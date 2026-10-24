@@ -14,7 +14,7 @@ It works for any group that wants to actually talk: families, roommates, long-di
 
 **The news gives the problem. Your real selves are the solution.**
 
-One screen becomes the table (a laptop or TV) and every phone becomes a character and a controller. 2 to 6 players scan a QR code and the group is ready in about thirty seconds. No DM, no prep, no account. **No TV? (if shipped)** Any phone can host instead: everyone plays from their own phone, from anywhere, with a crew chat for friends who aren't in the same room.
+One screen becomes the table (a laptop or TV) and every phone becomes a character and a controller. 2 to 6 players scan a QR code and the group is ready in about thirty seconds. No DM, no prep, no account. **No TV?** Any phone can host instead: everyone plays from their own phone, from anywhere, with a crew chat for friends who aren't in the same room.
 
 *Items marked (if shipped) were built this weekend but not yet verified end to end with live Muse calls when this was written.*
 
@@ -50,7 +50,7 @@ Our demo quests:
 
 **Three scenes, then a Final Roll** where everyone makes their final move at once. Each scene's opening gives that scene's spotlighted player a moment where their real skill can matter (if shipped). It's an opening, never a requirement.
 
-**Mirror, Mirror (if shipped).** A closing ritual. Each player is secretly another player's guardian and writes one kind sentence about that person's best moment. Players first guess what was written about them ("probably nothing"), then the screen reveals it. It aims straight at the liking gap. Nobody ever rates anyone.
+**Mirror, Mirror.** A closing ritual. Each player is secretly another player's guardian and writes one kind sentence about that person's best moment. Players first guess what was written about them ("probably nothing"), then the screen reveals it. It aims straight at the liking gap. Nobody ever rates anyone.
 
 **The reveal is proof, not a twist.** After the epilogue: "This really happened. Here's the article." **"The official story"**, the real headline, sits next to **"What your group uncovered"**, plus one line that names the crew **(if shipped)**: *"Solved by Ava's parallel parking and Ben's coffee."* The news gave the problem; your real selves were the solution.
 
@@ -125,13 +125,13 @@ Our demo quests:
 
 ## Why this fits each track
 
-**Meta: Bringing People Closer Together with AI.** The whole product is a machine for getting people to talk. You play yourself (if shipped), so you leave knowing what your friends are weirdly good at. Private clues force conversation, boosts and Catch! reward helping a friend, Convince the DM turns a plan into a debate, and Mirror, Mirror (if shipped) closes the night with a kind sentence. Muse is the DM that makes it possible, and Muse can even start the night.
+**Meta: Bringing People Closer Together with AI.** The whole product is a machine for getting people to talk. You play yourself (if shipped), so you leave knowing what your friends are weirdly good at. Private clues force conversation, boosts and Catch! reward helping a friend, Convince the DM turns a plan into a debate, and Mirror, Mirror closes the night with a kind sentence. Muse is the DM that makes it possible, and Muse can even start the night.
 
 ### How we map to Meta's criteria
 
 Meta scores human connection (30%), how essential and well integrated the AI is (25%), originality (20%), and a working demo (20%).
 
-**Human connection (30%).** Our north star is a game night that gives everyone an excuse to talk to each other. We designed against the real reason people stay quiet: uncertainty, and a crowd's silence. Each player gets a role, a reason (a secret clue only they hold) and a script (a plan to pitch, an argument to make). Everyone acts every round, nobody's idea is voted away, and friends rescue each other. Players bring something real about themselves (if shipped), and the reveal credits each of them by name. Mirror, Mirror (if shipped) works on the liking gap directly, and nobody is ever rated. Remote play (if shipped) means the crew doesn't have to be in one room.
+**Human connection (30%).** Our north star is a game night that gives everyone an excuse to talk to each other. We designed against the real reason people stay quiet: uncertainty, and a crowd's silence. Each player gets a role, a reason (a secret clue only they hold) and a script (a plan to pitch, an argument to make). Everyone acts every round, nobody's idea is voted away, and friends rescue each other. Players bring something real about themselves (if shipped), and the reveal credits each of them by name. Mirror, Mirror works on the liking gap directly, and nobody is ever rated. Remote play means the crew doesn't have to be in one room.
 
 **AI is essential and well integrated (25%).** Remove the AI and there is no game, because there is no DM. Muse Spark turns real answers into powers, picks the real story that fits this crew (if shipped), and writes the scenes, rulings, appeals, story beats, epilogue and keepsake. Muse Image paints heroes and scenes. Muse Voice Transcribe lets players pitch and argue by voice. Through the live MCP connector at `/api/mcp`, Muse can start the night, list tonight's quests, and draft the invite. The server owns the dice, and the narration is engineered not to sound like AI.
 

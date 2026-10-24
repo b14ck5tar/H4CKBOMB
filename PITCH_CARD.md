@@ -5,7 +5,7 @@
 CD = Creative Director (talks, plays the host). ENG = Engineer (drives the laptop, hidden hotkeys).
 Setup: laptop as TV, QR tent card, room pre-warmed in the lobby with "Who's playing?" set. Teammates join first and answer the two questions with fun, real answers, so judges see the tone. **Never type for the judge. Hand them the QR first, talk second.**
 
-Items marked **(if shipped)** only get said if they are live in the build you are demoing. If not, skip the line, do not apologize, and do not describe it as working. "Real In, Magic Out" (the two questions, best-fit pick, spotlights, the solved-by line, the rating), remote play and the refresh-proof host are being built on `remote-play` (design/18): treat each as **(if shipped)** until you have seen it work in the demo build.
+Items marked **(if shipped)** only get said if they are live in the build you are demoing. If not, skip the line, do not apologize, and do not describe it as working. "Real In, Magic Out" (the two questions, best-fit pick, spotlights, the solved-by line, the rating) is being built on `remote-play` (design/18): treat each as **(if shipped)** until you have seen it work in the demo build. Remote play, the refresh-proof host and Mirror, Mirror have been played end to end (with canned AI, not yet with live Muse).
 
 ## The hero moment
 At the reveal: **"This really happened. Here's the article."** Then the line that names the crew: **"...solved by Ava's parallel parking and Ben's coffee." (if shipped)** Pause on it. It's the whole pitch in one line: the news gave the problem, your real selves were the solution. If the solved-by line didn't ship, the hero moment is "The official story" next to "What your group uncovered".
@@ -16,7 +16,7 @@ Meta judges score: **Human connection 30% · AI essential and integrated 25% · 
 
 | Criterion | Weight | Our beat (say it) | Where it lands in the demo |
 |---|---|---|---|
-| **Human connection** | 30% | **"A game night that gives everyone an excuse to talk to each other."** | Opening hook, playing yourself (two questions), the secret clues, Convince the DM, Catch!, Mirror, Mirror (if shipped), the solved-by line |
+| **Human connection** | 30% | **"A game night that gives everyone an excuse to talk to each other."** | Opening hook, playing yourself (two questions), the secret clues, Convince the DM, Catch!, Mirror, Mirror, the solved-by line |
 | **AI essential + integrated** | 25% | **"Muse is the Dungeon Master, so nobody has to prep."** | Your real skill becoming a power, the best-fit story pick, the ruling, Convince the DM, portraits and scenes, hold-to-talk, the connector |
 | **Originality** | 20% | **"The news gives the problem. Your real selves are the solution."** | The quest intro and the reveal: "This really happened", "solved by" your real skills |
 | **Working demo** | 20% | **"Live on your phone, not a mockup."** | The judge scans, plays and rolls on their own device; real RNG; the fallback chain |
@@ -75,12 +75,12 @@ Tags in brackets show which criterion each beat is scoring. Demo quest: the 80-t
 | 2:30 | CD | If a disaster happens: "Now you're stuck, and your friends have to rescue you next scene." Then: "Each hero gets one story beat, in your own words." Read one back to the table. |
 | 2:45 | ENG | **[AI + DEMO]** **Muse connector beat (if shipped):** opens Muse, the personal agent, and types: "Start a game night for me and Mira." Muse calls our MCP endpoint (`start_game_night`, `list_todays_tales`, `invite_message`): a room appears on the TV and Muse drafts the invite. CD: "Muse doesn't just run the game. Muse can start the night." |
 | 3:05 | ENG | Hotkey: skip to the Final Roll. CD: "Normally it's three scenes, then everyone makes their final move at once." |
-| 3:12 | CD | **Mirror, Mirror (if shipped):** "Each of you was secretly someone's guardian and wrote one kind sentence about their best moment. Guess what was written about you." ("Probably nothing.") TV reveals them. "Nobody ever rates anyone." Epilogue plays. |
+| 3:12 | CD | **Mirror, Mirror:** "Each of you was secretly someone's guardian and wrote one kind sentence about their best moment. Guess what was written about you." ("Probably nothing.") TV reveals them. "Nobody ever rates anyone." Epilogue plays. |
 | 3:22 | CD | **[ORIGINALITY + CONNECTION] The hero moment.** "**This really happened.** Here's the article." **"The official story"** (the real headline) next to **"What your group uncovered"**. Then read the line on the TV: **"Solved by Ava's parallel parking and Ben's coffee." (if shipped)** **Pause. Let them read and laugh.** |
 | 3:40 | CD | Keepsake is saved to the shelf: "Next chapter, same crew." |
 | 3:45 | CD | **Scorecard close (say all four, one breath each):** "**Connection:** you play yourselves, everyone gets a role, a reason and a script, and the night is saved for next chapter, same crew. **AI:** Muse is the DM, the painter, the ears, picks the story that fits you, and can start the night. **Original:** the news gives the problem, your real selves are the solution. **Working:** you just played it on your own phone." |
 
-If the connector, Mirror, Mirror or the solved-by line did not ship, give their time back to Convince the DM and the reveal, and drop their words from the scorecard. Never drop the scorecard. **No TV at the table? (if shipped)** "Start a new game" on a phone makes it the host: every phone shows the story, with a crew chat for players who aren't in the same room.
+If the connector or the solved-by line did not ship, give their time back to Convince the DM and the reveal, and drop their words from the scorecard. Never drop the scorecard. **No TV at the table?** "Start a new game" on a phone makes it the host: every phone shows the story, with a crew chat for players who aren't in the same room.
 
 ## Research lines for "human connection" (30%)
 
@@ -100,7 +100,7 @@ Spark JSON call about 1.9 s. Portrait about 14 s. Scene image about 23 s. Never 
 ## Judge Q&A, by rubric criterion
 
 ### Human connection (30%)
-1. **Where's the human connection?** We designed against why people stay quiet: uncertainty and a crowd's silence. Each phone has a private clue, so the table has to talk. Everyone acts every round and nobody's idea is voted out. Friends boost each other's plans, spend a heart to Catch a fail, and rescue a stuck hero. Mirror, Mirror (if shipped) ends the night with a kind sentence about each person.
+1. **Where's the human connection?** We designed against why people stay quiet: uncertainty and a crowd's silence. Each phone has a private clue, so the table has to talk. Everyone acts every round and nobody's idea is voted out. Friends boost each other's plans, spend a heart to Catch a fail, and rescue a stuck hero. Mirror, Mirror ends the night with a kind sentence about each person.
 2. **Isn't a phone-and-TV game just more screens?** The TV is the shared focus and the phones carry the secrets. The secret clues exist to make people look up and talk to each other, not into a phone.
 3. **Does one evening really connect anyone?** We don't claim one night does. It lowers the cost of starting a conversation, and the keepsake shelf ("next chapter, same crew") is how nights add up.
 4. **Why a game and not a chat prompt?** A prompt hands you a question. A game hands you a role, a reason and a script, and that's what removes the uncertainty.
