@@ -11,7 +11,7 @@ const KEYS: [string, string][] = [
   ["Space", "Continue (reading screens)"],
   ["S", "Skip the current timer"],
   ["N", "DM's Notes: what the AI is doing"],
-  ["Q", "Quick start: first story + begin"],
+  ["Q", "Quick Tale: 3-minute mode + begin"],
   ["A", "Attract screen on/off"],
   ["H", "This help"],
 ];
@@ -95,10 +95,12 @@ export function Presenter({ host, s, onNotes, onCloseNotes }: { host: Stage; s: 
       } else if (k === "s") {
         if (host.deadlineAt) host.skip();
       } else if (k === "q" && st.phase === "lobby") {
+        // Quick Tale (it preselects the demo story), or the first story if none is picked yet.
+        host.setMode("quick");
         const first = st.questOptions[0];
-        if (first && st.questId !== first.id) host.chooseQuest(first.id);
+        if (!host.getState().questId && first) host.chooseQuest(first.id);
         if (host.canBegin()) host.begin();
-        else setToast(first ? "Story picked. Waiting for a finished character to start." : "No stories loaded yet.");
+        else setToast(host.getState().questId ? "Quick Tale picked. Waiting for a finished character to start." : "No stories loaded yet.");
       }
     };
     const onPointer = () => {

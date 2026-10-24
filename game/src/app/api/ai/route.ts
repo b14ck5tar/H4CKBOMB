@@ -3,6 +3,7 @@ import { museJSON, museText } from "@/server/muse";
 import {
   CHARACTER_SCHEMA,
   CHARACTER_SYSTEM,
+  EPILOGUE_QUICK,
   EPILOGUE_SYSTEM,
   KIND_SCHEMA,
   KIND_SYSTEM,
@@ -62,7 +63,7 @@ async function run(task: string, input: Any) {
     case "kind":
       return museJSON({ task: "dm-kind", system: KIND_SYSTEM, schema: KIND_SCHEMA, effort: "minimal", timeoutMs: 9000, maxTokens: 1200, user: JSON.stringify(input) });
     case "epilogue":
-      return museText({ task: "dm-epilogue", system: EPILOGUE_SYSTEM, user: JSON.stringify(input), effort: "low" });
+      return museText({ task: "dm-epilogue", system: input?.quick_tale ? EPILOGUE_SYSTEM + EPILOGUE_QUICK : EPILOGUE_SYSTEM, user: JSON.stringify(input), effort: "low" });
     case "storybook":
       return museJSON({
         task: "dm-storybook",

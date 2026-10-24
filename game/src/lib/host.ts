@@ -27,9 +27,12 @@ import {
 } from "./rules";
 import { openRoom, type Msg, type Transport } from "./transport";
 import { mask } from "./mask";
+import { QUICK, coldOpenTimeline } from "./quick";
 import type {
   Band,
   DMNotes,
+  FinalRoll,
+  GameMode,
   GameState,
   Hero,
   MirrorCard,
@@ -158,6 +161,13 @@ function fallbackClue(h: Hero, location: string) {
   };
 }
 
+/**
+ * Ending module: one step that runs between the Final Roll and the reveal. Call done() when it's over.
+ * Steps are looked up by id, so a new module (a Mirror, Mirror replacement, say) is one registerEnding() call
+ * plus a setEndingPlan() for the mode that should use it.
+ */
+export type EndingStep = (done: () => void) => void;
+
 function bestStat(h?: Hero): Stat {
   if (!h) return "brave";
   return (Object.keys(h.stats) as Stat[]).sort((a, b) => h.stats[b] - h.stats[a])[0];
@@ -229,11 +239,24 @@ export class GameHost {
   private toastSubs = new Set<(t: { text: string; id: number }) => void>();
   private toastId = 0;
   private presenceIv: ReturnType<typeof setInterval> | null = null;
+  private sceneP: { i: number; p: Promise<{ data: SceneOpen; fallback: boolean }> } | null = null;
+  private endingFor: string | null = null; // the final roll the epilogue/storybook were already asked about
+  private endingQueue: string[] = [];
+  private endingSteps: Record<string, EndingStep> = {
+    mirror: (done) => (Object.keys(this.state.wards).length ? this.startMirror(done) : done()),
+    epilogue: (done) => this.startEpilogue(done),
+  };
+  /** Which ending modules run, in order, per mode. Quick Tale skips Mirror for now (pluggable later). */
+  private endingPlan: Record<GameMode, string[]> = { full: ["mirror", "epilogue"], quick: ["epilogue"] };
+  /** When the current Quick Tale started (ms), for the TV's run clock. 0 = not running. */
+  startedAt = 0;
+  endedAt = 0;
 
   constructor(code: string) {
     this.state = {
       code,
       phase: "lobby",
+      mode: "full",
       partyName: "",
       players: [],
       questId: "",
@@ -367,13 +390,14 @@ export class GameHost {
   }
 
   /** A reading screen: advances on Continue, when every hero taps Ready, or after a generous safety timer. */
-  private reading(text: string, next: () => void, minMs = 7000) {
+  private reading(text: string, next: () => void, minMs = 7000, capMs?: number) {
     this.set({ ready: [] });
-    this.setTimer(readMs(text, minMs), next);
+    this.setTimer(this.readFor(text, minMs, capMs), next);
   }
 
   private onReady(pid: string) {
     if (!READING.has(this.state.phase) || this.state.busy || !this.pending) return;
+    if (this.quick && this.state.phase === "quest") return; // the cold open plays out (the TV can still skip)
     if (!this.player(pid)?.hero || this.state.ready.includes(pid)) return;
     const ready = [...this.state.ready, pid];
     this.set({ ready });
@@ -704,6 +728,37 @@ export class GameHost {
   }
 
   // ---------- lobby ----------
+  /** Lobby choice: "Quick Tale · 3 min" or "Full Story". Quick preselects the demo quest if none is picked. */
+  setMode(mode: GameMode) {
+    if (this.state.phase !== "lobby") return;
+    this.set({ mode });
+    if (mode === "quick" && !this.seed) this.chooseQuest(QUICK.defaultQuest);
+  }
+
+  /** Swap in a new ending module (see EndingStep). */
+  registerEnding(id: string, step: EndingStep) {
+    this.endingSteps[id] = step;
+  }
+
+  setEndingPlan(mode: GameMode, ids: string[]) {
+    this.endingPlan[mode] = ids;
+  }
+
+  /** The one scene opener that may nod to players' "one true thing": the second scene, or Quick Tale's only one. */
+  private truthScene() {
+    return this.quick ? 0 : 1;
+  }
+
+  private get quick() {
+    return this.state.mode === "quick";
+  }
+
+  /** Reading-screen safety timer; Quick Tale caps it so the demo stays under three minutes. */
+  private readFor(text: string, minMs: number, capMs: number = QUICK.readCapMs) {
+    const ms = readMs(text, minMs);
+    return this.quick ? Math.min(ms, Math.max(capMs, minMs)) : ms;
+  }
+
   setPartyName(name: string) {
     this.set({ partyName: name.slice(0, 40) });
   }
@@ -863,12 +918,23 @@ export class GameHost {
     this.note(
       "source",
       "The story",
-      `Built from a real news story${seed.category ? ` (${seed.category.replace(/_/g, " ")})` : ""}. The headline stays hidden until the end so it can't spoil the twist.`,
+      this.quick
+        ? `Quick Tale (one scene, ~3 min) built from a real news story${seed.category ? ` (${seed.category.replace(/_/g, " ")})` : ""}. The cold open shows the real headline; how each story element maps to it is revealed at the end.`
+        : `Built from a real news story${seed.category ? ` (${seed.category.replace(/_/g, " ")})` : ""}. The headline stays hidden until the end so it can't spoil the twist.`,
     );
     this.note("safety", "Why it's safe", SAFETY_NOTES[seed.id] ?? SAFETY_GENERIC);
+    this.sceneP = null;
+    this.endingFor = null;
+    const quick = this.quick;
+    // Quick Tale: one scene, set at the climax location, with the threat in full view from the first line.
+    const scenes = quick ? [{ ...this.state.scenes[this.state.scenes.length - 1], kind: "hook" as const }] : this.state.scenes;
+    this.startedAt = quick ? Date.now() : 0;
+    this.endedAt = 0;
     this.set({
       players,
-      wards: this.assignWards(players.map((p) => p.id)),
+      scenes,
+      sceneIndex: 0,
+      wards: quick ? {} : this.assignWards(players.map((p) => p.id)),
       mirrorMoments: {},
       mirror: [],
       mirrorIndex: 0,
@@ -887,6 +953,13 @@ export class GameHost {
       storybook: null,
       rescue: null,
     });
+    if (quick) {
+      // Cold open: the real headline types out over the painted scene, then the title card. Fixed length, no Ready.
+      this.set({ ready: [] });
+      this.setTimer(coldOpenTimeline(this.seed!.the_real_story.headline).total, () => this.openScene(0));
+      this.prefetchScene(0); // the DM writes the scene while the cold open plays
+      return;
+    }
     this.reading(this.seed!.fairytale_premise, () => this.openScene(0), 9000);
   }
 
@@ -928,7 +1001,7 @@ export class GameHost {
         titles: p.titles,
         peril: p.peril,
         clue: s.clues[p.id] ?? "",
-        truth_hint: s.sceneIndex === 1 ? p.truth ?? "" : "", // offered in one scene only, so the nod happens at most once
+        truth_hint: s.sceneIndex === this.truthScene() ? p.truth ?? "" : "", // offered in one scene only, so the nod happens at most once
       })),
       canon: this.canon.slice(-10),
       ledger: this.ledger.slice(-3),
@@ -938,12 +1011,35 @@ export class GameHost {
   }
 
   // ---------- scenes ----------
+  private sceneInput(i: number) {
+    const scene = this.state.scenes[i];
+    const victim = this.heroes().find((p) => p.peril);
+    return {
+      state: this.dmState(),
+      scene_plan: { n: i + 1, kind: scene.kind, location: scene.location, description: scene.description, seeded_twist: scene.twist },
+      recap_needed: i > 0,
+      rescue: victim ? { hero_id: victim.id, hero_name: victim.hero!.name, peril: victim.peril } : undefined,
+      hero_ids: this.heroes().map((p) => p.id),
+      last_scene_outcomes: this.state.log.filter((l) => l.scene === i - 1).map((l) => `${l.hero} (${l.band}): ${l.pitch}`),
+      quick_tale: this.quick || undefined,
+    };
+  }
+
+  /** Start writing a scene early (Quick Tale asks during the cold open). */
+  private prefetchScene(i: number) {
+    const p = ai<SceneOpen>("scene", this.sceneInput(i));
+    p.catch(() => {}); // openScene reports any failure (DM's Notes); don't leave it unhandled meanwhile
+    this.sceneP = { i, p };
+  }
+
   private async openScene(i: number) {
     this.clearTimer();
     const scene = this.state.scenes[i];
     const isClimax = scene.kind === "climax";
     const victim = this.heroes().find((p) => p.peril);
     const rescue = victim && !isClimax ? { victimId: victim.id, peril: victim.peril } : null;
+    const pre = this.sceneP?.i === i ? this.sceneP.p : null;
+    this.sceneP = null;
     this.set({
       phase: "narrating",
       sceneIndex: i,
@@ -964,14 +1060,6 @@ export class GameHost {
       busy: "The DM flips to the next page of notes…",
     });
     const heroIds = this.heroes().map((p) => p.id);
-    const input = {
-      state: this.dmState(),
-      scene_plan: { n: i + 1, kind: scene.kind, location: scene.location, description: scene.description, seeded_twist: scene.twist },
-      recap_needed: i > 0,
-      rescue: victim ? { hero_id: victim.id, hero_name: victim.hero!.name, peril: victim.peril } : undefined,
-      hero_ids: heroIds,
-      last_scene_outcomes: this.state.log.filter((l) => l.scene === i - 1).map((l) => `${l.hero} (${l.band}): ${l.pitch}`),
-    };
     const fb = (): SceneOpen => ({
       recap: "",
       narration: `${scene.location}. ${scene.twist}`,
@@ -986,12 +1074,12 @@ export class GameHost {
     const next = () => (isClimax ? this.startPitch(true) : this.startPitch(false));
     const sceneLabel = isClimax ? "Finale" : `Scene ${i + 1}`;
     try {
-      const res = await this.viaAI(`${sceneLabel} opening`, ai<SceneOpen>("scene", input), 16_000, (d, f) => (f ? fb() : d), fb);
+      const res = await this.viaAI(`${sceneLabel} opening`, pre ?? ai<SceneOpen>("scene", this.sceneInput(i)), pre ? 12_000 : 16_000, (d, f) => (f ? fb() : d), fb);
       if (this.state.phase !== "narrating" || this.state.sceneIndex !== i) return;
       this.note("scene", `${sceneLabel} · ${scene.kind}`, `The DM was given: the place (${scene.location}) and a twist seeded from a real fact: ${clip(scene.twist, 120)}`);
       this.note("scene", sceneLabel, `Question for the table: ${res.question || fb().question}`);
       if (rescue) this.note("scene", victim!.hero!.name, `In peril from last scene (${victim!.peril}). This scene is a rescue.`);
-      const truths = i === 1 ? this.heroes().filter((p) => p.truth).length : 0;
+      const truths = i === this.truthScene() ? this.heroes().filter((p) => p.truth).length : 0;
       if (truths) this.note("scene", sceneLabel, `The DM was offered ${truths} player${truths > 1 ? "s'" : "'s"} "one true thing" for one gentle nod (private, not shown here).`);
       if (res.recap) this.recaps.push(res.recap);
       const suggestions: Record<string, string[]> = {};
@@ -1038,7 +1126,7 @@ export class GameHost {
     this.appeals.clear();
     this.caughtThisRound = false;
     this.set({ phase: "pitch", pitches: [], boosts: {}, rolls: [], revealed: [], round: null, beatIndex: 0, ready: [] });
-    this.setTimer(final ? 30_000 : PITCH_MS, () => this.endPitch());
+    this.setTimer(final ? 30_000 : this.quick ? QUICK.pitchMs : PITCH_MS, () => this.endPitch());
   }
 
   private onPitch(pid: string, text: string, useAbility: boolean, embraceFlaw: boolean) {
@@ -1153,7 +1241,7 @@ export class GameHost {
     // "Convince the DM": anyone whose plan needs a roll gets one shot to argue for it.
     if (judged.some((p) => !autoSucceeds(p.verdict!.tier) && !p.auto)) {
       this.set({ phase: "appeal" });
-      this.setTimer(APPEAL_MS, () => this.endAppeal());
+      this.setTimer(this.quick ? QUICK.appealMs : APPEAL_MS, () => this.endAppeal());
       this.maybeEndAppeal();
     } else {
       this.startRoll();
@@ -1226,6 +1314,8 @@ export class GameHost {
       );
       if (this.state.phase !== "appeal") return;
       this.set({ pitches: settled, busy: "" });
+      // Quick Tale: hold a beat so the room sees the stamp flip (or not) before the dice come out.
+      if (this.quick) return this.setTimer(3000, () => this.state.phase === "appeal" && this.startRoll());
     }
     this.startRoll();
   }
@@ -1282,7 +1372,7 @@ export class GameHost {
     this.roundP = this.fetchRound(rolls);
     this.set({ phase: "roll", rolls, revealed, catchers: [] });
     if (revealed.length === rolls.length) return this.afterRoll();
-    this.setTimer(ROLL_MS, () => this.revealAll(true));
+    this.setTimer(this.quick ? QUICK.rollMs : ROLL_MS, () => this.revealAll(true));
     this.nudge(); // only away heroes left to roll: their dice roll themselves
   }
 
@@ -1432,7 +1522,9 @@ export class GameHost {
   private stepBeat(i: number) {
     const out = this.state.round!;
     this.set({ beatIndex: i });
-    if (i < out.beats.length) return this.reading(out.beats[i].text, () => this.stepBeat(i + 1), 6000);
+    if (i < out.beats.length) return this.reading(out.beats[i].text, () => this.stepBeat(i + 1), 6000, QUICK.beatCapMs);
+    // Quick Tale goes straight from the last beat to the Final Roll.
+    if (this.quick) return this.afterRound();
     this.reading(out.now, () => this.afterRound(), 5000);
   }
 
@@ -1525,6 +1617,13 @@ export class GameHost {
 
   private afterRound() {
     if (this.state.hope <= 0) return this.finish(true);
+    if (this.quick) {
+      // Everyone's plan from the one scene becomes their final move.
+      this.clearTimer();
+      this.note("scene", "Quick Tale", "One scene only: everyone's plan becomes their final move, straight to the all-together Final Roll.");
+      this.set({ finalMoves: Object.fromEntries(this.state.pitches.map((p) => [p.playerId, p.text])) });
+      return this.startFinalRoll();
+    }
     this.openScene(this.state.sceneIndex + 1);
   }
 
@@ -1538,6 +1637,8 @@ export class GameHost {
       final: { dice: {}, rolled: [], best: "", hopeBonus: this.state.hope, total: 0, ending: "BITTERSWEET", stage: "arm", armed: [], shook: [], auto: [] },
     });
     this.setTimer(FINAL_ARM_MS, () => this.startCountdown());
+    // The dice are already decided (crypto, in code), so Quick Tale asks for the ending now and hides the wait.
+    if (this.quick) this.askEnding(this.computeFinal(false));
     // Safety net: whatever happens to the phones, the ending always arrives.
     if (this.finalSafety) clearTimeout(this.finalSafety);
     this.finalSafety = setTimeout(() => this.state.phase === "final_roll" && this.finish(false), FINAL_ROLL_MS + 20_000);
@@ -1608,15 +1709,11 @@ export class GameHost {
     this.setTimer(FINAL_LAND_MS, () => this.finish(false));
   }
 
-  private finish(grim: boolean) {
-    if (["final_result", ...MIRROR_PHASES, "epilogue", "reveal", "storybook"].includes(this.state.phase)) return;
-    this.clearTimer();
-    if (this.finalSafety) clearTimeout(this.finalSafety);
-    this.finalSafety = null;
+  private computeFinal(grim: boolean): FinalRoll {
     const dice = grim ? {} : { ...this.finalDice };
     const best = Object.entries(dice).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "";
     const total = grim ? 0 : (dice[best] ?? 0) + this.state.hope;
-    const final = {
+    return {
       dice,
       rolled: Object.keys(dice),
       best,
@@ -1624,27 +1721,14 @@ export class GameHost {
       total,
       ending: grim ? ("GRIM_BUT_HILARIOUS" as const) : ending(total, this.state.hope),
     };
-    const players = this.state.players.map((p) => ({ ...p, peril: "" }));
-    const tapped = this.state.final?.rolled ?? [];
-    this.set({ phase: "final_result", final, players, ready: [] });
-    if (grim) {
-      this.note("roll", "The ending", `Hope hit 0, so it ends early: ${ENDING_LABEL[final.ending]}. Still a happy-ish ending, never a cruel one.`);
-    } else {
-      this.bump("rounds");
-      const unrolled = Object.keys(dice).filter((id) => !tapped.includes(id));
-      unrolled.forEach((id) => {
-        this.bump("rolls");
-        if (dice[id] === 1) this.bump("nat1");
-        if (dice[id] === 20) this.bump("nat20");
-      });
-      const auto = unrolled.length ? ` (the game rolled for ${unrolled.length} who didn't tap in time)` : "";
-      // After the last die's own note (those wait for the roll animation).
-      setTimeout(
-        () => this.note("roll", "The ending", `Best die ${dice[best] ?? 0} + Hope ${final.hopeBonus} = ${total} → ${ENDING_LABEL[final.ending]}${auto}. 20+ wins, 12+ mostly works.`),
-        ROLL_ANIM_MS + 200,
-      );
-    }
+  }
 
+  /** Ask the DM for the epilogue and the storybook. Once per final roll, however early it's called. */
+  private askEnding(final: FinalRoll) {
+    const key = JSON.stringify([final.dice, final.ending, this.state.finalMoves]);
+    if (this.endingFor === key) return;
+    this.endingFor = key;
+    const { dice, best, total } = final;
     const heroes = this.heroes().map((p) => ({ id: p.id, name: p.hero!.name }));
     const st = this.dmState();
     const name = (id: string) => this.player(id)?.hero?.name ?? "";
@@ -1658,13 +1742,18 @@ export class GameHost {
     };
     this.epilogueP = this.viaAI(
       "Epilogue",
-      ai<string>("epilogue", { state: st, final: finalInfo, log: this.state.log.map((l) => `${l.hero}: ${l.pitch} (${l.band})`) }),
+      ai<string>("epilogue", {
+        state: st,
+        final: finalInfo,
+        log: this.state.log.map((l) => `${l.hero}: ${l.pitch} (${l.band})`),
+        quick_tale: this.quick || undefined,
+      }),
       20_000,
       (d) => (typeof d === "string" && d.trim() ? d : null),
       () => "The dice land and, somehow, it holds. Everyone goes home with a story nobody will believe. And that's the version they'll never print.",
     );
     const crowd = Object.entries(this.reactionCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "";
-    const images = this.state.scenes.map((_, i) => `scene_${i + 1}`);
+    const images = this.artCount().map((i) => `scene_${i + 1}`);
     const bookFallback = (): Storybook => ({
       title: this.state.quest?.title ?? "A Tale",
       dedication: `For ${heroes.map((h) => h.name).join(", ")}.`,
@@ -1693,7 +1782,64 @@ export class GameHost {
       (d) => (Array.isArray(d?.pages) && d.pages.length ? d : null),
       bookFallback,
     );
-    this.setTimer(grim ? 2500 : 4500, () => (Object.keys(this.state.wards).length ? this.startMirror() : this.startEpilogue()));
+  }
+
+  /** Indexes of the painted scenes (Quick Tale keeps all three even though it plays one scene). */
+  private artCount() {
+    const n = Math.max(this.state.scenes.length, Object.keys(this.sceneImages).length);
+    return Array.from({ length: n }, (_, i) => i);
+  }
+
+  private finish(grim: boolean) {
+    if (["final_result", ...MIRROR_PHASES, "epilogue", "reveal", "storybook"].includes(this.state.phase)) return;
+    this.clearTimer();
+    if (this.finalSafety) clearTimeout(this.finalSafety);
+    this.finalSafety = null;
+    const tapped = this.state.final?.rolled ?? [];
+    const final = this.computeFinal(grim);
+    const { dice, best, total } = final;
+    const players = this.state.players.map((p) => ({ ...p, peril: "" }));
+    this.set({ phase: "final_result", final, players, ready: [] });
+    if (grim) {
+      this.note("roll", "The ending", `Hope hit 0, so it ends early: ${ENDING_LABEL[final.ending]}. Still a happy-ish ending, never a cruel one.`);
+    } else {
+      this.bump("rounds");
+      const unrolled = Object.keys(dice).filter((id) => !tapped.includes(id));
+      unrolled.forEach((id) => {
+        this.bump("rolls");
+        if (dice[id] === 1) this.bump("nat1");
+        if (dice[id] === 20) this.bump("nat20");
+      });
+      const auto = unrolled.length ? ` (the game rolled for ${unrolled.length} who didn't tap in time)` : "";
+      // After the last die's own note (those wait for the roll animation).
+      setTimeout(
+        () => this.note("roll", "The ending", `Best die ${dice[best] ?? 0} + Hope ${final.hopeBonus} = ${total} → ${ENDING_LABEL[final.ending]}${auto}. 20+ wins, 12+ mostly works.`),
+        ROLL_ANIM_MS + 200,
+      );
+    }
+    this.askEnding(final);
+    this.setTimer(grim ? 2500 : 4500, () => this.runEnding(this.endingPlan[this.state.mode] ?? ["epilogue"]));
+  }
+
+  // ---------- ending modules ----------
+  /** Run the ending steps in order, then the reveal. */
+  private runEnding(ids: string[]) {
+    this.endingQueue = [...ids];
+    this.nextEnding();
+  }
+
+  private nextEnding(): void {
+    this.clearTimer();
+    const id = this.endingQueue.shift();
+    if (id === undefined) return this.startReveal();
+    const step = this.endingSteps[id];
+    if (!step) return this.nextEnding();
+    let called = false;
+    step(() => {
+      if (called) return;
+      called = true;
+      this.nextEnding();
+    });
   }
 
   // ---------- Mirror, Mirror ----------
@@ -1715,7 +1861,10 @@ export class GameHost {
       .map(({ pitch, what_happened }) => ({ pitch, what_happened }));
   }
 
-  private startMirror() {
+  private mirrorDone: () => void = () => {};
+
+  private startMirror(done: () => void) {
+    this.mirrorDone = done;
     this.clearTimer();
     this.mirrorP.clear();
     const wards = this.state.wards;
@@ -1834,7 +1983,7 @@ export class GameHost {
   private stepMirror(i: number) {
     if (this.state.phase !== "mirror_reveal") return;
     const card = this.state.mirror[i];
-    if (!card) return this.startEpilogue();
+    if (!card) return this.mirrorDone();
     this.set({ mirrorIndex: i });
     this.reading(`${card.guess} ${card.sentence}`, () => this.stepMirror(i + 1), 11000);
   }
@@ -1897,12 +2046,13 @@ export class GameHost {
     return thankYouLines(this.state);
   }
 
-  private async startEpilogue() {
+  private async startEpilogue(done: () => void) {
     this.clearTimer();
     this.set({ phase: "epilogue", busy: "The DM wraps it up…", ready: [] });
     const text = await this.epilogueP!;
+    if (this.state.phase !== "epilogue") return;
     this.set({ epilogue: text, busy: "" });
-    this.reading(text, () => this.startReveal(), 10000);
+    this.reading(text, done, this.quick ? QUICK.epilogueMinMs : 10000);
   }
 
   private startReveal() {
@@ -1930,12 +2080,15 @@ export class GameHost {
       this.note("reveal", "The source", `Now revealed: "${rs.headline}" (${rs.source}, ${rs.date}).`);
     }
     this.set({ phase: "reveal" });
-    this.reading(`${this.seed?.the_real_story.headline ?? ""} ${this.seed?.the_real_story.summary ?? ""}`, () => this.showStorybook(), 15000);
+    const text = `${this.seed?.the_real_story.headline ?? ""} ${this.seed?.the_real_story.summary ?? ""}`;
+    if (this.quick) return this.reading(text, () => this.showStorybook(), QUICK.revealMs, QUICK.revealMs);
+    this.reading(text, () => this.showStorybook(), 15000);
   }
 
   private async showStorybook() {
     this.clearTimer();
     this.set({ phase: "storybook", busy: "Putting your story together…" });
+    if (this.startedAt && !this.endedAt) this.endedAt = Date.now();
     const book = await this.storybookP!;
     this.set({ storybook: book, busy: "" });
     this.saveToShelf(book);
@@ -1943,7 +2096,7 @@ export class GameHost {
 
   private async saveToShelf(book: Storybook) {
     try {
-      const last = this.sceneImages[this.state.scenes.length - 1] ?? this.sceneImages[0];
+      const last = this.sceneImages[this.artCount().length - 1] ?? this.sceneImages[0];
       const cover = last ? await thumbnail(last, 320, 0.7) : "";
       const rs = this.seed!.the_real_story;
       const entry: ShelfBook = {
@@ -1977,6 +2130,8 @@ export class GameHost {
   /** "Next chapter": same heroes and titles, new story. */
   nextTale() {
     this.clearTimer();
+    this.startedAt = 0;
+    const prev = SEEDS.findIndex((x) => x.id === this.state.questId);
     this.seed = undefined;
     this.sceneImages = {};
     this.sceneCopies.clear();
@@ -2007,6 +2162,8 @@ export class GameHost {
     this.notesStart = Date.now();
     this.mirrorP.clear();
     this.mirrorFate.clear();
+    // Quick Tale: the next story is already on the table, so the next group just hits Start.
+    if (this.quick) this.chooseQuest(SEEDS[(prev + 1) % SEEDS.length].id);
   }
 
   close() {

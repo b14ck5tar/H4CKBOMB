@@ -77,6 +77,9 @@ export class WatchSource {
   }
   begin() {}
   nextTale() {}
+  setMode() {}
+  startedAt = 0;
+  endedAt = 0;
 
   private emit() {
     this.subs.forEach((f) => f());

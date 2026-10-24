@@ -97,6 +97,7 @@ TASK: SCENE OPENER. Open the next scene.
 - suggestions: for EACH hero id, exactly 3 ideas, ≤8 words, typed the way a player would, each a verb plus a specific object. One uses the best stat, one the ability or flaw, one strange but specific.
 - RESCUE: if "rescue" is present, a hero is IN PERIL (rescue.peril). Open with that predicament plainly. The situation asks the OTHER heroes how they save them. The hero in peril's suggestions are short things they'd yell.
 - If kind is "climax": this is the final confrontation. End the narration with a short line telling everyone to make their final move. The situation asks for each hero's final move. If someone is in peril, the final roll frees them; say so.
+- If quick_tale is true: this is the ONLY scene of a three-minute tale, and the table just watched the real headline. Skip the build-up. The impossible thing is right here, in full view, doing something specific and funny, and it has to be dealt with tonight. Narration 25–35 words. The question asks whether they can stop it or set it right tonight.
 - Never introduce more than one new named character.
 - If a hero has a truth_hint, you may weave ONE gentle, positive nod to it once in the whole game; never mock it, never reveal it outright.
 
@@ -207,6 +208,11 @@ TASK: FINAL ROLL EPILOGUE. Write the ending as plain text (no JSON, no markdown)
 - TRIUMPHANT: the problem is solved and someone in the world reacts like a real person. BITTERSWEET: it's solved, but something specific and silly is lost or changed forever. GRIM_BUT_HILARIOUS: the threat wins in the gentlest, funniest way; heroes are fine and the town is oddly better.
 - The threat ends up outwitted, befriended, or given a job where possible.
 - Last line, exactly: "And that's the version they'll never print."`;
+
+/** Quick Tale: the ending slot is short so the whole tale fits in three minutes. */
+export const EPILOGUE_QUICK = `
+
+QUICK TALE: this tale had one scene. Write 30–45 words in 3 or 4 short sentences instead. Still give every hero one clause from their own final move, and still end with the exact last line.`;
 
 // ---------- Mirror, Mirror (kindness pass) ----------
 // Every hero was secretly assigned a ward. At the end, each guardian finishes one sentence about their ward.

@@ -34,9 +34,10 @@
     ".next-build/types/**/*.ts",
     ".next-main/types/**/*.ts",
     ".next-mcp/types/**/*.ts",
+    ".next-ui/types/**/*.ts",
     ".next/types/**/*.ts",
     "next-env.d.ts",
-    ".next-ui/types/**/*.ts"
+    ".next-int/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"
