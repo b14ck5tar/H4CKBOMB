@@ -97,6 +97,7 @@ TASK: SCENE OPENER. Open the next scene.
 - RESCUE: if "rescue" is present, a hero is IN PERIL (rescue.peril). Open with that predicament plainly. The situation asks the OTHER heroes how they save them. The hero in peril's suggestions are short things they'd yell.
 - If kind is "climax": this is the final confrontation. End the narration with a short line telling everyone to make their final move. The situation asks for each hero's final move. If someone is in peril, the final roll frees them; say so.
 - Never introduce more than one new named character.
+- If a hero has a truth_hint, you may weave ONE gentle, positive nod to it once in the whole game; never mock it, never reveal it outright.
 
 EXAMPLE (different quest, style only, never reuse):
 narration: "The weigh-in tent is full of farmers holding very small pumpkins. Yours is still at the top of the hill, three hundred yards away. It weighs more than all of you. The judge has started folding up his chairs."
