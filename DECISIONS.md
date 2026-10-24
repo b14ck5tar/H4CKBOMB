@@ -58,3 +58,9 @@ Full history and train of thought: `design/00-where-we-are.md`.
 
 ## Open logistics
 - ⏳ Final name and .tech domain · feature-freeze time · Meta presenter lines in the pitch · whether Best Pitch counts toward the 3-track limit · partner's role · Meta Global hackathon application (due Oct 25, 11:59 PM ET).
+
+## Sat ~5:30 PM: Meta-table playtest (2 recordings)
+- CD: "took like 8 minutes", "over crowded", "not enough explanation", "too many features", "proposed answers were always the same", "art didn't incorporate our characters", "obvious AI is writing these stories", "the wording is unfollowable", "what the hell is foam".
+- ✅ Writing: option a. We (the devs) hand-write each story's scenes in plain English during development; the AI only reacts to plans. Grade 5-6 reading level, no invented jargon.
+- ⏳ Round: a (bare bones ⭐) / b (+ Convince the DM) / c (loop v2).
+- ⏳ Art: a (hero stickers in scenes + AI group poster at the end ⭐) / b (paint every scene live).
