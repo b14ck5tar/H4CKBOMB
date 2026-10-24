@@ -51,6 +51,18 @@ const SEEDS = seedsJson as QuestSeed[];
 /** Ready-made characters for fast onboarding; portraits are pre-painted in public/heroes/<id>.webp. */
 export const QUICK_HEROES = quickHeroes as { id: string; pitch: string; hero: Hero }[];
 
+/** "Ricky thanked Mara for the save" lines. Pure, so the read-only /watch screen can show them too. */
+export function thankYouLines(s: GameState) {
+  const name = (id: string) => s.players.find((p) => p.id === id)?.hero?.name ?? "";
+  return s.saves
+    .filter((x) => x.thanked)
+    .map((x) => {
+      const by = x.byIds.map(name).filter(Boolean);
+      const list = by.length > 1 ? `${by.slice(0, -1).join(", ")} and ${by[by.length - 1]}` : by[0] ?? "a friend";
+      return `${name(x.savedId)} thanked ${list} for ${x.kind === "catch" ? "the save" : "the rescue"}`;
+    });
+}
+
 export interface ShelfBook {
   party: string;
   title: string;
@@ -204,6 +216,9 @@ export class GameHost {
   private notesStart = Date.now();
   private mirrorFate = new Map<string, "kept" | "rewritten" | "dm">(); // guardian id -> what the kindness pass did
   private finalSafety: ReturnType<typeof setTimeout> | null = null;
+  // Online mode: /watch pages ask for state + media. Only then do we spend bandwidth on reactions and scene copies.
+  private watched = false;
+  private sceneCopies = new Map<string, Promise<string>>(); // `${questId}:${index}` -> image small enough for a realtime message
 
   constructor(code: string) {
     this.state = {
@@ -466,6 +481,8 @@ export class GameHost {
         }
         break;
       }
+      case "watch":
+        return this.onWatch(m);
       case "join":
         return this.onJoin(m.pid, m.name);
       case "concept":
@@ -525,12 +542,35 @@ export class GameHost {
     this.lastReact[pid] = now;
     this.reactionCounts[pid] = (this.reactionCounts[pid] ?? 0) + 1;
     const r = { pid, emoji: String(emoji).slice(0, 4), id: ++this.reactionId };
-    this.reactionSubs.forEach((f) => f(r));
+    this.emitReaction(r);
     // Laughter shouldn't get cut off: a burst of reactions buys a reading screen a few more seconds.
     if (READING.has(this.state.phase) && this.deadlineAt && this.deadlineAt - now < 3000 && this.pending) {
       const fn = this.pending;
       this.setTimer(this.deadlineAt - now + 2500, fn);
     }
+  }
+
+  private emitReaction(r: { pid: string; emoji: string; id: number }) {
+    this.reactionSubs.forEach((f) => f(r));
+    if (this.watched) this.t.send({ type: "reaction", ...r });
+  }
+
+  /** A read-only /watch screen joined (or is missing pictures). It never changes the game; we just send it what it lacks. */
+  private onWatch(m: Msg) {
+    this.watched = true;
+    this.broadcastSoon();
+    const pids: string[] = Array.isArray(m.portraits) ? m.portraits.slice(0, 12).map(String) : [];
+    pids.forEach((pid) => this.thumbs[pid] && this.t.send({ type: "portrait", pid, url: this.thumbs[pid] }));
+    const questId = this.state.questId;
+    const idx: number[] = Array.isArray(m.scenes) ? m.scenes.slice(0, 6).map(Number) : [];
+    idx.forEach((i) => {
+      const url = this.sceneImages[i];
+      if (!url || !questId) return;
+      const key = `${questId}:${i}`;
+      // Pre-painted scenes are short paths; generated ones are big data URLs, so send a smaller JPEG copy.
+      if (!this.sceneCopies.has(key)) this.sceneCopies.set(key, url.startsWith("data:") ? thumbnail(url, 800, 0.7) : Promise.resolve(url));
+      this.sceneCopies.get(key)!.then((copy) => copy && this.state.questId === questId && this.t.send({ type: "scene", questId, index: i, url: copy }));
+    });
   }
 
   // ---------- lobby ----------
@@ -620,6 +660,7 @@ export class GameHost {
     this.seed = seed;
     this.sceneImages = {};
     this.set({ notes: { ...this.state.notes, safety: SAFETY_NOTES[seed.id] ?? SAFETY_GENERIC } });
+    this.sceneCopies.clear();
     const locs = seed.locations;
     const idx = [0, Math.floor(locs.length / 2), locs.length - 1];
     const kinds = ["hook", "twist", "climax"] as const;
@@ -1656,7 +1697,7 @@ export class GameHost {
     if (n > 30) return;
     this.set({ thanks: { ...this.state.thanks, [pid]: n } });
     const r = { pid, emoji: "❤️", id: ++this.reactionId };
-    this.reactionSubs.forEach((f) => f(r));
+    this.emitReaction(r);
     // A thank-you shouldn't get cut off either.
     if (READING.has(phase) && this.deadlineAt && this.deadlineAt - now < 3000 && this.pending) {
       const fn = this.pending;
@@ -1699,14 +1740,7 @@ export class GameHost {
 
   /** "Ricky thanked Mara for the save", for the storybook. */
   thankYous() {
-    const name = (id: string) => this.player(id)?.hero?.name ?? "";
-    return this.state.saves
-      .filter((x) => x.thanked)
-      .map((x) => {
-        const by = x.byIds.map(name).filter(Boolean);
-        const list = by.length > 1 ? `${by.slice(0, -1).join(", ")} and ${by[by.length - 1]}` : by[0] ?? "a friend";
-        return `${name(x.savedId)} thanked ${list} for ${x.kind === "catch" ? "the save" : "the rescue"}`;
-      });
+    return thankYouLines(this.state);
   }
 
   private async startEpilogue() {
@@ -1791,6 +1825,7 @@ export class GameHost {
     this.clearTimer();
     this.seed = undefined;
     this.sceneImages = {};
+    this.sceneCopies.clear();
     this.set({
       phase: "lobby",
       questId: "",

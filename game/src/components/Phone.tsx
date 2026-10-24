@@ -52,7 +52,36 @@ function Shell({ children, me, portrait }: { children: React.ReactNode; me?: Pla
       )}
       {showCard && me && <HeroCard player={me} portrait={portrait} />}
       {children}
+      <BigScreenLink />
     </main>
+  );
+}
+
+/** Online mode: friends who aren't in the room open the big screen in another tab, or side by side on a laptop. */
+function BigScreenLink() {
+  const [links, setLinks] = useState<{ watch: string; split: string } | null>(null);
+  useEffect(() => {
+    const q = new URLSearchParams(location.search);
+    const code = q.get("code");
+    if (!code || q.get("split") === "1") return;
+    const split = new URLSearchParams(q);
+    split.set("split", "1");
+    setLinks({ watch: `/watch?code=${encodeURIComponent(code)}`, split: `/play?${split.toString()}` });
+  }, []);
+  if (!links) return null;
+  return (
+    <p className="mt-auto pt-2 text-center font-ui text-xs text-parchment/60">
+      Not in the room?{" "}
+      <a className="underline text-parchment/85" href={links.watch} target="_blank" rel="noopener">
+        Open the big screen
+      </a>
+      <span className="hidden md:inline">
+        {" · "}
+        <a className="underline text-parchment/85" href={links.split}>
+          side by side
+        </a>
+      </span>
+    </p>
   );
 }
 

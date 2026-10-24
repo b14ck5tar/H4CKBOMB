@@ -6,7 +6,7 @@ import { useWatch } from "@/lib/useWatch";
 
 /** Judges' view: /notes?code=ABCD follows a table's DM's Notes live, without joining as a player. */
 function Watching({ code }: { code: string }) {
-  const { state } = useWatch(code);
+  const { state } = useWatch(code, { media: false });
   return (
     <main className="min-h-full px-4 py-5 max-w-2xl mx-auto flex flex-col gap-4">
       <header className="flex items-end gap-3">

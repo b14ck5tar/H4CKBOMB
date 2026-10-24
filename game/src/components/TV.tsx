@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import QRCode from "qrcode";
-import { GameHost, loadShelf, type ShelfBook } from "@/lib/host";
+import { type GameHost, loadShelf, thankYouLines, type ShelfBook } from "@/lib/host";
 import { BAND_LABEL, ENDING_LABEL, ROLL_ANIM_MS, STAT_LABEL, autoSucceeds, isFailure, stampText } from "@/lib/rules";
 import { sfx } from "@/lib/sfx";
 import type { GameState, Player, RollResult } from "@/lib/types";
@@ -17,7 +17,17 @@ const fmt = (n: number) => (n >= 0 ? `+${n}` : `${n}`);
 const initials = (s: string) => s.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
 const READING = ["quest", "narrating", "outcome", "mirror_reveal", "epilogue", "reveal"];
 
-function useHost(host: GameHost) {
+/**
+ * What the stage reads. GameHost (the real table) satisfies it, and so does the read-only
+ * WatchSource behind /watch, which renders the same screens from the TV's broadcasts.
+ */
+export type Stage = Pick<
+  GameHost,
+  | "subscribe" | "getState" | "deadlineAt" | "portraits" | "thumbs" | "sceneImages" | "realStory" | "questSeed"
+  | "transportKind" | "onReaction" | "skip" | "setPartyName" | "chooseQuest" | "canBegin" | "begin" | "nextTale"
+> & { readOnly?: boolean };
+
+function useHost(host: Stage) {
   return useSyncExternalStore(host.subscribe, host.getState, host.getState);
 }
 
@@ -48,7 +58,7 @@ function Hope({ hope, max }: { hope: number; max: number }) {
   );
 }
 
-function TopBar({ host, s, notesOpen, onNotes }: { host: GameHost; s: GameState; notesOpen: boolean; onNotes: () => void }) {
+function TopBar({ host, s, notesOpen, onNotes }: { host: Stage; s: GameState; notesOpen: boolean; onNotes: () => void }) {
   const now = useNow(!!host.deadlineAt);
   const left = host.deadlineAt ? Math.max(0, host.deadlineAt - now) : 0;
   const [muted, setMuted] = useState(false);
@@ -60,19 +70,21 @@ function TopBar({ host, s, notesOpen, onNotes }: { host: GameHost; s: GameState;
       <span className="flex-1" />
       {s.phase !== "lobby" && <Hope hope={s.hope} max={s.hopeMax} />}
       {left > 0 && !reading && <span className="tabular-nums font-bold text-2xl w-14 text-right">{Math.ceil(left / 1000)}s</span>}
-      {host.deadlineAt > 0 && reading && (
+      {host.deadlineAt > 0 && reading && !host.readOnly && (
         <button className="btn btn-ghost !py-1 !px-4 text-base" onClick={() => host.skip()} title="Spacebar works too">
           Continue ▸
         </button>
       )}
-      <button
-        className={`btn btn-ghost !py-1 !px-3 text-sm ${notesOpen ? "ring-2 ring-[var(--crimson)]" : ""}`}
-        onClick={onNotes}
-        title="What the AI is doing, and why (press N)"
-        aria-pressed={notesOpen}
-      >
-        DM&apos;s Notes
-      </button>
+      {!host.readOnly && (
+        <button
+          className={`btn btn-ghost !py-1 !px-3 text-sm ${notesOpen ? "ring-2 ring-[var(--crimson)]" : ""}`}
+          onClick={onNotes}
+          title="What the AI is doing, and why (press N)"
+          aria-pressed={notesOpen}
+        >
+          DM&apos;s Notes
+        </button>
+      )}
       <button
         className="btn btn-ghost !py-1 !px-3 text-sm"
         onClick={() => {
@@ -88,7 +100,7 @@ function TopBar({ host, s, notesOpen, onNotes }: { host: GameHost; s: GameState;
   );
 }
 
-function SceneImage({ host, index, className = "" }: { host: GameHost; index: number; className?: string }) {
+function SceneImage({ host, index, className = "" }: { host: Stage; index: number; className?: string }) {
   const url = host.sceneImages[index];
   return (
     <div className={`relative overflow-hidden rounded bg-[var(--surface-2)] ${className}`} style={{ aspectRatio: "16 / 9" }}>
@@ -105,7 +117,7 @@ function SceneImage({ host, index, className = "" }: { host: GameHost; index: nu
   );
 }
 
-function Avatar({ host, p, size = 64 }: { host: GameHost; p: Player; size?: number }) {
+function Avatar({ host, p, size = 64 }: { host: Stage; p: Player; size?: number }) {
   const url = host.thumbs[p.id];
   if (url)
     // eslint-disable-next-line @next/next/no-img-element
@@ -114,7 +126,7 @@ function Avatar({ host, p, size = 64 }: { host: GameHost; p: Player; size?: numb
 }
 
 /** Who's ready / who's acted: one chip per hero along the bottom. */
-function Crew({ host, s, mark }: { host: GameHost; s: GameState; mark?: (p: Player) => string }) {
+function Crew({ host, s, mark }: { host: Stage; s: GameState; mark?: (p: Player) => string }) {
   return (
     <div className="flex gap-6 justify-center flex-wrap">
       {s.players
@@ -170,16 +182,20 @@ function QuestBoard({ s }: { s: GameState }) {
 }
 
 // ---------- lobby ----------
-function Lobby({ host, s }: { host: GameHost; s: GameState }) {
+function Lobby({ host, s }: { host: Stage; s: GameState }) {
   const [qr, setQr] = useState("");
   const [shelf, setShelf] = useState<ShelfBook[]>([]);
   const [joinUrl, setJoinUrl] = useState("");
+  const [online, setOnline] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const watchUrl = joinUrl.replace("/play?", "/watch?");
+  const invite = `Join on your phone at ${joinUrl}, watch at ${watchUrl}`;
   const known = useRef(new Set<string>());
   useEffect(() => {
     const url = `${location.origin}/play?code=${s.code}`;
     setJoinUrl(url);
     QRCode.toDataURL(url, { margin: 1, width: 360, color: { dark: "#0A0612", light: "#F5F1FF" } }).then(setQr);
-    setShelf(loadShelf());
+    if (!host.readOnly) setShelf(loadShelf());
   }, [s.code]);
   useEffect(() => {
     s.players.forEach((p) => {
@@ -200,14 +216,40 @@ function Lobby({ host, s }: { host: GameHost; s: GameState }) {
         <p className="font-ui uppercase tracking-[0.2em] text-sm text-ink-soft">Room code</p>
         <p className="font-display text-7xl tracking-[0.2em]">{s.code}</p>
         <div className="gilt-rule w-full" />
-        <label className="font-heading self-start uppercase" htmlFor="party">Group name</label>
-        <input
-          id="party"
-          className="input"
-          placeholder="The Cousins, Floor 3, The Night Owls…"
-          value={s.partyName}
-          onChange={(e) => host.setPartyName(e.target.value)}
-        />
+        {host.readOnly ? (
+          s.partyName && <p className="font-heading text-2xl">{s.partyName}</p>
+        ) : (
+          <>
+            <label className="font-heading self-start uppercase" htmlFor="party">Group name</label>
+            <input
+              id="party"
+              className="input"
+              placeholder="The Cousins, Floor 3, The Night Owls…"
+              value={s.partyName}
+              onChange={(e) => host.setPartyName(e.target.value)}
+            />
+            <button className="btn btn-ghost !py-1 text-base self-start" onClick={() => setOnline((o) => !o)} aria-expanded={online}>
+              {online ? "▾" : "▸"} Online friends?
+            </button>
+            {online && (
+              <div className="w-full text-left flex flex-col gap-2 font-ui text-sm text-ink-soft fade-in">
+                <p>Friends somewhere else join on their phone and open the big screen on their laptop:</p>
+                <p className="break-all text-ink">{watchUrl}</p>
+                <button
+                  className="btn btn-gilt !py-1 text-base self-start"
+                  onClick={() => {
+                    navigator.clipboard?.writeText(invite).then(() => setCopied(true), () => {});
+                    setTimeout(() => setCopied(false), 2000);
+                  }}
+                >
+                  {copied ? "Copied ✓" : "Copy invite"}
+                </button>
+                <p className="italic">“{invite}”</p>
+                <p>Or just share this screen on FaceTime.</p>
+              </div>
+            )}
+          </>
+        )}
         {host.transportKind === "local" && (
           <p className="font-ui text-xs text-crimson">Local mode: phones on other devices can’t connect until Supabase keys are set.</p>
         )}
@@ -241,6 +283,7 @@ function Lobby({ host, s }: { host: GameHost; s: GameState }) {
             {s.questOptions.map((q) => (
               <button
                 key={q.id}
+                disabled={host.readOnly}
                 onClick={() => {
                   sfx.unlock();
                   sfx.pageTurn();
@@ -256,11 +299,13 @@ function Lobby({ host, s }: { host: GameHost; s: GameState }) {
         </section>
 
         <div className="flex items-center gap-4">
-          <button className="btn btn-crimson text-2xl" disabled={!host.canBegin()} onClick={() => host.begin()}>
-            Start the story
-          </button>
+          {!host.readOnly && (
+            <button className="btn btn-crimson text-2xl" disabled={!host.canBegin()} onClick={() => host.begin()}>
+              Start the story
+            </button>
+          )}
           <span className="font-ui text-parchment/70">
-            {!s.questId ? "Pick a story." : ready === 0 ? "Waiting for at least one character." : s.players.some((p) => p.status === "building") ? "Finishing characters…" : "Ready when you are."}
+            {host.readOnly ? (s.questId ? "Story picked. The table starts it when everyone’s ready." : "The table is picking a story.") : !s.questId ? "Pick a story." : ready === 0 ? "Waiting for at least one character." : s.players.some((p) => p.status === "building") ? "Finishing characters…" : "Ready when you are."}
           </span>
         </div>
 
@@ -285,7 +330,7 @@ function Lobby({ host, s }: { host: GameHost; s: GameState }) {
 }
 
 // ---------- round screens ----------
-function PlanCards({ host, s }: { host: GameHost; s: GameState }) {
+function PlanCards({ host, s }: { host: Stage; s: GameState }) {
   const boosts: Record<string, number> = {};
   Object.values(s.boosts).forEach((id) => (boosts[id] = (boosts[id] ?? 0) + 1));
   return (
@@ -314,7 +359,7 @@ function PlanCards({ host, s }: { host: GameHost; s: GameState }) {
   );
 }
 
-function PartyDice({ host, s }: { host: GameHost; s: GameState }) {
+function PartyDice({ host, s }: { host: Stage; s: GameState }) {
   const [settled, setSettled] = useState<Record<string, boolean>>({});
   const prev = useRef<string[]>([]);
   useEffect(() => {
@@ -366,7 +411,7 @@ function PartyDice({ host, s }: { host: GameHost; s: GameState }) {
   );
 }
 
-function BeatCards({ host, s }: { host: GameHost; s: GameState }) {
+function BeatCards({ host, s }: { host: Stage; s: GameState }) {
   const round = s.round!;
   const i = s.beatIndex;
   const beat = round.beats[i];
@@ -404,7 +449,7 @@ function BeatCards({ host, s }: { host: GameHost; s: GameState }) {
   );
 }
 
-function RoundStage({ host, s }: { host: GameHost; s: GameState }) {
+function RoundStage({ host, s }: { host: Stage; s: GameState }) {
   const scene = s.scenes[s.sceneIndex];
   const victim = s.rescue ? s.players.find((p) => p.id === s.rescue!.victimId) : undefined;
   const [flash, setFlash] = useState<{ kind: "legendary" | "catastrophe" | null; n: number }>({ kind: null, n: 0 });
@@ -525,7 +570,7 @@ function useFastNow(active: boolean) {
 }
 
 /** The Final Roll, all together: arm, one shared "3, 2, 1, SHAKE!", every die in the air, one drumroll, one landing. */
-function FinalRollView({ host, s }: { host: GameHost; s: GameState }) {
+function FinalRollView({ host, s }: { host: Stage; s: GameState }) {
   const f = s.final;
   const heroes = s.players.filter((p) => p.hero);
   const result = s.phase === "final_result";
@@ -630,7 +675,7 @@ function MirrorTitle({ sub }: { sub: string }) {
   );
 }
 
-function MirrorWait({ host, s }: { host: GameHost; s: GameState }) {
+function MirrorWait({ host, s }: { host: Stage; s: GameState }) {
   const write = s.phase === "mirror_write";
   useEffect(() => {
     sfx.whoosh();
@@ -660,7 +705,7 @@ function MirrorWait({ host, s }: { host: GameHost; s: GameState }) {
   );
 }
 
-function MirrorRevealCard({ host, s }: { host: GameHost; s: GameState }) {
+function MirrorRevealCard({ host, s }: { host: Stage; s: GameState }) {
   const card = s.mirror[s.mirrorIndex];
   const [shown, setShown] = useState(false);
   useEffect(() => {
@@ -732,7 +777,7 @@ function Epilogue({ s }: { s: GameState }) {
   );
 }
 
-function Reveal({ host }: { host: GameHost }) {
+function Reveal({ host }: { host: Stage }) {
   const rs = host.realStory;
   const seed = host.questSeed;
   const [qr, setQr] = useState("");
@@ -787,7 +832,7 @@ function Reveal({ host }: { host: GameHost }) {
   );
 }
 
-function StorybookView({ host, s }: { host: GameHost; s: GameState }) {
+function StorybookView({ host, s }: { host: Stage; s: GameState }) {
   const [page, setPage] = useState(0);
   const book = s.storybook;
   if (!book || s.busy) {
@@ -854,10 +899,10 @@ function StorybookView({ host, s }: { host: GameHost; s: GameState }) {
                 );
               })}
             </div>
-            {host.thankYous().length > 0 && (
+            {thankYouLines(s).length > 0 && (
               <div className="flex flex-col gap-1">
                 <p className="font-ui uppercase tracking-widest text-sm text-[var(--crimson)]">Thank-yous</p>
-                {host.thankYous().map((t, i) => (
+                {thankYouLines(s).map((t, i) => (
                   <p key={i} className="text-lg">❤️ {t}.</p>
                 ))}
               </div>
@@ -880,9 +925,11 @@ function StorybookView({ host, s }: { host: GameHost; s: GameState }) {
             <p className="italic text-2xl">{book.moral}</p>
             {book.real_story_bridge && <p className="text-xl max-w-3xl">{book.real_story_bridge}</p>}
             <p className="font-ui text-ink-soft">Saved to {s.partyName || "your group"}’s shelf. Next chapter, same crew, whenever you’re ready.</p>
-            <button className="btn btn-crimson text-xl" onClick={() => host.nextTale()}>
-              Next chapter
-            </button>
+            {!host.readOnly && (
+              <button className="btn btn-crimson text-xl" onClick={() => host.nextTale()}>
+                Next chapter
+              </button>
+            )}
             <p className="font-ui text-sm text-ink-soft">One more page: how the AI made this story ▸</p>
           </div>
         )}
@@ -897,7 +944,7 @@ function StorybookView({ host, s }: { host: GameHost; s: GameState }) {
   );
 }
 
-function QuestIntro({ host, s }: { host: GameHost; s: GameState }) {
+function QuestIntro({ host, s }: { host: Stage; s: GameState }) {
   return (
     <div className="flex-1 min-h-0 flex flex-col gap-4 px-8 pb-4">
       <div className="flex-1 min-h-0 grid grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] gap-6 items-center">
@@ -977,21 +1024,24 @@ function ThankHearts({ s }: { s: GameState }) {
 }
 
 // ---------- root ----------
-export function TV({ host }: { host: GameHost }) {
+/** The big screen. `embedded` (split view on a laptop) leaves the page's font size alone. */
+export function TV({ host, embedded = false }: { host: Stage; embedded?: boolean }) {
   const s = useHost(host);
   const [notesOpen, setNotesOpen] = useState(false);
   const [reactions, setReactions] = useState<{ id: number; emoji: string; color?: string }[]>([]);
   // 10-foot UI: scale every rem with the screen width so text stays readable from across a room.
   useEffect(() => {
+    if (embedded) return;
     const root = document.documentElement;
     const prev = root.style.fontSize;
     root.style.fontSize = "clamp(16px, 1.3vw, 30px)";
     return () => {
       root.style.fontSize = prev;
     };
-  }, []);
+  }, [embedded]);
   // Spacebar / clicker = Continue on reading screens.
   useEffect(() => {
+    if (host.readOnly) return;
     const onKey = (e: KeyboardEvent) => {
       const typing = e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement;
       if ((e.key === "n" || e.key === "N") && !typing && !e.ctrlKey && !e.metaKey && !e.altKey) {
@@ -1008,7 +1058,7 @@ export function TV({ host }: { host: GameHost }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [host]);
   // The game lives in this tab: warn before an accidental refresh or close wipes it mid-story.
-  const midGame = s.phase !== "lobby" && s.phase !== "storybook";
+  const midGame = s.phase !== "lobby" && s.phase !== "storybook" && !host.readOnly;
   useEffect(() => {
     if (!midGame) return;
     const warn = (e: BeforeUnloadEvent) => {
@@ -1067,7 +1117,7 @@ export function TV({ host }: { host: GameHost }) {
       <Footer />
       <Reactions items={reactions} />
       <ThankHearts s={s} />
-      <DMNotesPanel s={s} open={notesOpen} onClose={() => setNotesOpen(false)} />
+      {!host.readOnly && <DMNotesPanel s={s} open={notesOpen} onClose={() => setNotesOpen(false)} />}
     </div>
   );
 }
