@@ -16,7 +16,7 @@
 - Skip both and it falls back to the old one-line concept. Muse Spark builds the card (name and look still invented) and Muse Image paints a cartoon portrait (never a realistic person).
 
 ## Quests
-- 5 seeds in `game/src/data/seed_quests.json` plus up to 10 cached news quests (`/api/news?rating=…`, SerpApi Google News, RSS backup; fetched and filtered once, filtered by rating after the cache). Each quest carries a `rating`. Local-first news (Austin, then wider) is planned, not confirmed.
+- 5 seeds in `game/src/data/seed_quests.json` plus up to 10 cached news quests (`/api/news?rating=…`, SerpApi Google News, RSS backup; fetched and filtered once, filtered by rating after the cache). Each quest carries a `rating`. Local-first news: Austin (env `NEWS_CITY`, default "Austin, Texas"), then Texas, then national; 2 SerpApi searches per cached 4 h run plus free RSS (KXAN, Google News RSS). Built, not yet run against live SerpApi/Muse.
 - **Best-fit pick:** the host can tap "Pick the best story for us". Muse gets 5-10 allowed candidates plus the party's real answers and returns `QuestPick`: one candidate id, a one-line why, and **one spotlight per hero** (a scene where their real skill can matter; an opening, never a requirement). The host can still pick by hand, or preselect by link: `/tv?party=<name>&quest=<id>`.
 
 ## Round: Around the Table (everyone acts, no voting)
