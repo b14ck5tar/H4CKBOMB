@@ -20,6 +20,7 @@ import {
   isFailure,
   readMs,
 } from "./rules";
+import { loadSnapshot, saveSnapshot } from "./snapshot";
 import { openRoom, type Msg, type Transport } from "./transport";
 import { DEFAULT_RATING } from "./rating";
 import type {
@@ -58,6 +59,9 @@ const READING = new Set(["quest", "narrating", "outcome", "mirror_reveal", "epil
 const MIRROR_WRITE_MS = 40_000;
 const MIRROR_GUESS_MS = 20_000;
 const MIRROR_PHASES = ["mirror_write", "mirror_guess", "mirror_reveal"];
+const ENDING_PHASES = ["final_result", ...MIRROR_PHASES, "epilogue", "reveal", "storybook"];
+const FINAL_PITCH_MS = 30_000;
+const PERSIST_MS = 500;
 const BAND_RANK: Record<Band, number> = { LEGENDARY: 0, SUCCESS: 1, YES_BUT: 2, FAIL: 3, CATASTROPHE: 4 };
 const UNKIND = /\b(stupid|dumb|idiot|moron|ugly|fat|hate|hated|sucks?|sucked|loser|worst|annoying|useless|lame|trash|garbage|pathetic|shut up|creep|weirdo|fuck\w*|shit\w*|bitch\w*|ass|asshole|crap)\b/i;
 
@@ -105,6 +109,26 @@ export function loadShelf(): ShelfBook[] {
   }
 }
 
+/** What a refreshed host tab needs to pick the game back up (see persistNow / restore / resume). */
+interface HostSnapshot {
+  state: GameState;
+  seed?: QuestSeed;
+  canon: string[];
+  ledger: string[];
+  recaps: string[];
+  recentLines: string[];
+  threatMood: string;
+  finalDice: Record<string, number>;
+  caughtThisRound: boolean;
+  reactionCounts: Record<string, number>;
+  mirrorDrafts: Record<string, string>;
+  mirrorDone: Record<string, string>;
+  endingDone: { epilogue?: string; storybook?: Storybook };
+  sceneImages: Record<number, string>; // static paths only; generated art is a big data URL and isn't kept
+  thumbs?: Record<string, string>; // optional: dropped first if storage is full
+  sceneThumbs?: Record<number, string>;
+}
+
 const FALLBACK_BEAT: Record<Band, string[]> = {
   CATASTROPHE: ["{name}, it goes wrong fast and in an order nobody predicted. You end up stuck somewhere you really shouldn't be."],
   FAIL: ["{name}, you try it. The world declines, politely, and makes it a little worse."],
@@ -150,6 +174,18 @@ export class GameHost {
   private lastChat: Record<string, number> = {};
   private chatId = 0;
   private lastArtBlast = 0;
+  // Persistence: what the mirror and ending calls already produced, so a refresh doesn't ask twice.
+  private mirrorDrafts: Record<string, string> = {}; // guardian id -> what they wrote ("" = the DM writes it)
+  private mirrorDone: Record<string, string> = {}; // guardian id -> polished sentence
+  private endingDone: { epilogue?: string; storybook?: Storybook } = {};
+  private persistT: ReturnType<typeof setTimeout> | null = null;
+  private resumeT: ReturnType<typeof setTimeout> | null = null;
+  private closed = false;
+  private onHide = (e: Event) => {
+    if (e.type === "pagehide" || document.visibilityState === "hidden") this.persistNow();
+  };
+  /** True when this host picked up a saved game for its room code (the tab was refreshed). */
+  restored = false;
 
   constructor(code: string, opts: { screen?: GameState["screen"] } = {}) {
     this.state = {
@@ -200,8 +236,218 @@ export class GameHost {
       sideQuest: null,
       busy: "",
     };
+    const snap = loadSnapshot<HostSnapshot>(code);
+    if (snap) {
+      try {
+        this.restore(snap);
+      } catch (e) {
+        console.error("[host] couldn't restore the saved game; starting fresh", e);
+      }
+    }
     this.t = openRoom(code);
     this.t.on((m) => this.handle(m));
+    if (typeof window !== "undefined") {
+      // A refresh, or a phone backgrounding the tab: save right now instead of waiting for the throttle.
+      window.addEventListener("pagehide", this.onHide);
+      document.addEventListener("visibilitychange", this.onHide);
+    }
+    // Timers and AI calls restart on the next tick, so React strict mode's mount/unmount/mount
+    // (which closes the first host straight away) never fires them twice.
+    if (this.restored) this.resumeT = setTimeout(() => this.resume(), 0);
+  }
+
+  // ---------- refresh-proof: save and resume ----------
+  private persistSoon() {
+    if (this.closed || this.persistT) return;
+    this.persistT = setTimeout(() => this.persistNow(), PERSIST_MS);
+  }
+
+  private persistNow() {
+    if (this.persistT) clearTimeout(this.persistT);
+    this.persistT = null;
+    if (this.closed) return;
+    const core: HostSnapshot = {
+      state: this.state,
+      seed: this.seed,
+      canon: this.canon,
+      ledger: this.ledger,
+      recaps: this.recaps,
+      recentLines: this.recentLines,
+      threatMood: this.threatMood,
+      finalDice: this.finalDice,
+      caughtThisRound: this.caughtThisRound,
+      reactionCounts: this.reactionCounts,
+      mirrorDrafts: this.mirrorDrafts,
+      mirrorDone: this.mirrorDone,
+      endingDone: this.endingDone,
+      sceneImages: Object.fromEntries(Object.entries(this.sceneImages).filter(([, u]) => !u.startsWith("data:"))),
+    };
+    // Small copies of the art go along if they fit (portraits are worth more than scene art).
+    saveSnapshot(this.state.code, core, { thumbs: this.thumbs, sceneThumbs: this.sceneThumbs });
+  }
+
+  /** Load a saved game. Only data here: timers and AI calls restart in resume(). */
+  private restore(snap: HostSnapshot) {
+    const thumbs = snap.thumbs ?? {};
+    const sceneThumbs = snap.sceneThumbs ?? {};
+    const st = snap.state;
+    const pre = (questImages as Record<string, string[]>)[st.questId] ?? [];
+    const sceneImages: Record<number, string> = {};
+    st.scenes.forEach((_, i) => {
+      const url = snap.sceneImages?.[i] ?? pre[i] ?? sceneThumbs[i];
+      if (url) sceneImages[i] = url;
+    });
+    const state: GameState = {
+      ...this.state,
+      ...st,
+      code: this.state.code,
+      screen: this.state.screen,
+      deadline: 0,
+      players: st.players.map((p) => ({ ...p, hasPortrait: !!p.hero && !!thumbs[p.id] })),
+      scenes: st.scenes.map((sc, i) => ({ ...sc, hasImage: !!sceneImages[i] })),
+    };
+    // Everything is computed above, so a bad snapshot throws before anything is half-assigned.
+    this.state = state;
+    this.seed = snap.seed ?? SEEDS.find((s) => s.id === st.questId);
+    this.canon = snap.canon ?? [];
+    this.ledger = snap.ledger ?? [];
+    this.recaps = snap.recaps ?? [];
+    this.recentLines = snap.recentLines ?? [];
+    this.threatMood = snap.threatMood ?? "";
+    this.finalDice = snap.finalDice ?? {};
+    this.caughtThisRound = !!snap.caughtThisRound;
+    this.reactionCounts = snap.reactionCounts ?? {};
+    this.mirrorDrafts = snap.mirrorDrafts ?? {};
+    this.mirrorDone = snap.mirrorDone ?? {};
+    this.endingDone = snap.endingDone ?? {};
+    this.thumbs = thumbs;
+    this.portraits = { ...thumbs }; // the full-size portraits weren't kept; the small copies stand in
+    this.sceneThumbs = sceneThumbs;
+    this.sceneImages = sceneImages;
+    this.chatId = Math.max(0, ...state.chat.map((c) => c.id));
+    this.restored = true;
+  }
+
+  /** Quietly set the phase (no broadcast), so an existing method whose guard expects that phase can re-enter it. */
+  private rewind(phase: GameState["phase"]) {
+    this.state = { ...this.state, phase };
+  }
+
+  /**
+   * Re-enter the saved phase. Promises and timers didn't survive the refresh, so: reading screens restart
+   * their timer, timed input phases restart theirs at full length, and anything that was waiting on the DM
+   * asks again (each call already falls back to canned text if Muse is slow or down).
+   */
+  private resume() {
+    this.resumeT = null;
+    if (this.closed) return;
+    const s = this.state;
+    // Art that didn't survive (or was still being painted) gets painted again.
+    this.heroes().forEach((p) => p.status !== "building" && !this.thumbs[p.id] && this.paintPortrait(p.id, p.hero!));
+    s.scenes.forEach((_, i) => !this.sceneImages[i] && this.paintScene(i));
+    if (ENDING_PHASES.includes(s.phase)) {
+      if (s.epilogue) this.endingDone.epilogue = s.epilogue;
+      if (s.storybook) this.endingDone.storybook = s.storybook;
+      this.requestEnding();
+    }
+    switch (s.phase) {
+      case "lobby":
+        // A hero card that was being written: write it again.
+        s.players.forEach((p) => {
+          if (p.status !== "building") return;
+          this.patchPlayer(p.id, { status: "joined" });
+          if (p.concept) this.buildCharacter(p.id, p.concept);
+        });
+        break;
+      case "quest":
+        this.reading(this.seed?.fairytale_premise ?? s.narration, () => this.openScene(0), 9000);
+        break;
+      case "narrating":
+        if (s.busy || !s.narration) return void this.openScene(s.sceneIndex);
+        this.reading(`${s.narration} ${s.npcLine?.line ?? ""}`, () => this.startPitch(this.isFinal()));
+        break;
+      case "pitch":
+        if (!this.isFinal()) s.pitches.forEach((p) => (p.verdict ? this.verdicts.set(p.id, Promise.resolve(p.verdict)) : this.fireVerdict(p)));
+        if (s.busy) return void this.endPitch();
+        this.setTimer(this.isFinal() ? FINAL_PITCH_MS : PITCH_MS, () => this.endPitch());
+        break;
+      case "appeal":
+        // Arguments the DM hadn't answered yet get asked again.
+        s.pitches.forEach((p) => p.appeal && !p.appealed && this.onAppeal(p.playerId, p.appeal));
+        if (s.busy) return void this.endAppeal();
+        this.setTimer(APPEAL_MS, () => this.endAppeal());
+        break;
+      case "roll":
+        this.roundP = this.fetchRound(s.rolls);
+        if (s.revealed.length >= s.rolls.length) return void this.afterRoll();
+        this.setTimer(ROLL_MS, () => this.revealAll());
+        break;
+      case "catch":
+        this.roundP = this.fetchRound(s.rolls);
+        this.setTimer(CATCH_MS, () => this.resolveRound());
+        break;
+      case "outcome":
+        if (s.busy || !s.round) {
+          // The DM hadn't written the round up yet (and its results weren't applied): ask again.
+          this.roundP = this.fetchRound(s.rolls);
+          this.rewind("roll");
+          return void this.resolveRound();
+        }
+        this.stepBeat(s.beatIndex);
+        break;
+      case "final_roll": {
+        const n = Object.keys(this.finalDice).length;
+        if (!n) return void this.startFinalRoll();
+        if ((s.final?.rolled.length ?? 0) >= n) return void this.finish(false);
+        this.setTimer(FINAL_ROLL_MS, () => this.finish(false));
+        break;
+      }
+      case "final_result":
+        this.setTimer(4500, () => this.afterFinal());
+        break;
+      case "mirror_write":
+        this.rebuildMirror();
+        this.setTimer(MIRROR_WRITE_MS, () => this.endMirrorWrite());
+        break;
+      case "mirror_guess":
+        this.rebuildMirror();
+        this.setTimer(MIRROR_GUESS_MS, () => this.startMirrorReveal());
+        break;
+      case "mirror_reveal":
+        if (s.busy || s.mirror.some((c) => !c.sentence)) {
+          this.rebuildMirror();
+          this.rewind("mirror_guess");
+          return void this.startMirrorReveal();
+        }
+        this.stepMirror(s.mirrorIndex);
+        break;
+      case "epilogue":
+        if (s.busy || !s.epilogue) return void this.startEpilogue();
+        this.reading(s.epilogue, () => this.startReveal(), 10000);
+        break;
+      case "reveal":
+        this.startReveal();
+        break;
+      case "storybook":
+        if (s.busy || !s.storybook) this.showStorybook();
+        break;
+    }
+    this.broadcastSoon();
+  }
+
+  /** Mirror sentences: finished ones come back as-is, the rest go through the kindness pass again. */
+  private rebuildMirror() {
+    Object.entries(this.mirrorDrafts).forEach(([g, draft]) => {
+      const done = this.mirrorDone[g];
+      if (done != null) this.mirrorP.set(g, Promise.resolve(done));
+      else this.polish(g, draft);
+    });
+  }
+
+  private resetMirror() {
+    this.mirrorP.clear();
+    this.mirrorDrafts = {};
+    this.mirrorDone = {};
   }
 
   get transportKind() {
@@ -227,6 +473,7 @@ export class GameHost {
     this.state = { ...this.state, ...patch };
     this.subs.forEach((f) => f());
     this.broadcastSoon();
+    this.persistSoon();
   }
 
   private patchPlayer(pid: string, patch: Partial<Player>) {
@@ -250,6 +497,7 @@ export class GameHost {
   }
 
   private broadcastNow() {
+    if (this.closed) return;
     const deadline = this.deadlineAt ? Math.max(0, this.deadlineAt - Date.now()) : 0;
     this.t.send({ type: "state", state: { ...this.state, deadline } });
   }
@@ -287,7 +535,8 @@ export class GameHost {
    * The host's tab came back (phone unlocked, app switched back). Mobile browsers freeze timers while hidden,
    * so run anything that came due in the meantime, then bring every phone up to date.
    */
-  resume() {
+  wake() {
+    if (this.closed) return;
     if (this.pending && this.deadlineAt && Date.now() >= this.deadlineAt) this.skip();
     this.broadcastNow();
   }
@@ -404,16 +653,19 @@ export class GameHost {
     this.set({ chat: [...this.state.chat.slice(-39), { id: ++this.chatId, pid, text }] });
   }
 
-  /** No-TV mode: shrink a scene to phone size (pre-painted paths pass through) and send it to every phone. */
+  /**
+   * Shrink a scene to phone size (pre-painted paths pass through). No-TV mode sends it to every phone;
+   * either way the small copy is what survives a refresh of the host tab.
+   */
   private async shareScene(i: number, url: string) {
-    if (this.state.screen !== "phones") return;
     const questId = this.state.questId;
     let small = url.startsWith("data:") ? await thumbnail(url, 560, 0.7) : url;
     // Supabase broadcasts cap at 256 KB; busy art can get close, so shrink harder rather than lose it.
     if (small.length > 200_000) small = await thumbnail(url, 420, 0.5);
     if (!small || this.state.questId !== questId) return;
     this.sceneThumbs[i] = small;
-    this.t.send({ type: "scene", questId, i, url: small });
+    this.persistSoon();
+    if (this.state.screen === "phones") this.t.send({ type: "scene", questId, i, url: small });
   }
 
   // ---------- lobby ----------
@@ -434,6 +686,10 @@ export class GameHost {
     }).catch(() => ({ data: undefined as unknown as Hero }));
     if (!hero) return this.patchPlayer(pid, { status: "joined" });
     this.patchPlayer(pid, { status: "ready", hero, abilityAvailable: true, heart: 1 });
+    await this.paintPortrait(pid, hero);
+  }
+
+  private async paintPortrait(pid: string, hero: Hero) {
     const url = await image({ kind: "portrait", visual: hero.visual, flaw: hero.flaw, ability: hero.ability?.text });
     if (!url || this.player(pid)?.hero !== hero) return;
     this.portraits[pid] = url;
@@ -470,28 +726,31 @@ export class GameHost {
       },
       scenes,
     });
-    const pre = (questImages as Record<string, string[]>)[id];
-    scenes.forEach((s, i) => {
-      if (pre?.[i]) {
-        // Pre-painted for the demo quests: instant and free.
-        this.sceneImages[i] = pre[i];
-        this.set({ scenes: this.state.scenes.map((sc, j) => (j === i ? { ...sc, hasImage: true } : sc)) });
-        this.shareScene(i, pre[i]);
-        return;
-      }
-      image({
-        kind: "scene",
-        location: s.location,
-        description: s.description,
-        realm: seed.realm_name,
-        threat: s.kind === "climax" ? seed.the_threat.description : "",
-        quality: "best",
-      }).then((url) => {
-        if (!url || this.state.questId !== id) return;
-        this.sceneImages[i] = url;
-        this.set({ scenes: this.state.scenes.map((sc, j) => (j === i ? { ...sc, hasImage: true } : sc)) });
-        this.shareScene(i, url);
-      });
+    scenes.forEach((_, i) => this.paintScene(i));
+  }
+
+  private paintScene(i: number) {
+    const seed = this.seed;
+    const id = this.state.questId;
+    const s = this.state.scenes[i];
+    if (!seed || !s) return;
+    const pre = (questImages as Record<string, string[]>)[id]?.[i];
+    const done = (url: string) => {
+      this.sceneImages[i] = url;
+      this.set({ scenes: this.state.scenes.map((sc, j) => (j === i ? { ...sc, hasImage: true } : sc)) });
+      this.shareScene(i, url);
+    };
+    // Pre-painted for the demo quests: instant and free.
+    if (pre) return done(pre);
+    image({
+      kind: "scene",
+      location: s.location,
+      description: s.description,
+      realm: seed.realm_name,
+      threat: s.kind === "climax" ? seed.the_threat.description : "",
+      quality: "best",
+    }).then((url) => {
+      if (url && this.state.questId === id) done(url);
     });
   }
 
@@ -508,7 +767,7 @@ export class GameHost {
     this.recentLines = [];
     this.threatMood = this.seed!.the_threat.description.split(".")[0];
     this.reactionCounts = {};
-    this.mirrorP.clear();
+    this.resetMirror();
     this.set({
       players,
       wards: this.assignWards(players.map((p) => p.id)),
@@ -668,7 +927,7 @@ export class GameHost {
     this.appeals.clear();
     this.caughtThisRound = false;
     this.set({ phase: "pitch", pitches: [], boosts: {}, rolls: [], revealed: [], round: null, beatIndex: 0, ready: [] });
-    this.setTimer(final ? 30_000 : PITCH_MS, () => this.endPitch());
+    this.setTimer(final ? FINAL_PITCH_MS : PITCH_MS, () => this.endPitch());
   }
 
   private onPitch(pid: string, text: string, useAbility: boolean, embraceFlaw: boolean) {
@@ -1108,7 +1367,20 @@ export class GameHost {
     };
     const players = this.state.players.map((p) => ({ ...p, peril: "" }));
     this.set({ phase: "final_result", final, players, ready: [] });
+    this.endingDone = {};
+    this.requestEnding();
+    this.setTimer(grim ? 2500 : 4500, () => this.afterFinal());
+  }
 
+  private afterFinal() {
+    return Object.keys(this.state.wards).length ? this.startMirror() : this.startEpilogue();
+  }
+
+  /** Ask for the epilogue and the storybook (whichever isn't already written) from the final result in state. */
+  private requestEnding() {
+    const final = this.state.final;
+    if (!final) return;
+    const { dice, best, total } = final;
     const heroes = this.heroes().map((p) => ({ id: p.id, name: p.hero!.name }));
     const st = this.dmState();
     const name = (id: string) => this.player(id)?.hero?.name ?? "";
@@ -1120,11 +1392,25 @@ export class GameHost {
       ending: final.ending,
       final_moves: Object.fromEntries(Object.entries(this.state.finalMoves).map(([k, v]) => [name(k), v])),
     };
-    this.epilogueP = withTimeout(
-      ai<string>("epilogue", { state: st, final: finalInfo, log: this.state.log.map((l) => `${l.hero}: ${l.pitch} (${l.band})`) }).then((r) => r.data),
-      20_000,
-      () => "The dice land and, somehow, it holds. Everyone goes home with a story nobody will believe. And that's the version they'll never print.",
-    );
+    const done = this.endingDone;
+    const epilogueP: Promise<string> =
+      done.epilogue != null
+        ? Promise.resolve(done.epilogue)
+        : withTimeout(
+            ai<string>("epilogue", { state: st, final: finalInfo, log: this.state.log.map((l) => `${l.hero}: ${l.pitch} (${l.band})`) }).then((r) => r.data),
+            20_000,
+            () => "The dice land and, somehow, it holds. Everyone goes home with a story nobody will believe. And that's the version they'll never print.",
+          );
+    this.epilogueP = epilogueP;
+    epilogueP.then((text) => {
+      if (this.epilogueP !== epilogueP) return;
+      this.endingDone.epilogue = text;
+      this.persistSoon();
+    });
+    if (done.storybook) {
+      this.storybookP = Promise.resolve(done.storybook);
+      return;
+    }
     const crowd = Object.entries(this.reactionCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "";
     const images = this.state.scenes.map((_, i) => `scene_${i + 1}`);
     const bookFallback = (): Storybook => ({
@@ -1137,7 +1423,7 @@ export class GameHost {
       moral: "Go together or don't go.",
       real_story_bridge: "",
     });
-    this.storybookP = withTimeout(
+    const storybookP = withTimeout(
       ai<Storybook>("storybook", {
         state: st,
         title: this.state.quest?.title,
@@ -1152,7 +1438,12 @@ export class GameHost {
       30_000,
       bookFallback,
     );
-    this.setTimer(grim ? 2500 : 4500, () => (Object.keys(this.state.wards).length ? this.startMirror() : this.startEpilogue()));
+    this.storybookP = storybookP;
+    storybookP.then((book) => {
+      if (this.storybookP !== storybookP) return;
+      this.endingDone.storybook = book;
+      this.persistSoon();
+    });
   }
 
   // ---------- Mirror, Mirror ----------
@@ -1176,7 +1467,7 @@ export class GameHost {
 
   private startMirror() {
     this.clearTimer();
-    this.mirrorP.clear();
+    this.resetMirror();
     const wards = this.state.wards;
     const n = Object.keys(wards).length;
     // Reveal order follows the cycle, so each card's guardian is the hero on the card before it.
@@ -1212,6 +1503,13 @@ export class GameHost {
       () => kindFallback(h, moments, draft),
     );
     this.mirrorP.set(guardianId, p);
+    this.mirrorDrafts[guardianId] = draft;
+    p.then((sentence) => {
+      if (this.mirrorP.get(guardianId) !== p) return;
+      this.mirrorDone[guardianId] = sentence;
+      this.persistSoon();
+    });
+    this.persistSoon();
   }
 
   private onMirrorWrite(pid: string, text: string) {
@@ -1390,11 +1688,24 @@ export class GameHost {
       busy: "",
       ready: [],
     });
-    this.mirrorP.clear();
+    this.resetMirror();
   }
 
+  /**
+   * Stops this host. The saved game is deliberately kept: React strict mode closes the first host right
+   * after creating it, and a refresh must still find the game. Anything this host still had in flight
+   * can no longer save or broadcast, so it can't overwrite the next host's game.
+   */
   close() {
     this.clearTimer();
+    this.closed = true;
+    if (this.persistT) clearTimeout(this.persistT);
+    if (this.resumeT) clearTimeout(this.resumeT);
+    this.persistT = this.resumeT = null;
+    if (typeof window !== "undefined") {
+      window.removeEventListener("pagehide", this.onHide);
+      document.removeEventListener("visibilitychange", this.onHide);
+    }
     this.t.close();
   }
 }

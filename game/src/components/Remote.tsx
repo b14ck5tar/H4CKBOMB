@@ -169,7 +169,7 @@ export function HostBar({ host }: { host: GameHost }) {
     grab();
     const onVis = () => {
       if (document.visibilityState !== "visible") return;
-      host.resume(); // timers froze while hidden: catch up and re-sync every phone
+      host.wake(); // timers froze while hidden: catch up and re-sync every phone
       grab();
     };
     const onTouch = () => !lock && grab();
