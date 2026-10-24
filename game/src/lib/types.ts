@@ -131,6 +131,7 @@ export interface LogEntry {
   headline: string;
   narration: string;
   rescue: boolean;
+  flagged?: boolean; // the DM steered or flagged this plan: never quote it outside the game (keepsake, Hall)
 }
 
 export interface FinalRoll {

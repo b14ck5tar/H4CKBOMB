@@ -1370,6 +1370,7 @@ export class GameHost {
             headline: out.headline,
             narration: out.beats.find((b) => b.hero_id === r.playerId)?.text ?? "",
             rescue: !!rescue,
+            flagged: !!pitch?.verdict && pitch.verdict.moderation !== "ok",
           };
         }),
       ],
