@@ -137,6 +137,21 @@ export interface FinalRoll {
   hopeBonus: number;
   total: number;
   ending: Ending;
+  // All-together Final Roll: arm, shared "3, 2, 1, SHAKE!", then every die lands at once.
+  stage?: "arm" | "count" | "shake" | "tumble" | "landed";
+  armed?: string[]; // tapped "arm your die" (and granted motion on iOS)
+  shook?: string[]; // their die is in the air (shaken, tapped, or auto-rolled)
+  auto?: string[]; // didn't shake in time, so the table rolled for them
+}
+
+/** Someone got saved: a Catch! re-roll, or freed from peril by friends in a rescue round. */
+export interface Save {
+  id: string;
+  savedId: string;
+  byIds: string[]; // who saved them
+  kind: "catch" | "rescue";
+  scene: number;
+  thanked: boolean; // the saved player tapped "Thank <name>" (once per save)
 }
 
 export interface Storybook {
@@ -204,6 +219,7 @@ export interface GameState {
   rolls: RollResult[]; // in reveal order (lowest result first)
   revealed: string[]; // player ids whose die is shown
   catchers: string[];
+  saves: Save[]; // every save tonight, and whether the saved player said thanks
   round: RoundOutcome | null;
   beatIndex: number; // which beat card is showing; === beats.length shows the wrap
   // Reading screens

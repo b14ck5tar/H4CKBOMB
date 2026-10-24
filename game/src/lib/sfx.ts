@@ -557,6 +557,40 @@ const vSplash: Voice = (c, d, t) => {
   }
 };
 
+/** One countdown beat (3, 2, 1): a deep tom; `go` is the SHAKE hit, bigger and brighter. */
+function vCountBeat(go: boolean): Voice {
+  return (c, d, t) => {
+    tone(c, d, { t, f0: go ? 180 : 140, f1: go ? 60 : 70, glide: 0.25, dur: go ? 0.5 : 0.3, vol: go ? 1 : 0.8, attack: 0.003 });
+    noiseHit(c, d, { t, dur: go ? 0.35 : 0.1, vol: go ? 0.6 : 0.3, filter: go ? "highpass" : "lowpass", f0: go ? 3000 : 500, q: 0.7 });
+    if (go) tone(c, d, { t, f0: 880, f1: 1320, glide: 0.2, dur: 0.4, vol: 0.18, type: "triangle" });
+  };
+}
+
+/** Snare drumroll that swells for `ms`, then a crash: the whole table's dice landing as one. */
+function vDrumroll(ms: number): Voice {
+  return (c, d, t) => {
+    const total = Math.max(0.5, Math.min(ms / 1000, 5));
+    let el = 0;
+    let n = 0;
+    while (el < total && n < 160) {
+      const p = el / total;
+      noiseHit(c, d, { t: t + el, dur: 0.05, vol: 0.12 + 0.4 * p * p, filter: "bandpass", f0: 1800 + Math.random() * 600, q: 0.9 });
+      el += 0.055 - 0.025 * p;
+      n++;
+    }
+    const end = t + total;
+    vThud(c, d, end);
+    noiseHit(c, d, { t: end, dur: 1.2, vol: 0.5, filter: "highpass", f0: 4000, f1: 2500, q: 0.5 });
+  };
+}
+
+/** A small warm two-note chime for "thank you". */
+const vThanks: Voice = (c, d, t) => {
+  tone(c, d, { t, f0: 659, dur: 0.45, vol: 0.3, attack: 0.01 });
+  tone(c, d, { t: t + 0.14, f0: 988, dur: 0.6, vol: 0.28, attack: 0.01 });
+  tone(c, d, { t: t + 0.14, f0: 1976, dur: 0.3, vol: 0.05, type: "triangle", attack: 0.01 });
+};
+
 /* ------------------------------------------------------------------ */
 /* public API                                                          */
 /* ------------------------------------------------------------------ */
@@ -706,6 +740,15 @@ export const sfx = {
   },
   splash(): void {
     run(vSplash);
+  },
+  countBeat(go = false): void {
+    run(vCountBeat(go));
+  },
+  drumroll(ms: number = 2000): void {
+    run(vDrumroll(ms));
+  },
+  thanks(): void {
+    run(vThanks);
   },
   play(name: string): void {
     play(name);
