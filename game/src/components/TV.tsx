@@ -635,7 +635,9 @@ function FinalRollView({ host, s }: { host: Stage; s: GameState }) {
           const inAir = (stage === "shake" || stage === "tumble") && shook.includes(p.id);
           const sub =
             stage === "arm"
-              ? f?.armed?.includes(p.id)
+              ? p.away
+                ? "on autopilot"
+                : f?.armed?.includes(p.id)
                 ? "armed ✓"
                 : "tap to arm…"
               : stage === "shake"
@@ -916,7 +918,7 @@ function StorybookView({ host, s }: { host: Stage; s: GameState }) {
                       )}
                       {p.truth && (
                         <p className="text-lg leading-snug mt-1">
-                          <b className="font-ui text-sm uppercase tracking-widest text-[var(--signal)]">Fun fact, really true:</b> {p.name} says “{p.truth}”
+                          <b className="font-ui text-sm uppercase tracking-widest text-[var(--signal)]">Fun fact, really true:</b> {p.name} says “{mask(p.truth)}”
                         </p>
                       )}
                     </div>

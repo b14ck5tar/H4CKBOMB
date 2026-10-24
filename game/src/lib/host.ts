@@ -230,6 +230,8 @@ export class GameHost {
   private notesStart = Date.now();
   private mirrorFate = new Map<string, "kept" | "rewritten" | "dm">(); // guardian id -> what the kindness pass did
   private finalSafety: ReturnType<typeof setTimeout> | null = null;
+  private truths: Record<string, string> = {}; // "one true thing" texts, kept off the wire until the storybook
+  private skipping = false; // a presenter skip (Continue / S) isn't a player letting time run out
   // Online mode: /watch pages ask for state + media. Only then do we spend bandwidth on reactions and scene copies.
   private watched = false;
   private sceneCopies = new Map<string, Promise<string>>(); // `${questId}:${index}` -> image small enough for a realtime message
@@ -385,7 +387,12 @@ export class GameHost {
     const f = this.pending;
     if (!f) return;
     this.clearTimer();
-    f();
+    this.skipping = true;
+    try {
+      f();
+    } finally {
+      this.skipping = false;
+    }
     this.broadcastSoon();
   }
 
@@ -469,6 +476,7 @@ export class GameHost {
 
   /** A phase ran out on these players. Two in a row and their hero goes on autopilot. */
   private timedOut(pids: string[]) {
+    if (this.skipping) return; // the presenter cut the timer short; nobody walked away
     pids.forEach((pid) => {
       const p = this.player(pid);
       if (!p?.hero || p.away) return;
@@ -834,7 +842,9 @@ export class GameHost {
     const p = this.player(pid);
     if (!p || this.state.phase !== "lobby") return;
     const truth = String(text ?? "").replace(/[<>]/g, "").trim().slice(0, 80);
-    this.patchPlayer(pid, { truth });
+    // Private until the storybook: state (which every phone, /watch and /notes receive) only says "answered".
+    this.truths[pid] = truth;
+    this.patchPlayer(pid, { truth: "" });
     // The truth itself is PRIVATE: never put its text in the log.
     if (truth) this.note("hero", p.hero?.name ?? p.name, "Shared one true thing about themselves. It stays private: the DM may nod to it once, gently, in one scene.");
   }
@@ -1001,7 +1011,7 @@ export class GameHost {
         titles: p.titles,
         peril: p.peril,
         clue: s.clues[p.id] ?? "",
-        truth_hint: s.sceneIndex === this.truthScene() ? p.truth ?? "" : "", // offered in one scene only, so the nod happens at most once
+        truth_hint: s.sceneIndex === this.truthScene() ? this.truths[p.id] ?? "" : "", // offered in one scene only, so the nod happens at most once
       })),
       canon: this.canon.slice(-10),
       ledger: this.ledger.slice(-3),
@@ -1079,7 +1089,7 @@ export class GameHost {
       this.note("scene", `${sceneLabel} · ${scene.kind}`, `The DM was given: the place (${scene.location}) and a twist seeded from a real fact: ${clip(scene.twist, 120)}`);
       this.note("scene", sceneLabel, `Question for the table: ${res.question || fb().question}`);
       if (rescue) this.note("scene", victim!.hero!.name, `In peril from last scene (${victim!.peril}). This scene is a rescue.`);
-      const truths = i === this.truthScene() ? this.heroes().filter((p) => p.truth).length : 0;
+      const truths = i === this.truthScene() ? this.heroes().filter((p) => this.truths[p.id]).length : 0;
       if (truths) this.note("scene", sceneLabel, `The DM was offered ${truths} player${truths > 1 ? "s'" : "'s"} "one true thing" for one gentle nod (private, not shown here).`);
       if (res.recap) this.recaps.push(res.recap);
       const suggestions: Record<string, string[]> = {};
@@ -2087,7 +2097,9 @@ export class GameHost {
 
   private async showStorybook() {
     this.clearTimer();
-    this.set({ phase: "storybook", busy: "Putting your story together…" });
+    // The storybook's crew page is where the "one true thing" finally comes out.
+    const players = this.state.players.map((p) => (this.truths[p.id] ? { ...p, truth: this.truths[p.id] } : p));
+    this.set({ phase: "storybook", busy: "Putting your story together…", players });
     if (this.startedAt && !this.endedAt) this.endedAt = Date.now();
     const book = await this.storybookP!;
     this.set({ storybook: book, busy: "" });
@@ -2130,6 +2142,8 @@ export class GameHost {
   /** "Next chapter": same heroes and titles, new story. */
   nextTale() {
     this.clearTimer();
+    if (this.finalSafety) clearTimeout(this.finalSafety);
+    this.finalSafety = null;
     this.startedAt = 0;
     const prev = SEEDS.findIndex((x) => x.id === this.state.questId);
     this.seed = undefined;
@@ -2168,6 +2182,7 @@ export class GameHost {
 
   close() {
     this.clearTimer();
+    if (this.finalSafety) clearTimeout(this.finalSafety);
     if (this.presenceIv) clearInterval(this.presenceIv);
     this.t.close();
   }

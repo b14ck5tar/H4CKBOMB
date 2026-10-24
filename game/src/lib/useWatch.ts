@@ -112,12 +112,14 @@ export class WatchSource {
       if (this.state && next.questId !== this.state.questId) this.sceneImages = {};
       this.lastHeard = Date.now();
       this.state = next;
+      // Ready-made heroes have a static portrait, which the keepsake link can carry (data URLs can't ride along).
+      next.players.forEach((p) => p.pick && (this.portraits[p.id] = `/heroes/${p.pick}.webp`));
       this.deadlineAt = next.deadline ? Date.now() + next.deadline : 0;
       this.emit();
       this.ask();
     } else if (m.type === "portrait" && typeof m.url === "string") {
       this.thumbs[m.pid] = m.url;
-      this.portraits[m.pid] = m.url;
+      if (!this.state?.players.find((p) => p.id === m.pid)?.pick) this.portraits[m.pid] = m.url;
       this.bump();
     } else if (m.type === "scene" && typeof m.url === "string") {
       if (this.state && m.questId === this.state.questId) {
