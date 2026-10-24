@@ -7,9 +7,9 @@ import { HeroCard } from "./HeroCard";
 import { MicButton } from "./MicButton";
 import { Hourglass } from "./Effects";
 import { Stamp } from "./Stamp";
-import { ChatDock, HostBar, PhoneReactions, RoomLobby, StoryView } from "./Remote";
+import { ChatDock, HostBar, PhoneReactions, RatingNote, RoomLobby, SideQuestCard, StoryView } from "./Remote";
 import type { GameHost } from "@/lib/host";
-import type { GameState, Hero, Player } from "@/lib/types";
+import type { GameState, Hero, Player, Rating, RealAnswers } from "@/lib/types";
 
 const EXAMPLES = [
   "a night-shift barista who can hear electricity",
@@ -17,6 +17,38 @@ const EXAMPLES = [
   "a grandma who's been a ghost hunter since 1974",
   "a substitute teacher who is secretly a cryptid",
   "an influencer whose phone sees the future, badly",
+];
+const KID_EXAMPLES = [
+  "a kid detective whose backpack talks back",
+  "a dragon who is scared of birthday candles",
+  "a lunch lady with a magic ladle",
+  "a skateboarder who can talk to squirrels",
+  "a librarian who can hear what books are thinking",
+];
+
+/** "Real in, magic out": the three join questions (copy from design/18). */
+const QUESTIONS: { key: keyof RealAnswers; q: string; hint: string; ex: string[]; kids: string[] }[] = [
+  {
+    key: "skill",
+    q: "What's something you're weirdly good at?",
+    hint: "This becomes your hidden power.",
+    ex: ["parallel parking", "remembering birthdays", "finding lost things"],
+    kids: ["drawing dragons", "finding lost socks", "making people laugh"],
+  },
+  {
+    key: "fear",
+    q: "What's a small thing that scares you?",
+    hint: "It only ever shows up as a joke in the story. Nobody has to actually do anything scary.",
+    ex: ["pigeons", "voicemails", "the dark"],
+    kids: ["spiders", "thunder", "the dark"],
+  },
+  {
+    key: "talk",
+    q: "What could you talk about for hours?",
+    hint: "The group sees this at the end. It's how you'll find a reason to hang out again.",
+    ex: ["street food", "old horror movies", "Formula 1"],
+    kids: ["dinosaurs", "Minecraft", "my dog"],
+  },
 ];
 
 const READING = ["quest", "narrating", "outcome", "mirror_reveal", "epilogue", "reveal"];
@@ -97,6 +129,17 @@ function Clue({ text }: { text?: string }) {
   );
 }
 
+/** The DM's pick gave you this scene: a nudge that your real skill could matter here. Never a requirement. */
+function Spotlight({ how }: { how?: string }) {
+  if (!how) return null;
+  return (
+    <div className="rounded border-2 border-[var(--gilt-bright)] bg-black/40 p-3 flex flex-col gap-1">
+      <span className="font-ui text-xs uppercase tracking-[0.2em] text-[var(--gilt-bright)]">✨ Your spotlight</span>
+      <p className="leading-snug">{how}</p>
+    </div>
+  );
+}
+
 function ReadyButton({ state, me, send }: { state: GameState; me: Player; send: Send }) {
   const done = state.ready.includes(me.id);
   if (state.busy) return null;
@@ -165,10 +208,11 @@ function JoinForm({ onJoin }: { onJoin: (name: string) => void }) {
   );
 }
 
-function ConceptForm({ send, building }: { send: Send; building: boolean }) {
+/** The old path: describe an invented character in one line. */
+function ConceptForm({ send, rating, onBack }: { send: Send; rating: Rating; onBack: () => void }) {
   const [text, setText] = useState("");
-  const [ex] = useState(() => EXAMPLES[Math.floor(Math.random() * EXAMPLES.length)]);
-  if (building) return <Watch text="Drawing your character…" />;
+  const list = rating === "kids" ? KID_EXAMPLES : EXAMPLES;
+  const [ex] = useState(() => list[Math.floor(Math.random() * list.length)]);
   return (
     <form
       className="page p-5 flex flex-col gap-3"
@@ -184,6 +228,77 @@ function ConceptForm({ send, building }: { send: Send; building: boolean }) {
       <button className="btn btn-crimson text-lg" type="submit" disabled={!text.trim()}>Make my character</button>
       <button type="button" className="font-ui text-sm underline text-ink-soft" onClick={() => setText(ex)}>
         Use the example
+      </button>
+      <button type="button" className="font-ui text-sm underline text-ink-soft" onClick={onBack}>
+        ◂ Answer the three questions instead
+      </button>
+    </form>
+  );
+}
+
+/** Real in, magic out: three light questions about the real you, one at a time, each skippable. */
+function RealForm({ send, building, rating }: { send: Send; building: boolean; rating: Rating }) {
+  const [mode, setMode] = useState<"real" | "concept">("real");
+  const [step, setStep] = useState(0);
+  const [ans, setAns] = useState<RealAnswers>({ skill: "", fear: "", talk: "" });
+  if (building) return <Watch text="Drawing your character…" />;
+  if (mode === "concept") return <ConceptForm send={send} rating={rating} onBack={() => setMode("real")} />;
+  const q = QUESTIONS[step];
+  const last = step === QUESTIONS.length - 1;
+  const value = ans[q.key];
+  const setValue = (v: string) => setAns((a) => ({ ...a, [q.key]: v }));
+  const trimmed = (a: RealAnswers): RealAnswers => ({ skill: a.skill.trim(), fear: a.fear.trim(), talk: a.talk.trim() });
+  const anyAnswer = (a: RealAnswers) => !!(a.skill.trim() || a.fear.trim() || a.talk.trim());
+  const skipped = { ...ans, [q.key]: "" };
+  const go = (next: RealAnswers) => {
+    setAns(next);
+    if (!last) return setStep(step + 1);
+    if (!anyAnswer(next)) return;
+    send("concept", { text: "", real: trimmed(next) });
+    vibrate(20);
+  };
+  return (
+    <form
+      className="page p-5 flex flex-col gap-3"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (value.trim() || last) go(ans);
+      }}
+    >
+      <div className="flex items-center justify-between">
+        <span className="font-ui text-xs uppercase tracking-[0.2em] text-ink-soft">The real you · {step + 1} of {QUESTIONS.length}</span>
+        {step > 0 && (
+          <button type="button" className="font-ui text-xs underline text-ink-soft" onClick={() => setStep(step - 1)}>
+            ◂ Back
+          </button>
+        )}
+      </div>
+      {step === 0 && <p className="text-sm text-ink-soft -mt-1">You play yourself, with a hidden magical side. Skip anything you like.</p>}
+      <label className="font-heading text-2xl leading-tight" htmlFor={`real-${q.key}`}>{q.q}</label>
+      <p className="text-sm text-ink-soft -mt-1">{q.hint}</p>
+      <input
+        key={q.key}
+        id={`real-${q.key}`}
+        className="input"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        maxLength={80}
+        placeholder={(rating === "kids" ? q.kids : q.ex).join(", ")}
+        autoComplete="off"
+        autoFocus
+      />
+      <MicButton key={`mic-${q.key}`} onTranscript={(t) => setValue(t.slice(0, 80))} />
+      <div className="grid grid-cols-[auto_minmax(0,1fr)] gap-2">
+        <button type="button" className="btn btn-ghost" disabled={last && !anyAnswer(skipped)} onClick={() => go(skipped)}>
+          Skip
+        </button>
+        <button className="btn btn-crimson text-lg" type="submit" disabled={last ? !anyAnswer(ans) : !value.trim()}>
+          {last ? "Make my character" : "Next ▸"}
+        </button>
+      </div>
+      {last && !anyAnswer(ans) && <p className="text-sm text-center text-ink-soft">Answer at least one, or describe a character instead.</p>}
+      <button type="button" className="font-ui text-sm underline text-ink-soft" onClick={() => setMode("concept")}>
+        or just describe a character
       </button>
     </form>
   );
@@ -533,6 +648,8 @@ export function Phone({ code, host }: { code: string; host?: GameHost }) {
   const myClue = state.clues[me.id];
   const saidAboutMe = state.mirror?.find((c) => c.wardId === me.id)?.sentence ?? "";
   const wardHero = myWard ? state.players.find((p) => p.id === myWard)?.hero : undefined;
+  const pick = state.questPick?.quest_id === state.questId ? state.questPick : null;
+  const mySpot = pick?.spotlights.find((sp) => sp.hero_id === me.id && sp.scene === state.sceneIndex)?.how ?? "";
   let body: React.ReactNode;
 
   switch (state.phase) {
@@ -541,13 +658,22 @@ export function Phone({ code, host }: { code: string; host?: GameHost }) {
         <div className="flex flex-col gap-3">
           <HeroCard player={me} portrait={portrait} />
           {!host && <Watch text="Waiting for the story to start…" />}
-          <button className="font-ui text-sm underline opacity-80" onClick={() => send("concept", { text: me.concept ?? "" })}>
+          <button className="font-ui text-sm underline opacity-80" onClick={() => send("concept", { text: me.concept ?? "", real: me.real })}>
             Redraw my character
           </button>
         </div>
       ) : (
-        <ConceptForm send={send} building={me.status === "building"} />
+        <RealForm send={send} building={me.status === "building"} rating={state.rating ?? "teens"} />
       );
+      if (!onPhones)
+        body = (
+          <div className="flex flex-col gap-3">
+            {body}
+            <div className="page p-3">
+              <RatingNote state={state} />
+            </div>
+          </div>
+        );
       if (onPhones)
         body = (
           <div className="flex flex-col gap-3">
@@ -563,8 +689,10 @@ export function Phone({ code, host }: { code: string; host?: GameHost }) {
       body = (
         <div className="flex flex-col gap-3">
           {state.phase === "quest" && <MissionCard state={state} me={me} />}
+          {state.phase === "narrating" && <Spotlight how={mySpot} />}
           {state.phase === "narrating" && <Clue text={myClue} />}
           {busyOrEyes(state.phase === "reveal" ? "Look at the TV. This really happened." : undefined)}
+          {state.phase === "reveal" && !onPhones && state.solvedBy && <p className="page p-4 font-heading text-xl leading-snug text-center">{state.solvedBy}.</p>}
           <ReadyButton state={state} me={me} send={send} />
         </div>
       );
@@ -573,6 +701,7 @@ export function Phone({ code, host }: { code: string; host?: GameHost }) {
       const pitched = state.pitches.some((p) => p.playerId === me.id);
       body = (
         <div className="flex flex-col gap-3">
+          {!pitched && <Spotlight how={mySpot} />}
           <Clue text={myClue} />
           {pitched ? <WhileWaiting state={state} me={me} send={send} /> : <PitchForm key={state.sceneIndex} state={state} me={me} send={send} deadlineAt={deadlineAt} />}
         </div>
@@ -702,6 +831,7 @@ export function Phone({ code, host }: { code: string; host?: GameHost }) {
               <p className="text-lg leading-snug">{saidAboutMe}</p>
             </div>
           )}
+          {!onPhones && <SideQuestCard state={state} />}
           <div className="page p-5 text-center">
             <p className="font-heading text-2xl uppercase">Thanks for playing</p>
             <p className="text-ink-soft">

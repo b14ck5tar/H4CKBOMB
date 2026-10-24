@@ -3,6 +3,7 @@
 // plus the lobby, the host's controls and an in-game chat so players who aren't in the same room can talk.
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import type { GameHost } from "@/lib/host";
+import { RATINGS, RATING_BLURB, RATING_LABEL } from "@/lib/rating";
 import { BAND_LABEL, ENDING_LABEL, autoSucceeds, isFailure, stampText } from "@/lib/rules";
 import type { Floating } from "@/lib/usePhone";
 import type { GameState, Player } from "@/lib/types";
@@ -47,6 +48,40 @@ function Busy({ text }: { text: string }) {
     <div className="page p-5 flex flex-col items-center gap-2 text-center">
       <Hourglass size={40} />
       <p className="font-heading">{text}</p>
+    </div>
+  );
+}
+
+/** Everyone (not just the host) sees who tonight's stories are pitched at. */
+export function RatingNote({ state }: { state: GameState }) {
+  return (
+    <p className="text-sm leading-snug">
+      <span className="font-ui text-xs uppercase tracking-widest text-ink-soft">Who’s playing: </span>
+      <b className="font-heading uppercase">{RATING_LABEL[state.rating] ?? "Teens"}</b>
+      <span className="text-ink-soft"> · {RATING_BLURB[state.rating] ?? ""}</span>
+    </p>
+  );
+}
+
+/** One real-life plan for the whole group, with the words it came from. Shown at the end of the story. */
+export function SideQuestCard({ state }: { state: GameState }) {
+  const sq = state.sideQuest;
+  if (!sq) return null;
+  return (
+    <div className="rounded border-2 border-dashed border-[var(--crimson)] p-4 flex flex-col gap-2 fade-in">
+      <span className="font-ui text-xs uppercase tracking-[0.2em] text-[var(--crimson)]">Group side quest · one plan for all of you</span>
+      <p className="font-heading text-xl uppercase leading-tight">{sq.title}</p>
+      <p className="leading-snug">{sq.text}</p>
+      {sq.based_on.length > 0 && (
+        <div className="flex flex-col gap-0.5">
+          <span className="font-ui text-xs uppercase tracking-widest text-ink-soft">Because you said</span>
+          {sq.based_on.map((b, i) => (
+            <p key={i} className="text-sm italic">
+              “{b.said}” · {state.players.find((p) => p.id === b.hero_id)?.name ?? "someone"}
+            </p>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -99,9 +134,11 @@ export function RoomLobby({ state, me, portraits, host }: { state: GameState; me
         <HostLobby host={host} hostHasHero={!!me.hero} />
       ) : (
         <div className="page p-4 flex flex-col gap-1">
-          <p className="font-ui text-xs uppercase tracking-widest text-ink-soft">Tonight’s story</p>
+          <RatingNote state={state} />
+          <p className="font-ui text-xs uppercase tracking-widest text-ink-soft mt-2">Tonight’s story</p>
           <p className="font-heading text-lg uppercase">{quest ? quest.title : "The host is picking…"}</p>
           {quest && <p className="text-sm text-ink-soft">{quest.teaser}</p>}
+          {quest && state.questPick?.quest_id === quest.id && state.questPick.why && <p className="text-sm italic">The DM picked it: {state.questPick.why}</p>}
         </div>
       )}
     </div>
@@ -119,8 +156,31 @@ function HostLobby({ host, hostHasHero }: { host: GameHost; hostHasHero: boolean
       <p className="font-ui text-xs uppercase tracking-[0.2em] text-[var(--gilt-bright)]">You’re the host</p>
       <label className="font-heading uppercase text-sm" htmlFor="party">Group name</label>
       <input id="party" className="input" placeholder="The Cousins, Floor 3…" value={s.partyName} onChange={(e) => host.setPartyName(e.target.value)} />
+      <p className="font-heading uppercase text-sm">Who’s playing?</p>
+      <div className="grid grid-cols-3 gap-2 -mt-1">
+        {RATINGS.map((r) => (
+          <button
+            key={r}
+            className={`btn ${s.rating === r ? "btn-gilt" : "btn-ghost"} !px-2`}
+            aria-pressed={s.rating === r}
+            onClick={() => host.setRating(r)}
+          >
+            {RATING_LABEL[r]}
+          </button>
+        ))}
+      </div>
+      <p className="text-xs text-ink-soft -mt-1">{RATING_BLURB[s.rating]}</p>
       <p className="font-heading uppercase text-sm">Pick tonight’s story</p>
-      <p className="text-xs text-ink-soft -mt-2">Each one starts from a real news story. You’ll find out which at the end.</p>
+      <p className="text-xs text-ink-soft -mt-2">Every one of these really happened. At the end you’ll see the article.</p>
+      <button className="btn btn-gilt" disabled={!host.canPick()} onClick={() => host.pickBestQuest()}>
+        {host.picking ? "Reading the room…" : "✨ Pick the best story for us"}
+      </button>
+      {!host.picking && !s.players.some((p) => p.hero) && <p className="text-xs text-ink-soft -mt-2 text-center">Make a character first, then the DM can pick one that fits your crew.</p>}
+      {s.questPick && s.questPick.quest_id === s.questId && (
+        <p className="text-sm leading-snug border-l-4 border-[var(--gilt-bright)] pl-3 fade-in">
+          <b className="font-heading uppercase">The DM picked:</b> {s.questPick.why}
+        </p>
+      )}
       <div className="flex flex-col gap-2">
         {s.questOptions.map((q) => (
           <button
@@ -128,6 +188,7 @@ function HostLobby({ host, hostHasHero }: { host: GameHost; hostHasHero: boolean
             className={`rounded border p-3 text-left flex flex-col gap-1 ${s.questId === q.id ? "border-[var(--gilt-bright)] bg-white/10" : "border-white/15"}`}
             onClick={() => host.chooseQuest(q.id)}
           >
+            {host.isNewsQuest(q.id) && <span className="font-ui text-[10px] uppercase tracking-[0.2em] text-[var(--crimson)]">Today’s news</span>}
             <span className="font-heading font-bold uppercase leading-tight">{q.title}</span>
             <span className="text-sm text-ink-soft leading-snug line-clamp-2">{q.teaser}</span>
           </button>
@@ -397,7 +458,7 @@ export function StoryView({
       if (!r) return null;
       return (
         <div className="bg-[#f7f5ef] text-[#151515] p-5 shadow-2xl rotate-[-0.6deg] fade-in flex flex-col gap-2" style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}>
-          <p className="uppercase tracking-[0.3em] text-xs text-[#555] border-b border-[#bbb] pb-1">The official story</p>
+          <p className="uppercase tracking-[0.3em] text-xs text-[#555] border-b border-[#bbb] pb-1">This really happened · Here’s the article</p>
           <h2 className="text-2xl font-bold leading-tight">{r.headline}</h2>
           <p className="text-sm text-[#555]">
             {r.source} · {r.date}
@@ -412,9 +473,10 @@ export function StoryView({
           </p>
           {r.link && (
             <a href={r.link} target="_blank" rel="noreferrer" className="underline text-sm">
-              Read the real story
+              Read the article
             </a>
           )}
+          {s.solvedBy && <p className="mt-1 pt-2 border-t-2 border-[#151515] text-xl font-bold leading-tight">{s.solvedBy}.</p>}
         </div>
       );
     }
@@ -475,6 +537,7 @@ function PhoneStorybook({ s, portraits, sceneArt, host }: { s: GameState; portra
           );
         })}
         <p className="italic">{book.moral}</p>
+        <SideQuestCard state={s} />
         {host && (
           <button className="btn btn-crimson" onClick={() => host.nextTale()}>
             Next chapter

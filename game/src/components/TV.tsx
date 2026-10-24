@@ -4,6 +4,7 @@ import QRCode from "qrcode";
 import { GameHost, loadShelf, type ShelfBook } from "@/lib/host";
 import { BAND_LABEL, ENDING_LABEL, ROLL_ANIM_MS, STAT_LABEL, autoSucceeds, isFailure, stampText } from "@/lib/rules";
 import { sfx } from "@/lib/sfx";
+import { RATINGS, RATING_BLURB, RATING_LABEL } from "@/lib/rating";
 import type { GameState, Player, RollResult } from "@/lib/types";
 import { D20 } from "./D20";
 import { Stamp, WaxSeal } from "./Stamp";
@@ -225,8 +226,46 @@ function Lobby({ host, s }: { host: GameHost; s: GameState }) {
         </section>
 
         <section className="flex flex-col gap-3">
+          <h2 className="font-heading text-3xl uppercase text-[var(--gilt-bright)]">Who’s playing?</h2>
+          <div className="flex gap-3 flex-wrap">
+            {RATINGS.map((r) => (
+              <button
+                key={r}
+                className={`btn ${s.rating === r ? "btn-gilt" : "btn-ghost"} text-xl`}
+                aria-pressed={s.rating === r}
+                onClick={() => {
+                  sfx.unlock();
+                  host.setRating(r);
+                }}
+              >
+                {RATING_LABEL[r]}
+              </button>
+            ))}
+          </div>
+          <p className="text-lg text-parchment/80 -mt-1">{RATING_BLURB[s.rating]}</p>
+        </section>
+
+        <section className="flex flex-col gap-3">
           <h2 className="font-heading text-3xl uppercase text-[var(--gilt-bright)]">Pick tonight’s story</h2>
-          <p className="text-parchment/70 -mt-2">Each one starts from a real news story. You’ll find out which at the end.</p>
+          <p className="text-parchment/70 -mt-2">Every one of these really happened. At the end you’ll see the article.</p>
+          <div className="flex items-center gap-4 flex-wrap">
+            <button
+              className="btn btn-gilt text-xl"
+              disabled={!host.canPick()}
+              onClick={() => {
+                sfx.unlock();
+                host.pickBestQuest();
+              }}
+            >
+              {host.picking ? "Reading the room…" : "✨ Pick the best story for us"}
+            </button>
+            {!host.picking && !s.players.some((p) => p.hero) && <span className="font-ui text-parchment/70">Make a character first, then the DM can pick a story that fits you.</span>}
+          </div>
+          {s.questPick && s.questPick.quest_id === s.questId && (
+            <p className="text-xl leading-snug border-l-4 border-[var(--gilt-bright)] pl-4 fade-in">
+              <b className="font-heading uppercase">The DM picked:</b> {s.questPick.why}
+            </p>
+          )}
           <div className="grid grid-cols-2 xl:grid-cols-3 gap-3">
             {s.questOptions.map((q) => (
               <button
@@ -238,6 +277,7 @@ function Lobby({ host, s }: { host: GameHost; s: GameState }) {
                 }}
                 className={`page p-4 text-left flex flex-col gap-1 transition ${s.questId === q.id ? "ring-4 ring-[var(--gilt-bright)] scale-[1.01]" : "opacity-90 hover:opacity-100"}`}
               >
+                {host.isNewsQuest(q.id) && <span className="font-ui text-xs uppercase tracking-[0.2em] text-[var(--crimson)]">Today’s news</span>}
                 <span className="font-heading text-xl font-bold leading-tight uppercase">{q.title}</span>
                 <span className="text-sm text-ink-soft leading-snug line-clamp-3">{q.teaser}</span>
               </button>
@@ -658,7 +698,7 @@ function Epilogue({ s }: { s: GameState }) {
   );
 }
 
-function Reveal({ host }: { host: GameHost }) {
+function Reveal({ host, s }: { host: GameHost; s: GameState }) {
   const rs = host.realStory;
   const seed = host.questSeed;
   const [qr, setQr] = useState("");
@@ -686,7 +726,7 @@ function Reveal({ host }: { host: GameHost }) {
   return (
     <div className="flex-1 flex items-center justify-center px-8 pb-4">
       <div className="max-w-5xl w-full bg-[#f7f5ef] text-[#151515] p-10 shadow-2xl rotate-[-0.6deg] fade-in" style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}>
-        <p className="uppercase tracking-[0.3em] text-sm text-[#555] border-b border-[#bbb] pb-2">The official story</p>
+        <p className="uppercase tracking-[0.3em] text-sm text-[#555] border-b border-[#bbb] pb-2">This really happened · Here’s the article</p>
         <h2 className="text-5xl font-bold leading-tight mt-4 min-h-[2.4em]">
           {rs.headline.slice(0, typed)}
           <span className="animate-pulse">{typed < rs.headline.length ? "▍" : ""}</span>
@@ -706,8 +746,11 @@ function Reveal({ host }: { host: GameHost }) {
             </p>
           </div>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          {qr && <div className="flex flex-col items-center gap-2"><img src={qr} alt="QR code to the real article" className="w-44 h-44" /><span className="text-sm text-[#555]">Read the real story</span></div>}
+          {qr && <div className="flex flex-col items-center gap-2"><img src={qr} alt="QR code to the real article" className="w-44 h-44" /><span className="text-sm text-[#555]">Read the article</span></div>}
         </div>
+        {s.solvedBy && typed >= rs.headline.length && (
+          <p className="mt-6 pt-4 border-t-2 border-[#151515] text-4xl font-bold leading-tight fade-in">{s.solvedBy}.</p>
+        )}
       </div>
     </div>
   );
@@ -788,10 +831,27 @@ function StorybookView({ host, s }: { host: GameHost; s: GameState }) {
           </div>
         )}
         {page === pages.length + 2 && (
-          <div className="col-span-2 flex flex-col items-center gap-5 text-center">
+          <div className="col-span-2 flex flex-col items-center gap-5 text-center overflow-auto max-h-full">
             <p className="font-display text-6xl uppercase">The End</p>
             <p className="italic text-2xl">{book.moral}</p>
             {book.real_story_bridge && <p className="text-xl max-w-3xl">{book.real_story_bridge}</p>}
+            {s.sideQuest && (
+              <div className="w-full max-w-4xl rounded border-4 border-dashed border-[var(--crimson)] p-5 flex flex-col gap-2 text-left fade-in">
+                <p className="font-ui uppercase tracking-[0.25em] text-sm text-[var(--crimson)]">Group side quest · one plan for all of you</p>
+                <p className="font-heading text-3xl uppercase leading-tight">{s.sideQuest.title}</p>
+                <p className="text-2xl leading-snug">{s.sideQuest.text}</p>
+                {s.sideQuest.based_on.length > 0 && (
+                  <p className="text-lg italic text-ink-soft">
+                    Because you said:{" "}
+                    {s.sideQuest.based_on.map((b, i) => (
+                      <span key={i}>
+                        {i > 0 && " · "}“{b.said}” ({s.players.find((p) => p.id === b.hero_id)?.name ?? "someone"})
+                      </span>
+                    ))}
+                  </p>
+                )}
+              </div>
+            )}
             <p className="font-ui text-ink-soft">Saved to {s.partyName || "your group"}’s shelf. Next chapter, same crew, whenever you’re ready.</p>
             <button className="btn btn-crimson text-xl" onClick={() => host.nextTale()}>
               Next chapter
@@ -895,7 +955,7 @@ export function TV({ host }: { host: GameHost }) {
       main = <Epilogue s={s} />;
       break;
     case "reveal":
-      main = <Reveal host={host} />;
+      main = <Reveal host={host} s={s} />;
       break;
     case "storybook":
       main = <StorybookView host={host} s={s} />;

@@ -21,7 +21,7 @@ import {
   readMs,
 } from "./rules";
 import { openRoom, type Msg, type Transport } from "./transport";
-import { DEFAULT_RATING } from "./rating";
+import { DEFAULT_RATING, isRating, questAllowed } from "./rating";
 import type {
   Band,
   GameState,
@@ -29,11 +29,15 @@ import type {
   MirrorCard,
   Pitch,
   Player,
+  QuestPick,
   QuestSeed,
+  Rating,
+  RealAnswers,
   RollResult,
   RoundOutcome,
   SceneOpen,
   SceneView,
+  SideQuest,
   Stat,
   Storybook,
   Verdict,
@@ -60,6 +64,51 @@ const MIRROR_GUESS_MS = 20_000;
 const MIRROR_PHASES = ["mirror_write", "mirror_guess", "mirror_reveal"];
 const BAND_RANK: Record<Band, number> = { LEGENDARY: 0, SUCCESS: 1, YES_BUT: 2, FAIL: 3, CATASTROPHE: 4 };
 const UNKIND = /\b(stupid|dumb|idiot|moron|ugly|fat|hate|hated|sucks?|sucked|loser|worst|annoying|useless|lame|trash|garbage|pathetic|shut up|creep|weirdo|fuck\w*|shit\w*|bitch\w*|ass|asshole|crap)\b/i;
+const SWEARS = /\b(fuck\w*|shit\w*|bitch\w*|asshole\w*|cunt\w*)\b/gi;
+/** Kids rating: also mask mild swears and playground insults in chat. */
+const KID_MASK = /\b(fuck\w*|shit\w*|bitch\w*|asshole\w*|cunt\w*|ass|damn\w*|hell|crap\w*|piss\w*|stupid|dumb|idiot\w*|moron\w*|loser\w*|ugly|fat|lame|jerk\w*|freak\w*|weirdo\w*|shut up|hate you|sucks?)\b/gi;
+const mask = (w: string) => w[0] + w.slice(1).replace(/\S/g, "*");
+
+const EMPTY_REAL: RealAnswers = { skill: "", fear: "", talk: "" };
+
+/** A player's real answer, cleaned up: no markup, one line, short. */
+function cleanReal(v: unknown) {
+  return String(v ?? "").replace(/[<>]/g, "").replace(/\s+/g, " ").trim().slice(0, 80);
+}
+
+/** "I'm weirdly good at Parallel parking." -> "parallel parking" (keeps acronyms like "SQL"). */
+function skillPhrase(raw: string) {
+  const t = raw
+    .trim()
+    .replace(/^(i'?m|i am)\s+((weirdly|really|very|pretty|super)\s+)?good at\s+/i, "")
+    .replace(/[\s.!?,;:]+$/, "");
+  if (!t) return "";
+  return /^[A-Z][A-Z]/.test(t) ? t : t[0].toLowerCase() + t.slice(1);
+}
+
+/** ["a"] "a"; ["a","b"] "a and b"; ["a","b","c"] "a, b, and c". */
+function oxford(parts: string[]) {
+  if (parts.length <= 2) return parts.join(" and ");
+  return `${parts.slice(0, -1).join(", ")}, and ${parts[parts.length - 1]}`;
+}
+
+/** News quests come from the network: only keep ones the game can actually play. */
+function playable(q: QuestSeed | null | undefined): q is QuestSeed {
+  return (
+    !!q &&
+    typeof q.id === "string" &&
+    !!q.id &&
+    typeof q.quest_title === "string" &&
+    typeof q.fairytale_premise === "string" &&
+    !!q.the_threat?.name &&
+    !!q.the_goal?.description &&
+    Array.isArray(q.locations) &&
+    q.locations.length > 0 &&
+    q.locations.every((l) => typeof l?.name === "string") &&
+    Array.isArray(q.complications) &&
+    !!q.the_real_story?.headline
+  );
+}
 
 /** Uniform-enough random int in [0, n) from crypto. */
 function randInt(n: number) {
@@ -150,6 +199,12 @@ export class GameHost {
   private lastChat: Record<string, number> = {};
   private chatId = 0;
   private lastArtBlast = 0;
+  // Real in, magic out. Plain data only (snapshot/restore friendly).
+  private newsByRating: Partial<Record<Rating, QuestSeed[]>> = {}; // GET /api/news?rating=…, once per rating
+  private pendingQuest = ""; // a /tv?quest= id that may be a news quest still loading
+  private sideQuestP: Promise<SideQuest> | null = null;
+  /** "Pick the best story for us" is thinking (host-only UI state). */
+  picking = false;
 
   constructor(code: string, opts: { screen?: GameState["screen"] } = {}) {
     this.state = {
@@ -159,7 +214,7 @@ export class GameHost {
       partyName: "",
       players: [],
       questId: "",
-      questOptions: SEEDS.map((s) => ({ id: s.id, title: s.quest_title, teaser: s.fairytale_premise.split(/(?<=[.!?])\s/)[0] })),
+      questOptions: [],
       scenes: [],
       sceneIndex: 0,
       hope: HOPE_START,
@@ -200,8 +255,10 @@ export class GameHost {
       sideQuest: null,
       busy: "",
     };
+    this.state.questOptions = this.optionsFor(this.allowedQuests());
     this.t = openRoom(code);
     this.t.on((m) => this.handle(m));
+    this.loadNews(this.state.rating);
   }
 
   get transportKind() {
@@ -336,7 +393,7 @@ export class GameHost {
       case "join":
         return this.onJoin(m.pid, m.name);
       case "concept":
-        return this.buildCharacter(m.pid, m.text);
+        return this.buildCharacter(m.pid, m.text, m.real);
       case "pitch":
         return this.onPitch(m.pid, m.text, !!m.useAbility, !!m.embraceFlaw);
       case "boost":
@@ -396,7 +453,7 @@ export class GameHost {
     if (now - (this.lastChat[pid] ?? 0) < 700) return;
     const text = String(raw ?? "")
       .replace(/[<>]/g, "")
-      .replace(/\b(fuck\w*|shit\w*|bitch\w*|asshole\w*|cunt\w*)\b/gi, (w) => w[0] + "*".repeat(w.length - 1))
+      .replace(this.state.rating === "kids" ? KID_MASK : SWEARS, mask)
       .trim()
       .slice(0, 200);
     if (!text) return;
@@ -421,14 +478,74 @@ export class GameHost {
     this.set({ partyName: name.slice(0, 40) });
   }
 
-  async buildCharacter(pid: string, concept: string) {
+  /** "Who's playing?" Host only, lobby only. Re-filters the stories and drops a chosen one that no longer fits. */
+  setRating(r: Rating) {
+    if (this.state.phase !== "lobby" || !isRating(r) || r === this.state.rating) return;
+    this.set({ rating: r });
+    this.refreshOptions();
+    this.loadNews(r);
+  }
+
+  /** Seed quests plus today's news quests for this rating, filtered by "Who's playing?". */
+  allowedQuests(): QuestSeed[] {
+    const r = this.state.rating;
+    const news = (this.newsByRating[r] ?? []).filter((q) => !SEEDS.some((s) => s.id === q.id));
+    return [...SEEDS, ...news].filter((q) => questAllowed(q.rating, r));
+  }
+
+  isNewsQuest(id: string) {
+    return !SEEDS.some((s) => s.id === id) && this.allowedQuests().some((q) => q.id === id);
+  }
+
+  private optionsFor(qs: QuestSeed[]) {
+    return qs.map((q) => ({ id: q.id, title: q.quest_title, teaser: q.fairytale_premise.split(/(?<=[.!?])\s/)[0] }));
+  }
+
+  private refreshOptions() {
+    const allowed = this.allowedQuests();
+    this.set({ questOptions: this.optionsFor(allowed) });
+    if (this.state.questId && !allowed.some((q) => q.id === this.state.questId)) this.clearQuest();
+    if (this.state.questPick && !allowed.some((q) => q.id === this.state.questPick!.quest_id)) this.set({ questPick: null });
+    if (this.pendingQuest && allowed.some((q) => q.id === this.pendingQuest)) this.chooseQuest(this.pendingQuest);
+  }
+
+  private clearQuest() {
+    this.seed = undefined;
+    this.sceneImages = {};
+    this.sceneThumbs = {};
+    this.set({ questId: "", quest: undefined, scenes: [], questPick: null });
+  }
+
+  /** Today's news quests for a rating, fetched once per rating. A failure or an empty list just means seeds only. */
+  private async loadNews(r: Rating) {
+    if (this.newsByRating[r]) return this.refreshOptions();
+    this.newsByRating[r] = []; // in flight: don't ask twice
+    try {
+      const res = await fetch(`/api/news?rating=${r}`);
+      if (!res.ok) throw new Error(`news HTTP ${res.status}`);
+      const j = (await res.json()) as { quests?: QuestSeed[] };
+      const quests = (Array.isArray(j?.quests) ? j.quests : []).filter(playable).slice(0, 10);
+      this.newsByRating[r] = quests;
+    } catch (e) {
+      console.warn("[host] news unavailable, seed stories only", e);
+      delete this.newsByRating[r]; // try again next time this rating is picked
+    }
+    if (this.state.rating === r && this.state.phase === "lobby") this.refreshOptions();
+  }
+
+  async buildCharacter(pid: string, concept: string, rawReal?: Partial<RealAnswers>) {
     const p = this.player(pid);
     if (!p || p.status === "building" || this.state.phase !== "lobby") return;
-    const text = String(concept ?? "").slice(0, 200);
-    this.patchPlayer(pid, { status: "building", concept: text, hasPortrait: false });
+    const text = String(concept ?? "").replace(/[<>]/g, "").slice(0, 200);
+    const real: RealAnswers = { skill: cleanReal(rawReal?.skill), fear: cleanReal(rawReal?.fear), talk: cleanReal(rawReal?.talk) };
+    const shared = !!(real.skill || real.fear || real.talk);
+    if (!text.trim() && !shared) return;
+    this.patchPlayer(pid, { status: "building", concept: text, real: shared ? real : undefined, hasPortrait: false });
     const others = this.heroes().filter((o) => o.id !== pid);
     const { data: hero } = await ai<Hero>("character", {
       concept: text,
+      real: shared ? real : EMPTY_REAL,
+      rating: this.state.rating,
       partySoFar: others.map((o) => o.hero!.visual.anchor),
       avoidNames: others.map((o) => o.hero!.name),
     }).catch(() => ({ data: undefined as unknown as Hero }));
@@ -443,8 +560,16 @@ export class GameHost {
   }
 
   chooseQuest(id: string) {
-    const seed = SEEDS.find((s) => s.id === id);
-    if (!seed) return;
+    if (this.state.phase !== "lobby") return;
+    const seed = this.allowedQuests().find((s) => s.id === id);
+    if (!seed) {
+      // A link like /tv?quest=<news id> can arrive before today's news has loaded: pick it once it does.
+      this.pendingQuest = id;
+      return;
+    }
+    this.pendingQuest = "";
+    if (this.state.questPick && this.state.questPick.quest_id !== id) this.set({ questPick: null }); // spotlights were for another story
+    if (this.state.questId === id && this.seed === seed) return;
     this.seed = seed;
     this.sceneImages = {};
     this.sceneThumbs = {};
@@ -499,6 +624,107 @@ export class GameHost {
     return !!this.seed && this.heroes().length > 0 && this.state.players.every((p) => p.status !== "building");
   }
 
+  /** "Pick the best story for us": needs at least one hero and two stories to choose between. */
+  canPick() {
+    return this.state.phase === "lobby" && !this.picking && this.heroes().length > 0 && this.allowedQuests().length >= 2;
+  }
+
+  /** Up to 10 candidates: a mix of today's news and the seed stories (pre-painted, so they start instantly). */
+  private pickCandidates() {
+    const allowed = this.allowedQuests();
+    const news = allowed.filter((q) => !SEEDS.some((s) => s.id === q.id));
+    const seeds = allowed.filter((q) => SEEDS.some((s) => s.id === q.id));
+    const mix = [...news.slice(0, 5), ...seeds.slice(0, 5)];
+    for (const q of [...news, ...seeds]) if (mix.length < 10 && !mix.includes(q)) mix.push(q);
+    return mix.slice(0, 10);
+  }
+
+  /** Spotlights that cover every hero exactly once; anyone the AI missed is dealt round-robin into the scenes. */
+  private completeSpotlights(raw: unknown, heroIds: string[]): QuestPick["spotlights"] {
+    const out: QuestPick["spotlights"] = [];
+    (Array.isArray(raw) ? raw : []).forEach((s) => {
+      const scene = Number(s?.scene);
+      if (!heroIds.includes(s?.hero_id) || out.some((o) => o.hero_id === s.hero_id) || ![0, 1, 2].includes(scene)) return;
+      out.push({ hero_id: s.hero_id, scene: scene as 0 | 1 | 2, how: String(s?.how ?? "").slice(0, 200) });
+    });
+    heroIds
+      .filter((id) => !out.some((o) => o.hero_id === id))
+      .forEach((id) => {
+        const load = [0, 1, 2].map((n) => out.filter((o) => o.scene === n).length);
+        out.push({ hero_id: id, scene: load.indexOf(Math.min(...load)) as 0 | 1 | 2, how: "" });
+      });
+    return out;
+  }
+
+  /** When the AI can't answer: the story whose words overlap most with what people said, else a random one. */
+  private localPick(cands: QuestSeed[], heroIds: string[]): QuestPick {
+    const words = this.heroes()
+      .flatMap((p) => [p.real?.skill ?? "", p.real?.talk ?? ""])
+      .join(" ")
+      .toLowerCase()
+      .split(/\W+/)
+      .filter((w) => w.length > 3);
+    const score = (q: QuestSeed) => {
+      const hay = `${q.quest_title} ${q.fairytale_premise} ${q.locations.map((l) => l.name).join(" ")}`.toLowerCase();
+      return words.filter((w) => hay.includes(w)).length;
+    };
+    const best = Math.max(...cands.map(score));
+    const top = cands.filter((q) => score(q) === best);
+    const q = top[randInt(top.length)];
+    return {
+      quest_id: q.id,
+      why: best > 0 ? "It has room for what this crew is good at." : "A good one for this crew. Everyone gets a moment.",
+      spotlights: this.completeSpotlights([], heroIds),
+    };
+  }
+
+  async pickBestQuest() {
+    if (!this.canPick()) return;
+    const cands = this.pickCandidates();
+    const heroes = this.heroes();
+    const heroIds = heroes.map((p) => p.id);
+    this.picking = true;
+    this.set({}); // re-render the host's button
+    const input = {
+      rating: this.state.rating,
+      party: heroes.map((p) => ({
+        hero_id: p.id,
+        name: p.name,
+        hero_name: p.hero!.name,
+        skill: p.real?.skill ?? "",
+        fear: p.real?.fear ?? "",
+        talk: p.real?.talk ?? "",
+      })),
+      candidates: cands.map((q) => ({
+        id: q.id,
+        title: q.quest_title,
+        premise: q.fairytale_premise,
+        threat: q.the_threat.name,
+        goal: q.the_goal.description,
+        locations: q.locations.map((l) => l.name),
+      })),
+    };
+    const local = () => this.localPick(cands, heroIds);
+    let pick = await withTimeout(
+      ai<QuestPick>("pick_quest", input).then((r) => r.data),
+      15_000,
+      local,
+    );
+    this.picking = false;
+    if (this.state.phase !== "lobby") return this.set({});
+    if (!pick || !cands.some((q) => q.id === pick.quest_id)) pick = local();
+    // Heroes could have joined or left while the AI thought.
+    const ids = this.heroes().map((p) => p.id);
+    const clean: QuestPick = {
+      quest_id: pick.quest_id,
+      why: String(pick.why ?? "").slice(0, 240) || "A good fit for this crew.",
+      spotlights: this.completeSpotlights(pick.spotlights, ids),
+    };
+    if (!this.allowedQuests().some((q) => q.id === clean.quest_id)) return this.set({}); // rating changed meanwhile
+    this.chooseQuest(clean.quest_id);
+    this.set({ questPick: clean });
+  }
+
   begin() {
     if (!this.canBegin()) return;
     const players = this.state.players.filter((p) => p.hero).map((p) => ({ ...p, peril: "", abilityAvailable: true, heart: 1 as const }));
@@ -509,7 +735,10 @@ export class GameHost {
     this.threatMood = this.seed!.the_threat.description.split(".")[0];
     this.reactionCounts = {};
     this.mirrorP.clear();
+    this.sideQuestP = null;
     this.set({
+      solvedBy: "",
+      sideQuest: null,
       players,
       wards: this.assignWards(players.map((p) => p.id)),
       mirrorMoments: {},
@@ -580,6 +809,27 @@ export class GameHost {
   }
 
   // ---------- scenes ----------
+  /**
+   * Who gets a spotlight in scene i: from the AI's pick when there is one, otherwise heroes who shared a skill are
+   * dealt round-robin across the three scenes. It's an opening for their real skill, never a requirement.
+   */
+  private spotlightFor(i: number): { hero_id: string; how: string }[] {
+    const heroes = this.heroes();
+    const pick = this.state.questPick?.quest_id === this.state.questId ? this.state.questPick : null;
+    const covered = new Set(pick?.spotlights.map((s) => s.hero_id) ?? []);
+    const fromPick = (pick?.spotlights ?? []).filter((s) => s.scene === i && heroes.some((h) => h.id === s.hero_id));
+    const rest = heroes.filter((h) => !covered.has(h.id) && h.real?.skill);
+    const dealt = rest.filter((_, k) => k % 3 === i);
+    return [
+      ...fromPick.map((s) => ({ hero_id: s.hero_id, how: s.how })),
+      ...dealt.map((h) => ({ hero_id: h.id, how: `${h.hero!.name} is weirdly good at ${skillPhrase(h.real!.skill)}. Give that a way to matter here.` })),
+    ];
+  }
+
+  private partyReal() {
+    return this.heroes().map((p) => ({ hero_id: p.id, skill: p.real?.skill ?? "", fear: p.real?.fear ?? "" }));
+  }
+
   private async openScene(i: number) {
     this.clearTimer();
     const scene = this.state.scenes[i];
@@ -606,6 +856,9 @@ export class GameHost {
     });
     const heroIds = this.heroes().map((p) => p.id);
     const input = {
+      rating: this.state.rating,
+      party_real: this.partyReal(),
+      spotlight: this.spotlightFor(i),
       state: this.dmState(),
       scene_plan: { n: i + 1, kind: scene.kind, location: scene.location, description: scene.description, seeded_twist: scene.twist },
       recap_needed: i > 0,
@@ -710,6 +963,7 @@ export class GameHost {
     const others = this.state.pitches.filter((x) => x.id !== pitch.id).map((x) => x.text);
     return withTimeout(
       ai<{ verdicts: (Verdict & { pitch_id: string })[] }>("verdict", {
+        rating: this.state.rating,
         state: this.dmState(),
         rescue: r ? { hero_in_peril: this.player(r.victimId)?.hero?.name, peril: r.peril } : undefined,
         pitches: [
@@ -950,6 +1204,7 @@ export class GameHost {
       };
     });
     const p = ai<RoundOutcome>("round", {
+      rating: this.state.rating,
       state: this.dmState(),
       rescue_of: r ? this.player(r.victimId)?.hero?.name ?? "" : "",
       actions,
@@ -1070,8 +1325,53 @@ export class GameHost {
     this.openScene(this.state.sceneIndex + 1);
   }
 
+  // ---------- group side quest ----------
+  /** One real-life plan for the whole group, built only from what people said they could talk about for hours. */
+  private sideQuestFallback(): SideQuest {
+    const based_on = this.heroes()
+      .filter((p) => p.real?.talk)
+      .map((p) => ({ hero_id: p.id, said: p.real!.talk }));
+    const kids = this.state.rating === "kids";
+    return {
+      title: "Show and Tell, Next Game Night",
+      text: based_on.length
+        ? `One plan for all of you: next game night, everyone brings one thing about the topic they could talk about for hours, and gets two minutes to make the rest of the group care.${kids ? " Ask a grown-up to help set it up." : ""}`
+        : `One plan for all of you: next game night, everyone brings one thing they could talk about for hours, and gets two minutes to make the rest of the group care.${kids ? " Ask a grown-up to help set it up." : ""}`,
+      based_on,
+    };
+  }
+
+  /** Asked for early (when the Final Roll starts) so it's ready by the storybook. Never blocks the ending. */
+  private requestSideQuest() {
+    if (this.sideQuestP) return;
+    const heroes = this.heroes();
+    const ids = heroes.map((p) => p.id);
+    const fb = () => this.sideQuestFallback();
+    this.sideQuestP = withTimeout(
+      ai<SideQuest>("side_quest", {
+        rating: this.state.rating,
+        party: heroes.map((p) => ({ hero_id: p.id, name: p.name, hero_name: p.hero!.name, talk: p.real?.talk ?? "" })),
+        quest_title: this.state.quest?.title ?? "",
+      }).then((r) => {
+        const d = r.data;
+        if (!d || typeof d.title !== "string" || typeof d.text !== "string" || !d.text.trim()) return fb();
+        const based_on = (Array.isArray(d.based_on) ? d.based_on : [])
+          .filter((b) => ids.includes(b?.hero_id) && typeof b.said === "string" && b.said.trim())
+          .map((b) => ({ hero_id: b.hero_id, said: b.said.slice(0, 120) }));
+        return { title: d.title.slice(0, 80) || fb().title, text: d.text.slice(0, 400), based_on };
+      }),
+      25_000,
+      fb,
+    );
+    const p = this.sideQuestP;
+    p.then((sq) => {
+      if (this.sideQuestP === p) this.set({ sideQuest: sq });
+    });
+  }
+
   // ---------- final roll ----------
   private startFinalRoll() {
+    this.requestSideQuest();
     this.finalDice = {};
     this.heroes().forEach((p) => (this.finalDice[p.id] = d20()));
     this.set({
@@ -1108,6 +1408,7 @@ export class GameHost {
     };
     const players = this.state.players.map((p) => ({ ...p, peril: "" }));
     this.set({ phase: "final_result", final, players, ready: [] });
+    this.requestSideQuest(); // a grim ending skips the Final Roll
 
     const heroes = this.heroes().map((p) => ({ id: p.id, name: p.hero!.name }));
     const st = this.dmState();
@@ -1121,7 +1422,7 @@ export class GameHost {
       final_moves: Object.fromEntries(Object.entries(this.state.finalMoves).map(([k, v]) => [name(k), v])),
     };
     this.epilogueP = withTimeout(
-      ai<string>("epilogue", { state: st, final: finalInfo, log: this.state.log.map((l) => `${l.hero}: ${l.pitch} (${l.band})`) }).then((r) => r.data),
+      ai<string>("epilogue", { rating: this.state.rating, state: st, final: finalInfo, log: this.state.log.map((l) => `${l.hero}: ${l.pitch} (${l.band})`) }).then((r) => r.data),
       20_000,
       () => "The dice land and, somehow, it holds. Everyone goes home with a story nobody will believe. And that's the version they'll never print.",
     );
@@ -1139,6 +1440,7 @@ export class GameHost {
     });
     this.storybookP = withTimeout(
       ai<Storybook>("storybook", {
+        rating: this.state.rating,
         state: st,
         title: this.state.quest?.title,
         heroes,
@@ -1205,7 +1507,7 @@ export class GameHost {
     if (!h) return;
     const moments = this.wardMoments(wardId);
     const p = withTimeout(
-      ai<{ ok: boolean; sentence: string }>("kind", { ward_name: h.name, pronouns: h.pronouns, frame: mirrorFrame(h), moments, draft }).then((r) =>
+      ai<{ ok: boolean; sentence: string }>("kind", { rating: this.state.rating, ward_name: h.name, pronouns: h.pronouns, frame: mirrorFrame(h), moments, draft }).then((r) =>
         r.data?.sentence ? r.data.sentence : kindFallback(h, moments, draft),
       ),
       9000,
@@ -1298,11 +1600,21 @@ export class GameHost {
     this.reading(text, () => this.startReveal(), 10000);
   }
 
+  /** "Solved by Ava's parallel parking and Ben's coffee": real names + real skills. "" if nobody shared a skill. */
+  private solvedByLine() {
+    const parts = this.heroes()
+      .map((p) => ({ name: p.name, skill: skillPhrase(p.real?.skill ?? "") }))
+      .filter((x) => x.skill)
+      .map((x) => `${x.name}'s ${x.skill}`);
+    return parts.length ? `Solved by ${oxford(parts)}` : "";
+  }
+
   private startReveal() {
     const seed = this.seed;
     const rs = seed?.the_real_story;
     this.set({
       phase: "reveal",
+      solvedBy: this.solvedByLine(),
       reveal:
         seed && rs
           ? {
@@ -1367,8 +1679,13 @@ export class GameHost {
     this.seed = undefined;
     this.sceneImages = {};
     this.sceneThumbs = {};
+    this.sideQuestP = null;
+    this.pendingQuest = "";
     this.set({
       phase: "lobby",
+      questPick: null, // players keep their real answers; the next story gets a fresh pick
+      solvedBy: "",
+      sideQuest: null,
       reveal: null,
       questId: "",
       quest: undefined,
@@ -1391,6 +1708,7 @@ export class GameHost {
       ready: [],
     });
     this.mirrorP.clear();
+    this.loadNews(this.state.rating); // cached: just re-lists; failed earlier: one more try
   }
 
   close() {
