@@ -1,0 +1,134 @@
+[
+  {
+    "id": "barista",
+    "pitch": "A night-shift barista who can hear electricity",
+    "hero": {
+      "name": "Juno",
+      "epithet": "the Overcaffeinated",
+      "pronouns": "she/her",
+      "concept_status": "ok",
+      "concept_note": "",
+      "stats": { "brave": 1, "clever": 3, "charming": -1 },
+      "ability": { "name": "Hear the Current", "text": "Press an ear to any wire and hear what it carries." },
+      "flaw": "Tells everyone how each outlet is feeling, mid-sentence.",
+      "roast": "Juno can hear electricity. She has never once heard a customer's order.",
+      "visual": {
+        "anchor": "a tall skinny cartoon barista woman with an oversized round head, huge cupped ears, wild static-frizzed hair standing on end, dark under-eye circles, apron over a hoodie",
+        "outfit": "mint green apron over a striped hoodie, blank name tag",
+        "palette": ["mint green", "espresso brown", "electric yellow"],
+        "prop": "a steaming paper coffee cup",
+        "expression": "wide-eyed, listening very hard"
+      }
+    }
+  },
+  {
+    "id": "raccoon",
+    "pitch": "A raccoon who works security at the mall",
+    "hero": {
+      "name": "Gus",
+      "epithet": "of Mall Security",
+      "pronouns": "he/him",
+      "concept_status": "ok",
+      "concept_note": "",
+      "stats": { "brave": 3, "clever": 1, "charming": -1 },
+      "ability": { "name": "Trash Sense", "text": "Find anything anyone threw away nearby, in seconds." },
+      "flaw": "Abandons any post for a dropped pretzel.",
+      "roast": "Gus takes this job very seriously. The mall never technically hired him.",
+      "visual": {
+        "anchor": "a chubby cartoon raccoon standing upright, black bandit mask face, big striped tail, oversized security cap slipping over one eye, rumpled uniform two sizes too big",
+        "outfit": "baggy navy security uniform with a blank badge",
+        "palette": ["navy blue", "silver grey", "flashlight yellow"],
+        "prop": "a huge flashlight and half a pretzel",
+        "expression": "suspicious squint, very official"
+      }
+    }
+  },
+  {
+    "id": "grandma",
+    "pitch": "A grandma who's been a ghost hunter since 1974",
+    "hero": {
+      "name": "Dolores",
+      "epithet": "Ghost Hunter Since 1974",
+      "pronouns": "she/her",
+      "concept_status": "ok",
+      "concept_note": "",
+      "stats": { "brave": 3, "clever": -1, "charming": 1 },
+      "ability": { "name": "Stern Talking-To", "text": "Scold any ghost until it apologizes and sits down." },
+      "flaw": "Refuses to touch any gadget invented after 1974.",
+      "roast": "Dolores has caught forty-one ghosts. She has never once answered a text.",
+      "visual": {
+        "anchor": "a tiny round cartoon grandma with a giant puffy white bouffant, enormous round glasses, a cardigan with far too many pockets, bright white sneakers",
+        "outfit": "lavender cardigan, plaid skirt, chunky white sneakers",
+        "palette": ["lavender", "mustard yellow", "ghostly teal"],
+        "prop": "a clunky vintage brass ghost detector",
+        "expression": "unimpressed, one eyebrow raised"
+      }
+    }
+  },
+  {
+    "id": "substitute",
+    "pitch": "A substitute teacher who is secretly a cryptid",
+    "hero": {
+      "name": "Mr. Pruitt",
+      "epithet": "the Substitute",
+      "pronouns": "he/him",
+      "concept_status": "ok",
+      "concept_note": "",
+      "stats": { "brave": 1, "clever": 3, "charming": -1 },
+      "ability": { "name": "Go Blurry", "text": "Turn so blurry that nobody can get a clear look." },
+      "flaw": "Is seven feet tall and furry, and insists he isn't.",
+      "roast": "Mr. Pruitt is a normal human teacher. Please stop photographing him.",
+      "visual": {
+        "anchor": "a towering lanky cartoon cryptid with shaggy brown fur, a huge gentle face with tiny reading glasses, very long arms, wearing a sweater vest that is far too small",
+        "outfit": "tight mustard sweater vest, crooked tie, corduroy slacks",
+        "palette": ["mossy brown", "chalkboard green", "mustard"],
+        "prop": "a tall stack of ungraded papers",
+        "expression": "nervous, overly polite smile"
+      }
+    }
+  },
+  {
+    "id": "influencer",
+    "pitch": "An influencer whose phone sees the future, badly",
+    "hero": {
+      "name": "Kai",
+      "epithet": "the Almost Viral",
+      "pronouns": "they/them",
+      "concept_status": "ok",
+      "concept_note": "",
+      "stats": { "brave": 1, "clever": -1, "charming": 3 },
+      "ability": { "name": "Sneak Preview", "text": "Check your phone for a blurry clip of what happens next." },
+      "flaw": "Cannot do anything important without filming it first.",
+      "roast": "Kai's phone sees the future. It's mostly vertical video of Kai tripping.",
+      "visual": {
+        "anchor": "a bouncy cartoon young person with a giant swoop of pink hair, huge sparkly eyes, a round ring light glowing behind their head, an oversized puffer jacket",
+        "outfit": "oversized lilac puffer jacket, chunky platform sneakers",
+        "palette": ["hot pink", "lilac", "cyan"],
+        "prop": "a phone with a blank glowing screen",
+        "expression": "mid-selfie grin, slightly panicked"
+      }
+    }
+  },
+  {
+    "id": "crossing-guard",
+    "pitch": "A crossing guard who can stop time for exactly 3 seconds",
+    "hero": {
+      "name": "Bev",
+      "epithet": "the Three-Second Woman",
+      "pronouns": "she/her",
+      "concept_status": "ok",
+      "concept_note": "",
+      "stats": { "brave": 1, "clever": -1, "charming": 3 },
+      "ability": { "name": "Hold It Right There", "text": "Raise your paddle and freeze time for exactly three seconds." },
+      "flaw": "Spends two of the three seconds deciding what to do.",
+      "roast": "Bev can stop time. She mostly uses it to finish her sandwich.",
+      "visual": {
+        "anchor": "a short barrel-shaped cartoon crossing guard woman with a round belly and tiny legs, a huge grey bun of hair, giant mirrored sunglasses, a whistle on a cord",
+        "outfit": "neon orange safety vest over a blue windbreaker, white gloves",
+        "palette": ["safety orange", "sky blue", "white"],
+        "prop": "a big blank red octagon paddle, no lettering",
+        "expression": "calm, heroic, a little sleepy"
+      }
+    }
+  }
+]

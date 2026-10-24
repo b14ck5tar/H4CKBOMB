@@ -157,6 +157,12 @@ function wrapPlayerText(task: string, input: Any) {
     input.final.final_moves = Object.fromEntries(Object.entries(input.final.final_moves).map(([k, v]) => [k, wrap(`f-${k}`, String(v))]));
   if (task === "storybook" && input.final_moves)
     input.final_moves = Object.fromEntries(Object.entries(input.final_moves).map(([k, v]) => [k, wrap(`f-${k}`, String(v))]));
+  // "One true thing about the real you": private context for one gentle nod in a scene opener only; every other task never sees it.
+  if (Array.isArray(input.state?.party))
+    input.state.party = input.state.party.map((p: Any) => {
+      const { truth_hint, ...rest } = p ?? {};
+      return task === "scene" && truth_hint ? { ...rest, truth_hint: wrap(`${p.id}-truth`, truth_hint, 80) } : rest;
+    });
   return input;
 }
 

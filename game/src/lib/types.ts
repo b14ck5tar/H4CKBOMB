@@ -23,6 +23,8 @@ export interface Player {
   color: string;
   status: "joined" | "building" | "ready";
   concept?: string;
+  pick?: string; // id of the ready-made character they picked (absent = they made their own)
+  truth?: string; // "one true thing about the real you": undefined = not asked yet, "" = skipped. Never shown during play.
   hero?: Hero;
   hasPortrait: boolean;
   abilityAvailable: boolean;
