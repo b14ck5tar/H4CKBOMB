@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Core Mechanics Menu</title>
+<style>
+  :root { --bg:#0B0716; --card:#160F2A; --ink:#F4EEFF; --mute:#A99BCB; --pink:#FF2E7E; --cyan:#3DE7FF; --amber:#FFB648; --green:#2CF5C0; --line:#2E2350; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.5 system-ui,-apple-system,Segoe UI,sans-serif; }
+  .wrap { max-width:1100px; margin:0 auto; padding:28px 16px 64px; }
+  h1 { font-size:32px; margin:0 0 6px; } h1 span { color:var(--pink); }
+  .sub { color:var(--mute); margin:0 0 14px; }
+  .legend { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 22px; font-size:13px; }
+  .pill { padding:2px 9px; border-radius:999px; border:1px solid var(--line); white-space:nowrap; }
+  .now { background:#0f3b33; border-color:var(--green); color:var(--green); }
+  .no  { background:#3b0f1e; border-color:var(--pink); color:#ff8fb5; }
+  .cd  { color:var(--amber); border-color:var(--amber); }
+  .meta{ color:var(--cyan); border-color:var(--cyan); }
+  .cl  { color:#cbb8ff; border-color:#7b5cd6; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(330px,1fr)); gap:14px; }
+  .m { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 16px; }
+  .m h2 { font-size:17px; margin:0 0 2px; }
+  .m .q { color:var(--mute); font-size:13px; margin:0 0 10px; }
+  .m ol { margin:0; padding-left:20px; } .m li { margin:6px 0; font-size:15px; }
+  .m li .pill { font-size:11px; margin-left:4px; }
+  .foot { color:var(--mute); font-size:13px; margin-top:28px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Core mechanics <span>menu</span></h1>
+  <p class="sub">Every central piece of Group Project and every way it could work, in no particular order. No recommendations here; this is just the menu.</p>
+  <div class="legend">
+    <span class="pill now">in the build now</span>
+    <span class="pill no">tried / rejected</span>
+    <span class="pill cd">raised by you</span>
+    <span class="pill meta">raised by the Meta rep</span>
+    <span class="pill cl">raised by Claude</span>
+  </div>
+
+  <div class="grid">
+
+  <div class="m"><h2>Character creation</h2><p class="q">How you become a hero.</p><ol>
+    <li>Tap a ready-made cartoon hero (instant) <span class="pill now">now</span></li>
+    <li>Describe a hero in one line; the AI writes and draws it (~40 s) <span class="pill now">now</span></li>
+    <li>Ready-made, plus 2 questions: "weirdly good at" becomes your power, "small fear" your weakness <span class="pill cd">you</span></li>
+    <li>Only the 2 questions; the AI builds the whole hero from you</li>
+    <li>"One true thing" about you, used once as a nod <span class="pill no">replaced</span></li>
+    <li>Partner's 3 questions (good at / scared of / could talk about for hours)</li>
+    <li>Selfie-based hero <span class="pill no">rejected: uncomfortable</span></li>
+    <li>Random hero, reroll once</li>
+    <li>No heroes: you play yourself</li>
+  </ol></div>
+
+  <div class="m"><h2>Whose action happens</h2><p class="q">Each beat of the story, whose idea moves it forward?</p><ol>
+    <li>Everyone acts at once; every plan happens <span class="pill now">live site</span> <span class="pill no">"too much going on"</span></li>
+    <li>Group picks one plan by vote <span class="pill no">"my answer never chosen"</span></li>
+    <li>Vote, but you can't back your own + spotlight rule (a winner can't win again until everyone has)</li>
+    <li>Turn-based: on your turn you type and roll, others watch <span class="pill cd">you</span></li>
+    <li>Turn-based: everyone suggests for the turn owner, the owner picks <span class="pill cl">Claude</span></li>
+    <li>Turn-based: everyone suggests, the table votes, the owner rolls</li>
+    <li>Rotating leader each scene, others add on</li>
+    <li>Pairs: two players team up on one action</li>
+  </ol></div>
+
+  <div class="m"><h2>Dice vs no dice</h2><p class="q">How we find out if it worked.</p><ol>
+    <li>One d20 roll per action + modifiers (classic D&D) <span class="pill cd">you</span></li>
+    <li>Roll only when the outcome is uncertain; obvious things just happen (real DM rule)</li>
+    <li>No dice: the AI decides from how good the idea is <span class="pill no">AI judging = bad feel</span></li>
+    <li>"Clever = no roll", everything else rolls <span class="pill now">now</span></li>
+    <li>Everyone rolls, best die counts <span class="pill no">"5 chances at a 20, no good"</span></li>
+    <li>Final shared roll: everyone shakes, one die <span class="pill cd">you</span></li>
+    <li>Card draw / spinner instead of dice</li>
+  </ol></div>
+
+  <div class="m"><h2>Who judges if a plan is reasonable</h2><p class="q">Difficulty, before the roll.</p><ol>
+    <li>The AI sets difficulty tiers (solid / risky / wild / miracle) + a one-line reason <span class="pill now">now</span></li>
+    <li>The AI's ruling + "Convince the DM" (argue once; can only go up) <span class="pill cd">you liked it</span></li>
+    <li>Fixed difficulty per scene; no ruling</li>
+    <li>The table votes on difficulty</li>
+    <li>The AI sets difficulty, and friends can lower it by backing the plan</li>
+  </ol></div>
+
+  <div class="m"><h2>Where stories come from</h2><p class="q">The seed of each game.</p><ol>
+    <li>Curated odd real news, hand-picked by us <span class="pill now">now (8 stories)</span></li>
+    <li>Live news pulled tonight (SerpApi) and filtered</li>
+    <li>Local news first: city, then state, then national <span class="pill cd">you kept it</span></li>
+    <li>Players bring their own story ("my flight got cancelled in Lisbon") <span class="pill meta">Meta rep</span></li>
+    <li>Players pick a setting / kind of chaos <span class="pill meta">Meta rep</span></li>
+    <li>Heavy real news with guardrails (future mode) <span class="pill cd">pitch only</span></li>
+  </ol></div>
+
+  <div class="m"><h2>Picking tonight's story</h2><p class="q">Who decides which story you play.</p><ol>
+    <li>Host taps a story on the board <span class="pill now">now</span></li>
+    <li>Fully random</li>
+    <li>3 random headlines, everyone votes <span class="pill cd">you chose</span></li>
+    <li>The AI picks the best fit for the group <span class="pill no">"unfair advantage"</span></li>
+    <li>3 random + a "write your own" card</li>
+    <li>Roll for it: one d20 picks among 3</li>
+  </ol></div>
+
+  <div class="m"><h2>How the story text is written</h2><p class="q">Who writes the words on screen.</p><ol>
+    <li>The AI writes everything live <span class="pill no">"unfollowable"</span></li>
+    <li>We hand-write the scenes; the AI writes only outcomes <span class="pill cd">you chose</span></li>
+    <li>The AI writes ahead of time; we review and edit</li>
+    <li>The AI writes ahead from a player's own story, using a strong model, while people vote</li>
+    <li>Fully hand-written, branching paths (no AI writing)</li>
+    <li>Which model: Muse Spark (fast, funnier in testing) vs Muse Wonder (bigger, slower) vs a non-Meta model <span class="pill meta">"test models, show taste"</span></li>
+  </ol></div>
+
+  <div class="m"><h2>Using each hero's quirks</h2><p class="q">How powers and weaknesses show up.</p><ol>
+    <li>Every outcome mentions every hero's quirk <span class="pill no">too much at 4+ players</span></li>
+    <li>Only the hero whose turn it is <span class="pill cd">you</span></li>
+    <li>Only when the plan uses it</li>
+    <li>Each hero gets one spotlight scene written for their power</li>
+    <li>The weakness shows up only on a failed roll, as comedy</li>
+    <li>The reveal names each real quality: "Solved by Ava's parallel parking"</li>
+  </ol></div>
+
+  <div class="m"><h2>Length and structure</h2><p class="q">How long a game lasts.</p><ol>
+    <li>Quick Tale: one scene, about 3 min <span class="pill now">now</span></li>
+    <li>Full Story: 3 scenes (hook, twist, climax), 8+ min <span class="pill now">now</span></li>
+    <li>Turn count = player count (1 turn each), the story bends to fit</li>
+    <li>2 turns each, spread across 3 scenes</li>
+    <li>Fixed clock (e.g. 5 min) and the story wraps up when time's up</li>
+    <li>Weekly chapters, continuing next week <span class="pill cd">pitch only</span></li>
+  </ol></div>
+
+  <div class="m"><h2>Connection moments between players</h2><p class="q">Mechanics that make you turn to your friend.</p><ol>
+    <li>None: just talking out loud while playing</li>
+    <li>Private clues: one only you noticed <span class="pill now">now</span></li>
+    <li>Jigsaw clues: your clue helps a friend's power</li>
+    <li>Suggest an action for a friend's hero</li>
+    <li>Help: add one friend's idea for +2</li>
+    <li>Inspiration: the AI gives a token for a great idea; you give it to a friend</li>
+    <li>Thank-you button for whoever saved or helped you <span class="pill now">now</span></li>
+    <li>Catch!: save a friend's failed roll <span class="pill no">"not in D&D"</span></li>
+    <li>Boost a friend's plan <span class="pill no">popularity contest</span></li>
+    <li>Mirror, Mirror: one kind line about a friend <span class="pill no">"weak link"</span></li>
+    <li>Emoji reactions on the TV <span class="pill now">now</span></li>
+    <li>Shake together for the final roll <span class="pill now">now</span></li>
+  </ol></div>
+
+  <div class="m"><h2>Stakes and winning</h2><p class="q">What you're playing for.</p><ol>
+    <li>Team vs the story: you win or lose together <span class="pill now">now</span></li>
+    <li>Hope meter (goes up and down, shapes the ending) <span class="pill now">now, hidden in demo</span></li>
+    <li>Ending tiers: You did it / Mostly fine / Well, it's a story <span class="pill now">now</span></li>
+    <li>No fail state: it always ends funny</li>
+    <li>Score per player <span class="pill no">no rating people</span></li>
+  </ol></div>
+
+  <div class="m"><h2>The ending</h2><p class="q">The last 60 seconds.</p><ol>
+    <li>"Official story vs what you uncovered" reveal <span class="pill now">now</span></li>
+    <li>"This really happened. Here's the article." (proof, not twist)</li>
+    <li>"Solved by Ava's parallel parking and Ben's coffee"</li>
+    <li>Group poster with all your heroes <span class="pill now">built</span></li>
+    <li>Keepsake link + QR to take home <span class="pill now">now</span></li>
+    <li>Short storybook (1-2 pages) vs the long book (8 pages) <span class="pill no">long one too slow</span></li>
+    <li>Shelf of past stories on the TV</li>
+  </ol></div>
+
+  <div class="m"><h2>Narration</h2><p class="q">How the story reaches your eyes and ears.</p><ol>
+    <li>Text only</li>
+    <li>Text appears line by line at reading speed</li>
+    <li>A voice reads it aloud (Gemini, ElevenLabs, OpenAI); samples coming <span class="pill cd">you</span></li>
+    <li>Voice for scenes only (pre-recorded) vs also live outcomes</li>
+    <li>Music and sound effects under everything <span class="pill now">now</span></li>
+  </ol></div>
+
+  <div class="m"><h2>Art</h2><p class="q">What the TV shows.</p><ol>
+    <li>Pre-painted scene per story <span class="pill now">now</span></li>
+    <li>Your heroes painted into the scenes, prepared in the background <span class="pill now">built</span></li>
+    <li>Paint a new scene live after every action (slow, 15 s)</li>
+    <li>Heroes as cards beside the scene only</li>
+  </ol></div>
+
+  <div class="m"><h2>How players input</h2><p class="q">What you do on your phone.</p><ol>
+    <li>Type (default) <span class="pill now">now</span></li>
+    <li>Voice, with talking to the phone optional <span class="pill now">now</span></li>
+    <li>Pick from AI suggestions <span class="pill no">"answers all the same"</span></li>
+    <li>Pick from friends' suggestions</li>
+    <li>Buttons only (fast, less creative)</li>
+  </ol></div>
+
+  <div class="m"><h2>Showing what the AI does</h2><p class="q">Making the AI explainable.</p><ol>
+    <li>DM's Notes panel: every decision and why <span class="pill now">now</span></li>
+    <li>A one-line reason under each ruling <span class="pill now">now</span></li>
+    <li>Judges get their own live link to the notes <span class="pill now">now</span></li>
+    <li>Hidden: just play</li>
+  </ol></div>
+
+  <div class="m"><h2>Where you play</h2><p class="q">The setup.</p><ol>
+    <li>One room: laptop or TV + phones <span class="pill now">now</span></li>
+    <li>Remote friends watch a /watch big screen <span class="pill now">built</span></li>
+    <li>Share the TV screen on FaceTime</li>
+    <li>A phone hosts, with no laptop (partner's branch)</li>
+  </ol></div>
+
+  <div class="m"><h2>Pacing</h2><p class="q">How the game keeps moving.</p><ol>
+    <li>Timers on every step <span class="pill now">now</span></li>
+    <li>Move on as soon as everyone's done</li>
+    <li>The host presses Continue</li>
+    <li>Autopilot for players who walk away <span class="pill now">built</span></li>
+    <li>Auto-roll if you don't roll, plus a buzz <span class="pill cd">you</span></li>
+  </ol></div>
+
+  <div class="m"><h2>Who it's for</h2><p class="q">Audience and safety.</p><ol>
+    <li>Kids / Teens / Adults setting <span class="pill cd">partner, kept</span></li>
+    <li>One fixed tone for everyone</li>
+    <li>Nothing in real life outside the game (no meetups) <span class="pill cd">you</span></li>
+    <li>Filters on news and on what players type <span class="pill now">now</span></li>
+  </ol></div>
+
+  </div>
+  <p class="foot">The Meta judge's lens for all of it: "the flow should just work really well", "not about how many features", AI that feels "magical", not an afterthought.</p>
+</div>
+</body>
+</html>

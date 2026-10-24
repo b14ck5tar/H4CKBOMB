@@ -74,3 +74,5 @@ Full history and train of thought: `design/00-where-we-are.md`.
 - ✅ Art a: muse-image edits paint the party's heroes into the scene art, prefetched in the background; fall back to the pre-painted scene if not ready. Group poster at the end.
 - ✅ "Your own story" a: after the core is flawless (target ~9 PM), add a 4th "Write your own" card on the story vote; muse-wonder writes it.
 - ✅ Models: muse-wonder-1.0 for story creation (ahead of time); muse-spark-1.3 minimal for live rulings; research the best model per job (images, narration incl. voice, judging, story creation), and a non-Meta model is allowed.
+- ✅ CD rebuild priorities: flow first; simple gameplay; uncluttered screens; smooth, slick transitions and story effects; execute the core VERY well; polish and fix only, no cool new features; stories easy to follow and logical, especially when weaving in each hero's quirks. Base the work on the Meta judge's feedback.
+- ⏳ Voice narration: wanted, but it must be "smooth, not obviously AI". Voice samples to be compared by ear before choosing.
