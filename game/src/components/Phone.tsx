@@ -7,7 +7,7 @@ import { HeroCard } from "./HeroCard";
 import { MicButton } from "./MicButton";
 import { Hourglass } from "./Effects";
 import { Stamp } from "./Stamp";
-import type { GameState, Player } from "@/lib/types";
+import type { GameState, Hero, Player } from "@/lib/types";
 
 const EXAMPLES = [
   "a night-shift barista who can hear electricity",
@@ -17,7 +17,9 @@ const EXAMPLES = [
   "an influencer whose phone sees the future, badly",
 ];
 
-const READING = ["quest", "narrating", "outcome", "epilogue", "reveal"];
+const READING = ["quest", "narrating", "outcome", "mirror_reveal", "epilogue", "reveal"];
+const PLAY_PHASES = ["narrating", "pitch", "appeal", "roll", "catch", "outcome", "final_roll", "final_result"];
+const GUESSES = ["Probably nothing much", "Something about a mistake I made", "Something nice I did"];
 
 function vibrate(p: number | number[]) {
   try {
@@ -328,6 +330,155 @@ function Appeal({ state, me, send, deadlineAt }: { state: GameState; me: Player;
   );
 }
 
+// ---------- Mirror, Mirror ----------
+function frameFor(h?: Hero) {
+  if (!h) return "They were at their best when";
+  const poss = h.pronouns === "he/him" ? "his" : h.pronouns === "she/her" ? "her" : "their";
+  return `${h.name} was at ${poss} best when`;
+}
+
+function MissionCard({ state, me }: { state: GameState; me: Player }) {
+  const ward = state.players.find((p) => p.id === state.wards[me.id]);
+  if (!ward?.hero) return null;
+  return (
+    <div className="rounded border-2 border-[var(--gilt-bright)] bg-black/40 p-4 flex flex-col gap-1">
+      <span className="font-ui text-xs uppercase tracking-[0.2em] text-[var(--gilt-bright)]">🪞 Secret mission</span>
+      <p className="text-xl leading-snug">
+        You're <b>{ward.hero.name}</b>'s guardian tonight{ward.name && ward.name !== ward.hero.name ? ` (that's ${ward.name})` : ""}. Watch for one great moment.
+      </p>
+      <span className="text-xs text-parchment/60">Keep it secret. You'll write one nice sentence about them at the end.</span>
+    </div>
+  );
+}
+
+function MirrorWrite({ state, me, send, deadlineAt }: { state: GameState; me: Player; send: Send; deadlineAt: number }) {
+  const [text, setText] = useState("");
+  const card = state.mirror.find((c) => c.guardianId === me.id);
+  const ward = state.players.find((p) => p.id === state.wards[me.id]);
+  if (!card || !ward?.hero) return <Watch text="Eyes on the TV" />;
+  if (card.written)
+    return (
+      <div className="page p-6 flex flex-col items-center gap-3 text-center">
+        <p className="font-heading text-2xl uppercase">Sent ✓</p>
+        <p className="text-ink-soft">Your words stay secret until the end. {ward.hero.name} has no idea.</p>
+      </div>
+    );
+  const moments = state.mirrorMoments[me.id] ?? [];
+  const frame = frameFor(ward.hero);
+  return (
+    <form
+      className="page p-5 flex flex-col gap-3"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (!text.trim()) return;
+        send("mirror", { text: text.trim() });
+        vibrate(20);
+      }}
+    >
+      <Timer deadlineAt={deadlineAt} total={40000} />
+      <span className="font-ui text-xs uppercase tracking-[0.2em] text-[var(--crimson)]">🪞 Your ward: {ward.hero.name}</span>
+      {moments.length > 0 && (
+        <div className="flex flex-col gap-1">
+          <span className="font-ui text-xs uppercase tracking-widest text-ink-soft">What they said tonight</span>
+          {moments.map((m, i) => (
+            <p key={i} className="italic leading-snug">“{m}”</p>
+          ))}
+        </div>
+      )}
+      <p className="font-heading text-xl leading-snug">{frame}…</p>
+      <textarea className="input min-h-24" value={text} onChange={(e) => setText(e.target.value)} maxLength={200} placeholder="…they kept going when it got silly" />
+      <MicButton onTranscript={(t) => setText(t)} />
+      <p className="text-ink-soft text-sm">Only nice things. One true moment beats a big compliment.</p>
+      <button className="btn btn-crimson text-lg" type="submit" disabled={!text.trim()}>Send it</button>
+    </form>
+  );
+}
+
+function MirrorGuess({ state, me, send, deadlineAt }: { state: GameState; me: Player; send: Send; deadlineAt: number }) {
+  const [text, setText] = useState("");
+  const card = state.mirror.find((c) => c.wardId === me.id);
+  if (!card) return <Watch text="Eyes on the TV" />;
+  if (card.guess)
+    return (
+      <div className="page p-6 flex flex-col items-center gap-3 text-center">
+        <p className="font-ui text-xs uppercase tracking-widest text-ink-soft">Your guess</p>
+        <p className="text-xl italic">“{card.guess}”</p>
+        <p className="font-heading uppercase">Waiting on the others…</p>
+      </div>
+    );
+  const guess = (g: string) => {
+    send("guess", { text: g });
+    vibrate(15);
+  };
+  return (
+    <div className="page p-5 flex flex-col gap-3">
+      <Timer deadlineAt={deadlineAt} total={20000} />
+      <p className="font-heading text-2xl leading-snug">Someone was secretly watching you tonight. What do you think they wrote about you?</p>
+      {GUESSES.map((g) => (
+        <button key={g} className="btn btn-ghost text-lg text-left" onClick={() => guess(g)}>
+          {g}
+        </button>
+      ))}
+      <form
+        className="flex flex-col gap-2"
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (text.trim()) guess(text.trim());
+        }}
+      >
+        <input className="input" value={text} onChange={(e) => setText(e.target.value)} maxLength={120} placeholder="Or say it in your own words" />
+        <button className="btn btn-crimson" type="submit" disabled={!text.trim()}>Send my guess</button>
+      </form>
+    </div>
+  );
+}
+
+function MirrorMine({ state, me, send, delay }: { state: GameState; me: Player; send: Send; delay: boolean }) {
+  const card = state.mirror.find((c) => c.wardId === me.id);
+  const [shown, setShown] = useState(!delay);
+  const [sent, setSent] = useState(0);
+  useEffect(() => {
+    if (shown) return;
+    const t = setTimeout(() => {
+      setShown(true);
+      vibrate([20, 60, 20]);
+    }, 2200);
+    return () => clearTimeout(t);
+  }, [shown]);
+  if (!card?.sentence) return null;
+  const guardian = state.players.find((p) => p.id === card.guardianId)?.hero?.name ?? "a friend";
+  return (
+    <div className="page p-5 flex flex-col gap-3 ring-4 ring-[var(--gilt-bright)]">
+      <span className="font-ui text-xs uppercase tracking-widest text-[var(--crimson)]">🪞 About you</span>
+      <p className="italic text-ink-soft">You guessed: {card.guess ? `“${card.guess}”` : "you were too shy to guess"}</p>
+      {shown ? (
+        <>
+          <p className="font-heading text-2xl leading-snug fade-in">{card.sentence}</p>
+          <p className="font-ui text-[var(--crimson)]">From your guardian, {guardian}</p>
+          <button
+            className="btn btn-crimson text-2xl relative"
+            onClick={() => {
+              send("thanks");
+              setSent((n) => n + 1);
+              vibrate(25);
+            }}
+          >
+            ❤️ Thank them
+            {sent > 0 && (
+              <span key={sent} className="absolute -top-6 right-6 text-4xl fade-in pointer-events-none">
+                ❤️
+              </span>
+            )}
+          </button>
+          {sent > 0 && <p className="text-center text-sm text-ink-soft">{guardian} just felt that.</p>}
+        </>
+      ) : (
+        <p className="font-heading text-xl text-ink-soft animate-pulse">Your guardian wrote…</p>
+      )}
+    </div>
+  );
+}
+
 function BigButton({ label, sub, onClick, tone = "crimson" }: { label: string; sub?: string; onClick: () => void; tone?: "crimson" | "gilt" }) {
   return (
     <button
@@ -346,6 +497,16 @@ export function Phone({ code }: { code: string }) {
   useEffect(() => {
     if (state?.phase !== "final_roll") setRolledFinal(false);
   }, [state?.phase]);
+  const myWard = me ? state?.wards?.[me.id] : undefined;
+  const thanked = myWard ? state?.thanks?.[myWard] ?? 0 : 0;
+  const lastThanked = useRef(0);
+  useEffect(() => {
+    if (thanked > lastThanked.current) {
+      vibrate([40, 60, 40, 60, 120]);
+      sfx.pop();
+    }
+    lastThanked.current = thanked;
+  }, [thanked]);
 
   if (!state) {
     return (
@@ -362,6 +523,8 @@ export function Phone({ code }: { code: string }) {
 
   const name = (id: string) => state.players.find((p) => p.id === id)?.hero?.name ?? "Someone";
   const myClue = state.clues[me.id];
+  const saidAboutMe = state.mirror?.find((c) => c.wardId === me.id)?.sentence ?? "";
+  const wardHero = myWard ? state.players.find((p) => p.id === myWard)?.hero : undefined;
   let body: React.ReactNode;
 
   switch (state.phase) {
@@ -384,6 +547,7 @@ export function Phone({ code }: { code: string }) {
     case "reveal":
       body = (
         <div className="flex flex-col gap-3">
+          {state.phase === "quest" && <MissionCard state={state} me={me} />}
           {state.phase === "narrating" && <Clue text={myClue} />}
           {state.busy ? <Watch text={state.busy} /> : <Watch text={state.phase === "reveal" ? "Look at the TV. This really happened." : "Eyes on the TV"} />}
           <ReadyButton state={state} me={me} send={send} />
@@ -489,10 +653,40 @@ export function Phone({ code }: { code: string }) {
         />
       );
       break;
+    case "mirror_write":
+      body = <MirrorWrite state={state} me={me} send={send} deadlineAt={deadlineAt} />;
+      break;
+    case "mirror_guess":
+      body = <MirrorGuess state={state} me={me} send={send} deadlineAt={deadlineAt} />;
+      break;
+    case "mirror_reveal": {
+      const idx = state.mirror.findIndex((c) => c.wardId === me.id);
+      const mineNow = !state.busy && idx === state.mirrorIndex;
+      body = (
+        <div className="flex flex-col gap-3">
+          {state.busy ? (
+            <Watch text={state.busy} />
+          ) : (
+            <>
+              {idx >= 0 && idx <= state.mirrorIndex && <MirrorMine key={idx} state={state} me={me} send={send} delay={mineNow} />}
+              {!mineNow && <Watch text={`Eyes on the TV: this one's about ${name(state.mirror[state.mirrorIndex]?.wardId ?? "")}`} />}
+            </>
+          )}
+          <ReadyButton state={state} me={me} send={send} />
+        </div>
+      );
+      break;
+    }
     case "storybook":
       body = (
         <div className="flex flex-col gap-3">
           <HeroCard player={me} portrait={portrait} showRoast={false} />
+          {saidAboutMe && (
+            <div className="page p-5 flex flex-col gap-1">
+              <span className="font-ui text-xs uppercase tracking-widest text-[var(--crimson)]">Said about you</span>
+              <p className="text-lg leading-snug">{saidAboutMe}</p>
+            </div>
+          )}
           <div className="page p-5 text-center">
             <p className="font-heading text-2xl uppercase">Thanks for playing</p>
             <p className="text-ink-soft">Your story's on the TV. Next chapter, same crew, whenever you're ready.</p>
@@ -507,8 +701,14 @@ export function Phone({ code }: { code: string }) {
   return (
     <Shell me={me} portrait={portrait}>
       {me.peril && state.phase !== "pitch" && <p className="font-ui font-bold text-center text-[var(--gilt-bright)]">You're stuck: {me.peril}</p>}
+      {wardHero && PLAY_PHASES.includes(state.phase) && (
+        <p className="font-ui text-xs text-center text-parchment/70">🪞 Secretly watching {wardHero.name}. Look for one great moment.</p>
+      )}
+      {wardHero && thanked > 0 && (
+        <p key={thanked} className="page p-3 text-center font-heading text-xl fade-in">❤️ {wardHero.name} says thanks</p>
+      )}
       {body}
-      {me.hero && !READING.includes("never") && <ReactionBar send={send} />}
+      {me.hero && <ReactionBar send={send} />}
     </Shell>
   );
 }

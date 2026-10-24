@@ -146,6 +146,15 @@ export interface Storybook {
   real_story_bridge: string;
 }
 
+/** Mirror, Mirror: one card per hero, revealed after the Final Roll. */
+export interface MirrorCard {
+  wardId: string; // the hero this card is about
+  guardianId: string; // who secretly watched them and wrote the sentence
+  written: boolean; // the guardian sent their own sentence (false = the AI wrote one from the log)
+  guess: string; // what the ward guessed their guardian wrote ("" = no guess)
+  sentence: string; // "" until the reveal starts
+}
+
 export type Phase =
   | "lobby"
   | "quest"
@@ -157,6 +166,9 @@ export type Phase =
   | "outcome"
   | "final_roll"
   | "final_result"
+  | "mirror_write"
+  | "mirror_guess"
+  | "mirror_reveal"
   | "epilogue"
   | "reveal"
   | "storybook";
@@ -200,6 +212,12 @@ export interface GameState {
   finalMoves: Record<string, string>;
   epilogue: string;
   storybook: Storybook | null;
+  // Mirror, Mirror (empty with one player)
+  wards: Record<string, string>; // guardian id -> ward id (phones only show their own)
+  mirrorMoments: Record<string, string[]>; // guardian id -> a few of their ward's own lines, as reminders
+  mirror: MirrorCard[]; // in reveal order
+  mirrorIndex: number; // which mirror card is showing
+  thanks: Record<string, number>; // ward id -> times they tapped "Thank them"
   log: LogEntry[];
   busy: string;
 }

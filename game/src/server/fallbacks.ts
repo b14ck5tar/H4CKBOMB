@@ -81,6 +81,32 @@ export function fallbackRound(actions: { hero_id: string; hero_name?: string; ba
 export const FALLBACK_EPILOGUE =
   "The dice land and, somehow, it holds. Everyone goes home with a story nobody will believe. And that's the version they'll never print.";
 
+/** Words that mean a draft can't be shown as written when the kindness pass is unavailable. */
+const UNKIND = /\b(stupid|dumb|idiot|moron|ugly|fat|hate|hated|sucks?|sucked|loser|worst|annoying|useless|lame|trash|garbage|pathetic|shut up|creep|weirdo|fuck\w*|shit\w*|bitch\w*|ass|asshole|crap)\b/i;
+
+export interface KindInput {
+  ward_name?: string;
+  pronouns?: string;
+  frame?: string;
+  moments?: { pitch?: string; what_happened?: string }[];
+  draft?: string;
+}
+
+/** Mirror, Mirror without Muse: keep a kind draft, otherwise write a warm line from the ward's own best moment. */
+export function fallbackKind(input: KindInput): { ok: boolean; sentence: string } {
+  const frame = String(input.frame || `${input.ward_name || "They"} was at their best when`).trim();
+  const subj = input.pronouns === "he/him" ? "he" : input.pronouns === "she/her" ? "she" : "they";
+  const draft = String(input.draft ?? "").replace(/[<>]/g, "").replace(/\s+/g, " ").trim();
+  let rest = draft.toLowerCase().startsWith(frame.toLowerCase()) ? draft.slice(frame.length).trim() : draft;
+  rest = rest.replace(/^(when|…|\.\.\.)\s*/i, "").replace(/[\s.!?,]+$/, "");
+  if (rest.split(/\s+/).length >= 2 && !UNKIND.test(rest)) return { ok: true, sentence: `${frame} ${rest}.` };
+  const pitch = String(input.moments?.[0]?.pitch ?? "").replace(/[<>"“”]/g, "").replace(/[\s.!?]+$/, "").slice(0, 70);
+  return {
+    ok: !draft,
+    sentence: pitch ? `${frame} ${subj} said "${pitch}" and went all in.` : `${frame} ${subj} stayed in it with everyone, start to finish.`,
+  };
+}
+
 export function fallbackStorybook(title: string, heroes: { id: string; name: string }[], images: string[]): Storybook {
   return {
     title,

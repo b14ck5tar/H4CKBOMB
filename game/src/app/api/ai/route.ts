@@ -4,6 +4,8 @@ import {
   CHARACTER_SCHEMA,
   CHARACTER_SYSTEM,
   EPILOGUE_SYSTEM,
+  KIND_SCHEMA,
+  KIND_SYSTEM,
   ROUND_SCHEMA,
   ROUND_SYSTEM,
   SCENE_SCHEMA,
@@ -13,12 +15,12 @@ import {
   VERDICT_SYSTEM,
   storybookSchema,
 } from "@/server/prompts";
-import { FALLBACK_EPILOGUE, fallbackHero, fallbackRound, fallbackScene, fallbackStorybook, fallbackVerdict } from "@/server/fallbacks";
+import { FALLBACK_EPILOGUE, fallbackHero, fallbackKind, fallbackRound, fallbackScene, fallbackStorybook, fallbackVerdict } from "@/server/fallbacks";
 import type { Hero, Stat } from "@/lib/types";
 
 export const maxDuration = 60;
 
-const TASKS = ["character", "scene", "verdict", "round", "epilogue", "storybook"];
+const TASKS = ["character", "scene", "verdict", "round", "epilogue", "storybook", "kind"];
 
 /** Player-authored text is wrapped so the model treats it as in-world speech, never instructions. */
 function wrap(id: string, text: string, max = 240) {
@@ -56,6 +58,8 @@ async function run(task: string, input: Any) {
       return museJSON({ task: "dm-verdict", system: VERDICT_SYSTEM, schema: VERDICT_SCHEMA, effort: "minimal", timeoutMs: 10_000, user: JSON.stringify(input) });
     case "round":
       return museJSON({ task: "dm-round", system: ROUND_SYSTEM, schema: ROUND_SCHEMA, effort: "low", timeoutMs: 14_000, user: JSON.stringify(input) });
+    case "kind":
+      return museJSON({ task: "dm-kind", system: KIND_SYSTEM, schema: KIND_SCHEMA, effort: "minimal", timeoutMs: 9000, maxTokens: 1200, user: JSON.stringify(input) });
     case "epilogue":
       return museText({ task: "dm-epilogue", system: EPILOGUE_SYSTEM, user: JSON.stringify(input), effort: "low" });
     case "storybook":
@@ -82,6 +86,8 @@ function fallback(task: string, input: Any) {
       return { verdicts: ((input.pitches as Any[]) ?? []).map((p) => fallbackVerdict(p.pitch_id, p.best_stat ?? "brave")) };
     case "round":
       return fallbackRound(input.actions ?? []);
+    case "kind":
+      return fallbackKind(input);
     case "epilogue":
       return FALLBACK_EPILOGUE;
     case "storybook":
@@ -129,6 +135,16 @@ const TIERS = ["clever", "solid", "risky", "absurd", "miracle"];
 
 /** Every piece of player-written text is wrapped as <player_input>, wherever it rides along. */
 function wrapPlayerText(task: string, input: Any) {
+  if (task === "kind") {
+    // A fresh object: the fallback needs the raw draft.
+    return {
+      ...input,
+      ward_name: String(input.ward_name ?? "").slice(0, 40),
+      frame: String(input.frame ?? "").slice(0, 80),
+      draft: input.draft ? wrap("draft", input.draft, 240) : "",
+      moments: ((input.moments as Any[]) ?? []).slice(0, 4).map((m, i) => ({ pitch: wrap(`m${i}`, m?.pitch, 200), what_happened: String(m?.what_happened ?? "").slice(0, 240) })),
+    };
+  }
   if (task === "verdict") {
     input.pitches = ((input.pitches as Any[]) ?? []).map((p) => ({ ...p, text: wrap(p.hero_id, p.text), appeal: p.appeal ? wrap(`${p.hero_id}-appeal`, p.appeal) : "" }));
     if (Array.isArray(input.other_pitches)) input.other_pitches = input.other_pitches.map((t: string, i: number) => wrap(`o${i}`, t));
@@ -148,13 +164,21 @@ export async function POST(req: Request) {
   const { task, input: rawInput } = await req.json();
   if (!TASKS.includes(task)) return NextResponse.json({ error: "unknown task" }, { status: 400 });
   const input = wrapPlayerText(task, rawInput ?? {});
+  const fbInput = task === "kind" ? rawInput ?? {} : input;
   try {
     let data: Any = await run(task, input);
     if (task === "epilogue") {
       if (typeof data !== "string" || !data.trim()) throw new Error("empty epilogue");
       data = scrub(data);
     } else {
-      data = scrubDeep(conform(fallback(task, input), data));
+      data = scrubDeep(conform(fallback(task, fbInput), data));
+    }
+    if (task === "kind") {
+      // The sentence must finish the frame and stay a sentence; otherwise use the safe local version.
+      const frame = String(rawInput?.frame ?? "").trim().toLowerCase();
+      const sentence = String(data.sentence ?? "").replace(/!/g, ".").trim();
+      if (!sentence || (frame && !sentence.toLowerCase().startsWith(frame)) || sentence.length > 260) throw new Error("kind sentence off-frame");
+      data = { ok: !!data.ok, sentence: /[.?"”]$/.test(sentence) ? sentence : `${sentence}.` };
     }
     if (task === "verdict") {
       data.verdicts = (data.verdicts as Any[]).map((v) => ({
@@ -166,6 +190,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ data, fallback: false });
   } catch (e) {
     console.error(`[ai] ${task} failed, using fallback:`, (e as Error).message);
-    return NextResponse.json({ data: fallback(task, input), fallback: true });
+    return NextResponse.json({ data: fallback(task, fbInput), fallback: true });
   }
 }

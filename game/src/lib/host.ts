@@ -25,6 +25,7 @@ import type {
   Band,
   GameState,
   Hero,
+  MirrorCard,
   Pitch,
   Player,
   QuestSeed,
@@ -52,7 +53,36 @@ export interface ShelfBook {
   cover: string;
 }
 
-const READING = new Set(["quest", "narrating", "outcome", "epilogue", "reveal"]);
+const READING = new Set(["quest", "narrating", "outcome", "mirror_reveal", "epilogue", "reveal"]);
+const MIRROR_WRITE_MS = 40_000;
+const MIRROR_GUESS_MS = 20_000;
+const MIRROR_PHASES = ["mirror_write", "mirror_guess", "mirror_reveal"];
+const BAND_RANK: Record<Band, number> = { LEGENDARY: 0, SUCCESS: 1, YES_BUT: 2, FAIL: 3, CATASTROPHE: 4 };
+const UNKIND = /\b(stupid|dumb|idiot|moron|ugly|fat|hate|hated|sucks?|sucked|loser|worst|annoying|useless|lame|trash|garbage|pathetic|shut up|creep|weirdo|fuck\w*|shit\w*|bitch\w*|ass|asshole|crap)\b/i;
+
+/** Uniform-enough random int in [0, n) from crypto. */
+function randInt(n: number) {
+  const buf = new Uint32Array(1);
+  crypto.getRandomValues(buf);
+  return buf[0] % n;
+}
+
+/** "Doug was at his best when" */
+function mirrorFrame(h: Hero) {
+  const poss = h.pronouns === "he/him" ? "his" : h.pronouns === "she/her" ? "her" : "their";
+  return `${h.name} was at ${poss} best when`;
+}
+
+/** Client-side safety net when the kindness pass doesn't answer in time. Mirrors fallbackKind on the server. */
+function kindFallback(h: Hero, moments: { pitch: string }[], draft: string) {
+  const frame = mirrorFrame(h);
+  const subj = h.pronouns === "he/him" ? "he" : h.pronouns === "she/her" ? "she" : "they";
+  let rest = draft.toLowerCase().startsWith(frame.toLowerCase()) ? draft.slice(frame.length).trim() : draft.trim();
+  rest = rest.replace(/^(when|…|\.\.\.)\s*/i, "").replace(/[\s.!?,]+$/, "");
+  if (rest.split(/\s+/).length >= 2 && !UNKIND.test(rest)) return `${frame} ${rest}.`;
+  const pitch = (moments[0]?.pitch ?? "").replace(/["“”]/g, "").replace(/[\s.!?]+$/, "").slice(0, 70);
+  return pitch ? `${frame} ${subj} said "${pitch}" and went all in.` : `${frame} ${subj} stayed in it with everyone, start to finish.`;
+}
 const SUCCESS_BANDS: Band[] = ["YES_BUT", "SUCCESS", "LEGENDARY"];
 
 function bestStat(h?: Hero): Stat {
@@ -112,6 +142,8 @@ export class GameHost {
   private reactionId = 0;
   private lastReact: Record<string, number> = {};
   private lastPortraitSend: Record<string, number> = {};
+  private mirrorP = new Map<string, Promise<string>>(); // guardian id -> their finished, kind sentence
+  private lastThanks: Record<string, number> = {};
 
   constructor(code: string) {
     this.state = {
@@ -147,6 +179,11 @@ export class GameHost {
       finalMoves: {},
       epilogue: "",
       storybook: null,
+      wards: {},
+      mirrorMoments: {},
+      mirror: [],
+      mirrorIndex: 0,
+      thanks: {},
       log: [],
       busy: "",
     };
@@ -279,6 +316,12 @@ export class GameHost {
         return this.onReady(m.pid);
       case "react":
         return this.onReact(m.pid, m.emoji);
+      case "mirror":
+        return this.onMirrorWrite(m.pid, m.text);
+      case "guess":
+        return this.onMirrorGuess(m.pid, m.text);
+      case "thanks":
+        return this.onThanks(m.pid);
     }
   }
 
@@ -399,8 +442,14 @@ export class GameHost {
     this.recentLines = [];
     this.threatMood = this.seed!.the_threat.description.split(".")[0];
     this.reactionCounts = {};
+    this.mirrorP.clear();
     this.set({
       players,
+      wards: this.assignWards(players.map((p) => p.id)),
+      mirrorMoments: {},
+      mirror: [],
+      mirrorIndex: 0,
+      thanks: {},
       phase: "quest",
       hope: HOPE_START,
       log: [],
@@ -415,6 +464,20 @@ export class GameHost {
       rescue: null,
     });
     this.reading(this.seed!.fairytale_premise, () => this.openScene(0), 9000);
+  }
+
+  /**
+   * Mirror, Mirror: everyone secretly guards one other hero. A shuffled single cycle, so nobody gets themselves,
+   * everyone has exactly one guardian, and nobody is picked more than anyone else. One player: no mirror.
+   */
+  private assignWards(ids: string[]): Record<string, string> {
+    if (ids.length < 2) return {};
+    const order = [...ids];
+    for (let i = order.length - 1; i > 0; i--) {
+      const j = randInt(i + 1);
+      [order[i], order[j]] = [order[j], order[i]];
+    }
+    return Object.fromEntries(order.map((id, i) => [id, order[(i + 1) % order.length]]));
   }
 
   // ---------- DM state ----------
@@ -963,7 +1026,7 @@ export class GameHost {
   }
 
   private finish(grim: boolean) {
-    if (["final_result", "epilogue", "reveal", "storybook"].includes(this.state.phase)) return;
+    if (["final_result", ...MIRROR_PHASES, "epilogue", "reveal", "storybook"].includes(this.state.phase)) return;
     this.clearTimer();
     const dice = grim ? {} : { ...this.finalDice };
     const best = Object.entries(dice).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "";
@@ -1022,10 +1085,146 @@ export class GameHost {
       30_000,
       bookFallback,
     );
-    this.setTimer(grim ? 2500 : 4500, () => this.startEpilogue());
+    this.setTimer(grim ? 2500 : 4500, () => (Object.keys(this.state.wards).length ? this.startMirror() : this.startEpilogue()));
+  }
+
+  // ---------- Mirror, Mirror ----------
+  /** The ward's own moments from tonight, best first: what they said, and what happened. */
+  private wardMoments(wardId: string) {
+    const fromLog = this.state.log
+      .filter((l) => l.heroId === wardId && l.pitch)
+      .map((l, i) => ({ pitch: l.pitch, what_happened: l.narration, rank: BAND_RANK[l.band] * 10 + i }));
+    const fin = this.state.finalMoves[wardId];
+    if (fin) fromLog.push({ pitch: fin, what_happened: "their final move in the last scene", rank: 15 });
+    const seen = new Set<string>();
+    return fromLog
+      .sort((a, b) => a.rank - b.rank)
+      .filter((m) => {
+        const k = m.pitch.trim().toLowerCase();
+        return !seen.has(k) && !!seen.add(k);
+      })
+      .slice(0, 3)
+      .map(({ pitch, what_happened }) => ({ pitch, what_happened }));
+  }
+
+  private startMirror() {
+    this.clearTimer();
+    this.mirrorP.clear();
+    const wards = this.state.wards;
+    const n = Object.keys(wards).length;
+    // Reveal order follows the cycle, so each card's guardian is the hero on the card before it.
+    const cards: MirrorCard[] = [];
+    let g = Object.keys(wards)[0];
+    for (let k = 0; k < n && g; k++) {
+      cards.push({ wardId: wards[g], guardianId: g, written: false, guess: "", sentence: "" });
+      g = wards[g];
+    }
+    const mirrorMoments = Object.fromEntries(Object.entries(wards).map(([gid, wid]) => [gid, this.wardMoments(wid).map((m) => m.pitch)]));
+    this.set({
+      phase: "mirror_write",
+      mirror: cards.filter((c) => this.player(c.wardId)?.hero && this.player(c.guardianId)?.hero),
+      mirrorMoments,
+      mirrorIndex: 0,
+      ready: [],
+      busy: "",
+    });
+    this.setTimer(MIRROR_WRITE_MS, () => this.endMirrorWrite());
+  }
+
+  /** Run one sentence through the kindness pass. Never blocks: a local version stands in after 9 s. */
+  private polish(guardianId: string, draft: string) {
+    const wardId = this.state.wards[guardianId];
+    const h = this.player(wardId)?.hero;
+    if (!h) return;
+    const moments = this.wardMoments(wardId);
+    const p = withTimeout(
+      ai<{ ok: boolean; sentence: string }>("kind", { ward_name: h.name, pronouns: h.pronouns, frame: mirrorFrame(h), moments, draft }).then((r) =>
+        r.data?.sentence ? r.data.sentence : kindFallback(h, moments, draft),
+      ),
+      9000,
+      () => kindFallback(h, moments, draft),
+    );
+    this.mirrorP.set(guardianId, p);
+  }
+
+  private onMirrorWrite(pid: string, text: string) {
+    if (this.state.phase !== "mirror_write" || !this.state.mirror.some((c) => c.guardianId === pid) || this.mirrorP.has(pid)) return;
+    const clean = String(text ?? "").replace(/[<>]/g, "").replace(/\s+/g, " ").trim().slice(0, 200);
+    if (!clean) return;
+    this.polish(pid, clean);
+    const mirror = this.state.mirror.map((c) => (c.guardianId === pid ? { ...c, written: true } : c));
+    this.set({ mirror });
+    if (mirror.every((c) => c.written)) this.endMirrorWrite();
+  }
+
+  private endMirrorWrite() {
+    if (this.state.phase !== "mirror_write") return;
+    this.clearTimer();
+    // Whoever ran out of time: the DM writes one warm line from what their ward actually did.
+    this.state.mirror.forEach((c) => {
+      if (!this.mirrorP.has(c.guardianId)) this.polish(c.guardianId, "");
+    });
+    this.set({ phase: "mirror_guess" });
+    this.setTimer(MIRROR_GUESS_MS, () => this.startMirrorReveal());
+  }
+
+  private onMirrorGuess(pid: string, text: string) {
+    if (this.state.phase !== "mirror_guess") return;
+    const card = this.state.mirror.find((c) => c.wardId === pid);
+    const clean = String(text ?? "").replace(/[<>]/g, "").replace(/\s+/g, " ").trim().slice(0, 120);
+    if (!card || card.guess || !clean) return;
+    const mirror = this.state.mirror.map((c) => (c.wardId === pid ? { ...c, guess: clean } : c));
+    this.set({ mirror });
+    if (mirror.every((c) => c.guess)) this.startMirrorReveal();
+  }
+
+  private async startMirrorReveal() {
+    if (this.state.phase !== "mirror_guess") return;
+    this.clearTimer();
+    this.set({ phase: "mirror_reveal", busy: "The mirror is polishing the glass…", mirrorIndex: 0, ready: [] });
+    const mirror = await Promise.all(
+      this.state.mirror.map(async (c) => {
+        const h = this.player(c.wardId)!.hero!;
+        const sentence = (await this.mirrorP.get(c.guardianId)?.catch(() => "")) || kindFallback(h, this.wardMoments(c.wardId), "");
+        return { ...c, sentence };
+      }),
+    );
+    if ((this.state.phase as string) !== "mirror_reveal") return; // moved on while we waited
+    this.set({ mirror, busy: "" });
+    this.stepMirror(0);
+  }
+
+  /** One card per hero (Continue / everyone Ready / timer), then the epilogue. */
+  private stepMirror(i: number) {
+    if (this.state.phase !== "mirror_reveal") return;
+    const card = this.state.mirror[i];
+    if (!card) return this.startEpilogue();
+    this.set({ mirrorIndex: i });
+    this.reading(`${card.guess} ${card.sentence}`, () => this.stepMirror(i + 1), 11000);
+  }
+
+  private onThanks(pid: string) {
+    const phase = this.state.phase;
+    if (!["mirror_reveal", "epilogue", "reveal", "storybook"].includes(phase)) return;
+    const idx = this.state.mirror.findIndex((c) => c.wardId === pid);
+    if (idx < 0 || (phase === "mirror_reveal" && (idx > this.state.mirrorIndex || this.state.busy))) return;
+    const now = Date.now();
+    if (now - (this.lastThanks[pid] ?? 0) < 600) return;
+    this.lastThanks[pid] = now;
+    const n = (this.state.thanks[pid] ?? 0) + 1;
+    if (n > 30) return;
+    this.set({ thanks: { ...this.state.thanks, [pid]: n } });
+    const r = { pid, emoji: "❤️", id: ++this.reactionId };
+    this.reactionSubs.forEach((f) => f(r));
+    // A thank-you shouldn't get cut off either.
+    if (READING.has(phase) && this.deadlineAt && this.deadlineAt - now < 3000 && this.pending) {
+      const fn = this.pending;
+      this.setTimer(this.deadlineAt - now + 2500, fn);
+    }
   }
 
   private async startEpilogue() {
+    this.clearTimer();
     this.set({ phase: "epilogue", busy: "The DM wraps it up…", ready: [] });
     const text = await this.epilogueP!;
     this.set({ epilogue: text, busy: "" });
@@ -1095,11 +1294,17 @@ export class GameHost {
       finalMoves: {},
       epilogue: "",
       storybook: null,
+      wards: {},
+      mirrorMoments: {},
+      mirror: [],
+      mirrorIndex: 0,
+      thanks: {},
       log: [],
       rescue: null,
       busy: "",
       ready: [],
     });
+    this.mirrorP.clear();
   }
 
   close() {

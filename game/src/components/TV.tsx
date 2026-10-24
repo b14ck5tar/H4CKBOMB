@@ -13,7 +13,7 @@ import { HeroCard } from "./HeroCard";
 
 const fmt = (n: number) => (n >= 0 ? `+${n}` : `${n}`);
 const initials = (s: string) => s.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
-const READING = ["quest", "narrating", "outcome", "epilogue", "reveal"];
+const READING = ["quest", "narrating", "outcome", "mirror_reveal", "epilogue", "reveal"];
 
 function useHost(host: GameHost) {
   return useSyncExternalStore(host.subscribe, host.getState, host.getState);
@@ -545,6 +545,105 @@ function FinalRollView({ host, s }: { host: GameHost; s: GameState }) {
   );
 }
 
+// ---------- Mirror, Mirror ----------
+function MirrorTitle({ sub }: { sub: string }) {
+  return (
+    <div className="flex flex-col items-center gap-3 text-center">
+      <p className="font-ui uppercase tracking-[0.3em] text-base text-[var(--signal)]">The secret mission</p>
+      <h2 className="font-display text-7xl uppercase text-[var(--gilt-bright)]">Mirror, Mirror</h2>
+      <p className="font-heading text-4xl leading-tight max-w-5xl">{sub}</p>
+    </div>
+  );
+}
+
+function MirrorWait({ host, s }: { host: GameHost; s: GameState }) {
+  const write = s.phase === "mirror_write";
+  useEffect(() => {
+    sfx.whoosh();
+  }, [write]);
+  return (
+    <div className="flex-1 min-h-0 flex flex-col justify-center gap-10 px-8 pb-4">
+      <MirrorTitle
+        sub={
+          write
+            ? "All night, each of you secretly watched one friend. Finish one sentence about them on your phone."
+            : "Now guess: what do you think your guardian wrote about you?"
+        }
+      />
+      <p className="text-center font-ui text-xl text-parchment/75">
+        {write ? "Only nice things. Nobody gets rated. Nobody knows who has who, yet." : "Tap a guess on your phone. Be honest."}
+      </p>
+      <Crew
+        host={host}
+        s={s}
+        mark={(p) => {
+          const c = write ? s.mirror.find((m) => m.guardianId === p.id) : s.mirror.find((m) => m.wardId === p.id);
+          if (!c) return "";
+          return write ? (c.written ? "written ✓" : "…") : c.guess ? "guessed ✓" : "…";
+        }}
+      />
+    </div>
+  );
+}
+
+function MirrorRevealCard({ host, s }: { host: GameHost; s: GameState }) {
+  const card = s.mirror[s.mirrorIndex];
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    setShown(false);
+    if (!card?.sentence) return;
+    sfx.pageTurn();
+    const t = setTimeout(() => {
+      setShown(true);
+      sfx.choir();
+    }, 2200);
+    return () => clearTimeout(t);
+  }, [card?.wardId, card?.sentence]);
+  if (s.busy || !card) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center gap-4">
+        <Hourglass size={72} />
+        <p className="font-heading text-2xl">{s.busy || "The mirror is polishing the glass…"}</p>
+      </div>
+    );
+  }
+  const ward = s.players.find((p) => p.id === card.wardId);
+  const guardian = s.players.find((p) => p.id === card.guardianId);
+  return (
+    <div className="flex-1 min-h-0 flex flex-col justify-center gap-4 px-8 pb-4">
+      <div key={card.wardId} className="page p-10 grid grid-cols-[auto_minmax(0,1fr)] gap-10 items-center fade-in">
+        <div className="flex flex-col items-center gap-3 w-60">
+          {ward && host.portraits[ward.id] ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={host.portraits[ward.id]} alt="" className="portrait-oval w-52 h-64" />
+          ) : (
+            ward && <Avatar host={host} p={ward} size={180} />
+          )}
+          <p className="font-heading text-3xl uppercase text-center leading-tight">{ward?.hero?.name}</p>
+          {ward && <p className="font-ui text-base text-ink-soft">played by {ward.name}</p>}
+        </div>
+        <div className="flex flex-col gap-6 min-w-0">
+          <p className="text-2xl italic text-ink-soft">
+            You guessed: {card.guess ? `“${card.guess}”` : "you were too shy to guess"}
+          </p>
+          <div className="min-h-[7em]">
+            {shown ? (
+              <TypeReveal text={card.sentence} className="font-heading text-[2.6rem] leading-snug" />
+            ) : (
+              <p className="font-heading text-3xl text-ink-soft animate-pulse">Your guardian wrote…</p>
+            )}
+          </div>
+          {shown && <p className="font-ui text-2xl text-[var(--crimson)] fade-in">From your guardian, {guardian?.hero?.name ?? "a friend"}</p>}
+          <p className="font-ui text-sm text-ink-soft">
+            {s.mirrorIndex + 1} of {s.mirror.length}
+          </p>
+        </div>
+      </div>
+      <Crew host={host} s={s} mark={(p) => (s.ready.includes(p.id) ? "ready ✓" : "")} />
+    </div>
+  );
+}
+
 function Epilogue({ s }: { s: GameState }) {
   return (
     <div className="flex-1 flex items-center justify-center px-8">
@@ -625,6 +724,7 @@ function StorybookView({ host, s }: { host: GameHost; s: GameState }) {
   const pages = book.pages;
   const total = pages.length + 2;
   const imgIndex = (ref: string) => Math.max(0, Number(String(ref).replace("scene_", "")) - 1);
+  const said = (id: string) => s.mirror.find((c) => c.wardId === id)?.sentence ?? "";
   const quotes = s.log.filter((l) => l.band === "LEGENDARY" || l.band === "SUCCESS" || l.band === "CATASTROPHE").slice(0, 4);
   return (
     <div className="flex-1 min-h-0 flex flex-col gap-4 px-8 pb-4">
@@ -662,6 +762,11 @@ function StorybookView({ host, s }: { host: GameHost; s: GameState }) {
                       <p className="font-heading text-xl font-bold">{[p.hero.name, ...p.titles].join(", ")}</p>
                       <Stamp text={hp.award} size="sm" slam={false} tone="gilt" />
                       <p className="text-lg leading-snug mt-1">{hp.best_moment}</p>
+                      {said(hp.hero_id) && (
+                        <p className="text-lg leading-snug mt-1 italic">
+                          <b className="not-italic font-ui text-sm uppercase tracking-widest text-[var(--crimson)]">Said about you:</b> {said(hp.hero_id)}
+                        </p>
+                      )}
                     </div>
                   </div>
                 );
@@ -711,6 +816,7 @@ function QuestIntro({ host, s }: { host: GameHost; s: GameState }) {
           <div className="gilt-rule" />
           <TypeReveal text={s.quest?.premise ?? ""} className="text-[1.7rem] leading-snug" />
           <p className="font-ui text-[var(--gilt-bright)] text-lg">The goal: {s.quest?.goalShort}</p>
+          {Object.keys(s.wards).length > 0 && <p className="font-ui text-[var(--signal)] text-lg">🪞 Check your phone. Everyone has a secret mission tonight.</p>}
         </div>
       </div>
       <Crew host={host} s={s} mark={(p) => (s.ready.includes(p.id) ? "ready ✓" : "")} />
@@ -774,6 +880,13 @@ export function TV({ host }: { host: GameHost }) {
     case "final_roll":
     case "final_result":
       main = <FinalRollView host={host} s={s} />;
+      break;
+    case "mirror_write":
+    case "mirror_guess":
+      main = <MirrorWait host={host} s={s} />;
+      break;
+    case "mirror_reveal":
+      main = <MirrorRevealCard host={host} s={s} />;
       break;
     case "epilogue":
       main = <Epilogue s={s} />;
