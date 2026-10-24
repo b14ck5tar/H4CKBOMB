@@ -1,0 +1,370 @@
+[
+ {
+  "quest_title": "The Rust-Wyrm of Mineral Springs",
+  "category": "infrastructure",
+  "tone": "joyful",
+  "realm_name": "The Twin Banks of Porterholm",
+  "fairytale_premise": "For nearly three winters, the two halves of Porterholm have only been able to wave at each other across the Lesser Calumet River. A Rust-Wyrm coiled beneath the old iron bridge and licked its beams into flaky orange lace, until the Royal Inspector declared it unsafe for so much as a goose. Bread arrives stale via the Endless Detour. Grandmothers shout recipes across the water. Enough is enough.",
+  "the_threat": {
+   "name": "The Rust-Wyrm",
+   "description": "A long, damp, copper-orange serpent that eats iron and breathes humidity. Wherever it naps, steel turns to crumbly red flakes. It is not evil, just extremely hungry and extremely snacky.",
+   "mapped_from": "The bridge's steel beams deteriorated until inspectors found the structure unsafe for all traffic."
+  },
+  "the_goal": {
+   "description": "Coax the Rust-Wyrm out from under the girders, help the Bridgewrights raise a new span the Wyrm can't eat, and lead the first cart across to reunite the Twin Banks.",
+   "mapped_from": "A replacement bridge was built and the road is set to reopen after nearly 3 years."
+  },
+  "locations": [
+   {
+    "name": "The Shouting Banks",
+    "description": "Two riverside villages that have been yelling small talk across the water for three years. Their voices are VERY strong now.",
+    "mapped_from": "The road closure split the route over the Little Calumet River."
+   },
+   {
+    "name": "The Endless Detour",
+    "description": "A road that loops so many times that travelers pack lunch, then dinner, then breakfast.",
+    "mapped_from": "Traffic was detoured while the bridge was closed."
+   },
+   {
+    "name": "The Inspector's Spire",
+    "description": "Home of Inspector Pemberly, a monocled gnome with a clipboard who has never once said 'looks fine'.",
+    "mapped_from": "The county inspection that closed the bridge."
+   },
+   {
+    "name": "The Underspan Nest",
+    "description": "A dripping cavern beneath the girders, glittering with half-chewed rivets.",
+    "mapped_from": "The deteriorated steel beams beneath the deck."
+   },
+   {
+    "name": "The Guildhall of Sealed Bids",
+    "description": "Where rival Bridgewright guilds slide wax-sealed scrolls under the door and glare at one another.",
+    "mapped_from": "The replacement was put out to bid and awarded to a contractor."
+   }
+  ],
+  "complications": [
+   {
+    "stage": 1,
+    "title": "Your Sword Is a Snack",
+    "what_happens": "The first hero to draw an iron weapon watches the Wyrm eat it like a breadstick. It now wants more.",
+    "why_obvious_in_hindsight": "It's literally an iron-eating monster. Bring wood, stone, or snacks that aren't you.",
+    "mapped_from": "Steel deterioration: iron is the thing being consumed."
+   },
+   {
+    "stage": 2,
+    "title": "No Bridge Without a Bid",
+    "what_happens": "The Wyrm is gone, but the Bridgewrights won't lift a hammer until the Guildhall opens the sealed bids. Two guilds are now locked in a staring contest.",
+    "why_obvious_in_hindsight": "Public works always go out to bid. Someone has to pick a builder.",
+    "mapped_from": "Bids for the new bridge were opened and awarded before construction."
+   },
+   {
+    "stage": 3,
+    "title": "The Trial of Weight",
+    "what_happens": "The shiny new bridge is finished, and Inspector Pemberly refuses to open it until it holds the heaviest thing in the realm. Every villager is now rolling their prize pumpkin toward the river.",
+    "why_obvious_in_hindsight": "The same inspector who closed the old bridge was always going to test the new one.",
+    "mapped_from": "New bridges are inspected and load-checked before reopening."
+   }
+  ],
+  "the_real_story": {
+   "summary": "A road in Porter, Indiana, that has been closed for nearly three years is set to reopen with a newly built bridge.",
+   "headline": "Road with new bridge in Porter to reopen after nearly 3 years",
+   "source": "Chicago Tribune",
+   "date": "2026-10-24",
+   "link": "https://news.google.com/rss/articles/CBMigAFBVV95cUxNVmxaS290dEV3MHNGQ2Z2dUxhcDR2a0NJN2N3amZJRm52ckQxeDc2SzRaRGR1UUFMYnB0NnpMcXl2SkVLZ0VlN2tyNno3dHZMdnZ3QTVGME9MMWxMQ1JwLTdyUWhKYkRaU1lpTHFHXzd4emdZcWdFUXdaSGYwM0Q5ag?oc=5",
+   "context_note": "Likely Mineral Springs Road over the Little Calumet River, closed Dec 1, 2023 for deteriorated steel beams (Town of Porter notice). Verify against the article before demo."
+  },
+  "art_style_hint": "Cozy storybook gouache, autumn Midwest palette (rust orange, river teal, harvest gold), a sheepish copper serpent curled under a steel truss bridge, villagers waving from both banks.",
+  "id": "rust-wyrm"
+ },
+ {
+  "quest_title": "The Billion Pearls of the Grey Sea",
+  "category": "environment",
+  "tone": "neutral",
+  "realm_name": "The Tidelands, from the Mouth of Tyne to the Wadden Isles",
+  "fairytale_premise": "In midsummer, a careless cargo-giant at the Mouth of Tyne spilled a sack of one billion tiny milk-white pearls. Nobody chased them. Now the Grey Sea's great current has carried them 390 miles east, and a lighthouse keeper with a flying glass eye has found them carpeting the shores of the Wadden Isles. The gulls think they're fish eggs. The crabs are very confused. Someone has to prove where they came from and sweep the tide clean.",
+  "the_threat": {
+   "name": "The Pearl Plague",
+   "description": "A billion false pearls, each smaller than a lentil, that look exactly like fish roe and fool every bird, seal and crab on the coast. They never dissolve, and they never stop traveling.",
+   "mapped_from": "A spill of roughly one billion plastic nurdles (pre-production pellets) in the River Tyne in July."
+  },
+  "the_goal": {
+   "description": "Trace the pearls back across the sea, prove their origin to the Alchemists of Aarhus, and rally both shores to sweep the tidelines before the gulls feast.",
+   "mapped_from": "Denmark's Environment Protection Agency and Aarhus University tested the pellets and linked them to the Tyne spill."
+  },
+  "locations": [
+   {
+    "name": "The Isle of Mandø",
+    "description": "A pristine tidal island where the pearls first appeared, so thick on the sand it looks like it snowed.",
+    "mapped_from": "Nurdles first spotted on Mandø, Denmark, on 26 September."
+   },
+   {
+    "name": "The Watchtower of the Flying Eye",
+    "description": "Home of a lighthouse keeper whose enchanted glass drone can spot a single pearl from the clouds.",
+    "mapped_from": "The finder runs a startup that detects microplastics from drone images."
+   },
+   {
+    "name": "The Current Road",
+    "description": "A swirling invisible highway across the Grey Sea. Anything dropped in at Tyne eventually turns up somewhere else.",
+    "mapped_from": "Arrival timing matched North Sea currents and circulation."
+   },
+   {
+    "name": "The Alchemists' Tower of Aarhus",
+    "description": "Robed scholars who won't believe anything they haven't put under a lens and tested three times.",
+    "mapped_from": "Aarhus University tested the pellets with the Danish EPA."
+   },
+   {
+    "name": "The Mouth of Tyne",
+    "description": "The bustling river harbor where the sack first split.",
+    "mapped_from": "The July spill in north-east England."
+   }
+  ],
+  "complications": [
+   {
+    "stage": 1,
+    "title": "The Tide Giveth (Again)",
+    "what_happens": "The party sweeps the whole beach spotless. Six hours later the tide delivers a fresh batch.",
+    "why_obvious_in_hindsight": "You can't empty a beach while the sea keeps refilling it. Get ahead of the current, not behind it.",
+    "mapped_from": "Nurdles kept washing up wherever the tide reached."
+   },
+   {
+    "stage": 2,
+    "title": "Pearls Know No Borders",
+    "what_happens": "The pearls have drifted south onto the sands of Sylt, in the neighboring realm, and its wardens won't take orders from strangers.",
+    "why_obvious_in_hindsight": "The sea doesn't stop at borders. Cleanup takes two kingdoms working together.",
+    "mapped_from": "Samples were also collected on Sylt, Germany."
+   },
+   {
+    "stage": 3,
+    "title": "Prove It Wasn't Anyone Else",
+    "what_happens": "The Alchemists agree the pearls match Tyne's, but won't seal the verdict until the party proves no OTHER ship spilled any. To the Harbor Ledgers!",
+    "why_obvious_in_hindsight": "A match isn't proof until you rule out other suspects.",
+    "mapped_from": "The agency noted there were no other recorded spills in the area that could explain the pellets."
+   }
+  ],
+  "the_real_story": {
+   "summary": "Denmark's Environment Protection Agency says plastic pellets that washed up on its coast likely came from a July spill of about one billion nurdles in the River Tyne, roughly 390 miles away.",
+   "headline": "Denmark nurdles may be from Tyne spill, agency says",
+   "source": "BBC News",
+   "date": "2026-10-23",
+   "link": "https://www.bbc.co.uk/news/articles/cqy43xv1jwv2o"
+  },
+  "art_style_hint": "Soft watercolor seascape in cool grey-blue and sand, milky pearl highlights scattered like snow on a tidal flat, a lighthouse with a tiny glass drone, curious gulls. Avoid Viking or horned-helmet clichés.",
+  "id": "billion-pearls"
+ },
+ {
+  "quest_title": "The Last Fifty Giants of Thamesreach",
+  "category": "animals_nature",
+  "tone": "wholesome",
+  "realm_name": "The Floodplain Kingdom of Thamesreach",
+  "fairytale_premise": "Long ago, gnarled Black Poplar Giants lined every river in Thamesreach. They drank the floods and sheltered the Hornet-Moth folk. Then came the axes, the Drain-Sprites and the lost meadows. Now only fifty Giants remain in all of Oxenshire, standing so far apart they've forgotten each other's voices. The Druids of Long Mead have a plan: read each Giant's secret bloodline, take cuttings, and grow a new grove before the river rises again.",
+  "the_threat": {
+   "name": "The Drain-Sprites and the Great Sundering",
+   "description": "Tiny mischief-sprites who pull the plugs out of marshes and sip the floodplains dry, leaving the Giants stranded in lonely patches. The real curse is distance: the Giants are too scattered to renew themselves.",
+   "mapped_from": "Black poplar numbers fell due to decades of felling, land drainage and habitat loss. The remaining population is 'extremely fragmented'."
+  },
+  "the_goal": {
+   "description": "Read each Giant's bloodline with the Lineage Rune, take cuttings from the true Giants, raise saplings, and plant a new guardian grove along the river.",
+   "mapped_from": "The project uses DNA analysis of existing trees, propagates cuttings and plants them in suitable sites."
+  },
+  "locations": [
+   {
+    "name": "The Long Mead Druid Circle",
+    "description": "A cheerful grove-council who call the Giants 'extraordinary survivors' and speak to moths.",
+    "mapped_from": "The Long Mead Foundation in Swindon is involved in the project."
+   },
+   {
+    "name": "The Gnarled Giant of the Ford",
+    "description": "A colossal tree with a trunk like a twisted castle tower, wise but very lonely.",
+    "mapped_from": "Black poplars' 'great gnarled trunks' that look like something out of a fantasy epic."
+   },
+   {
+    "name": "The Thirsty Fens",
+    "description": "Once-soggy marshland now dry and cracked where the Drain-Sprites partied.",
+    "mapped_from": "Land drainage as a cause of decline."
+   },
+   {
+    "name": "The Swollen Thames",
+    "description": "A river that keeps creeping over its banks now that no Giants hold it back.",
+    "mapped_from": "Black poplars reduce flood risk by lining rivers and floodplains."
+   },
+   {
+    "name": "The Treasury of Oxenshire",
+    "description": "A council vault with a strict ledger-keeper who will match gold, but only up to a point.",
+    "mapped_from": "The county council will match-fund the fundraiser up to £10,000."
+   }
+  ],
+  "complications": [
+   {
+    "stage": 1,
+    "title": "Not Every Giant Is a Giant",
+    "what_happens": "The Lineage Rune reveals that some trees calling themselves Giants are look-alike imposters. Plant their cuttings and you'll grow the wrong forest.",
+    "why_obvious_in_hindsight": "If telling them apart by eye were easy, nobody would need the DNA test.",
+    "mapped_from": "The project relies on DNA testing of existing trees before propagation."
+   },
+   {
+    "stage": 2,
+    "title": "The Gold Runs Half-Way",
+    "what_happens": "The Treasury will match every coin the villagers raise, but only up to 10,000. The grove needs 20,000. Time to throw a fundraiser feast.",
+    "why_obvious_in_hindsight": "Matched funding means someone still has to raise the first half.",
+    "mapped_from": "Project aims to raise £20,000, with council matching up to £10,000."
+   },
+   {
+    "stage": 3,
+    "title": "Plant It and the River Takes It",
+    "what_happens": "The first saplings go in right at the water's edge and the swollen Thames promptly floats them away.",
+    "why_obvious_in_hindsight": "Trees that tame floods need to grow up first. Saplings need sheltered 'suitable sites'.",
+    "mapped_from": "Cuttings are planted in suitable sites along the Thames and its flood plain."
+   }
+  ],
+  "the_real_story": {
+   "summary": "Conservation groups in the Thames Valley are using DNA testing, cuttings and new plantings to restore England's rare black poplar trees, with only about 50 recorded in Oxfordshire.",
+   "headline": "Project to restore rare native trees with DNA testing",
+   "source": "BBC News",
+   "date": "2026-10-24",
+   "link": "https://www.bbc.co.uk/news/articles/cw240ln41mq2o"
+  },
+  "art_style_hint": "Arthur Rackham-style ink and wash: huge gnarled poplars with faces in the bark, misty English floodplain, glowing moth-folk, druids in muddy wellies.",
+  "id": "fifty-giants"
+ },
+ {
+  "quest_title": "The Fall of the Undefeated Sky-Colossus",
+  "category": "sports",
+  "tone": "joyful",
+  "realm_name": "The League of Twenty Banners",
+  "fairytale_premise": "All season, the Sky-Blue Colossus of the Northern Citadel has won every tourney it played. Bards have pre-written the 'Ballad of the Perfect Season'. Now the Colossus marches on Villa Keep, home of the Claret Lions, who are underdogs but not quite under-lions. You are the Lions' scrappy war council. Your mission: do the impossible, and give the bards something new to sing about.",
+  "the_threat": {
+   "name": "The Aura of Inevitability",
+   "description": "A shimmering sky-blue fog that rolls off the Colossus and whispers 'you've already lost' to every opponent. It works great, until somebody stops listening.",
+   "mapped_from": "Manchester City arrived with a 100% winning record in the Premier League."
+  },
+  "the_goal": {
+   "description": "Break the Aura and win the Tourney of Villa Keep, ending the Colossus's perfect streak.",
+   "mapped_from": "Aston Villa beat Manchester City, ending City's 100% Premier League record."
+  },
+  "locations": [
+   {
+    "name": "The Bards' Quarter",
+    "description": "Minstrels nervously rehearsing a ballad with the ending already written.",
+    "mapped_from": "Media buzz about a perfect season."
+   },
+   {
+    "name": "Villa Keep",
+    "description": "A claret-and-blue fortress whose crowd roars so loud pigeons migrate early.",
+    "mapped_from": "Aston Villa's home ground."
+   },
+   {
+    "name": "The Scrying Pool of Tactics",
+    "description": "Where the Colossus has studied every move the Lions have ever made.",
+    "mapped_from": "Top clubs' heavy opposition scouting and analysis."
+   },
+   {
+    "name": "The Tourney Green",
+    "description": "The great field where the match itself unfolds.",
+    "mapped_from": "The match pitch."
+   }
+  ],
+  "complications": [
+   {
+    "stage": 1,
+    "title": "They've Seen This Before",
+    "what_happens": "The Lions' favorite trick play fails instantly. The Colossus has watched it in the Scrying Pool a hundred times.",
+    "why_obvious_in_hindsight": "An unbeaten giant got that way by studying everyone. You need a plan nobody has ever tried.",
+    "mapped_from": "Elite teams scout opponents thoroughly."
+   },
+   {
+    "stage": 2,
+    "title": "The Roar Is the Real Magic",
+    "what_happens": "The Aura only breaks when the whole Keep believes at once, and half the crowd is still queuing for pies.",
+    "why_obvious_in_hindsight": "Home advantage only works if the home crowd shows up loud.",
+    "mapped_from": "Villa won at home."
+   },
+   {
+    "stage": 3,
+    "title": "The Colossus Wakes Up",
+    "what_happens": "You've taken the lead! Now the Colossus throws every knight forward at once. Hold the line until the final horn.",
+    "why_obvious_in_hindsight": "A champion that's losing for the first time all season won't go quietly.",
+    "mapped_from": "A favorite pushing hard late after falling behind (typical match dynamic)."
+   }
+  ],
+  "the_real_story": {
+   "summary": "Aston Villa beat Manchester City, ending City's 100% winning record in the Premier League this season.",
+   "headline": "Man City lose 100% Premier League record with defeat at Aston Villa",
+   "source": "ESPN",
+   "date": "2026-10-24",
+   "link": "https://news.google.com/rss/articles/CBMiqgFBVV95cUxQcm44T3BmNVFnVk1SQzlYT0FtUnNqSU93MEw1QmtHbDJxWnVVQ3kyWnZFS2czQVNsaDhpay1DVHppcGdpZTZqNl9SdmNVaVRNTVlLM1hWYlB3VUl2alJfangyQ3hLYlZzVnZtejlEbG1oWE1nTF9lSm5UaWdtU1M4Nlhnb3Joa1JDemFiUWhpZE1tdzdrS0p6S21aQ055SFBUd2FSTEsta1Y2Zw?oc=5",
+   "context_note": "No players are named in the fiction; club names appear only in the reveal."
+  },
+  "art_style_hint": "Illuminated medieval manuscript meets sports poster: a towering sky-blue armored colossus facing a pride of claret lions in a roaring castle stadium, gold-leaf borders.",
+  "id": "sky-colossus"
+ },
+ {
+  "quest_title": "The Littlest Gardener and the Pumpkin That Ate the Fair",
+  "category": "quirky",
+  "tone": "joyful",
+  "realm_name": "The Treasure Vale of Hysham",
+  "fairytale_premise": "At the Fall Fun Festival in the Treasure Vale, the Great Gourd Crown is up for grabs. The favorite isn't a grizzled farmer. It's the Littlest Gardener, two years old and about knee-high, whose pumpkin weighs 280 pounds, roughly ten times the gardener. The pumpkin is still in the patch. The scales are across the fairgrounds. Nap time is in one hour.",
+  "the_threat": {
+   "name": "The Gourd of Unstoppable Momentum",
+   "description": "A colossal, gleaming orange pumpkin too heavy to lift and far too round to steer. Once it starts rolling, it has opinions about where it's going.",
+   "mapped_from": "The winning pumpkin weighed 280 pounds."
+  },
+  "the_goal": {
+   "description": "Get the Great Gourd from the patch to the Royal Scales in one piece and crown the Littlest Gardener before nap time.",
+   "mapped_from": "A 2-year-old's pumpkin won the festival's weigh-off."
+  },
+  "locations": [
+   {
+    "name": "The Patch of Plenty",
+    "description": "Where the Great Gourd sits like a sleeping orange moon.",
+    "mapped_from": "The pumpkin was grown locally."
+   },
+   {
+    "name": "Hayride Hill",
+    "description": "A gentle slope that is not gentle at all if you're a 280-pound pumpkin.",
+    "mapped_from": "Typical fall-festival grounds (hayrides, fields)."
+   },
+   {
+    "name": "The Midway of Distractions",
+    "description": "Kettle corn, ring toss, a petting zoo. Everything a toddler would rather do than win a crown.",
+    "mapped_from": "The Fall Fun Festival setting."
+   },
+   {
+    "name": "The Royal Scales",
+    "description": "An enormous brass weighing platform guarded by a very serious Weigh-Master.",
+    "mapped_from": "The festival's pumpkin weigh-in."
+   }
+  ],
+  "complications": [
+   {
+    "stage": 1,
+    "title": "Too Heavy to Lift",
+    "what_happens": "Four heroes heave. The pumpkin doesn't notice. It weighs more than the whole party's packs combined.",
+    "why_obvious_in_hindsight": "It's 280 pounds. You need a wagon, a lever, or a very polite ox.",
+    "mapped_from": "The pumpkin's 280-pound weight."
+   },
+   {
+    "stage": 2,
+    "title": "What Goes Down Hayride Hill...",
+    "what_happens": "The party gets it rolling, and now it won't stop. It's headed straight for the Midway at alarming speed.",
+    "why_obvious_in_hindsight": "Big, round, heavy, downhill. Physics was always going to win.",
+    "mapped_from": "Moving giant pumpkins is notoriously tricky."
+   },
+   {
+    "stage": 3,
+    "title": "The Champion Is Asleep",
+    "what_happens": "The pumpkin is weighed and the crown is ready, but the Littlest Gardener has fallen fast asleep in a hay bale. Wake them gently, or the ceremony is a bust.",
+    "why_obvious_in_hindsight": "The champion is two. It was always going to come down to nap time.",
+    "mapped_from": "The winner is a 2-year-old."
+   }
+  ],
+  "the_real_story": {
+   "summary": "A 2-year-old grew the 280-pound pumpkin that won the weigh-off at the Fall Fun Festival in Hysham, Montana.",
+   "headline": "A 2-year-old grew the 280-pound winning pumpkin at Hysham's Fall Fun Festival",
+   "source": "KTVQ",
+   "date": "2026-10-24",
+   "link": "https://news.google.com/rss/articles/CBMipAFBVV95cUxOODhVb0ItQktJNE0zMkJlRlJaUU5GakVSb1p3U2RRQWpzXzU3S3drQnRoX1lJN3ZaY3FUMWI4NTliVVR1aV9vME9OVFVSMkJJaVliMGxFRHFobnlWbmhyRWh5UWZtMnRUUGx6N2Izb3NsWGUyNVJJZks4T2JYRWVZNzJjNWoxRTVxSnh3aHlPc3JFQUhFX011MHltZVd2WUl2NXZYeg?oc=5",
+   "context_note": "The child is never named in the game. The reveal shows only the headline and link."
+  },
+  "art_style_hint": "Warm Richard Scarry-style busy fairground, big-sky Montana prairie at golden hour, a gigantic shiny pumpkin dwarfing a tiny gardener in overalls, hay bales and bunting.",
+  "id": "littlest-gardener"
+ }
+]

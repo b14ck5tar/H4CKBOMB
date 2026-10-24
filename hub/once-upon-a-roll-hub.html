@@ -1,0 +1,315 @@
+<title>Once Upon a Roll HQ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Alegreya+Sans:wght@400;500;700&display=swap">
+<style>
+/* Layout: a war-room ledger. Countdown strip on top, then a two-column body: the shared quest log (tasks + notes) beside the game brief. */
+:root {
+  --bg: #f4ead3;
+  --page: #fbf5e6;
+  --ink: #2a1e16;
+  --ink-soft: #6b5846;
+  --rule: #d9c79f;
+  --gilt: #a87717;
+  --crimson: #a3282e;
+  --forest: #2e5e4e;
+  --chip: #efe2c2;
+  --display: "Cinzel", "Trajan Pro", Georgia, serif;
+  --body: "EB Garamond", Garamond, Georgia, serif;
+  --ui: "Alegreya Sans", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12162b; --page: #1a1f38; --ink: #efe4cc; --ink-soft: #b4a78f; --rule: #39406a;
+    --gilt: #d8a944; --crimson: #e06a6f; --forest: #6fb39a; --chip: #262c4d; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12162b; --page: #1a1f38; --ink: #efe4cc; --ink-soft: #b4a78f; --rule: #39406a;
+  --gilt: #d8a944; --crimson: #e06a6f; --forest: #6fb39a; --chip: #262c4d; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 17px; line-height: 1.5; padding-inline: 16px; padding-block: 20px 48px; }
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 20px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; letter-spacing: .02em; }
+h1 { font-size: clamp(28px, 5vw, 44px); line-height: 1.1; }
+h2 { font-size: 18px; text-transform: uppercase; letter-spacing: .12em; color: var(--gilt); }
+h3 { font-size: 16px; }
+p { margin: 0; }
+.muted { color: var(--ink-soft); }
+.ui { font-family: var(--ui); }
+header { display: grid; gap: 8px; }
+.tag { font-family: var(--body); font-style: italic; font-size: 20px; color: var(--ink-soft); }
+.clocks { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+.clock { background: var(--page); border: 1px solid var(--rule); border-radius: 6px; padding: 10px 14px; display: grid; gap: 2px; }
+.clock .lbl { font-family: var(--ui); font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
+.clock .t { font-family: var(--display); font-size: 24px; font-variant-numeric: tabular-nums; }
+.clock .when { font-family: var(--ui); font-size: 13px; color: var(--ink-soft); }
+.clock.next { border-color: var(--crimson); box-shadow: inset 4px 0 0 var(--crimson); }
+.clock.past .t { color: var(--ink-soft); text-decoration: line-through; }
+.cols { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 860px) { .cols { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--page); border: 1px solid var(--rule); border-radius: 8px; padding: 18px; display: grid; gap: 14px; min-width: 0; }
+.ms { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+.ms li { display: grid; grid-template-columns: 22px 1fr auto; gap: 10px; align-items: baseline; font-family: var(--ui); font-size: 15px; }
+.dot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--ink-soft); display: inline-block; translate: 0 1px; }
+.done .dot { background: var(--forest); border-color: var(--forest); }
+.doing .dot { background: var(--gilt); border-color: var(--gilt); }
+.ms .st { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-soft); }
+.tasks { display: grid; gap: 8px; }
+.task { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; background: var(--bg); }
+.task.isdone .title { text-decoration: line-through; color: var(--ink-soft); }
+.task .title { font-family: var(--ui); font-size: 15px; overflow-wrap: anywhere; }
+.task select, .task button, form input, form select, form button, textarea { font: inherit; font-family: var(--ui); font-size: 14px; color: var(--ink); background: var(--chip); border: 1px solid var(--rule); border-radius: 5px; padding: 6px 8px; }
+.task input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--forest); }
+.who { font-family: var(--ui); font-size: 12px; padding: 2px 8px; border-radius: 99px; background: var(--chip); white-space: nowrap; }
+form.add { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; }
+@media (max-width: 520px) { form.add { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } form.add input { grid-column: 1 / -1; } }
+button.primary { background: var(--crimson); color: #fff8ec; border-color: var(--crimson); cursor: pointer; }
+button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--gilt); outline-offset: 2px; }
+.notes { display: grid; gap: 10px; }
+.note { border-left: 3px solid var(--gilt); padding: 4px 0 4px 12px; display: grid; gap: 2px; }
+.note .meta { font-family: var(--ui); font-size: 12px; color: var(--ink-soft); }
+.note p { white-space: pre-wrap; overflow-wrap: anywhere; }
+form.note-add { display: grid; gap: 8px; }
+textarea { width: 100%; min-height: 70px; resize: vertical; }
+.state { font-family: var(--ui); font-size: 13px; color: var(--ink-soft); }
+.loop { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+@media (max-width: 520px) { .loop { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.step { border: 1px solid var(--rule); border-radius: 6px; padding: 10px; background: var(--bg); display: grid; gap: 4px; }
+.step b { font-family: var(--display); font-size: 15px; }
+.step span { font-family: var(--ui); font-size: 13px; color: var(--ink-soft); }
+table { border-collapse: collapse; width: 100%; font-family: var(--ui); font-size: 14px; }
+td, th { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--ink-soft); font-weight: 500; }
+.scroll { overflow-x: auto; }
+ul.plain { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.dice { font-family: var(--display); color: var(--crimson); }
+.stamp { display: inline-block; font-family: var(--display); font-size: 12px; letter-spacing: .1em; border: 2px solid var(--crimson); color: var(--crimson); padding: 2px 8px; rotate: -3deg; }
+@media (prefers-reduced-motion: no-preference) { .clock.next .t { animation: pulse 2s ease-in-out infinite; } @keyframes pulse { 50% { opacity: .7; } } }
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="stamp">HackTX ’26 · Team HQ</span>
+    <h1>Once Upon a Roll</h1>
+    <p class="tag">Nobody has to be the Dungeon Master anymore.</p>
+    <p class="muted">A co-op fairytale D&amp;D night where every quest is today’s real news, told as a fairytale. The TV is the table, phones are the controllers, and Meta’s Muse is the Dungeon Master.</p>
+  </header>
+
+  <section class="clocks" id="clocks" aria-label="Deadlines"></section>
+
+  <div class="cols">
+    <div class="panel" style="gap:18px">
+      <div style="display:grid;gap:10px">
+        <h2>Quest log</h2>
+        <p class="state" id="dbstate">Connecting to the shared log…</p>
+        <div class="tasks" id="tasks"></div>
+        <form class="add" id="addTask">
+          <input id="taskTitle" placeholder="Add a task (e.g. test on 3 phones)" maxlength="140" required>
+          <select id="taskWho" aria-label="Owner">
+            <option>Creative Director</option><option>Partner</option><option>Claude</option><option>Everyone</option>
+          </select>
+          <button class="primary" type="submit">Add</button>
+        </form>
+      </div>
+      <div style="display:grid;gap:10px">
+        <h2>Team notes</h2>
+        <form class="note-add" id="addNote">
+          <textarea id="noteText" placeholder="Leave a note for the team: what judges said, ideas, blockers…" maxlength="1200" required></textarea>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <select id="noteWho" aria-label="From"><option>Creative Director</option><option>Partner</option></select>
+            <button class="primary" type="submit">Post note</button>
+          </div>
+        </form>
+        <div class="notes" id="notes"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div style="display:grid;gap:10px">
+        <h2>Build progress</h2>
+        <ul class="ms" id="milestones"></ul>
+      </div>
+
+      <div style="display:grid;gap:10px">
+        <h2>How a round plays</h2>
+        <div class="loop">
+          <div class="step"><b>Pitch</b><span>Everyone types or says an action on their phone (25 s).</span></div>
+          <div class="step"><b>Verdict</b><span>The AI rates each idea: Clever +3, Solid, Risky −3, Absurd −6, Miracle.</span></div>
+          <div class="step"><b>Pick</b><span>The party votes on the best idea (not your own).</span></div>
+          <div class="step"><b>Roll</b><span>The winner rolls a <span class="dice">d20</span>. 1 is catastrophe, 20 is legend.</span></div>
+        </div>
+        <ul class="plain">
+          <li><b>Catch!</b> Spend your one Heart to reroll a friend’s failure.</li>
+          <li><b>Rescue Round.</b> A nat 1 leaves a hero in peril; friends pitch rescues and the hero in peril picks their savior.</li>
+          <li><b>Final Roll.</b> Everyone rolls together; the best die plus the party’s Hope decides the ending.</li>
+          <li><b>The reveal.</b> The storybook tears away into a newspaper clipping: “This tale was inspired by real events.”</li>
+          <li><b>Bookshelf.</b> Every tale is saved to the party’s shelf, so next week is Chapter 2.</li>
+        </ul>
+      </div>
+
+      <div style="display:grid;gap:10px">
+        <h2>Prize tracks</h2>
+        <div class="scroll">
+          <table>
+            <thead><tr><th>Track</th><th>Prize</th><th>Our angle</th></tr></thead>
+            <tbody>
+              <tr><td>Meta</td><td>Top 3 + Round 2 at Menlo Park</td><td>Friends in one room; Muse Spark, Image and Voice all on the critical path</td></tr>
+              <tr><td>Most Entertaining</td><td>PS5</td><td>Nat 1s, absurd pitches, judges play it live</td></tr>
+              <tr><td>SerpApi</td><td>Switch 2</td><td>Google News powers every quest and the reveal</td></tr>
+              <tr><td>Best Pitch</td><td>DJI speakers</td><td>Real-news reveal as the closer</td></tr>
+              <tr><td>Best Novice / Overall</td><td>Meta glasses / MacBook</td><td>Automatic</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div style="display:grid;gap:10px">
+        <h2>Pitch lines</h2>
+        <ul class="plain">
+          <li>“Nobody has to be the Dungeon Master anymore.”</li>
+          <li>“Every quest is today’s news, told as a fairytale.”</li>
+          <li>“Game night in thirty seconds, from the couch.”</li>
+        </ul>
+      </div>
+
+      <div style="display:grid;gap:10px">
+        <h2>Ground rules</h2>
+        <ul class="plain">
+          <li>SerpApi has 250 searches a month. Nobody calls it by hand; the app caches news.</li>
+          <li>API keys live only in the laptop’s key file. Never paste them in chat, Discord or this page.</li>
+          <li>Feature freeze Sunday 10 AM. After that, only bug fixes and rehearsal.</li>
+          <li>All code is written during the hacking period.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// Deadlines in Austin time (CDT, UTC−5).
+const CLOCKS = [
+  { lbl: "Soft submission", at: "2026-10-25T04:30:00Z", when: "Sat 11:30 PM" },
+  { lbl: "Feature freeze", at: "2026-10-25T15:00:00Z", when: "Sun 10:00 AM" },
+  { lbl: "Final submission", at: "2026-10-25T16:30:00Z", when: "Sun 11:30 AM" },
+  { lbl: "Judging starts", at: "2026-10-25T19:00:00Z", when: "Sun 2:00 PM · WEL" },
+];
+const MILESTONES_DEFAULT = [
+  ["Design + research", "done"], ["Muse API verified (text, images)", "done"], ["Rooms: TV + phones join", "doing"],
+  ["Characters + portraits", "doing"], ["Core loop playable", "todo"], ["Live on Vercel + soft submit", "todo"],
+  ["News quests + reveal + storybook", "todo"], ["Juice: dice, sounds, effects", "doing"], ["Voice actions", "doing"], ["Rehearse + backup video", "todo"],
+];
+
+function fmt(ms) {
+  if (ms <= 0) return "passed";
+  const h = Math.floor(ms / 3.6e6), m = Math.floor((ms % 3.6e6) / 6e4), s = Math.floor((ms % 6e4) / 1000);
+  return `${h}h ${String(m).padStart(2, "0")}m ${String(s).padStart(2, "0")}s`;
+}
+const clocksEl = document.getElementById("clocks");
+function renderClocks() {
+  const now = Date.now();
+  const nextIdx = CLOCKS.findIndex(c => Date.parse(c.at) > now);
+  clocksEl.replaceChildren(...CLOCKS.map((c, i) => {
+    const d = document.createElement("div");
+    const left = Date.parse(c.at) - now;
+    d.className = "clock" + (i === nextIdx ? " next" : "") + (left <= 0 ? " past" : "");
+    d.innerHTML = `<span class="lbl"></span><span class="t"></span><span class="when"></span>`;
+    d.children[0].textContent = c.lbl; d.children[1].textContent = fmt(left); d.children[2].textContent = c.when;
+    return d;
+  }));
+}
+renderClocks(); setInterval(renderClocks, 1000);
+
+function renderMilestones(list) {
+  const el = document.getElementById("milestones");
+  el.replaceChildren(...list.map(([name, st]) => {
+    const li = document.createElement("li");
+    li.className = st;
+    li.innerHTML = `<span class="dot"></span><span></span><span class="st"></span>`;
+    li.children[1].textContent = name;
+    li.children[2].textContent = st === "doing" ? "in progress" : st;
+    return li;
+  }));
+}
+renderMilestones(MILESTONES_DEFAULT);
+
+const stateEl = document.getElementById("dbstate");
+const tasksEl = document.getElementById("tasks");
+const notesEl = document.getElementById("notes");
+let db = null, canWrite = true;
+
+function renderTasks(docs) {
+  if (!docs.length) {
+    tasksEl.innerHTML = `<p class="muted ui" style="font-size:14px">No tasks yet. Add the first one below.</p>`;
+    return;
+  }
+  const order = { false: 0, true: 1 };
+  docs.sort((a, b) => order[!!a.data().done] - order[!!b.data().done] || (a.data().created || 0) - (b.data().created || 0));
+  tasksEl.replaceChildren(...docs.map(snap => {
+    const t = snap.data();
+    const row = document.createElement("div");
+    row.className = "task" + (t.done ? " isdone" : "");
+    const cb = document.createElement("input");
+    cb.type = "checkbox"; cb.checked = !!t.done; cb.id = "t-" + snap.id; cb.disabled = !canWrite;
+    cb.setAttribute("aria-label", "Mark done");
+    cb.addEventListener("change", () => write(() => db.doc("tasks/" + snap.id).update({ done: cb.checked })));
+    const title = document.createElement("label");
+    title.className = "title"; title.htmlFor = cb.id; title.textContent = t.title || "";
+    const who = document.createElement("span");
+    who.className = "who"; who.textContent = t.owner || "Everyone";
+    row.append(cb, title, who);
+    return row;
+  }));
+}
+function renderNotes(docs) {
+  docs.sort((a, b) => (b.data().created || 0) - (a.data().created || 0));
+  notesEl.replaceChildren(...docs.slice(0, 40).map(snap => {
+    const n = snap.data();
+    const d = document.createElement("div");
+    d.className = "note";
+    const meta = document.createElement("span");
+    meta.className = "meta";
+    meta.textContent = `${n.from || "Team"} · ${n.created ? new Date(n.created).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : ""}`;
+    const p = document.createElement("p"); p.textContent = n.text || "";
+    d.append(meta, p);
+    return d;
+  }));
+}
+async function write(fn) {
+  try { await fn(); }
+  catch (e) {
+    if (e && e.code === "invalid_argument") { canWrite = false; stateEl.textContent = "You can read the log but not edit it. Ask the owner to share it with you as Contributor or Editor."; }
+    else stateEl.textContent = "That change didn’t save. Try again in a moment.";
+  }
+}
+document.getElementById("addTask").addEventListener("submit", e => {
+  e.preventDefault();
+  if (!db) return;
+  const input = document.getElementById("taskTitle");
+  const title = input.value.trim(); if (!title) return;
+  const owner = document.getElementById("taskWho").value;
+  input.value = "";
+  write(() => db.collection("tasks").add({ title, owner, done: false, created: Date.now() }));
+});
+document.getElementById("addNote").addEventListener("submit", e => {
+  e.preventDefault();
+  if (!db) return;
+  const ta = document.getElementById("noteText");
+  const text = ta.value.trim(); if (!text) return;
+  const from = document.getElementById("noteWho").value;
+  ta.value = "";
+  write(() => db.collection("notes").add({ text, from, created: Date.now() }));
+});
+
+(async () => {
+  db = window.claude?.use ? await window.claude.use("db") : null;
+  if (!db) { stateEl.textContent = "Sign in to claude.ai to see and edit the shared quest log."; renderTasks([]); return; }
+  const user = await window.claude.use("user");
+  const w = user ? await user.can("data.write") : null;
+  if (w === false) { canWrite = false; stateEl.textContent = "Read-only: ask the owner to share this page with you as Contributor or Editor to edit."; }
+  else stateEl.textContent = "Shared live with your team. Changes show up for everyone.";
+  db.collection("tasks").onSnapshot(s => renderTasks([...s.docs]), () => { stateEl.textContent = "Lost connection to the quest log. Reload the page."; });
+  db.collection("notes").onSnapshot(s => renderNotes([...s.docs]));
+  db.doc("status/milestones").onSnapshot(s => { if (s.exists && Array.isArray(s.data().list)) renderMilestones(s.data().list); });
+})();
+</script>
