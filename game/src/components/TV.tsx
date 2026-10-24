@@ -10,6 +10,8 @@ import { Stamp, WaxSeal } from "./Stamp";
 import { Reactions } from "./Reactions";
 import { Hourglass, ScreenFlash, TypeReveal } from "./Effects";
 import { HeroCard } from "./HeroCard";
+import { KeepsakeQR } from "./Keepsake";
+import { Presenter } from "./Presenter";
 
 const fmt = (n: number) => (n >= 0 ? `+${n}` : `${n}`);
 const initials = (s: string) => s.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
@@ -788,7 +790,8 @@ function StorybookView({ host, s }: { host: GameHost; s: GameState }) {
           </div>
         )}
         {page === pages.length + 2 && (
-          <div className="col-span-2 flex flex-col items-center gap-5 text-center">
+          <div className="col-span-2 grid grid-cols-[minmax(0,1fr)_auto] gap-10 items-center">
+          <div className="flex flex-col items-center gap-5 text-center">
             <p className="font-display text-6xl uppercase">The End</p>
             <p className="italic text-2xl">{book.moral}</p>
             {book.real_story_bridge && <p className="text-xl max-w-3xl">{book.real_story_bridge}</p>}
@@ -796,6 +799,8 @@ function StorybookView({ host, s }: { host: GameHost; s: GameState }) {
             <button className="btn btn-crimson text-xl" onClick={() => host.nextTale()}>
               Next chapter
             </button>
+          </div>
+          <KeepsakeQR host={host} s={s} size={320} />
           </div>
         )}
       </div>
@@ -840,17 +845,7 @@ export function TV({ host }: { host: GameHost }) {
       root.style.fontSize = prev;
     };
   }, []);
-  // Spacebar / clicker = Continue on reading screens.
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if ((e.key === " " || e.key === "PageDown" || e.key === "ArrowRight") && !(e.target instanceof HTMLInputElement)) {
-        e.preventDefault();
-        if (READING.includes(host.getState().phase)) host.skip();
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [host]);
+  // Spacebar / clicker = Continue, plus presenter hotkeys and the attract loop: see Presenter.tsx.
   // The game lives in this tab: warn before an accidental refresh or close wipes it mid-story.
   const midGame = s.phase !== "lobby" && s.phase !== "storybook";
   useEffect(() => {
@@ -910,6 +905,7 @@ export function TV({ host }: { host: GameHost }) {
       {main}
       <Footer />
       <Reactions items={reactions} />
+      <Presenter host={host} s={s} />
     </div>
   );
 }
