@@ -10,12 +10,13 @@ import { Stamp, WaxSeal } from "./Stamp";
 import { Reactions } from "./Reactions";
 import { Hourglass, ScreenFlash, TypeReveal } from "./Effects";
 import { HeroCard } from "./HeroCard";
+import { QuickTV } from "./QuickTV";
 
 const fmt = (n: number) => (n >= 0 ? `+${n}` : `${n}`);
 const initials = (s: string) => s.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
 const READING = ["quest", "narrating", "outcome", "mirror_reveal", "epilogue", "reveal"];
 
-function useHost(host: GameHost) {
+export function useHost(host: GameHost) {
   return useSyncExternalStore(host.subscribe, host.getState, host.getState);
 }
 
@@ -34,7 +35,7 @@ function bandTone(b: RollResult["band"]): "gilt" | "forest" | "crimson" {
 }
 
 // ---------- shared bits ----------
-function Hope({ hope, max }: { hope: number; max: number }) {
+export function Hope({ hope, max }: { hope: number; max: number }) {
   return (
     <span className="font-ui text-2xl tracking-wider" aria-label={`Hope ${hope} of ${max}`} title="Group Hope">
       {Array.from({ length: max }, (_, i) => (
@@ -95,7 +96,7 @@ function SceneImage({ host, index, className = "" }: { host: GameHost; index: nu
   );
 }
 
-function Avatar({ host, p, size = 64 }: { host: GameHost; p: Player; size?: number }) {
+export function Avatar({ host, p, size = 64 }: { host: GameHost; p: Player; size?: number }) {
   const url = host.thumbs[p.id];
   if (url)
     // eslint-disable-next-line @next/next/no-img-element
@@ -225,6 +226,20 @@ function Lobby({ host, s }: { host: GameHost; s: GameState }) {
         </section>
 
         <section className="flex flex-col gap-3">
+          <h2 className="font-heading text-3xl uppercase text-[var(--gilt-bright)]">How long have you got?</h2>
+          <div className="qt-mode">
+            <button aria-pressed={s.mode === "quick"} onClick={() => { sfx.unlock(); sfx.pageTurn(); host.setMode("quick"); }}>
+              <span className="font-heading text-2xl font-bold uppercase block">Quick Tale · 3 min</span>
+              <span className="text-sm text-ink-soft">One scene from a real headline, one big roll together.</span>
+            </button>
+            <button aria-pressed={s.mode === "full"} onClick={() => { sfx.unlock(); sfx.pageTurn(); host.setMode("full"); }}>
+              <span className="font-heading text-2xl font-bold uppercase block">Full Story · ~15 min</span>
+              <span className="text-sm text-ink-soft">Three scenes, rescues, Mirror, Mirror and the whole ending.</span>
+            </button>
+          </div>
+        </section>
+
+        <section className="flex flex-col gap-3">
           <h2 className="font-heading text-3xl uppercase text-[var(--gilt-bright)]">Pick tonight’s story</h2>
           <p className="text-parchment/70 -mt-2">Each one starts from a real news story. You’ll find out which at the end.</p>
           <div className="grid grid-cols-2 xl:grid-cols-3 gap-3">
@@ -304,7 +319,7 @@ function PlanCards({ host, s }: { host: GameHost; s: GameState }) {
   );
 }
 
-function PartyDice({ host, s }: { host: GameHost; s: GameState }) {
+export function PartyDice({ host, s }: { host: GameHost; s: GameState }) {
   const [settled, setSettled] = useState<Record<string, boolean>>({});
   const prev = useRef<string[]>([]);
   useEffect(() => {
@@ -504,7 +519,7 @@ function RoundStage({ host, s }: { host: GameHost; s: GameState }) {
 }
 
 /** Ticks fast enough for a countdown to land on the beat. */
-function useFastNow(active: boolean) {
+export function useFastNow(active: boolean) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     if (!active) return;
@@ -905,7 +920,7 @@ function QuestIntro({ host, s }: { host: GameHost; s: GameState }) {
 }
 
 /** A save got thanked: a big heart floats from the saved hero's avatar to whoever saved them. */
-function ThankHearts({ s }: { s: GameState }) {
+export function ThankHearts({ s }: { s: GameState }) {
   const seen = useRef<Set<string> | null>(null);
   const layer = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -1008,6 +1023,9 @@ export function TV({ host }: { host: GameHost }) {
       }),
     [host],
   );
+
+  // Quick Tale has its own full-bleed, cinematic stage once the story starts.
+  if (s.mode === "quick" && s.phase !== "lobby") return <QuickTV host={host} s={s} />;
 
   let main: React.ReactNode;
   switch (s.phase) {

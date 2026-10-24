@@ -289,7 +289,7 @@ function PitchForm({ state, me, send, deadlineAt }: { state: GameState; me: Play
         vibrate(20);
       }}
     >
-      <Timer deadlineAt={deadlineAt} total={final ? 30000 : 40000} />
+      <Timer deadlineAt={deadlineAt} total={final || state.mode === "quick" ? 30000 : 40000} />
       {state.rescue && !victim && <p className="font-ui font-bold text-crimson">{state.players.find((p) => p.id === state.rescue!.victimId)?.hero?.name} is stuck. Help them out.</p>}
       {victim && <p className="font-ui font-bold text-crimson">You're stuck: {me.peril}. Yell something useful.</p>}
       <p className="font-heading text-xl leading-snug">{final ? "This is it. What's your final move?" : state.situation || "What do you do?"}</p>
@@ -398,7 +398,7 @@ function Appeal({ state, me, send, deadlineAt }: { state: GameState; me: Player;
         vibrate(20);
       }}
     >
-      <Timer deadlineAt={deadlineAt} total={20000} />
+      <Timer deadlineAt={deadlineAt} total={state.mode === "quick" ? 15000 : 20000} />
       <div className="flex items-center gap-2 flex-wrap">
         <Stamp text={stampText(mine.verdict.tier)} size="sm" slam={false} tone="crimson" />
         <span className="italic text-ink-soft text-sm">{mine.verdict.quip}</span>
@@ -678,6 +678,46 @@ function FinalRollPhone({ state, me, send, deadlineAt }: { state: GameState; me:
   );
 }
 
+// ---------- Quick Tale keepsake ----------
+/** What a stranger walks away with: their hero, their award, their own words, and the real story. */
+function QuickKeepsake({ state, me, portrait }: { state: GameState; me: Player; portrait?: string }) {
+  const book = state.storybook;
+  if (!book || state.busy) return <Watch text={state.busy || "Binding your storybook…"} />;
+  const mine = book.hero_pages.find((h) => h.hero_id === me.id);
+  const said = state.pitches.find((p) => p.playerId === me.id)?.text;
+  const img = me.pick ? `/heroes/${me.pick}.webp` : portrait;
+  return (
+    <div className="flex flex-col gap-3">
+      <div className="page p-5 flex flex-col gap-3 fade-in">
+        <span className="font-ui text-xs uppercase tracking-[0.25em] text-[var(--gilt-bright)]">Your keepsake · {state.partyName || "The Group"}</span>
+        <h2 className="font-display text-4xl uppercase leading-none">{book.title}</h2>
+        <div className="flex gap-3 items-start">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          {img && <img src={img} alt="" className="portrait-oval w-24 h-32 shrink-0" />}
+          <div className="flex flex-col gap-2 min-w-0">
+            <p className="font-heading text-xl font-bold uppercase leading-tight">{[me.hero?.name, ...me.titles].join(", ")}</p>
+            {mine && <Stamp text={mine.award} size="sm" slam={false} rotate={-2} tone="gilt" />}
+            {mine && <p className="leading-snug">{mine.best_moment}</p>}
+          </div>
+        </div>
+        {said && (
+          <p className="italic leading-snug">
+            <span className="font-ui not-italic text-xs uppercase tracking-widest text-ink-soft block">In your own words</span>“{said}”
+          </p>
+        )}
+        <p className="italic text-ink-soft">{book.moral}</p>
+      </div>
+      {book.real_story_bridge && (
+        <div className="page p-4 flex flex-col gap-1">
+          <span className="font-ui text-xs uppercase tracking-widest text-[var(--signal)]">Inspired by real events</span>
+          <p className="leading-snug">{book.real_story_bridge}</p>
+        </div>
+      )}
+      <p className="text-center font-ui text-sm opacity-80">Screenshot this page to keep it. Thanks for playing.</p>
+    </div>
+  );
+}
+
 // ---------- Thank-you after a save ----------
 function ThankSave({ state, me, send }: { state: GameState; me: Player; send: Send }) {
   const [sent, setSent] = useState<string[]>([]);
@@ -776,6 +816,17 @@ export function Phone({ code }: { code: string }) {
       );
       break;
     case "quest":
+      if (state.mode === "quick") {
+        body = (
+          <div className="page p-6 text-center flex flex-col items-center gap-3">
+            <span className="on-air">Real news</span>
+            <p className="font-heading text-2xl uppercase leading-tight">Eyes on the TV. This one really happened.</p>
+            <p className="text-ink-soft">In a moment you'll get a secret clue. Say it out loud.</p>
+          </div>
+        );
+        break;
+      }
+    // falls through
     case "narrating":
     case "epilogue":
     case "reveal":
@@ -901,6 +952,10 @@ export function Phone({ code }: { code: string }) {
       break;
     }
     case "storybook":
+      if (state.mode === "quick") {
+        body = <QuickKeepsake state={state} me={me} portrait={portrait} />;
+        break;
+      }
       body = (
         <div className="flex flex-col gap-3">
           <HeroCard player={me} portrait={portrait} showRoast={false} />

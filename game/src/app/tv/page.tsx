@@ -24,6 +24,8 @@ export default function TVPage() {
       const party = qs.get("party")?.trim();
       const quest = qs.get("quest")?.trim();
       if (party) h.setPartyName(party);
+      // /tv?mode=quick opens straight into the 3-minute judge demo.
+      if (qs.get("mode") === "quick") h.setMode("quick");
       if (quest) h.chooseQuest(quest);
     } catch {}
     setHost(h);

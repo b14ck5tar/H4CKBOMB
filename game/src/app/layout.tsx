@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Anton, Atkinson_Hyperlegible, Barlow_Condensed, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import "./juice.css";
+import "./quick.css";
 
 // Urban-fantasy broadcast type stack. Variable names are the contract the components rely on.
 // display: tabloid/broadcast headline. heading: chunky condensed lower-third. body: built for legibility

@@ -190,9 +190,13 @@ export type Phase =
   | "reveal"
   | "storybook";
 
+/** "quick" = the ~3 minute judge demo (one scene, then straight to the Final Roll). "full" = the whole story. */
+export type GameMode = "full" | "quick";
+
 export interface GameState {
   code: string;
   phase: Phase;
+  mode: GameMode;
   partyName: string;
   players: Player[];
   questId: string;
