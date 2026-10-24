@@ -1,4 +1,28 @@
 export type Stat = "brave" | "clever" | "charming";
+
+/** Who's playing: sets how gentle or heavy the stories, news and humor can be. See `lib/rating.ts`. */
+export type Rating = "kids" | "teens" | "adults";
+
+/** "Real in, magic out": what a player says about their real self. Any field can be "" (skipped). */
+export interface RealAnswers {
+  skill: string; // "What's something you're weirdly good at?" → their power
+  fear: string; // "What's a small thing that scares you?" → comedy in the fiction only, never a real dare
+  talk: string; // "What could you talk about for hours?" → the only basis for the side quest
+}
+
+/** The AI's pick of tonight's story for this crew, plus one spotlight per hero. */
+export interface QuestPick {
+  quest_id: string;
+  why: string; // one line, shown to the host
+  spotlights: { hero_id: string; scene: 0 | 1 | 2; how: string }[]; // how that hero's real skill can matter there
+}
+
+/** One group side quest for real life, built only from what players said they could talk about for hours. */
+export interface SideQuest {
+  title: string;
+  text: string;
+  based_on: { hero_id: string; said: string }[]; // verbatim answers it uses
+}
 export type Tier = "clever" | "solid" | "risky" | "absurd" | "miracle";
 export type Band = "CATASTROPHE" | "FAIL" | "YES_BUT" | "SUCCESS" | "LEGENDARY";
 export type Ending = "TRIUMPHANT" | "BITTERSWEET" | "GRIM_BUT_HILARIOUS";
@@ -23,6 +47,7 @@ export interface Player {
   color: string;
   status: "joined" | "building" | "ready";
   concept?: string;
+  real?: RealAnswers;
   hero?: Hero;
   hasPortrait: boolean;
   abilityAvailable: boolean;
@@ -115,6 +140,8 @@ export interface QuestSeed {
   art_style_hint: string;
   category?: string;
   tone?: string;
+  /** The youngest group this story suits: "kids" = fine for everyone, "adults" = adults only. Missing = "teens". */
+  rating?: Rating;
 }
 
 export interface LogEntry {
@@ -196,6 +223,7 @@ export interface GameState {
   code: string;
   /** "tv": a big screen runs the table. "phones": a player's device hosts and every phone shows the story. */
   screen: "tv" | "phones";
+  rating: Rating; // set by the host in the lobby; default "teens"
   phase: Phase;
   partyName: string;
   players: Player[];
@@ -242,5 +270,8 @@ export interface GameState {
   log: LogEntry[];
   chat: ChatMsg[]; // last few messages, oldest first
   reveal: RevealInfo | null; // set when the reveal starts
+  questPick: QuestPick | null; // the AI's "best fit for this crew" pick, if the host asked for one
+  solvedBy: string; // reveal line: "Solved by Ava's parallel parking and Ben's coffee" ("" if nobody shared a skill)
+  sideQuest: SideQuest | null; // shown at the end
   busy: string;
 }

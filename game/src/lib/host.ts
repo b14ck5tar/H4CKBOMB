@@ -21,6 +21,7 @@ import {
   readMs,
 } from "./rules";
 import { openRoom, type Msg, type Transport } from "./transport";
+import { DEFAULT_RATING } from "./rating";
 import type {
   Band,
   GameState,
@@ -193,6 +194,10 @@ export class GameHost {
       log: [],
       chat: [],
       reveal: null,
+      rating: DEFAULT_RATING,
+      questPick: null,
+      solvedBy: "",
+      sideQuest: null,
       busy: "",
     };
     this.t = openRoom(code);
