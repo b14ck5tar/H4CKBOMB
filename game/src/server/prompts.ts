@@ -134,7 +134,8 @@ For each pitch decide:
 - ability_fits / flaw_walk_in: booleans.
 - quip: the DM's ruling shown before the roll, ≤10 words, deadpan, plain ("Sure. The raccoon will remember this."). No dashes, no caps, no "!".
 - on_success / on_failure: ≤10 words each, what is at stake.
-- moderation: "ok"; "redirected" if you rewrote an inappropriate pitch; "flag" for self-harm or emergencies (tier solid, kind quip).`;
+- moderation: "ok"; "redirected" if you rewrote an inappropriate pitch; "flag" for self-harm or emergencies (tier solid, kind quip).
+CONVINCE THE DM: if a pitch has an "appeal", the player is arguing that their plan should work (previous_tier is what you ruled before). Judge the ARGUMENT like a fair, good-humored DM: a specific reason that uses the scene, their clue, their ability, or something that happened earlier can raise the tier (even to clever, which means it just works). A vague or silly argument keeps the previous tier. Never lower it. The quip answers their argument directly ("Fine. You did say the raccoon owes you.").`;
 
 export const VERDICT_SCHEMA = obj({
   verdicts: {

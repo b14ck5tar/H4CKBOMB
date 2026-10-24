@@ -1,100 +1,98 @@
 import "server-only";
-import type { Band, Hero, Outcome, SceneOpen, Storybook, Verdict } from "@/lib/types";
+import type { Band, Hero, RoundOutcome, SceneOpen, Storybook, Verdict } from "@/lib/types";
 
 const pick = <T,>(a: T[]) => a[Math.floor(Math.random() * a.length)];
 
 export function fallbackHero(concept: string): Hero {
   return {
-    name: pick(["Pip Thistlewick", "Mira Mossfoot", "Bramble Oakhart", "Wren Featherbell"]),
+    name: pick(["Doug", "Marigold", "Wendell", "Priya", "Sal"]),
     epithet: "the Unexpected",
     pronouns: "they/them",
     concept_status: "ok",
     concept_note: "",
     stats: { brave: 1, clever: 3, charming: -1 },
-    ability: { name: "Lucky Pocket", text: "Pull exactly the right odd object from a pocket." },
+    ability: { name: "Pocket Full of Stuff", text: "Pull exactly the right odd object from a pocket." },
     flaw: "Narrates their own actions out loud, badly.",
-    roast: `The scribes heard "${concept.slice(0, 40)}" and simply did their best.`,
+    roast: `The notes just say "${concept.slice(0, 40)}" and a coffee stain.`,
     visual: {
-      anchor: "a small cheerful adventurer with a patched cloak and wild hair",
-      outfit: "patched green cloak, too-big boots",
-      palette: ["forest green", "ochre", "crimson"],
-      prop: "a bulging satchel",
+      anchor: "a small round cartoon character with a giant hoodie and wild hair",
+      outfit: "oversized hoodie, mismatched sneakers",
+      palette: ["teal", "orange", "magenta"],
+      prop: "a bulging backpack",
       expression: "eager grin",
     },
   };
 }
 
-export function fallbackScene(heroIds: string[], situation: string): SceneOpen {
+export function fallbackScene(heroIds: string[], plan: { location?: string; seeded_twist?: string; kind?: string }): SceneOpen {
+  const where = plan.location ?? "The next stop";
   return {
-    recap_of_previous: "",
-    narration: `The path bends, the wind shifts, and trouble arrives right on schedule. ${situation}`,
-    situation,
-    banner: "TROUBLE AHEAD",
+    recap: "",
+    narration: `${where}. ${plan.seeded_twist ?? "Something here is wrong, and it's getting worse."}`,
+    question: plan.kind === "climax" ? "Can you end this tonight?" : "Can you get past this?",
+    situation: plan.kind === "climax" ? "This is it. What's your final move?" : "What do you do?",
+    banner: "Trouble",
     npc_line: { speaker: "", line: "" },
-    suggestions: heroIds.map((id) => ({ hero_id: id, ideas: ["Charge in bravely", "Look for a clever trick", "Sing at it, loudly"] })),
-    music: "tense",
+    clues: [],
+    suggestions: heroIds.map((id) => ({ hero_id: id, ideas: ["Go straight at it", "Look for another way in", "Ask whoever's in charge"] })),
+    music: "eerie",
   };
 }
 
 export function fallbackVerdict(pitchId: string, bestStat: Verdict["stat"]): Verdict & { pitch_id: string } {
   return {
     pitch_id: pitchId,
-    interpretation: "Attempts something bold and slightly unclear.",
+    interpretation: "Tries something bold and slightly unclear.",
     stat: bestStat,
     tier: "solid",
     ability_fits: false,
     flaw_walk_in: false,
-    quip: pick(["The DM squints… fine.", "Sure, why not.", "The scribes allow it."]),
+    quip: pick(["Sure. Roll for it.", "The DM allows it.", "Fine. Dice, please."]),
     on_success: "It works.",
     on_failure: "It doesn't.",
     moderation: "ok",
   };
 }
 
-const BAND_LINES: Record<Band, string[]> = {
-  CATASTROPHE: [
-    "{name} attempts greatness. Greatness declines, loudly, with smoke. {name} is now dangling somewhere very inconvenient.",
-    "With a heroic shout, {name} leaps — and lands in exactly the wrong place, upside down, as things start to circle.",
-  ],
-  FAIL: ["{name}'s plan unravels like a cheap scarf. The realm notices.", "It goes wrong in a way everyone saw coming except {name}."],
-  YES_BUT: ["It works! Mostly. {name} wins the moment but loses a boot.", "{name} pulls it off, at a price nobody wanted to pay."],
-  SUCCESS: ["{name} makes it look easy. The crowd of squirrels applauds.", "Clean, bold, and only slightly showing off — well done, {name}."],
-  LEGENDARY: ["A natural twenty! {name} becomes a legend on the spot.", "Bards will argue for centuries about how {name} did that."],
+const BEAT: Record<Band, string> = {
+  CATASTROPHE: "{name}, it goes wrong fast and in an order nobody predicted. You end up stuck somewhere you really shouldn't be.",
+  FAIL: "{name}, you try it. The world declines, politely, and makes it a little worse.",
+  YES_BUT: "{name}, it works. It also costs you something you'll miss later.",
+  SUCCESS: "{name}, it works the way you said it would. Nobody is more surprised than you.",
+  LEGENDARY: "{name}, it works better than it has any right to. Someone nearby starts clapping and can't stop.",
 };
 
-export function fallbackOutcome(b: Band, name: string): Outcome {
-  const fail = b === "FAIL" || b === "CATASTROPHE";
+export function fallbackRound(actions: { hero_id: string; hero_name?: string; band?: Band }[]): RoundOutcome {
+  const worst = actions.find((a) => a.band === "CATASTROPHE");
   return {
-    headline: { CATASTROPHE: "Oh No.", FAIL: "Not Quite!", YES_BUT: "Sort Of!", SUCCESS: "Nailed It!", LEGENDARY: "LEGEND!" }[b],
-    narration: pick(BAND_LINES[b]).replaceAll("{name}", name),
-    yes_but_cost: b === "YES_BUT" ? "hope" : "none",
-    complication: fail ? "The commotion has attracted unwanted attention." : "",
-    shame_title: b === "CATASTROPHE" ? "the Upside-Down" : "",
-    glory_title: b === "LEGENDARY" ? "the Legendary" : "",
-    savior_title: "",
-    peril: b === "CATASTROPHE" ? "stuck upside down while things circle below" : "",
+    headline: "Well, That Happened",
+    beats: actions.map((a) => ({ hero_id: a.hero_id, text: BEAT[a.band ?? "FAIL"].replaceAll("{name}", a.hero_name ?? "You") })),
+    now: "Everyone is still here, which counts for something.",
+    complication: actions.some((a) => a.band === "FAIL" || a.band === "CATASTROPHE") ? "Somebody definitely noticed all that." : "",
+    titles: [],
+    peril: worst ? { hero_id: worst.hero_id, text: "stuck somewhere very inconvenient" } : { hero_id: "", text: "" },
     new_canon: [],
     threat_mood: "",
-    highlight_score: b === "CATASTROPHE" || b === "LEGENDARY" ? 8 : 4,
-    sfx: { CATASTROPHE: "record_scratch", FAIL: "sad_trombone", YES_BUT: "thud", SUCCESS: "fanfare", LEGENDARY: "choir" }[b],
+    highlight_score: 5,
+    sfx: "none",
   };
 }
 
 export const FALLBACK_EPILOGUE =
-  "The dice land, the realm holds its breath, and the heroes do what heroes do: improvise wildly. Somehow, against all sensible odds, it works out. The threat is sent off with a stern talking-to and a packed lunch. And that is how it really happened... more or less.";
+  "The dice land and, somehow, it holds. Everyone goes home with a story nobody will believe. And that's the version they'll never print.";
 
 export function fallbackStorybook(title: string, heroes: { id: string; name: string }[], images: string[]): Storybook {
   return {
     title,
     dedication: `For ${heroes.map((h) => h.name).join(", ")}, who were there.`,
     pages: [
-      { text: "Once upon a time, trouble came to the realm, and a most unlikely party answered the call.", image_ref: images[0] },
-      { text: "They tried things. Some of those things worked. Others are now legends for the wrong reasons.", image_ref: images[1] ?? images[0] },
+      { text: "It started like any other night, which is how these things always start.", image_ref: images[0] },
+      { text: "They tried things. Some of those things worked. Others are now stories for the wrong reasons.", image_ref: images[1] ?? images[0] },
       { text: "But when it mattered, they rolled together.", image_ref: images[images.length - 1] },
-      { text: "And the realm was, against all odds, a little better than before.", image_ref: images[images.length - 1] },
+      { text: "The town was, against every reasonable expectation, a little better than before.", image_ref: images[images.length - 1] },
     ],
-    hero_pages: heroes.map((h) => ({ hero_id: h.id, best_moment: `${h.name} showed up, which is half of any adventure.`, award: "Brave Showing-Up" })),
-    moral: "Always roll with friends.",
-    real_story_bridge: "Every tale has a true story underneath. Here is this one's.",
+    hero_pages: heroes.map((h) => ({ hero_id: h.id, best_moment: `${h.name} showed up, which is half of anything.`, award: "Showed Up" })),
+    moral: "Go together or don't go.",
+    real_story_bridge: "Every story has a real one underneath. Here's this one.",
   };
 }

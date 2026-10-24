@@ -4,8 +4,8 @@ import {
   CHARACTER_SCHEMA,
   CHARACTER_SYSTEM,
   EPILOGUE_SYSTEM,
-  OUTCOME_SCHEMA,
-  OUTCOME_SYSTEM,
+  ROUND_SCHEMA,
+  ROUND_SYSTEM,
   SCENE_SCHEMA,
   SCENE_SYSTEM,
   STORYBOOK_SYSTEM,
@@ -13,21 +13,16 @@ import {
   VERDICT_SYSTEM,
   storybookSchema,
 } from "@/server/prompts";
-import {
-  FALLBACK_EPILOGUE,
-  fallbackHero,
-  fallbackOutcome,
-  fallbackScene,
-  fallbackStorybook,
-  fallbackVerdict,
-} from "@/server/fallbacks";
-import type { Band, Hero, Stat } from "@/lib/types";
+import { FALLBACK_EPILOGUE, fallbackHero, fallbackRound, fallbackScene, fallbackStorybook, fallbackVerdict } from "@/server/fallbacks";
+import type { Hero, Stat } from "@/lib/types";
 
 export const maxDuration = 60;
 
+const TASKS = ["character", "scene", "verdict", "round", "epilogue", "storybook"];
+
 /** Player-authored text is wrapped so the model treats it as in-world speech, never instructions. */
-function wrap(id: string, text: string) {
-  const clean = String(text ?? "").replace(/[<>]/g, "").slice(0, 200);
+function wrap(id: string, text: string, max = 240) {
+  const clean = String(text ?? "").replace(/[<>]/g, "").slice(0, max);
   return `<player_input id="${id}">${clean}</player_input>`;
 }
 
@@ -51,38 +46,16 @@ async function run(task: string, input: Any) {
         system: CHARACTER_SYSTEM,
         schema: CHARACTER_SCHEMA,
         effort: "low",
-        user: JSON.stringify({ concept: wrap("p", input.concept), party_so_far: input.partySoFar ?? [], avoid_names: input.avoidNames ?? [] }),
+        user: JSON.stringify({ concept: wrap("p", input.concept, 200), party_so_far: input.partySoFar ?? [], avoid_names: input.avoidNames ?? [] }),
       });
       return fixStats(hero);
     }
     case "scene":
-      return museJSON({
-        task: "dm-scene",
-        system: SCENE_SYSTEM,
-        schema: SCENE_SCHEMA,
-        effort: "low",
-        user: JSON.stringify(input),
-      });
-    case "verdict": {
-      const pitches = (input.pitches as Any[]).map((p) => ({ ...p, text: wrap(p.hero_id, p.text) }));
-      return museJSON({
-        task: "dm-verdict",
-        system: VERDICT_SYSTEM,
-        schema: VERDICT_SCHEMA,
-        effort: "minimal",
-        timeoutMs: 10_000,
-        user: JSON.stringify({ ...input, pitches }),
-      });
-    }
-    case "outcome":
-      return museJSON({
-        task: "dm-outcome",
-        system: OUTCOME_SYSTEM,
-        schema: OUTCOME_SCHEMA,
-        effort: "minimal",
-        timeoutMs: 10_000,
-        user: JSON.stringify({ ...input, action: { ...input.action, pitch: wrap(input.action.hero_id, input.action.pitch) } }),
-      });
+      return museJSON({ task: "dm-scene", system: SCENE_SYSTEM, schema: SCENE_SCHEMA, effort: "low", user: JSON.stringify(input) });
+    case "verdict":
+      return museJSON({ task: "dm-verdict", system: VERDICT_SYSTEM, schema: VERDICT_SCHEMA, effort: "minimal", timeoutMs: 10_000, user: JSON.stringify(input) });
+    case "round":
+      return museJSON({ task: "dm-round", system: ROUND_SYSTEM, schema: ROUND_SCHEMA, effort: "low", timeoutMs: 14_000, user: JSON.stringify(input) });
     case "epilogue":
       return museText({ task: "dm-epilogue", system: EPILOGUE_SYSTEM, user: JSON.stringify(input), effort: "low" });
     case "storybook":
@@ -95,9 +68,8 @@ async function run(task: string, input: Any) {
         maxTokens: 5000,
         user: JSON.stringify(input),
       });
-    default:
-      throw new Error(`unknown task ${task}`);
   }
+  throw new Error(`unknown task ${task}`);
 }
 
 function fallback(task: string, input: Any) {
@@ -105,11 +77,11 @@ function fallback(task: string, input: Any) {
     case "character":
       return fallbackHero(input.concept ?? "");
     case "scene":
-      return fallbackScene(input.hero_ids ?? [], input.scene_plan?.objective ?? "What do you do?");
+      return fallbackScene(input.hero_ids ?? [], input.scene_plan ?? {});
     case "verdict":
-      return { verdicts: (input.pitches as Any[]).map((p) => fallbackVerdict(p.pitch_id, p.best_stat ?? "brave")) };
-    case "outcome":
-      return fallbackOutcome(input.roll?.band as Band, input.hero_name ?? "Our hero");
+      return { verdicts: ((input.pitches as Any[]) ?? []).map((p) => fallbackVerdict(p.pitch_id, p.best_stat ?? "brave")) };
+    case "round":
+      return fallbackRound(input.actions ?? []);
     case "epilogue":
       return FALLBACK_EPILOGUE;
     case "storybook":
@@ -132,36 +104,63 @@ function conform(shape: Any, data: Any): Any {
   return typeof data === typeof shape ? data : shape;
 }
 
-const TIERS = ["clever", "solid", "risky", "absurd", "miracle"];
-const STAT_NAMES = ["brave", "clever", "charming"];
+/** Backstop for the most recognizable AI-writing tells, applied to every string the DM writes. */
+function scrub(text: string): string {
+  let s = text
+    .replace(/\s*[—–]\s*/g, ", ")
+    .replace(/\s*(\.\.\.|…)\s*/g, ". ")
+    .replace(/\b([A-Z]{3,})\b/g, (w) => (["NPC", "USA", "ATM", "UFO", "DJ", "TV", "AI", "OK"].includes(w) ? w : w[0] + w.slice(1).toLowerCase()))
+    .replace(/,\s*,/g, ",")
+    .replace(/\s{2,}/g, " ");
+  // At most one exclamation mark per string.
+  let seen = false;
+  s = s.replace(/!+/g, () => (seen ? "." : ((seen = true), "!")));
+  return s.trim();
+}
 
-/** Player-written text that rides along in other fields gets the same <player_input> wrapping. */
+function scrubDeep(v: Any, key = ""): Any {
+  if (typeof v === "string") return ["hero_id", "pitch_id", "image_ref", "stat", "tier", "kind", "moderation", "sfx", "music", "pronouns", "concept_status"].includes(key) ? v : scrub(v);
+  if (Array.isArray(v)) return v.map((x) => scrubDeep(x, key));
+  if (v && typeof v === "object") return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, scrubDeep(x, k)]));
+  return v;
+}
+
+const TIERS = ["clever", "solid", "risky", "absurd", "miracle"];
+
+/** Every piece of player-written text is wrapped as <player_input>, wherever it rides along. */
 function wrapPlayerText(task: string, input: Any) {
-  if (task === "verdict" && Array.isArray(input.other_pitches)) input.other_pitches = input.other_pitches.map((t: string, i: number) => wrap(`o${i}`, t));
-  if (task === "outcome" && Array.isArray(input.supporting_pitches))
-    input.supporting_pitches = input.supporting_pitches.map((s: Any, i: number) => ({ ...s, pitch: wrap(`s${i}`, s?.pitch) }));
-  if (task === "storybook" && Array.isArray(input.log)) input.log = input.log.map((l: Any, i: number) => ({ ...l, pitch: wrap(`l${i}`, l?.pitch) }));
+  if (task === "verdict") {
+    input.pitches = ((input.pitches as Any[]) ?? []).map((p) => ({ ...p, text: wrap(p.hero_id, p.text), appeal: p.appeal ? wrap(`${p.hero_id}-appeal`, p.appeal) : "" }));
+    if (Array.isArray(input.other_pitches)) input.other_pitches = input.other_pitches.map((t: string, i: number) => wrap(`o${i}`, t));
+  }
+  if (task === "round" && Array.isArray(input.actions))
+    input.actions = input.actions.map((a: Any) => ({ ...a, pitch: wrap(a.hero_id, a.pitch), appeal: a.appeal ? wrap(`${a.hero_id}-appeal`, a.appeal) : "" }));
+  if ((task === "storybook" || task === "epilogue") && Array.isArray(input.log))
+    input.log = input.log.map((l: Any, i: number) => (typeof l === "string" ? wrap(`l${i}`, l) : { ...l, pitch: wrap(`l${i}`, l?.pitch) }));
+  if (task === "epilogue" && input.final?.final_moves)
+    input.final.final_moves = Object.fromEntries(Object.entries(input.final.final_moves).map(([k, v]) => [k, wrap(`f-${k}`, String(v))]));
+  if (task === "storybook" && input.final_moves)
+    input.final_moves = Object.fromEntries(Object.entries(input.final_moves).map(([k, v]) => [k, wrap(`f-${k}`, String(v))]));
   return input;
 }
 
 export async function POST(req: Request) {
   const { task, input: rawInput } = await req.json();
-  if (!["character", "scene", "verdict", "outcome", "epilogue", "storybook"].includes(task)) {
-    return NextResponse.json({ error: "unknown task" }, { status: 400 });
-  }
+  if (!TASKS.includes(task)) return NextResponse.json({ error: "unknown task" }, { status: 400 });
   const input = wrapPlayerText(task, rawInput ?? {});
   try {
     let data: Any = await run(task, input);
     if (task === "epilogue") {
       if (typeof data !== "string" || !data.trim()) throw new Error("empty epilogue");
+      data = scrub(data);
     } else {
-      data = conform(fallback(task, input), data);
+      data = scrubDeep(conform(fallback(task, input), data));
     }
     if (task === "verdict") {
       data.verdicts = (data.verdicts as Any[]).map((v) => ({
         ...v,
         tier: TIERS.includes(v?.tier) ? v.tier : "solid",
-        stat: STAT_NAMES.includes(v?.stat) ? v.stat : input.pitches?.[0]?.best_stat ?? "brave",
+        stat: STATS.includes(v?.stat) ? v.stat : input.pitches?.[0]?.best_stat ?? "brave",
       }));
     }
     return NextResponse.json({ data, fallback: false });
