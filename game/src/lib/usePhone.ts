@@ -35,8 +35,8 @@ export function usePhone(code: string | null) {
     tRef.current = t;
     let lastHeard = 0;
     const off = t.on((m: Msg) => {
-      lastHeard = Date.now();
       if (m.type === "state") {
+        lastHeard = Date.now(); // only the table's state counts; other phones chatting doesn't mean we're in sync
         setState(m.state as GameState);
         setDeadlineAt(m.state.deadline ? Date.now() + m.state.deadline : 0);
       } else if (m.type === "portrait" && m.pid === pid) {

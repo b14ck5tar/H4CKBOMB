@@ -51,6 +51,7 @@ export interface Pitch {
   embraceFlaw: boolean;
   verdict?: Verdict;
   partnerId?: string; // set on a ⚔ Team Up combo
+  abilityBy?: string; // on a combo: whose ability gets spent
 }
 
 export interface RollResult {
@@ -58,6 +59,7 @@ export interface RollResult {
   dice: number[];
   kept: number;
   advantage: "adv" | "dis" | "none";
+  baseAdvantage?: "adv" | "dis" | "none"; // before the Team Up bonus, so a Catch! reroll starts from the same footing
   statBonus: number;
   tierMod: number;
   total: number;

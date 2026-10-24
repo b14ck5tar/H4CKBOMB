@@ -98,6 +98,7 @@ export class GameHost {
   private threatMood = "";
   private reactionId = 0;
   private lastReact: Record<string, number> = {};
+  private lastPortraitSend: Record<string, number> = {};
 
   constructor(code: string) {
     this.state = {
@@ -215,10 +216,16 @@ export class GameHost {
   // ---------- messages from phones ----------
   private handle(m: Msg) {
     switch (m.type) {
-      case "hello":
-        this.broadcastNow();
-        if (this.thumbs[m.pid]) this.t.send({ type: "portrait", pid: m.pid, url: this.thumbs[m.pid] });
+      case "hello": {
+        // Coalesced, and portraits re-sent at most every 5s per phone, so hellos can't flood the channel.
+        this.broadcastSoon();
+        const now = Date.now();
+        if (this.thumbs[m.pid] && now - (this.lastPortraitSend[m.pid] ?? 0) > 5000) {
+          this.lastPortraitSend[m.pid] = now;
+          this.t.send({ type: "portrait", pid: m.pid, url: this.thumbs[m.pid] });
+        }
         break;
+      }
       case "join":
         return this.onJoin(m.pid, m.name);
       case "concept":
@@ -266,7 +273,7 @@ export class GameHost {
 
   async buildCharacter(pid: string, concept: string) {
     const p = this.player(pid);
-    if (!p || p.status === "building") return;
+    if (!p || p.status === "building" || this.state.phase !== "lobby") return;
     const text = String(concept ?? "").slice(0, 200);
     this.patchPlayer(pid, { status: "building", concept: text, hasPortrait: false });
     const others = this.heroes().filter((o) => o.id !== pid);
@@ -434,24 +441,34 @@ export class GameHost {
       suggestions: heroIds.map((id) => ({ hero_id: id, ideas: ["Charge in bravely", "Try a clever trick", "Sing at it, loudly"] })),
       music: "tense",
     });
-    const res = await withTimeout(
-      ai<SceneOpen>("scene", input).then((r) => r.data),
-      16_000,
-      fb,
-    );
-    if (res.recap_of_previous) this.recaps.push(res.recap_of_previous);
-    const suggestions: Record<string, string[]> = {};
-    res.suggestions?.forEach((s) => (suggestions[s.hero_id] = s.ideas));
-    this.set({
-      narration: res.narration,
-      situation: res.situation,
-      banner: res.banner,
-      npcLine: res.npc_line,
-      suggestions,
-      busy: "",
-    });
-    const ms = readMs(res.narration + " " + res.npc_line.line);
-    this.setTimer(ms, () => (isClimax ? this.startFinalRoll() : this.startPitch()));
+    const next = () => (isClimax ? this.startFinalRoll() : this.startPitch());
+    try {
+      const res = await withTimeout(
+        ai<SceneOpen>("scene", input).then((r) => (r.fallback ? fb() : r.data)),
+        16_000,
+        fb,
+      );
+      if (this.state.phase !== "narrating" || this.state.sceneIndex !== i) return;
+      if (res.recap_of_previous) this.recaps.push(res.recap_of_previous);
+      const suggestions: Record<string, string[]> = {};
+      res.suggestions?.forEach((s) => s?.hero_id && Array.isArray(s.ideas) && (suggestions[s.hero_id] = s.ideas));
+      const npcLine = res.npc_line ?? { speaker: "", line: "" };
+      this.set({
+        narration: res.narration || fb().narration,
+        situation: res.situation || fb().situation,
+        banner: res.banner ?? "",
+        npcLine,
+        suggestions,
+        busy: "",
+      });
+      this.setTimer(readMs(`${res.narration ?? ""} ${npcLine.line ?? ""}`), next);
+    } catch (e) {
+      // Never leave the table stuck: show the plain beat and move on.
+      console.error("[host] openScene failed", e);
+      const f = fb();
+      this.set({ narration: f.narration, situation: f.situation, banner: f.banner, npcLine: f.npc_line, busy: "" });
+      this.setTimer(6000, next);
+    }
   }
 
   // ---------- pitch → verdict ----------
@@ -595,6 +612,8 @@ export class GameHost {
       partnerId: other.playerId,
       text: `${a.text} + ${b.text}`,
       useAbility: a.useAbility || b.useAbility,
+      // Whoever ticked "use ability" (and still has it) is the one who spends it.
+      abilityBy: [a, b].find((x) => x.useAbility && this.player(x.playerId)?.abilityAvailable)?.playerId,
       embraceFlaw: a.embraceFlaw || b.embraceFlaw,
       verdict: {
         ...v,
@@ -610,6 +629,7 @@ export class GameHost {
   private makeRoll(pid: string, v: Verdict, advantage: RollResult["advantage"], rescuerId: string, partnerId = ""): RollResult {
     const hero = this.player(pid)!.hero!;
     const partner = partnerId ? this.player(partnerId)?.hero : undefined;
+    const baseAdvantage = advantage;
     // A Team Up rolls two dice and keeps the best (unless a flaw drags it down to one).
     if (partner && advantage === "none") advantage = "adv";
     if (partner && advantage === "dis") advantage = "none";
@@ -618,17 +638,18 @@ export class GameHost {
     const statBonus = Math.max(hero.stats[v.stat], partner?.stats[v.stat] ?? -9);
     const tierMod = TIER_MOD[v.tier];
     const total = kept + statBonus + tierMod;
-    return { playerId: pid, dice, kept, advantage, statBonus, tierMod, total, band: band(kept, total, v.tier), rescuerId };
+    return { playerId: pid, dice, kept, advantage, baseAdvantage, statBonus, tierMod, total, band: band(kept, total, v.tier), rescuerId };
   }
 
   private startRoll(pitch: Pitch, believes: boolean) {
     const p = this.player(pitch.playerId)!;
     const v = pitch.verdict!;
-    const usesAbility = pitch.useAbility && p.abilityAvailable;
+    const abilityOwner = pitch.partnerId ? pitch.abilityBy : pitch.useAbility && p.abilityAvailable ? p.id : undefined;
+    const usesAbility = !!abilityOwner;
     const adv = usesAbility || believes;
     const dis = v.flaw_walk_in && !pitch.embraceFlaw;
     const advantage = adv && !dis ? "adv" : dis && !adv ? "dis" : "none";
-    if (usesAbility) this.patchPlayer(p.id, { abilityAvailable: false });
+    if (abilityOwner) this.patchPlayer(abilityOwner, { abilityAvailable: false });
     this.pendingRoll = this.makeRoll(p.id, v, advantage, "", pitch.partnerId ?? "");
     this.outcomeP = this.fetchOutcome(pitch, this.pendingRoll);
     this.set({ phase: "roll", rollerId: p.id, winningPitchId: pitch.id, roll: null, catchers: [] });
@@ -654,7 +675,10 @@ export class GameHost {
   private afterRoll() {
     const roll = this.state.roll!;
     if (isFailure(roll.band) && !roll.rescuerId) {
-      const catchers = this.heroes().filter((p) => p.heart === 1 && p.id !== roll.playerId).map((p) => p.id);
+      const partnerId = this.state.pitches.find((p) => p.id === this.state.winningPitchId)?.partnerId;
+      const catchers = this.heroes()
+        .filter((p) => p.heart === 1 && p.id !== roll.playerId && p.id !== partnerId)
+        .map((p) => p.id);
       if (catchers.length) {
         this.set({ phase: "catch", catchers });
         this.setTimer(CATCH_MS, () => this.resolveOutcome());
@@ -670,7 +694,7 @@ export class GameHost {
     const pitch = this.state.pitches.find((p) => p.id === this.state.winningPitchId)!;
     const old = this.state.roll!;
     this.patchPlayer(pid, { heart: 0 });
-    this.pendingRoll = this.makeRoll(old.playerId, pitch.verdict!, old.advantage, pid, pitch.partnerId ?? "");
+    this.pendingRoll = this.makeRoll(old.playerId, pitch.verdict!, old.baseAdvantage ?? old.advantage, pid, pitch.partnerId ?? "");
     this.outcomeP = this.fetchOutcome(pitch, this.pendingRoll);
     this.set({ phase: "rolling", roll: this.pendingRoll, catchers: [] });
     setTimeout(() => this.resolveOutcome(), ROLL_ANIM_MS);
@@ -715,7 +739,9 @@ export class GameHost {
       rescue_of: r ? this.player(r.victimId)?.hero?.name ?? "" : "",
       ability: { ...p.hero!.ability, fits: v.ability_fits },
     };
-    return ai<Outcome>("outcome", input).then((res) => res.data);
+    const p2 = ai<Outcome>("outcome", input).then((res) => res.data);
+    p2.catch(() => {}); // may be discarded by a Catch!; resolveOutcome has its own fallback
+    return p2;
   }
 
   private async resolveOutcome() {
@@ -739,8 +765,13 @@ export class GameHost {
       highlight_score: 5,
       sfx: "none",
     });
-    const out = await withTimeout(this.outcomeP ?? Promise.resolve(fb()), 12_000, fb);
-    this.applyOutcome(roll, pitch, roller, out);
+    let out = await withTimeout(this.outcomeP ?? Promise.resolve(fb()), 12_000, fb);
+    if (!out || typeof out.narration !== "string") out = fb();
+    try {
+      this.applyOutcome(roll, pitch, roller, { ...fb(), ...out, new_canon: Array.isArray(out.new_canon) ? out.new_canon : [] });
+    } catch (e) {
+      console.error("[host] applyOutcome failed", e);
+    }
     this.set({ outcome: out, busy: "" });
     this.setTimer(readMs(out.narration), () => this.afterOutcome());
   }
@@ -766,7 +797,7 @@ export class GameHost {
           if (out.glory_title) titles.push(out.glory_title);
           abilityAvailable = true;
         }
-        if (b === "CATASTROPHE" && !rescue) peril = out.peril || "in terrible, comic peril";
+        if (b === "CATASTROPHE" && !rescue && p.id === roller.id) peril = out.peril || "in terrible, comic peril";
         if (rescue && success && out.savior_title) titles.push(out.savior_title);
       }
       if (roll.rescuerId && p.id === roll.rescuerId && success && out.savior_title && !rescue) titles.push(out.savior_title);
@@ -852,28 +883,30 @@ export class GameHost {
     );
     const crowd = Object.entries(this.reactionCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "";
     const images = this.state.scenes.map((_, i) => `scene_${i + 1}`);
-    this.storybookP = this.epilogueP.then((epilogue) =>
-      withTimeout(
-        ai<Storybook>("storybook", {
-          state: st,
-          title: this.state.quest?.title,
-          heroes,
-          log: this.state.log,
-          epilogue,
-          crowd_favorite: crowd,
-          available_images: images,
-          real_story: this.seed?.the_real_story,
-        }).then((r) => r.data),
-        45_000,
-        () => ({
-          title: this.state.quest?.title ?? "A Tale",
-          dedication: `For ${heroes.map((h) => h.name).join(", ")}.`,
-          pages: [{ text: epilogue, image_ref: images[images.length - 1] }],
-          hero_pages: heroes.map((h) => ({ hero_id: h.id, best_moment: `${h.name} was there when it mattered.`, award: "Present & Heroic" })),
-          moral: "Always roll with friends.",
-          real_story_bridge: "",
-        }),
-      ),
+    // Runs in parallel with the epilogue (it doesn't need its text), so the ending never waits on both.
+    const bookFallback = (): Storybook => ({
+      title: this.state.quest?.title ?? "A Tale",
+      dedication: `For ${heroes.map((h) => h.name).join(", ")}.`,
+      pages: this.state.log.length
+        ? this.state.log.slice(0, 5).map((l, i) => ({ text: `${l.headline} ${l.narration}`, image_ref: images[Math.min(i, images.length - 1)] }))
+        : [{ text: "Once upon a time, a most unlikely party answered the call, and the realm was never quite the same.", image_ref: images[0] }],
+      hero_pages: heroes.map((h) => ({ hero_id: h.id, best_moment: `${h.name} was there when it mattered.`, award: "Present & Heroic" })),
+      moral: "Always roll with friends.",
+      real_story_bridge: "",
+    });
+    this.storybookP = withTimeout(
+      ai<Storybook>("storybook", {
+        state: st,
+        title: this.state.quest?.title,
+        heroes,
+        log: this.state.log,
+        ending: final.ending,
+        crowd_favorite: crowd,
+        available_images: images,
+        real_story: this.seed?.the_real_story,
+      }).then((r) => (Array.isArray(r.data?.pages) && r.data.pages.length ? r.data : bookFallback())),
+      30_000,
+      bookFallback,
     );
     this.setTimer(grim ? 2500 : 4500, () => this.startEpilogue());
   }

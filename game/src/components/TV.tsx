@@ -351,7 +351,7 @@ function SceneStage({ host, s }: { host: GameHost; s: GameState }) {
     ) : (
       <div className="flex flex-col gap-4">
         <TypeReveal text={s.narration} className="text-[1.65rem] leading-snug" />
-        {s.npcLine.speaker && s.npcLine.line && (
+        {s.npcLine?.speaker && s.npcLine?.line && (
           <p className="text-xl italic border-l-4 border-[var(--gilt)] pl-4">
             <b className="font-heading not-italic">{s.npcLine.speaker}:</b> “{s.npcLine.line}”
           </p>
@@ -638,6 +638,17 @@ function QuestIntro({ host, s }: { host: GameHost; s: GameState }) {
 export function TV({ host }: { host: GameHost }) {
   const s = useHost(host);
   const [reactions, setReactions] = useState<{ id: number; emoji: string; color?: string }[]>([]);
+  // The game lives in this tab: warn before an accidental refresh or close wipes it mid-tale.
+  const midGame = s.phase !== "lobby" && s.phase !== "storybook";
+  useEffect(() => {
+    if (!midGame) return;
+    const warn = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "";
+    };
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [midGame]);
   useEffect(
     () =>
       host.onReaction((r) => {

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useCountdown, usePhone } from "@/lib/usePhone";
 import { BAND_LABEL, REACTIONS, stampText } from "@/lib/rules";
 import { sfx } from "@/lib/sfx";
@@ -72,6 +72,8 @@ function Watch({ text = "Eyes on the table" }: { text?: string }) {
 }
 
 function ReactionBar({ send }: { send: (t: string, d?: Record<string, unknown>) => void }) {
+  // Throttled on the phone: every reaction fans out to everyone on the realtime channel.
+  const last = useRef(0);
   return (
     <div className="mt-auto pt-2 grid grid-cols-6 gap-2">
       {REACTIONS.map((e) => (
@@ -79,6 +81,8 @@ function ReactionBar({ send }: { send: (t: string, d?: Record<string, unknown>) 
           key={e}
           className="text-3xl py-2 rounded-xl bg-white/10 active:scale-90 transition"
           onClick={() => {
+            if (Date.now() - last.current < 450) return;
+            last.current = Date.now();
             send("react", { emoji: e });
             vibrate(10);
           }}

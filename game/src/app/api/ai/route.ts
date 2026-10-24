@@ -117,10 +117,53 @@ function fallback(task: string, input: Any) {
   }
 }
 
+/**
+ * Strict schemas should guarantee shape, but a demo can't bet on it: every field the game reads is checked
+ * against the fallback's shape, and anything missing or the wrong type is filled from the fallback.
+ */
+function conform(shape: Any, data: Any): Any {
+  if (Array.isArray(shape)) return Array.isArray(data) ? data : shape;
+  if (shape && typeof shape === "object") {
+    if (!data || typeof data !== "object" || Array.isArray(data)) return shape;
+    const out: Any = { ...data };
+    for (const k of Object.keys(shape)) out[k] = conform(shape[k], data[k]);
+    return out;
+  }
+  return typeof data === typeof shape ? data : shape;
+}
+
+const TIERS = ["clever", "solid", "risky", "absurd", "miracle"];
+const STAT_NAMES = ["brave", "clever", "charming"];
+
+/** Player-written text that rides along in other fields gets the same <player_input> wrapping. */
+function wrapPlayerText(task: string, input: Any) {
+  if (task === "verdict" && Array.isArray(input.other_pitches)) input.other_pitches = input.other_pitches.map((t: string, i: number) => wrap(`o${i}`, t));
+  if (task === "outcome" && Array.isArray(input.supporting_pitches))
+    input.supporting_pitches = input.supporting_pitches.map((s: Any, i: number) => ({ ...s, pitch: wrap(`s${i}`, s?.pitch) }));
+  if (task === "storybook" && Array.isArray(input.log)) input.log = input.log.map((l: Any, i: number) => ({ ...l, pitch: wrap(`l${i}`, l?.pitch) }));
+  return input;
+}
+
 export async function POST(req: Request) {
-  const { task, input } = await req.json();
+  const { task, input: rawInput } = await req.json();
+  if (!["character", "scene", "verdict", "outcome", "epilogue", "storybook"].includes(task)) {
+    return NextResponse.json({ error: "unknown task" }, { status: 400 });
+  }
+  const input = wrapPlayerText(task, rawInput ?? {});
   try {
-    const data = await run(task, input);
+    let data: Any = await run(task, input);
+    if (task === "epilogue") {
+      if (typeof data !== "string" || !data.trim()) throw new Error("empty epilogue");
+    } else {
+      data = conform(fallback(task, input), data);
+    }
+    if (task === "verdict") {
+      data.verdicts = (data.verdicts as Any[]).map((v) => ({
+        ...v,
+        tier: TIERS.includes(v?.tier) ? v.tier : "solid",
+        stat: STAT_NAMES.includes(v?.stat) ? v.stat : input.pitches?.[0]?.best_stat ?? "brave",
+      }));
+    }
     return NextResponse.json({ data, fallback: false });
   } catch (e) {
     console.error(`[ai] ${task} failed, using fallback:`, (e as Error).message);

@@ -72,7 +72,9 @@ export async function museText(opts: { task: string; system: string; user: strin
   if (!res.ok) throw new Error(`muse ${opts.task} HTTP ${res.status}: ${(await res.text()).slice(0, 300)}`);
   const j = await res.json();
   console.log(`[muse] ${opts.task} ${Date.now() - t0}ms`);
-  return String(j.choices?.[0]?.message?.content ?? "").trim();
+  const text = String(j.choices?.[0]?.message?.content ?? "").trim();
+  if (!text) throw new Error(`muse ${opts.task}: empty text (${j.choices?.[0]?.finish_reason})`);
+  return text;
 }
 
 export async function museImage(opts: {
