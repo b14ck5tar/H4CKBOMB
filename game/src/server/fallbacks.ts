@@ -101,8 +101,28 @@ export function fallbackRound(actions: { hero_id: string; hero_name?: string; ba
   };
 }
 
-export const FALLBACK_EPILOGUE =
-  "The dice land and, somehow, it holds. Everyone goes home with a story nobody will believe. And that's the version they'll never print.";
+export const FALLBACK_EPILOGUE = {
+  ending: "The die lands, and somehow the plan holds. Everyone goes home with a story nobody will believe.",
+  line: "Nobody will believe it, but it happened.",
+};
+
+/** Ruling backup: no AI, so the plan counts as Solid (and DM's Notes says the plan was never reviewed). */
+export function fallbackRuling(bestStat: Verdict["stat"]) {
+  return { interpretation: "", stat: bestStat, tier: "solid" as const, reason: "Backup ruling: the AI didn't answer, so the plan counts as Solid", moderation: "ok" as const };
+}
+
+/** Outcome backup. Never quotes the plan: it was never reviewed. */
+export function fallbackOutcome(name: string, band: Band) {
+  const n = name || "The hero";
+  const lines: Record<Band, string> = {
+    CATASTROPHE: `${n} tries it, and it goes wrong fast. Nobody is hurt, but the problem is now a little bigger.`,
+    FAIL: `${n} gives it a real try, but it doesn't work this time. The problem is still right there.`,
+    YES_BUT: `${n}'s plan works, mostly. It costs something on the way, but the heroes are closer to the goal.`,
+    SUCCESS: `${n}'s plan works the way it was meant to, and the heroes get what they came for.`,
+    LEGENDARY: `${n}'s plan works better than anyone hoped. Someone nearby starts clapping and can't stop.`,
+  };
+  return { text: lines[band] ?? lines.YES_BUT };
+}
 
 export interface KindInput {
   ward_name?: string;

@@ -2,9 +2,17 @@ import "server-only";
 
 const BASE = "https://api.meta.ai/v1";
 const TEXT_MODEL = "muse-spark-1.3";
+/**
+ * One model per job (design/23-model-choices.md). Pinned here so a swap is one line.
+ * Rulings: spark-1.3 at "minimal" effort, 1-2 s per plan, and with the v2 rubric 8/8 consistent across runs.
+ */
+export const MODELS = {
+  ruling: "muse-spark-1.3",
+  writing: TEXT_MODEL,
+} as const;
 const IMAGE_MODEL = "muse-image-1.0";
 
-if (/-contributor$/.test(TEXT_MODEL)) throw new Error("Never use -contributor models: Meta trains on that data.");
+if (Object.values(MODELS).some((m) => /-contributor$/.test(m))) throw new Error("Never use -contributor models: Meta trains on that data.");
 
 function key() {
   const k = process.env.MODEL_API_KEY;
@@ -26,6 +34,7 @@ export async function museJSON<T>(opts: {
   effort?: Effort;
   maxTokens?: number;
   timeoutMs?: number;
+  model?: string;
 }): Promise<T> {
   const t0 = Date.now();
   const res = await fetch(`${BASE}/chat/completions`, {
@@ -33,7 +42,7 @@ export async function museJSON<T>(opts: {
     headers: headers(),
     signal: AbortSignal.timeout(opts.timeoutMs ?? 15_000),
     body: JSON.stringify({
-      model: TEXT_MODEL,
+      model: opts.model ?? TEXT_MODEL,
       messages: [
         { role: "developer", content: opts.system },
         { role: "user", content: opts.user },
@@ -48,7 +57,7 @@ export async function museJSON<T>(opts: {
   const j = await res.json();
   const content = j.choices?.[0]?.message?.content;
   if (!content) throw new Error(`muse ${opts.task}: empty response (${j.choices?.[0]?.finish_reason})`);
-  console.log(`[muse] ${opts.task} ${Date.now() - t0}ms in=${j.usage?.prompt_tokens} out=${j.usage?.completion_tokens}`);
+  console.log(`[muse] ${opts.task} ${opts.model ?? TEXT_MODEL} ${Date.now() - t0}ms in=${j.usage?.prompt_tokens} out=${j.usage?.completion_tokens}`);
   return JSON.parse(content) as T;
 }
 

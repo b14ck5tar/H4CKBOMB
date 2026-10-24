@@ -24,6 +24,8 @@ export const FEATURES = {
   clueBox: false,
   /** AI-written scene openers. Off = the hand-written scenes in seed_quests.json. */
   aiScenes: false,
+  /** Paint the party's heroes into each scene (server/art, muse-image edits, ~$0.01 each, cached). */
+  heroArt: true,
   /** AI plan suggestions on phones (they made everyone's plans the same). */
   suggestions: false,
 } as const;

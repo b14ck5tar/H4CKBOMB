@@ -8,7 +8,8 @@ export interface RealAnswers {
   skill: string; // "What's something you're weirdly good at?" -> their power, and the reveal's "Solved by" line
   fear: string; // "What's a small thing that scares you?" -> comedy in the fiction only, never a real dare
 }
-export type Tier = "clever" | "solid" | "risky" | "absurd" | "miracle";
+/** How likely the winning plan is to work. Every plan rolls; "clever" is just the best modifier (lib/rules.ts). */
+export type Tier = "clever" | "solid" | "risky" | "wild" | "miracle";
 export type Band = "CATASTROPHE" | "FAIL" | "YES_BUT" | "SUCCESS" | "LEGENDARY";
 export type Ending = "TRIUMPHANT" | "BITTERSWEET" | "GRIM_BUT_HILARIOUS";
 export type SceneKind = "hook" | "twist" | "climax";
@@ -120,6 +121,17 @@ export interface SceneView {
   hasImage: boolean;
 }
 
+/** A scene the team wrote by hand in plain English (seed_quests.json). The AI never rewrites it. */
+export interface SeedScene {
+  kind: SceneKind;
+  title: string;
+  location: string;
+  narration: string;
+  goal: string;
+  situation: string;
+  npc_line: { speaker: string; line: string };
+}
+
 export interface QuestSeed {
   id: string;
   quest_title: string;
@@ -131,6 +143,8 @@ export interface QuestSeed {
   complications: { stage: number; title: string; what_happens: string; why_obvious_in_hindsight: string; mapped_from: string }[];
   the_real_story: { summary: string; headline: string; source: string; link: string; date: string; context_note?: string };
   art_style_hint: string;
+  scenes?: SeedScene[]; // Full Story: hook, twist, climax
+  quick_scene?: SeedScene; // Quick Tale: the one scene
   category?: string;
   tone?: string;
   /** The youngest group this story suits: "kids" = fine for everyone, "adults" = adults only. Missing = "teens". */
@@ -245,9 +259,12 @@ export interface DMNotes {
 
 export type Phase =
   | "lobby"
+  | "story_vote"
   | "quest"
   | "narrating"
   | "pitch"
+  | "vote"
+  | "ruling"
   | "appeal"
   | "roll"
   | "catch"
@@ -281,7 +298,9 @@ export interface GameState {
   // Quest board
   question: string; // the scene's dramatic question ("Right now")
   lastTime: string; // recap / wrap of the last round
-  // Scene
+  // Scene (hand-written: seed_quests.json)
+  sceneTitle: string;
+  goal: string; // what the heroes are trying to do this scene: on the TV and every phone the whole scene
   narration: string;
   situation: string;
   banner: string;
@@ -290,8 +309,14 @@ export interface GameState {
   clues: Record<string, string>; // private per hero (phones only show their own)
   clueBecause: Record<string, string>; // why only that hero noticed it ("your Brains", "you're a night-shift baker")
   rescue: { victimId: string; peril: string } | null;
-  // Round
+  // Round: everyone types a plan, everyone backs a friend's, the winner rolls
   pitches: Pitch[];
+  votes: Record<string, string>; // voter id -> pitch id (or quest id during the story vote)
+  winnerId: string; // the winning pitch id ("" until the vote ends)
+  wins: Record<string, number>; // player id -> plans of theirs that won (the spotlight rule)
+  outcome: string; // 1-2 sentences: what the winning plan did
+  endingLine: string; // one line for the reveal: how it ended
+  storyOptions: { id: string; title: string; teaser: string }[]; // the story vote's 3 headlines
   boosts: Record<string, string>; // booster id -> pitch id
   rolls: RollResult[]; // in reveal order (lowest result first)
   revealed: string[]; // player ids whose die is shown

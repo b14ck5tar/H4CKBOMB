@@ -1,29 +1,32 @@
 import { NextResponse } from "next/server";
-import { museJSON, museText } from "@/server/muse";
+import { MODELS, museJSON } from "@/server/muse";
 import {
   CHARACTER_SCHEMA,
   CHARACTER_SYSTEM,
   EPILOGUE_QUICK,
+  EPILOGUE_SCHEMA,
   EPILOGUE_SYSTEM,
   KIND_SCHEMA,
   KIND_SYSTEM,
+  OUTCOME_SCHEMA,
+  OUTCOME_SYSTEM,
   ROUND_SCHEMA,
   ROUND_SYSTEM,
   SCENE_SCHEMA,
   SCENE_SYSTEM,
+  RULING_SCHEMA,
+  RULING_SYSTEM,
   STORYBOOK_SYSTEM,
-  VERDICT_SCHEMA,
-  VERDICT_SYSTEM,
   storybookSchema,
   withRating,
 } from "@/server/prompts";
-import { FALLBACK_EPILOGUE, fallbackHero, fallbackKind, fallbackRound, fallbackScene, fallbackStorybook, fallbackVerdict } from "@/server/fallbacks";
+import { FALLBACK_EPILOGUE, fallbackHero, fallbackKind, fallbackOutcome, fallbackRound, fallbackRuling, fallbackScene, fallbackStorybook } from "@/server/fallbacks";
 import { cleanText, ratingOf, realOf } from "@/server/real";
 import type { Hero, Rating, Stat } from "@/lib/types";
 
 export const maxDuration = 60;
 
-const TASKS = ["character", "scene", "verdict", "round", "epilogue", "storybook", "kind"];
+const TASKS = ["character", "scene", "verdict", "outcome", "round", "epilogue", "storybook", "kind"];
 
 /** Player-authored text is wrapped so the model treats it as in-world speech, never instructions. */
 function wrap(id: string, text: string, max = 240) {
@@ -75,13 +78,16 @@ async function run(task: string, input: Any, rating: Rating) {
       // Scene openers run ~1.7-2k tokens with reasoning; 2.5k truncated one mid-JSON in a playtest.
       return museJSON({ task: t("scene"), system: withRating(SCENE_SYSTEM, rating), schema: SCENE_SCHEMA, effort: "low", maxTokens: 4000, user: JSON.stringify(input) });
     case "verdict":
-      return museJSON({ task: t("verdict"), system: withRating(VERDICT_SYSTEM, rating), schema: VERDICT_SCHEMA, effort: "minimal", timeoutMs: 10_000, user: JSON.stringify(input) });
+      // One winning plan per call: spark-1.3 at minimal effort answers in 1-2 s (design/23).
+      return museJSON({ task: t("ruling"), model: MODELS.ruling, system: withRating(RULING_SYSTEM, rating), schema: RULING_SCHEMA, effort: "minimal", timeoutMs: 9000, maxTokens: 1500, user: JSON.stringify(input) });
+    case "outcome":
+      return museJSON({ task: t("outcome"), model: MODELS.writing, system: withRating(OUTCOME_SYSTEM, rating), schema: OUTCOME_SCHEMA, effort: "low", timeoutMs: 12_000, maxTokens: 2000, user: JSON.stringify(input) });
     case "round":
       return museJSON({ task: t("round"), system: withRating(ROUND_SYSTEM, rating), schema: ROUND_SCHEMA, effort: "low", timeoutMs: 14_000, user: JSON.stringify(input) });
     case "kind":
       return museJSON({ task: t("kind"), system: withRating(KIND_SYSTEM, rating), schema: KIND_SCHEMA, effort: "minimal", timeoutMs: 9000, maxTokens: 1200, user: JSON.stringify(input) });
     case "epilogue":
-      return museText({ task: t("epilogue"), system: withRating(input?.quick_tale ? EPILOGUE_SYSTEM + EPILOGUE_QUICK : EPILOGUE_SYSTEM, rating), user: JSON.stringify(input), effort: "low" });
+      return museJSON({ task: t("epilogue"), system: withRating(input?.quick_tale ? EPILOGUE_SYSTEM + EPILOGUE_QUICK : EPILOGUE_SYSTEM, rating), schema: EPILOGUE_SCHEMA, effort: "low", timeoutMs: 15_000, maxTokens: 2000, user: JSON.stringify(input) });
     case "storybook":
       return museJSON({
         task: t("storybook"),
@@ -103,7 +109,9 @@ function fallback(task: string, input: Any) {
     case "scene":
       return fallbackScene(input.hero_ids ?? [], input.scene_plan ?? {}, input.state?.party ?? []);
     case "verdict":
-      return { verdicts: ((input.pitches as Any[]) ?? []).map((p) => fallbackVerdict(p.pitch_id, p.best_stat ?? "brave")) };
+      return fallbackRuling(STATS.includes(input?.hero?.best_stat) ? input.hero.best_stat : "brave");
+    case "outcome":
+      return fallbackOutcome(cleanText(input?.hero?.name, 40), input?.band);
     case "round":
       return fallbackRound(input.actions ?? []);
     case "kind":
@@ -151,7 +159,7 @@ function scrubDeep(v: Any, key = ""): Any {
   return v;
 }
 
-const TIERS = ["clever", "solid", "risky", "absurd", "miracle"];
+const TIERS = ["clever", "solid", "risky", "wild", "miracle"];
 
 /** Every piece of player-written text is wrapped as <player_input>, wherever it rides along. */
 function wrapPlayerText(task: string, input: Any) {
@@ -165,10 +173,7 @@ function wrapPlayerText(task: string, input: Any) {
       moments: ((input.moments as Any[]) ?? []).slice(0, 4).map((m, i) => ({ pitch: wrap(`m${i}`, m?.pitch, 200), what_happened: String(m?.what_happened ?? "").slice(0, 240) })),
     };
   }
-  if (task === "verdict") {
-    input.pitches = ((input.pitches as Any[]) ?? []).map((p) => ({ ...p, text: wrap(p.hero_id, p.text), appeal: p.appeal ? wrap(`${p.hero_id}-appeal`, p.appeal) : "" }));
-    if (Array.isArray(input.other_pitches)) input.other_pitches = input.other_pitches.map((t: string, i: number) => wrap(`o${i}`, t));
-  }
+  if (task === "verdict" || task === "outcome") input.plan = wrap("plan", input.plan, 200);
   if (task === "round" && Array.isArray(input.actions))
     input.actions = input.actions.map((a: Any) => ({ ...a, pitch: wrap(a.hero_id, a.pitch), appeal: a.appeal ? wrap(`${a.hero_id}-appeal`, a.appeal) : "" }));
   if ((task === "storybook" || task === "epilogue") && Array.isArray(input.log))
@@ -193,11 +198,12 @@ export async function POST(req: Request) {
   const fbInput = task === "kind" ? rawInput ?? {} : input;
   try {
     let data: Any = await run(task, input, ratingOf(rawInput?.rating));
-    if (task === "epilogue") {
-      if (typeof data !== "string" || !data.trim()) throw new Error("empty epilogue");
-      data = scrub(data);
-    } else {
-      data = scrubDeep(conform(fallback(task, fbInput), data));
+    data = scrubDeep(conform(fallback(task, fbInput), data));
+    if (task === "epilogue" && !String(data.ending ?? "").trim()) throw new Error("empty ending");
+    if (task === "outcome") {
+      const text = String(data.text ?? "").replace(/<\/?player_input[^>]*>/g, "").trim();
+      if (!text) throw new Error("empty outcome");
+      data = { text };
     }
     if (task === "kind") {
       // The sentence must finish the frame and stay a sentence; otherwise use the safe local version.
@@ -207,13 +213,14 @@ export async function POST(req: Request) {
       data = { ok: !!data.ok, sentence: /[.?"”]$/.test(sentence) ? sentence : `${sentence}.` };
     }
     if (task === "verdict") {
-      data.verdicts = (data.verdicts as Any[]).map((v) => ({
-        ...v,
-        tier: TIERS.includes(v?.tier) ? v.tier : "solid",
-        stat: STATS.includes(v?.stat) ? v.stat : input.pitches?.[0]?.best_stat ?? "brave",
+      data = {
+        ...data,
+        tier: TIERS.includes(data?.tier) ? data.tier : "solid",
+        stat: STATS.includes(data?.stat) ? data.stat : input?.hero?.best_stat ?? "brave",
+        interpretation: String(data?.interpretation ?? "").replace(/<\/?player_input[^>]*>/g, "").slice(0, 120),
         // DM's Notes: one short plain line, never a wall of text.
-        reason: String(v?.reason ?? "").replace(/<\/?player_input[^>]*>/g, "").split(/\s+/).slice(0, 20).join(" ").slice(0, 140),
-      }));
+        reason: String(data?.reason ?? "").replace(/<\/?player_input[^>]*>/g, "").split(/\s+/).slice(0, 20).join(" ").slice(0, 140),
+      };
     }
     return NextResponse.json({ data, fallback: false });
   } catch (e) {

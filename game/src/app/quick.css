@@ -525,3 +525,66 @@
   .qt-push, .qt-drift { transform: scale(1.04); }
   .qt-bd[data-mood="final"] .qt-pulse { opacity: 0.6; }
 }
+
+/* ==================================================================
+   Core round (both modes): goal bar, the ONE "Now" banner, crew row, line-by-line reveal
+   ================================================================== */
+.qt-stage { padding: 8.2rem 3rem 7.2rem; }
+.qt-cold { padding: 0; }
+.gp-goal {
+  position: absolute;
+  top: 4.4rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 15;
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  max-width: min(92vw, 90rem);
+  padding: 0.55rem 1.4rem;
+  border-radius: 999px;
+  background: rgba(5, 3, 9, 0.72);
+  border: 1px solid rgba(255, 182, 72, 0.45);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.8);
+  animation: qt-rise 0.8s cubic-bezier(0.2, 0.8, 0.25, 1) both;
+}
+.gp-goal-k { font-family: var(--font-ui), monospace; text-transform: uppercase; letter-spacing: 0.25em; font-size: 0.85rem; color: var(--gilt-bright); white-space: nowrap; }
+.gp-goal-t { font-family: var(--font-heading), sans-serif; font-size: 1.6rem; line-height: 1.15; text-transform: uppercase; color: var(--parchment); }
+
+.gp-now {
+  position: absolute;
+  bottom: 1.6rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 15;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.7rem 1.8rem 0.7rem 0.8rem;
+  border-radius: 999px;
+  background: rgba(5, 3, 9, 0.82);
+  border: 1px solid rgba(61, 231, 255, 0.45);
+  box-shadow: 0 0 40px -12px rgba(61, 231, 255, 0.6), 0 14px 40px -10px rgba(0, 0, 0, 0.9);
+  white-space: nowrap;
+  animation: gp-now-in 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+@keyframes gp-now-in { 0% { opacity: 0; transform: translate(-50%, 14px) scale(0.96); } 100% { opacity: 1; transform: translate(-50%, 0); } }
+.gp-now-k { font-family: var(--font-ui), monospace; font-weight: 800; text-transform: uppercase; letter-spacing: 0.2em; font-size: 0.95rem; color: #0a0612; background: var(--signal); padding: 0.2rem 0.7rem; border-radius: 999px; }
+.gp-now-t { font-family: var(--font-heading), sans-serif; font-size: 1.85rem; text-transform: uppercase; color: var(--parchment); }
+
+.gp-crew { position: relative; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; opacity: 0.45; filter: grayscale(0.7); transition: opacity 0.4s, filter 0.4s, transform 0.4s cubic-bezier(0.2, 1.4, 0.4, 1); }
+.gp-crew.on { opacity: 1; filter: none; transform: translateY(-4px); }
+.gp-crew-tick {
+  position: absolute; top: -0.3rem; right: -0.3rem; width: 1.6rem; height: 1.6rem; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; font-size: 1rem; font-weight: 900;
+  background: var(--signal); color: #0a0612; transform: scale(0); transition: transform 0.35s cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+.gp-crew.on .gp-crew-tick { transform: scale(1); }
+
+.gp-line { animation: gp-line 0.7s cubic-bezier(0.2, 0.8, 0.25, 1) both; }
+@keyframes gp-line { 0% { opacity: 0; transform: translateY(12px); filter: blur(4px); } 100% { opacity: 1; transform: none; filter: none; } }
+.gp-line-old { opacity: 0.62; transition: opacity 0.8s ease; animation: none; }
+
+.gp-card { display: flex; flex-direction: column; gap: 1.4rem; padding: 2.2rem 2.6rem; width: min(70rem, 90vw); border-left: 6px solid var(--pc, var(--crimson)); }

@@ -1121,7 +1121,8 @@ export function TV({ host, embedded = false }: { host: Stage; embedded?: boolean
       <Presenter host={host} s={s} onNotes={() => setNotesOpen((o) => !o)} onCloseNotes={() => setNotesOpen(false)} />
     </>
   );
-  if (s.mode === "quick" && s.phase !== "lobby")
+  // Both modes play the story on one full-bleed, cinematic stage (QuickTV.tsx). Mirror keeps its own screens.
+  if (s.phase !== "lobby" && !(FEATURES.mirror && s.phase.startsWith("mirror")))
     return (
       <>
         <QuickTV host={host} s={s} onNotes={() => setNotesOpen((o) => !o)} notesOpen={notesOpen} />
