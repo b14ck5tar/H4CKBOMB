@@ -57,6 +57,10 @@ const READING = new Set(["quest", "narrating", "outcome", "mirror_reveal", "epil
 const MIRROR_WRITE_MS = 40_000;
 const MIRROR_GUESS_MS = 20_000;
 const MIRROR_PHASES = ["mirror_write", "mirror_guess", "mirror_reveal"];
+// Autopilot: a phone that's said nothing for this long (mid-story) is away; its hero keeps playing on its own.
+const AWAY_SILENCE_MS = 25_000;
+const AWAY_AFTER_TIMEOUTS = 2;
+const PRESENCE_ONLY = new Set(["hello", "ping", "away"]); // these don't count as "I'm back"
 const BAND_RANK: Record<Band, number> = { LEGENDARY: 0, SUCCESS: 1, YES_BUT: 2, FAIL: 3, CATASTROPHE: 4 };
 const UNKIND = /\b(stupid|dumb|idiot|moron|ugly|fat|hate|hated|sucks?|sucked|loser|worst|annoying|useless|lame|trash|garbage|pathetic|shut up|creep|weirdo|fuck\w*|shit\w*|bitch\w*|ass|asshole|crap)\b/i;
 
@@ -144,6 +148,12 @@ export class GameHost {
   private lastPortraitSend: Record<string, number> = {};
   private mirrorP = new Map<string, Promise<string>>(); // guardian id -> their finished, kind sentence
   private lastThanks: Record<string, number> = {};
+  private lastSeen: Record<string, number> = {};
+  private timeouts: Record<string, number> = {}; // consecutive phases this player let time out
+  private awayWhy: Record<string, "silent" | "idle" | "stepped"> = {};
+  private toastSubs = new Set<(t: { text: string; id: number }) => void>();
+  private toastId = 0;
+  private presenceIv: ReturnType<typeof setInterval> | null = null;
 
   constructor(code: string) {
     this.state = {
@@ -189,6 +199,7 @@ export class GameHost {
     };
     this.t = openRoom(code);
     this.t.on((m) => this.handle(m));
+    this.presenceIv = setInterval(() => this.checkPresence(), 2000);
   }
 
   get transportKind() {
@@ -207,6 +218,13 @@ export class GameHost {
     this.reactionSubs.add(fn);
     return () => {
       this.reactionSubs.delete(fn);
+    };
+  }
+
+  onToast(fn: (t: { text: string; id: number }) => void) {
+    this.toastSubs.add(fn);
+    return () => {
+      this.toastSubs.delete(fn);
     };
   }
 
@@ -281,11 +299,118 @@ export class GameHost {
     if (!this.player(pid)?.hero || this.state.ready.includes(pid)) return;
     const ready = [...this.state.ready, pid];
     this.set({ ready });
-    if (this.heroes().every((h) => ready.includes(h.id))) this.skip();
+    if (this.allPresent((id) => ready.includes(id))) this.skip();
+  }
+
+  // ---------- autopilot (presence) ----------
+  /** Heroes whose phones are with us. */
+  private present() {
+    return this.heroes().filter((p) => !p.away);
+  }
+
+  /** Everyone who's here has done it. Never true when nobody is here, so an empty table runs on timers. */
+  private allPresent(done: (pid: string) => boolean) {
+    const here = this.present();
+    return here.length > 0 && here.every((p) => done(p.id));
+  }
+
+  private inStory() {
+    return this.state.phase !== "lobby" && this.state.phase !== "storybook";
+  }
+
+  private toast(text: string) {
+    const t = { text, id: ++this.toastId };
+    this.toastSubs.forEach((f) => f(t));
+  }
+
+  private setAway(pid: string, why: "silent" | "idle" | "stepped") {
+    const p = this.player(pid);
+    if (!p?.hero) return;
+    this.awayWhy[pid] = why;
+    if (p.away) return;
+    this.patchPlayer(pid, { away: true });
+    this.nudge();
+  }
+
+  private setBack(pid: string) {
+    const p = this.player(pid);
+    delete this.awayWhy[pid];
+    this.timeouts[pid] = 0;
+    if (!p?.away) return;
+    // One line on what their hero did without them (skipped when "Your moment" is already on their phone).
+    const s = this.state;
+    const beatAt = s.round?.beats.findIndex((b) => b.hero_id === pid) ?? -1;
+    const onScreen = s.phase === "outcome" && beatAt >= 0 && s.beatIndex >= beatAt;
+    const last = [...s.log].reverse().find((l) => l.heroId === pid)?.narration;
+    const catchUp = onScreen ? "" : last || "Not much yet. Your hero kept your seat warm.";
+    this.patchPlayer(pid, { away: false, catchUp });
+    if (catchUp) setTimeout(() => this.player(pid)?.catchUp === catchUp && this.patchPlayer(pid, { catchUp: "" }), 20_000);
+    if (p.hero) this.toast(`${p.hero.name} is back`);
+  }
+
+  /** Every message from a phone says "I'm here". Pings only undo a silent away; a real tap undoes any. */
+  private touch(m: Msg) {
+    const pid = m.pid as string;
+    if (!pid || !this.player(pid)) return;
+    this.lastSeen[pid] = Date.now();
+    if (m.type === "away") {
+      if (this.inStory()) this.setAway(pid, "stepped");
+      return;
+    }
+    if (!PRESENCE_ONLY.has(m.type) || this.awayWhy[pid] === "silent") this.setBack(pid);
+  }
+
+  /** A phase ran out on these players. Two in a row and their hero goes on autopilot. */
+  private timedOut(pids: string[]) {
+    pids.forEach((pid) => {
+      const p = this.player(pid);
+      if (!p?.hero || p.away) return;
+      this.timeouts[pid] = (this.timeouts[pid] ?? 0) + 1;
+      if (this.timeouts[pid] >= AWAY_AFTER_TIMEOUTS) this.setAway(pid, "idle");
+    });
+  }
+
+  private checkPresence() {
+    if (!this.inStory()) return;
+    const now = Date.now();
+    this.heroes().forEach((p) => {
+      if (!p.away && now - (this.lastSeen[p.id] ?? now) > AWAY_SILENCE_MS) this.setAway(p.id, "silent");
+    });
+  }
+
+  /** Someone just went away: if everyone still here has already acted, don't make them wait. */
+  private nudge() {
+    const s = this.state;
+    const pitched = (id: string) => s.pitches.some((x) => x.playerId === id);
+    switch (s.phase) {
+      case "pitch":
+        if (!s.busy && this.allPresent(pitched)) this.endPitch();
+        return;
+      case "appeal":
+        return this.maybeEndAppeal();
+      case "roll":
+        if (s.revealed.length < s.rolls.length && this.allPresent((id) => s.revealed.includes(id) || !s.rolls.some((r) => r.playerId === id))) this.revealAll();
+        return;
+      case "final_roll":
+        if (s.final && s.final.rolled.length < Object.keys(this.finalDice).length && this.allPresent((id) => !!s.final?.rolled.includes(id))) {
+          this.clearTimer();
+          setTimeout(() => this.finish(false), 1500);
+        }
+        return;
+      case "mirror_write":
+        if (this.allPresent((id) => !s.mirror.some((c) => c.guardianId === id && !c.written))) this.endMirrorWrite();
+        return;
+      case "mirror_guess":
+        if (this.allPresent((id) => !s.mirror.some((c) => c.wardId === id && !c.guess))) this.startMirrorReveal();
+        return;
+      default:
+        if (READING.has(s.phase) && !s.busy && this.pending && this.allPresent((id) => s.ready.includes(id))) this.skip();
+    }
   }
 
   // ---------- messages from phones ----------
   private handle(m: Msg) {
+    this.touch(m);
     switch (m.type) {
       case "hello": {
         this.broadcastSoon();
@@ -322,6 +447,7 @@ export class GameHost {
         return this.onMirrorGuess(m.pid, m.text);
       case "thanks":
         return this.onThanks(m.pid);
+      // "ping", "away" and "back" are handled by touch()
     }
   }
 
@@ -435,7 +561,11 @@ export class GameHost {
 
   begin() {
     if (!this.canBegin()) return;
-    const players = this.state.players.filter((p) => p.hero).map((p) => ({ ...p, peril: "", abilityAvailable: true, heart: 1 as const }));
+    const players = this.state.players.filter((p) => p.hero).map((p) => ({ ...p, peril: "", abilityAvailable: true, heart: 1 as const, away: false }));
+    const now = Date.now();
+    players.forEach((p) => (this.lastSeen[p.id] = Math.max(this.lastSeen[p.id] ?? 0, now)));
+    this.timeouts = {};
+    this.awayWhy = {};
     this.canon = [];
     this.ledger = [];
     this.recaps = [];
@@ -612,7 +742,7 @@ export class GameHost {
     const pitch: Pitch = { id: `${this.state.sceneIndex}-${pid}`, playerId: pid, text: clean, useAbility, embraceFlaw };
     this.set({ pitches: [...this.state.pitches, pitch] });
     if (!this.isFinal()) this.fireVerdict(pitch);
-    if (this.heroes().every((h) => this.state.pitches.some((x) => x.playerId === h.id))) this.endPitch();
+    if (this.allPresent((id) => this.state.pitches.some((x) => x.playerId === id))) this.endPitch();
   }
 
   private onBoost(pid: string, pitchId: string) {
@@ -681,6 +811,7 @@ export class GameHost {
     this.clearTimer();
     // Nobody is skipped: whoever ran out of time does the first thing that comes to mind.
     const missing = this.heroes().filter((h) => !this.state.pitches.some((p) => p.playerId === h.id));
+    this.timedOut(missing.map((h) => h.id));
     const autos: Pitch[] = missing.map((h) => ({
       id: `${this.state.sceneIndex}-${h.id}`,
       playerId: h.id,
@@ -688,6 +819,7 @@ export class GameHost {
       useAbility: false,
       embraceFlaw: false,
       auto: true,
+      autopilot: !!this.player(h.id)?.away,
     }));
     this.set({ pitches: [...this.state.pitches, ...autos] });
     if (this.isFinal()) {
@@ -703,6 +835,7 @@ export class GameHost {
     if (judged.some((p) => !autoSucceeds(p.verdict!.tier) && !p.auto)) {
       this.set({ phase: "appeal" });
       this.setTimer(APPEAL_MS, () => this.endAppeal());
+      this.maybeEndAppeal();
     } else {
       this.startRoll();
     }
@@ -741,14 +874,21 @@ export class GameHost {
     this.maybeEndAppeal();
   }
 
+  /** Players the appeal phase is still waiting on (away players don't hold it up). */
+  private appealWaiting() {
+    return this.state.pitches.filter((p) => p.verdict && !autoSucceeds(p.verdict.tier) && !p.auto && !p.appealed && !p.appeal && !this.player(p.playerId)?.away);
+  }
+
   private maybeEndAppeal() {
-    const waiting = this.state.pitches.some((p) => p.verdict && !autoSucceeds(p.verdict.tier) && !p.auto && !p.appealed);
-    if (!waiting) this.endAppeal();
+    if (this.state.phase !== "appeal" || this.state.busy) return;
+    const pending = this.state.pitches.some((p) => p.appeal && !p.appealed);
+    if (!pending && !this.appealWaiting().length) this.endAppeal();
   }
 
   private async endAppeal() {
-    if (this.state.phase !== "appeal") return;
+    if (this.state.phase !== "appeal" || this.state.busy) return;
     this.clearTimer();
+    // Appeals are optional, so letting one lapse doesn't count toward autopilot.
     if (this.appeals.size) {
       this.set({ busy: "The DM is considering your arguments…" });
       const settled = await Promise.all(
@@ -803,7 +943,8 @@ export class GameHost {
     this.roundP = this.fetchRound(rolls);
     this.set({ phase: "roll", rolls, revealed, catchers: [] });
     if (revealed.length === rolls.length) return this.afterRoll();
-    this.setTimer(ROLL_MS, () => this.revealAll());
+    this.setTimer(ROLL_MS, () => this.revealAll(true));
+    this.nudge(); // only away heroes left to roll: their dice roll themselves
   }
 
   private onRoll(pid: string) {
@@ -814,15 +955,16 @@ export class GameHost {
       if (revealed.length === this.state.rolls.length) {
         this.clearTimer();
         setTimeout(() => this.afterRoll(), ROLL_ANIM_MS);
-      }
+      } else this.nudge();
       return;
     }
     if (this.state.phase === "final_roll") return this.revealFinalDie(pid);
   }
 
-  private revealAll() {
+  private revealAll(timedOut = false) {
     if (this.state.phase !== "roll") return;
     this.clearTimer();
+    if (timedOut) this.timedOut(this.state.rolls.filter((r) => !this.state.revealed.includes(r.playerId)).map((r) => r.playerId));
     this.set({ revealed: this.state.rolls.map((r) => r.playerId) });
     setTimeout(() => this.afterRoll(), ROLL_ANIM_MS);
   }
@@ -832,7 +974,7 @@ export class GameHost {
     const failed = this.state.rolls.filter((r) => isFailure(r.band) && !r.rescuerId);
     if (failed.length && !this.caughtThisRound) {
       const catchers = this.heroes()
-        .filter((p) => p.heart === 1 && failed.some((f) => f.playerId !== p.id))
+        .filter((p) => p.heart === 1 && !p.away && failed.some((f) => f.playerId !== p.id))
         .map((p) => p.id);
       if (catchers.length) {
         this.set({ phase: "catch", catchers });
@@ -1011,7 +1153,11 @@ export class GameHost {
       phase: "final_roll",
       final: { dice: {}, rolled: [], best: "", hopeBonus: this.state.hope, total: 0, ending: "BITTERSWEET" },
     });
-    this.setTimer(FINAL_ROLL_MS, () => this.finish(false));
+    this.setTimer(FINAL_ROLL_MS, () => {
+      this.timedOut(Object.keys(this.finalDice).filter((id) => !this.state.final?.rolled.includes(id)));
+      this.finish(false);
+    });
+    this.nudge();
   }
 
   private revealFinalDie(pid: string) {
@@ -1022,7 +1168,7 @@ export class GameHost {
     if (next.rolled.length === Object.keys(this.finalDice).length) {
       this.clearTimer();
       setTimeout(() => this.finish(false), 1500);
-    }
+    } else this.nudge();
   }
 
   private finish(grim: boolean) {
@@ -1128,7 +1274,8 @@ export class GameHost {
       ready: [],
       busy: "",
     });
-    this.setTimer(MIRROR_WRITE_MS, () => this.endMirrorWrite());
+    this.setTimer(MIRROR_WRITE_MS, () => this.endMirrorWrite(true));
+    this.nudge();
   }
 
   /** Run one sentence through the kindness pass. Never blocks: a local version stands in after 9 s. */
@@ -1155,17 +1302,20 @@ export class GameHost {
     const mirror = this.state.mirror.map((c) => (c.guardianId === pid ? { ...c, written: true } : c));
     this.set({ mirror });
     if (mirror.every((c) => c.written)) this.endMirrorWrite();
+    else this.nudge();
   }
 
-  private endMirrorWrite() {
+  private endMirrorWrite(timedOut = false) {
     if (this.state.phase !== "mirror_write") return;
     this.clearTimer();
+    if (timedOut) this.timedOut(this.state.mirror.filter((c) => !c.written).map((c) => c.guardianId));
     // Whoever ran out of time: the DM writes one warm line from what their ward actually did.
     this.state.mirror.forEach((c) => {
       if (!this.mirrorP.has(c.guardianId)) this.polish(c.guardianId, "");
     });
     this.set({ phase: "mirror_guess" });
     this.setTimer(MIRROR_GUESS_MS, () => this.startMirrorReveal());
+    this.nudge();
   }
 
   private onMirrorGuess(pid: string, text: string) {
@@ -1176,6 +1326,7 @@ export class GameHost {
     const mirror = this.state.mirror.map((c) => (c.wardId === pid ? { ...c, guess: clean } : c));
     this.set({ mirror });
     if (mirror.every((c) => c.guess)) this.startMirrorReveal();
+    else this.nudge();
   }
 
   private async startMirrorReveal() {
@@ -1309,6 +1460,7 @@ export class GameHost {
 
   close() {
     this.clearTimer();
+    if (this.presenceIv) clearInterval(this.presenceIv);
     this.t.close();
   }
 }

@@ -507,6 +507,9 @@ export function Phone({ code }: { code: string }) {
     }
     lastThanked.current = thanked;
   }, [thanked]);
+  // Autopilot: when you come back, the table sends one line on what your hero did without you.
+  const [dismissed, setDismissed] = useState("");
+  const catchUp = me?.catchUp && me.catchUp !== dismissed ? me.catchUp : "";
 
   if (!state) {
     return (
@@ -525,6 +528,19 @@ export function Phone({ code }: { code: string }) {
   const myClue = state.clues[me.id];
   const saidAboutMe = state.mirror?.find((c) => c.wardId === me.id)?.sentence ?? "";
   const wardHero = myWard ? state.players.find((p) => p.id === myWard)?.hero : undefined;
+  const inStory = state.phase !== "lobby" && state.phase !== "storybook" && !!me.hero;
+  if (inStory && me.away) {
+    return (
+      <Shell me={me} portrait={portrait}>
+        <div className="page p-6 flex flex-col items-center gap-3 text-center">
+          <span className="text-5xl">🤖</span>
+          <p className="font-heading text-2xl uppercase">{me.hero!.name} is on autopilot</p>
+          <p className="text-ink-soft">Your hero keeps playing on their own until you&apos;re back. Nobody waits.</p>
+        </div>
+        <BigButton label="I'M BACK" sub="Take your hero back" tone="gilt" onClick={() => send("back")} />
+      </Shell>
+    );
+  }
   let body: React.ReactNode;
 
   switch (state.phase) {
@@ -707,8 +723,19 @@ export function Phone({ code }: { code: string }) {
       {wardHero && thanked > 0 && (
         <p key={thanked} className="page p-3 text-center font-heading text-xl fade-in">❤️ {wardHero.name} says thanks</p>
       )}
+      {catchUp && (
+        <button className="page p-3 text-left fade-in" onClick={() => setDismissed(catchUp)}>
+          <span className="font-ui text-xs uppercase tracking-widest text-[var(--gilt-bright)]">While you were away</span>
+          <span className="block leading-snug">{catchUp}</span>
+        </button>
+      )}
       {body}
       {me.hero && <ReactionBar send={send} />}
+      {inStory && (
+        <button className="font-ui text-xs underline opacity-60 self-center" onClick={() => send("away")}>
+          Step away (your hero plays on autopilot)
+        </button>
+      )}
     </Shell>
   );
 }

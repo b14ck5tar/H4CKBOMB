@@ -103,6 +103,11 @@ function Avatar({ host, p, size = 64 }: { host: GameHost; p: Player; size?: numb
   return <WaxSeal initials={initials(p.hero?.name ?? p.name)} color={p.color} size={size} />;
 }
 
+/** Autopilot: this hero's player stepped away, so the hero is acting on its own. */
+function AutopilotTag() {
+  return <span className="font-ui text-xs font-bold whitespace-nowrap text-[var(--signal)]">🤖 on autopilot</span>;
+}
+
 /** Who's ready / who's acted: one chip per hero along the bottom. */
 function Crew({ host, s, mark }: { host: GameHost; s: GameState; mark?: (p: Player) => string }) {
   return (
@@ -110,12 +115,13 @@ function Crew({ host, s, mark }: { host: GameHost; s: GameState; mark?: (p: Play
       {s.players
         .filter((p) => p.hero)
         .map((p) => {
-          const m = mark?.(p) ?? "";
+          const m = p.away ? "" : mark?.(p) ?? "";
           return (
             <div key={p.id} className={`flex flex-col items-center gap-1 w-28 text-center transition ${m === "…" ? "opacity-60" : ""}`}>
               <Avatar host={host} p={p} size={56} />
               <span className="font-heading text-base leading-tight text-parchment">{p.hero!.name.split(" ")[0]}</span>
               {m && <span className="font-ui text-xs text-[var(--gilt-bright)]">{m}</span>}
+              {p.away && <AutopilotTag />}
               {p.peril && <span className="font-ui text-xs font-bold text-[var(--crimson)]">STUCK</span>}
             </div>
           );
@@ -287,6 +293,7 @@ function PlanCards({ host, s }: { host: GameHost; s: GameState }) {
             <div className="flex items-center gap-3">
               <Avatar host={host} p={pl} size={40} />
               <span className="font-heading text-xl font-bold uppercase flex-1">{pl.hero?.name}</span>
+              {(p.autopilot || pl.away) && <AutopilotTag />}
               {!!boosts[p.id] && <span className="font-ui text-lg">{"🔥".repeat(boosts[p.id])}</span>}
             </div>
             <p className="text-xl leading-snug">“{p.text}”</p>
@@ -831,6 +838,13 @@ function QuestIntro({ host, s }: { host: GameHost; s: GameState }) {
 export function TV({ host }: { host: GameHost }) {
   const s = useHost(host);
   const [reactions, setReactions] = useState<{ id: number; emoji: string; color?: string }[]>([]);
+  const [toast, setToast] = useState<{ id: number; text: string } | null>(null);
+  useEffect(() => host.onToast(setToast), [host]);
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 3500);
+    return () => clearTimeout(t);
+  }, [toast]);
   // 10-foot UI: scale every rem with the screen width so text stays readable from across a room.
   useEffect(() => {
     const root = document.documentElement;
@@ -910,6 +924,11 @@ export function TV({ host }: { host: GameHost }) {
       {main}
       <Footer />
       <Reactions items={reactions} />
+      {toast && (
+        <div key={toast.id} className="fixed top-20 left-1/2 -translate-x-1/2 z-50 page px-6 py-3 font-heading text-2xl uppercase fade-in">
+          👋 {toast.text}
+        </div>
+      )}
     </div>
   );
 }
