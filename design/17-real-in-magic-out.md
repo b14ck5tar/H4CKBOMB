@@ -1,6 +1,15 @@
 # 17 - Real In, Magic Out: players' real qualities meet real news
 
-**Status: proposed, NOT built.** A design pass from Saturday evening for the creative director to accept, trim or reject. Builds on `SPEC.md` (Group Project, urban fantasy, Around the Table), `07` (Mirror, Mirror; Masks Off) and `16` (Real World mode). Nothing below is claimed as shipped.
+**Status: adopted with changes, see `18-real-in-build-contract.md`** (the build contract wins where they differ). What changed from this proposal:
+1. Players play themselves: **two** light, skippable questions (skill → ability, small fear → flaw as fiction-only comedy). The optional third question ("talk about for hours") was dropped.
+2. Best-fit story: the AI picks from 5-10 safe candidates (seed + cached news quests, filtered by rating) and gives one spotlight per hero. The host can still pick by hand. Local-first news (Austin, then wider) only if it ships.
+3. Spotlights are openings, never requirements.
+4. The reveal is proof ("This really happened"), plus one hero line: "Solved by Ava's parallel parking and Ben's coffee."
+5. **Side quests are cut** (no group side quest, no SerpApi Events, no "did you complete it?"). The reason to meet again is the existing keepsake shelf, "next chapter, same crew".
+6. New: a **"Who's playing?" rating** (Kids / Teens / Adults) set by the host. Not in this proposal.
+Not in the contract (not being built): friend-power combo bonus (loop step 4), real public places as locations (stretch).
+
+The original proposal follows unchanged. Builds on `SPEC.md` (Group Project, urban fantasy, Around the Table), `07` (Mirror, Mirror; Masks Off) and `16` (Real World mode).
 
 **The problem it answers:** the game is great for friends *playing* together, but nothing real about the players goes in, so they don't leave knowing each other better. It's fun, not bonding.
 
