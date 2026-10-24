@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useId, useRef, useState } from "react";
 
@@ -79,6 +79,7 @@ export function D20({
   // tumble + number flicker while rolling, with ease-out deceleration
   useEffect(() => {
     if (!rolling) return;
+    const node = spinRef.current;
     const start = performance.now();
     let raf = 0;
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -93,7 +94,6 @@ export function D20({
       angle += vel * dt;
       const s = 1 + 0.07 * Math.sin(el / 55) * Math.max(0.3, Math.exp(-el / 1200));
       const hop = -Math.abs(Math.sin(el / 120)) * size * 0.07 * Math.max(0.25, Math.exp(-el / 900));
-      const node = spinRef.current;
       if (node) node.style.transform = `translateY(${hop.toFixed(1)}px) rotate(${angle.toFixed(1)}deg) scale(${s.toFixed(3)})`;
       raf = requestAnimationFrame(spin);
     };
@@ -108,7 +108,6 @@ export function D20({
     return () => {
       cancelAnimationFrame(raf);
       if (timer) clearTimeout(timer);
-      const node = spinRef.current;
       if (node) node.style.transform = "";
     };
   }, [rolling, size]);

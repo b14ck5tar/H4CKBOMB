@@ -1,0 +1,247 @@
+/* ==========================================================================
+   Once Upon a Roll: "juice" keyframes + classes (all prefixed ouar-)
+   ========================================================================== */
+
+/* ---------- D20 ---------- */
+.ouar-d20-land {
+  animation: ouar-d20-land 0.62s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+.ouar-d20-land-crit {
+  animation: ouar-d20-land-crit 0.9s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+}
+.ouar-d20-land-fail {
+  animation: ouar-d20-land-fail 1.05s cubic-bezier(0.3, 0.7, 0.4, 1) both;
+}
+@keyframes ouar-d20-land {
+  0% { transform: translateY(-14%) rotate(-28deg) scale(1.12); }
+  45% { transform: translateY(0) rotate(5deg) scale(0.93, 1.06); }
+  62% { transform: translateY(-5%) rotate(-2deg) scale(1.03, 0.97); }
+  80% { transform: translateY(0) rotate(1deg) scale(0.99, 1.01); }
+  100% { transform: none; }
+}
+@keyframes ouar-d20-land-crit {
+  0% { transform: translateY(-14%) rotate(-30deg) scale(1.1); }
+  35% { transform: translateY(0) rotate(4deg) scale(0.92, 1.06); }
+  55% { transform: translateY(-4%) rotate(0deg) scale(1.22); }
+  75% { transform: scale(1.08); }
+  100% { transform: none; }
+}
+/* nat 1: bounces off the table, comes to rest crooked */
+@keyframes ouar-d20-land-fail {
+  0% { transform: translateY(-14%) rotate(-25deg) scale(1.1); }
+  22% { transform: translate(0, 0) rotate(10deg) scale(0.9, 1.08); }
+  42% { transform: translate(18%, -22%) rotate(58deg) scale(1.02); }
+  60% { transform: translate(9%, 4%) rotate(26deg) scale(1.04, 0.95); }
+  76% { transform: translate(5%, 1%) rotate(14deg); }
+  88% { transform: translate(4%, 3%) rotate(19deg); }
+  100% { transform: rotate(17deg) translate(4%, 3%); }
+}
+
+.ouar-d20-glow {
+  animation: ouar-d20-glow 2.4s ease-in-out infinite;
+}
+@keyframes ouar-d20-glow {
+  0%, 100% { filter: drop-shadow(0 0 10px rgba(246, 213, 122, 0.85)) drop-shadow(0 0 26px rgba(200, 149, 46, 0.6)); }
+  50% { filter: drop-shadow(0 0 18px rgba(255, 240, 184, 1)) drop-shadow(0 0 42px rgba(200, 149, 46, 0.85)); }
+}
+.ouar-d20-dim {
+  filter: saturate(0.6) brightness(0.72) drop-shadow(0 4px 6px rgba(0, 0, 0, 0.45));
+  transition: filter 0.6s ease 0.3s;
+}
+.ouar-d20-crack {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: ouar-d20-crack 0.35s ease-out forwards;
+}
+@keyframes ouar-d20-crack {
+  to { stroke-dashoffset: 0; }
+}
+.ouar-d20-burst {
+  position: absolute;
+  inset: -45%;
+  pointer-events: none;
+  animation: ouar-d20-burst 1.6s ease-out both;
+}
+@keyframes ouar-d20-burst {
+  0% { opacity: 0; transform: scale(0.3); }
+  25% { opacity: 1; transform: scale(1.05); }
+  100% { opacity: 0.55; transform: scale(1); }
+}
+.ouar-d20-rays {
+  transform-origin: 100px 100px;
+  animation: ouar-spin 14s linear infinite;
+}
+@keyframes ouar-spin {
+  to { transform: rotate(360deg); }
+}
+.ouar-d20-flick {
+  animation: ouar-d20-flick 0.09s steps(2) infinite;
+}
+@keyframes ouar-d20-flick {
+  50% { opacity: 0.72; }
+}
+
+/* ---------- Stamp + WaxSeal ---------- */
+.ouar-stamp-slam {
+  animation: ouar-stamp-slam 0.55s cubic-bezier(0.5, 0, 0.75, 0) both;
+  transform-origin: 50% 55%;
+}
+@keyframes ouar-stamp-slam {
+  0% { opacity: 0; transform: rotate(calc(var(--ouar-rot, -6deg) + 9deg)) scale(2.2); }
+  55% { opacity: 1; transform: rotate(var(--ouar-rot, -6deg)) scale(0.94); animation-timing-function: ease-out; }
+  64% { transform: rotate(var(--ouar-rot, -6deg)) translate(-3px, 2px) scale(1.04); }
+  72% { transform: rotate(var(--ouar-rot, -6deg)) translate(3px, -2px) scale(0.99); }
+  80% { transform: rotate(var(--ouar-rot, -6deg)) translate(-2px, 1px) scale(1.01); }
+  90% { transform: rotate(var(--ouar-rot, -6deg)) translate(1px, 0) scale(1); }
+  100% { opacity: 1; transform: rotate(var(--ouar-rot, -6deg)) scale(1); }
+}
+.ouar-seal-pulse {
+  animation: ouar-seal-pulse 1.6s ease-in-out infinite;
+}
+@keyframes ouar-seal-pulse {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 0 transparent); }
+  50% { transform: scale(1.07); filter: drop-shadow(0 0 8px var(--ouar-seal, #C8952E)) drop-shadow(0 0 3px #F6D57A); }
+}
+
+/* ---------- Reactions ---------- */
+.ouar-react-rise {
+  animation-name: ouar-react-rise;
+  animation-timing-function: cubic-bezier(0.25, 0.6, 0.4, 1);
+  animation-fill-mode: forwards;
+  will-change: transform, opacity;
+}
+@keyframes ouar-react-rise {
+  0% { transform: translateY(20%) scale(0.4) rotate(0deg); opacity: 0; }
+  10% { transform: translateY(-6vh) scale(1.15) rotate(var(--ouar-tilt, 0deg)); opacity: 1; }
+  20% { transform: translateY(-14vh) scale(1) rotate(var(--ouar-tilt, 0deg)); opacity: 1; }
+  70% { opacity: 0.95; }
+  100% { transform: translateY(-82vh) scale(0.9) rotate(calc(var(--ouar-tilt, 0deg) * -1)); opacity: 0; }
+}
+.ouar-react-sway {
+  animation-name: ouar-react-sway;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+@keyframes ouar-react-sway {
+  from { transform: translateX(calc(var(--ouar-sway, 24px) * -0.5)); }
+  to { transform: translateX(calc(var(--ouar-sway, 24px) * 0.5)); }
+}
+
+/* ---------- ScreenFlash: legendary ---------- */
+.ouar-flash-white {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 45%, rgba(255, 253, 240, 1) 0%, rgba(255, 240, 184, 0.92) 30%, rgba(200, 149, 46, 0.55) 65%, rgba(200, 149, 46, 0) 100%);
+  mix-blend-mode: screen;
+  animation: ouar-flash-white 1.1s ease-out both;
+}
+@keyframes ouar-flash-white {
+  0% { opacity: 0; }
+  8% { opacity: 1; }
+  30% { opacity: 0.75; }
+  100% { opacity: 0; }
+}
+.ouar-flash-rays {
+  position: absolute;
+  left: 50%;
+  top: 45%;
+  width: 220vmax;
+  height: 220vmax;
+  margin: -110vmax 0 0 -110vmax;
+  background: repeating-conic-gradient(from 0deg, rgba(246, 213, 122, 0.32) 0deg 6deg, rgba(246, 213, 122, 0) 6deg 18deg);
+  -webkit-mask-image: radial-gradient(circle, #000 0%, transparent 55%);
+  mask-image: radial-gradient(circle, #000 0%, transparent 55%);
+  animation: ouar-flash-rays 2.6s ease-out both;
+}
+@keyframes ouar-flash-rays {
+  0% { opacity: 0; transform: rotate(0deg) scale(0.6); }
+  15% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(40deg) scale(1.1); }
+}
+.ouar-leaf-fall {
+  position: absolute;
+  top: -40px;
+  animation-name: ouar-leaf-fall;
+  animation-timing-function: cubic-bezier(0.35, 0.1, 0.6, 1);
+  animation-fill-mode: both;
+  will-change: transform;
+}
+@keyframes ouar-leaf-fall {
+  0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+  85% { opacity: 1; }
+  100% { transform: translate(var(--ouar-drift, 0px), calc(100vh + 60px)) rotate(var(--ouar-spin, 360deg)); opacity: 0.2; }
+}
+.ouar-leaf-flutter {
+  box-shadow: 0 0 6px rgba(255, 230, 150, 0.5);
+  animation-name: ouar-leaf-flutter;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-direction: alternate;
+}
+@keyframes ouar-leaf-flutter {
+  from { transform: perspective(200px) rotateX(0deg) rotateY(-50deg); filter: brightness(1.25); }
+  to { transform: perspective(200px) rotateX(70deg) rotateY(50deg); filter: brightness(0.8); }
+}
+
+/* ---------- ScreenFlash: catastrophe ---------- */
+.ouar-blot-spread {
+  transform-origin: 50px 50px;
+  animation: ouar-blot-spread 0.9s cubic-bezier(0.2, 0.8, 0.3, 1) both;
+}
+@keyframes ouar-blot-spread {
+  0% { transform: scale(0.04) rotate(-20deg); }
+  60% { transform: scale(3.2) rotate(4deg); }
+  100% { transform: scale(4.4) rotate(8deg); }
+}
+.ouar-blot-wipe {
+  opacity: 0.95;
+  animation: ouar-blot-wipe 1.6s linear both;
+}
+@keyframes ouar-blot-wipe {
+  0%, 62% { clip-path: inset(0 0 0 0); opacity: 0.95; }
+  100% { clip-path: inset(0 0 0 100%); opacity: 0.85; }
+}
+
+/* ---------- TypeReveal ---------- */
+.ouar-phrase {
+  position: relative;
+  opacity: 0;
+  animation: ouar-phrase-in 0.55s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+}
+@keyframes ouar-phrase-in {
+  from { opacity: 0; top: 0.35em; filter: blur(3px); }
+  to { opacity: 1; top: 0; filter: blur(0); }
+}
+.ouar-dropcap {
+  float: left;
+  font-family: var(--font-display, "Cinzel Decorative", "Cinzel", Georgia, serif);
+  font-weight: 700;
+  font-size: 3.3em;
+  line-height: 0.82;
+  margin: 0.06em 0.1em 0 0;
+  padding: 0.04em 0.06em 0;
+  color: #C8952E;
+  background: linear-gradient(170deg, #F6D57A 0%, #C8952E 45%, #8A6118 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(1px 1.5px 0 rgba(42, 30, 22, 0.45)) drop-shadow(0 0 0.5px rgba(163, 40, 46, 0.6));
+  animation: ouar-dropcap-bloom 0.8s cubic-bezier(0.2, 0.9, 0.3, 1.25) both;
+  transform-origin: 50% 70%;
+}
+@keyframes ouar-dropcap-bloom {
+  0% { opacity: 0; transform: scale(0.4) rotate(-8deg); }
+  60% { opacity: 1; transform: scale(1.12) rotate(1deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0); }
+}
+
+/* ---------- reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .ouar-d20-land, .ouar-d20-land-crit, .ouar-d20-land-fail,
+  .ouar-stamp-slam, .ouar-dropcap {
+    animation-duration: 0.01s !important;
+  }
+  .ouar-phrase { animation-duration: 0.2s; }
+  .ouar-leaf-flutter, .ouar-d20-rays, .ouar-seal-pulse, .ouar-d20-glow { animation: none; }
+}

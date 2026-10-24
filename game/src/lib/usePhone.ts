@@ -30,23 +30,27 @@ export function usePhone(code: string | null) {
     if (!code || !pid) return;
     const t = openRoom(code);
     tRef.current = t;
-    let gotState = false;
+    let lastHeard = 0;
     const off = t.on((m: Msg) => {
+      lastHeard = Date.now();
       if (m.type === "state") {
-        gotState = true;
         setState(m.state as GameState);
         setDeadlineAt(m.state.deadline ? Date.now() + m.state.deadline : 0);
       } else if (m.type === "portrait" && m.pid === pid) {
         setPortrait(m.url);
       }
     });
-    // Keep saying hello until the table answers (it may not be subscribed yet).
+    // Say hello until the table answers, and again whenever it's been quiet for a while,
+    // so a dropped message (flaky Wi-Fi, phone asleep) heals itself within seconds.
     t.send({ type: "hello", pid });
     const iv = setInterval(() => {
-      if (!gotState) t.send({ type: "hello", pid });
+      if (Date.now() - lastHeard > (lastHeard ? 5000 : 1500)) t.send({ type: "hello", pid });
     }, 1500);
+    const onVisible = () => document.visibilityState === "visible" && t.send({ type: "hello", pid });
+    document.addEventListener("visibilitychange", onVisible);
     return () => {
       clearInterval(iv);
+      document.removeEventListener("visibilitychange", onVisible);
       off();
       t.close();
       tRef.current = null;

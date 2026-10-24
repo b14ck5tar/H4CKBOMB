@@ -28,6 +28,8 @@ A laptop or TV becomes the table, and every phone becomes a character sheet and 
 
 **The reveal.** After a streamed epilogue, the last page of the storybook tears away to a stark newsprint clipping: **"This tale was inspired by real events,"** with the real headline, source and a QR link. Players gasp, then laugh.
 
+**Muse can run game night.** We built a Muse connector: an MCP endpoint at `/api/mcp` that exposes three tools Meta's personal agent can call. `start_game_night` opens a room, `list_todays_tales` shows tonight's quests, and `invite_message` drafts the invite to your friends. The agent does the planning; the humans still send the message and show up. *(Verify the connector is live before submitting, or cut this paragraph.)*
+
 **Storybook and bookshelf.** Every tale becomes an illustrated storybook saved to the party's bookshelf ("The Cousins, Book 3"). The ending teases "Chapter 2 unlocks next week," so the group has a reason to come back.
 
 ## How we built it
@@ -38,6 +40,8 @@ A laptop or TV becomes the table, and every phone becomes a character sheet and 
 - **Muse Spark (`muse-spark-1.3`)** is the DM brain, always with strict JSON schemas: quest generation, character cards, scene openers, per-pitch verdicts, outcome narration, epilogue, storybook text and the safety classifier. A JSON call measures about 1.9 s.
 - **Muse Image (`muse-image-1.0`)** paints portraits (about 14 s), scene plates (about 23 s) and the cover, all from one "Illuminated Storybook" style string.
 - **Muse Voice Transcribe (`muse-voice-transcribe-1.0`)** drives push-to-talk pitches. The phone encodes 16 kHz mono WAV, the server forwards it, and the transcript lands in an editable box. We never auto-submit.
+
+**Built with Claude Code.** Claude Code (Anthropic) was our lead engineer, orchestrating parallel subagents for research, the news pipeline, voice, juice and animation, and docs, while the Muse models run inside the product itself.
 
 **The AI never touches a number.** The server rolls every die with `crypto` RNG, and code computes the DC (15 minus the tier modifier), totals, Hope and outcome bands. The model proposes tiers and prose inside a schema, so it cannot invent its own rules.
 
@@ -80,11 +84,29 @@ A laptop or TV becomes the table, and every phone becomes a character sheet and 
 
 ## Built With
 
-`next.js` · `typescript` · `tailwindcss` · `react` · `vercel` · `supabase-realtime` · `meta-muse-spark` · `meta-muse-image` · `meta-muse-voice-transcribe` · `serpapi` · `google-news` · `web-audio-api` · `zod` · `gemini` (fallback)
+`next.js` · `typescript` · `tailwindcss` · `react` · `vercel` · `supabase-realtime` · `meta-muse-spark` · `meta-muse-image` · `meta-muse-voice-transcribe` · `meta-muse-agent` · `model-context-protocol` · `claude-code` · `serpapi` · `google-news` · `web-audio-api` · `zod` · `gemini` (fallback)
 
 ## Why this fits each track
 
-**Meta: Bringing People Closer Together with AI.** A social product by design. It removes the biggest barrier to playing together (the DM's prep), and each mechanic makes a human moment: the public Pitch Wall, voting for a friend's idea, Catch! (spending your only Heart to save someone), and the Rescue Round, where the hero you failed chooses who saves them. All three Muse models are on the critical path of every game.
+**Meta: Bringing People Closer Together with AI.** A social product by design. It removes the biggest barrier to playing together (the DM's prep), and each mechanic makes a human moment: the public Pitch Wall, voting for a friend's idea, Catch! (spending your only Heart to save someone), and the Rescue Round, where the hero you failed chooses who saves them. All three Muse models are on the critical path of every game, and a Muse connector lets Meta's personal agent start the night.
+
+### Why this fits Meta's criteria
+
+Meta scores human connection (30%), how essential and well integrated the AI is (25%), originality (20%), and technical execution with a working demo (20%). Here is how we map to each.
+
+**Human connection (30%).** The product exists to put friends in one room looking at one screen. The AI takes the Dungeon Master's chair, the biggest barrier to a group ever playing. Phones are only for pitching and voting, and every mechanic is a human moment: the public Pitch Wall, voting for a friend's idea, Catch! (spending your only Heart to save someone), and the Rescue Round, where the hero you failed picks their savior. The AI faces the table, not one user. *(If shipped: Look Up! dims phones during the story so eyes stay on each other, Thank your savior prompts a one-tap thanks after a rescue, and Spotlight has the narrator call on whoever has had the fewest moments.)*
+
+**AI is essential and well integrated (25%).** Remove the AI and there is no game. Muse Spark is the DM brain and safety filter (quests, character cards, per-pitch verdicts, narration, epilogue, storybook), Muse Image paints portraits, scenes and the cover, and Muse Voice Transcribe powers push-to-talk pitches. All three run in every game. The AI sets stakes but never rolls: the server owns the dice and the math. And through our Muse connector (`start_game_night`, `list_todays_tales`, `invite_message`), Meta's personal agent can start the night and draft the invite.
+
+**Originality (20%).** Three ideas in one product: an AI Dungeon Master, quests drawn from real headlines this week and filtered to be safe and repairable, and the newsprint reveal ("This tale was inspired by real events") that turns a joke into a conversation.
+
+**Technical execution (20%).** A working game from QR code to keepsake storybook. Next.js on Vercel, Supabase Realtime keeping a TV and phones in sync, server-side AI calls with strict JSON schemas, a server RNG, pre-generated and cached news, and a fallback chain (Muse, then Gemini, then canned text) so the demo does not stall.
+
+**Research grounding.** We designed around the evidence on how people bond:
+- Shared laughter releases endorphins and bonds groups (Dunbar et al. 2012, *Proc. Royal Society B*; PET evidence in Manninen et al. 2017, *J. Neuroscience*).
+- An AI that supports the group, rather than replacing it, can get humans talking more to each other and more evenly (Traeger et al. 2020, *PNAS*).
+- Social games build trust better than icebreakers, because they add risk and interdependence (Depping et al. 2016, *CHI PLAY*).
+- The need is real: the US Surgeon General's 2023 advisory called loneliness and isolation an epidemic, and linked a lack of connection to mortality risk comparable to smoking up to 15 cigarettes a day.
 
 **Most Entertaining.** A foam d20, a record scratch when the die rolls off the table, a crooked CATASTROPHE stamp, a table voting to talk a dragon down with an apology. Every round is built for laughter, and the newsprint reveal is the final punchline.
 

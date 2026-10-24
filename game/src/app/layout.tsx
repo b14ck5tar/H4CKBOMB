@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Alegreya_Sans, Cinzel, Cinzel_Decorative, EB_Garamond } from "next/font/google";
 import "./globals.css";
+import "./juice.css";
 
 const display = Cinzel_Decorative({ variable: "--font-display", subsets: ["latin"], weight: ["700", "900"] });
 const heading = Cinzel({ variable: "--font-heading", subsets: ["latin"], weight: ["500", "700", "900"] });

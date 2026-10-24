@@ -114,15 +114,16 @@ function escapeRe(s: string) {
 }
 
 /** Name fragments worth checking: the full name and any token ≥ 4 letters (surnames, distinctive first names). */
-function nameNeedles(people: string[]): string[] {
-  const out = new Set<string>();
+function nameNeedles(people: string[]): { needle: string; flags: string }[] {
+  const out = new Map<string, string>();
   for (const p of people) {
-    const clean = p.replace(/[^\p{L}\p{N}' -]/gu, " ").trim();
+    const clean = p.replace(/[^\p{L}\p{N}' -]/gu, " ").replace(/\s+/g, " ").trim();
     if (clean.length < 3) continue;
-    out.add(clean);
-    for (const tok of clean.split(/\s+/)) if (tok.length >= 4 && /^\p{Lu}/u.test(tok)) out.add(tok);
+    out.set(clean, "iu"); // full name: any case
+    // single tokens: case-sensitive, so the surname "Wall" doesn't trip on "a stone wall"
+    for (const tok of clean.split(" ")) if (tok.length >= 4 && /^\p{Lu}/u.test(tok) && !out.has(tok)) out.set(tok, "u");
   }
-  return [...out];
+  return [...out].map(([needle, flags]) => ({ needle, flags }));
 }
 
 /**
@@ -134,8 +135,8 @@ export function lintQuest(q: RawQuest, cls: Pick<Classification, "people_named">
   const fiction = fictionStrings(q);
   const blob = fiction.join(" \n ");
 
-  for (const n of nameNeedles(cls.people_named ?? [])) {
-    if (new RegExp(`(^|[^\\p{L}])${escapeRe(n)}($|[^\\p{L}])`, "iu").test(blob)) problems.push(`real person's name "${n}" appears in the fiction`);
+  for (const { needle, flags } of nameNeedles(cls.people_named ?? [])) {
+    if (new RegExp(`(^|[^\\p{L}])${escapeRe(needle)}($|[^\\p{L}])`, flags).test(blob)) problems.push(`real person's name "${needle}" appears in the fiction`);
   }
   for (const re of FICTION_BLOCK) {
     const m = blob.match(re);

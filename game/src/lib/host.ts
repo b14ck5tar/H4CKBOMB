@@ -1,5 +1,6 @@
 "use client";
 import seedsJson from "@/data/seed_quests.json";
+import questImages from "@/data/quest_images.json";
 import { ai, image, thumbnail, withTimeout } from "./api";
 import {
   CATCH_MS,
@@ -145,7 +146,9 @@ export class GameHost {
   getState = () => this.state;
   onReaction(fn: (r: { pid: string; emoji: string; id: number }) => void) {
     this.reactionSubs.add(fn);
-    return () => this.reactionSubs.delete(fn);
+    return () => {
+      this.reactionSubs.delete(fn);
+    };
   }
 
   private set(patch: Partial<GameState>) {
@@ -307,7 +310,14 @@ export class GameHost {
       },
       scenes,
     });
+    const pre = (questImages as Record<string, string[]>)[id];
     scenes.forEach((s, i) => {
+      if (pre?.[i]) {
+        // Pre-painted for the demo quests: instant and free.
+        this.sceneImages[i] = pre[i];
+        this.set({ scenes: this.state.scenes.map((sc, j) => (j === i ? { ...sc, hasImage: true } : sc)) });
+        return;
+      }
       image({
         kind: "scene",
         location: s.location,

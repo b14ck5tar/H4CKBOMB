@@ -1,15 +1,32 @@
 import type { NextConfig } from "next";
+import fs from "node:fs";
 import path from "node:path";
-import { loadEnvConfig } from "@next/env";
 
-// Keys live in ../.env.local (next to SPEC.md). Next's dev workers don't inherit variables loaded here,
-// so pass the ones that are set through `env` (on Vercel they come from the project settings instead).
-loadEnvConfig(path.resolve(__dirname, ".."));
+// Keys live in ../.env.local (next to SPEC.md). Next only auto-loads env files from game/, and its loader
+// caches the first result, so read the parent file directly. On Vercel the keys come from project settings.
+// cwd is the game/ folder for `npm run dev` / `next build` (next.config.ts is transpiled, so __dirname is unreliable).
+const parentEnv: Record<string, string> = {};
+try {
+  const text = fs.readFileSync(path.resolve(process.cwd(), "..", ".env.local"), "utf8");
+  for (const line of text.split(/\r?\n/)) {
+    const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*?)\s*$/);
+    if (m && m[2]) parentEnv[m[1]] = m[2].replace(/^["']|["']$/g, "");
+  }
+} catch {
+  /* no parent key file (e.g. on Vercel) */
+}
 
-const KEYS = ["MODEL_API_KEY", "SERPAPI_KEY", "GEMINI_API_KEY", "NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY"];
+const KEYS = ["MODEL_API_KEY", "SERPAPI_KEY", "GEMINI_API_KEY", "NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY", "MCP_TOKEN"];
+const env: Record<string, string> = {};
+for (const k of KEYS) {
+  const v = process.env[k] || parentEnv[k];
+  if (v) env[k] = v;
+}
 
 const nextConfig: NextConfig = {
-  env: Object.fromEntries(KEYS.filter((k) => process.env[k]).map((k) => [k, process.env[k] as string])),
+  // Each dev server gets its own build folder so parallel test servers don't clobber each other.
+  distDir: process.env.NEXT_DIST_DIR || ".next",
+  env,
 };
 
 export default nextConfig;
