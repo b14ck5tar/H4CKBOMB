@@ -725,7 +725,10 @@ function StorybookView({ host, s }: { host: GameHost; s: GameState }) {
   const total = pages.length + 2;
   const imgIndex = (ref: string) => Math.max(0, Number(String(ref).replace("scene_", "")) - 1);
   const said = (id: string) => s.mirror.find((c) => c.wardId === id)?.sentence ?? "";
-  const quotes = s.log.filter((l) => l.band === "LEGENDARY" || l.band === "SUCCESS" || l.band === "CATASTROPHE").slice(0, 4);
+  const quotes = s.log
+    .filter((l) => l.band === "LEGENDARY" || l.band === "SUCCESS" || l.band === "CATASTROPHE")
+    .filter((l, i, all) => all.findIndex((x) => x.pitch === l.pitch) === i)
+    .slice(0, 4);
   return (
     <div className="flex-1 min-h-0 flex flex-col gap-4 px-8 pb-4">
       <div className="flex-1 min-h-0 page p-8 grid grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] gap-8 items-center">

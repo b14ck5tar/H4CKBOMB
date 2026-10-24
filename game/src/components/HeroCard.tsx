@@ -32,7 +32,7 @@ export function HeroCard({ player, portrait, compact = false, showRoast = true }
         )}
       </div>
       <div className="min-w-0 flex-1 flex flex-col gap-1.5">
-        {!compact && <p className="font-ui text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-ink-soft">Case file · subject</p>}
+        {!compact && <p className="font-ui text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-ink-soft">Character</p>}
         <div>
           <p className={`font-heading font-extrabold uppercase tracking-wide leading-none ${compact ? "text-lg" : "text-2xl"}`}>{h.name}</p>
           <p className="italic text-ink-soft leading-tight mt-0.5">

@@ -333,19 +333,8 @@
 }
 /* first word: comic caption-box highlight that swipes in */
 .ouar-lead {
+  /* The first word reads like the rest of the sentence; a shouted caption box made narration feel robotic. */
   display: inline;
-  font-family: var(--font-heading, "Barlow Condensed", "Arial Narrow", sans-serif);
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  font-size: 1.08em;
-  color: #0A0612;
-  background: var(--gilt-bright, #FFB648);
-  padding: 0 0.2em;
-  margin-right: 0.04em;
-  -webkit-box-decoration-break: clone;
-  box-decoration-break: clone;
-  box-shadow: 0.12em 0.12em 0 var(--crimson, #FF2E7E);
   animation: ouar-lead-in 0.5s cubic-bezier(0.2, 0.9, 0.3, 1) both;
 }
 @keyframes ouar-lead-in {
