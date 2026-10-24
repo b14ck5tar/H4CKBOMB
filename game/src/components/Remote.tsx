@@ -96,7 +96,7 @@ export function RoomLobby({ state, me, portraits, host }: { state: GameState; me
         ))}
       </div>
       {host ? (
-        <HostLobby host={host} />
+        <HostLobby host={host} hostHasHero={!!me.hero} />
       ) : (
         <div className="page p-4 flex flex-col gap-1">
           <p className="font-ui text-xs uppercase tracking-widest text-ink-soft">Tonight’s story</p>
@@ -108,9 +108,12 @@ export function RoomLobby({ state, me, portraits, host }: { state: GameState; me
   );
 }
 
-function HostLobby({ host }: { host: GameHost }) {
+function HostLobby({ host, hostHasHero }: { host: GameHost; hostHasHero: boolean }) {
   const s = useHostState(host);
   const ready = s.players.filter((p) => p.status === "ready").length;
+  // The host's device runs the game, so the host must be in it: a hero-less host would be dropped at begin()
+  // and lose Continue, Next chapter and the keep-awake.
+  const canStart = host.canBegin() && hostHasHero;
   return (
     <div className="page p-4 flex flex-col gap-3 ring-2 ring-[var(--gilt-bright)]">
       <p className="font-ui text-xs uppercase tracking-[0.2em] text-[var(--gilt-bright)]">You’re the host</p>
@@ -130,11 +133,11 @@ function HostLobby({ host }: { host: GameHost }) {
           </button>
         ))}
       </div>
-      <button className="btn btn-crimson text-xl" disabled={!host.canBegin()} onClick={() => host.begin()}>
+      <button className="btn btn-crimson text-xl" disabled={!canStart} onClick={() => canStart && host.begin()}>
         Start the story
       </button>
       <p className="font-ui text-sm text-ink-soft text-center">
-        {!s.questId ? "Pick a story." : ready === 0 ? "Waiting for at least one character." : s.players.some((p) => p.status === "building") ? "Finishing characters…" : "Ready when you are."}
+        {!hostHasHero ? "Make your own character first (you're playing too)." : !s.questId ? "Pick a story." : ready === 0 ? "Waiting for at least one character." : s.players.some((p) => p.status === "building") ? "Finishing characters…" : "Ready when you are."}
       </p>
     </div>
   );
@@ -165,7 +168,8 @@ export function HostBar({ host }: { host: GameHost }) {
       lock?.release().catch(() => {});
     };
   }, []);
-  const midGame = s.phase !== "lobby" && s.phase !== "storybook";
+  // Leaving loses the room for everyone once anyone has a character (lobby and storybook included).
+  const midGame = s.players.some((p) => p.hero);
   useEffect(() => {
     if (!midGame) return;
     const warn = (e: BeforeUnloadEvent) => {
@@ -480,6 +484,15 @@ export function ChatDock({ state, me, send }: { state: GameState; me: Player; se
   const [text, setText] = useState("");
   const [seen, setSeen] = useState(0);
   const listRef = useRef<HTMLDivElement>(null);
+  // The host drops messages closer than 700 ms apart, so space quick ones out instead of losing them.
+  const nextSlot = useRef(0);
+  const sendSpaced = (msg: string) => {
+    const now = Date.now();
+    const at = Math.max(now, nextSlot.current);
+    nextSlot.current = at + 800;
+    if (at === now) send("chat", { text: msg });
+    else setTimeout(() => send("chat", { text: msg }), at - now);
+  };
   const lastId = state.chat.at(-1)?.id ?? 0;
   const unread = open ? 0 : state.chat.filter((m) => m.id > seen && m.pid !== me.id).length;
   useEffect(() => {
@@ -519,7 +532,7 @@ export function ChatDock({ state, me, send }: { state: GameState; me: Player; se
             onSubmit={(e) => {
               e.preventDefault();
               if (!text.trim()) return;
-              send("chat", { text: text.trim() });
+              sendSpaced(text.trim());
               setText("");
             }}
           >

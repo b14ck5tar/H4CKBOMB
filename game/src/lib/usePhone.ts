@@ -57,11 +57,12 @@ export function usePhone(code: string | null) {
     });
     // Say hello until the table answers, and again whenever it's been quiet for a while,
     // so a dropped message (flaky Wi-Fi, phone asleep) heals itself within seconds.
-    t.send({ type: "hello", pid });
+    // `fresh` asks the host to re-send the art too: only when we have nothing yet or were away, not on every keepalive.
+    t.send({ type: "hello", pid, fresh: true });
     const iv = setInterval(() => {
-      if (Date.now() - lastHeard > (lastHeard ? 5000 : 1500)) t.send({ type: "hello", pid });
+      if (Date.now() - lastHeard > (lastHeard ? 5000 : 1500)) t.send({ type: "hello", pid, fresh: lastHeard === 0 });
     }, 1500);
-    const onVisible = () => document.visibilityState === "visible" && t.send({ type: "hello", pid });
+    const onVisible = () => document.visibilityState === "visible" && t.send({ type: "hello", pid, fresh: true });
     document.addEventListener("visibilitychange", onVisible);
     return () => {
       clearInterval(iv);

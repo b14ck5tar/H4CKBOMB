@@ -297,6 +297,7 @@ export class GameHost {
       case "hello": {
         this.broadcastSoon();
         const now = Date.now();
+        if (this.state.screen === "phones" && !m.fresh) break; // keepalive only: the state broadcast above is enough
         if (now - (this.lastPortraitSend[m.pid] ?? 0) < 5000) break;
         this.lastPortraitSend[m.pid] = now;
         if (this.state.screen === "phones") {
