@@ -1,4 +1,13 @@
 export type Stat = "brave" | "clever" | "charming";
+
+/** Who's playing: sets how gentle or heavy the stories and humor can be. See `lib/rating.ts`. */
+export type Rating = "kids" | "teens" | "adults";
+
+/** Two optional join questions (lib/real.ts). Either can be "" (skipped). Private until the reveal. */
+export interface RealAnswers {
+  skill: string; // "What's something you're weirdly good at?" -> their power, and the reveal's "Solved by" line
+  fear: string; // "What's a small thing that scares you?" -> comedy in the fiction only, never a real dare
+}
 export type Tier = "clever" | "solid" | "risky" | "absurd" | "miracle";
 export type Band = "CATASTROPHE" | "FAIL" | "YES_BUT" | "SUCCESS" | "LEGENDARY";
 export type Ending = "TRIUMPHANT" | "BITTERSWEET" | "GRIM_BUT_HILARIOUS";
@@ -24,6 +33,7 @@ export interface Player {
   status: "joined" | "building" | "ready";
   concept?: string;
   pick?: string; // id of the ready-made character they picked (absent = they made their own)
+  real?: RealAnswers; // join questions. On the wire it is only ever {skill:"",fear:""} = "answered"; the text stays on the TV until the reveal.
   truth?: string; // "one true thing about the real you": undefined = not asked yet, "" = skipped. Never shown during play.
   hero?: Hero;
   hasPortrait: boolean;
@@ -123,6 +133,8 @@ export interface QuestSeed {
   art_style_hint: string;
   category?: string;
   tone?: string;
+  /** The youngest group this story suits: "kids" = fine for everyone, "adults" = adults only. Missing = "teens". */
+  rating?: Rating;
 }
 
 export interface LogEntry {
@@ -254,6 +266,7 @@ export type GameMode = "full" | "quick";
 
 export interface GameState {
   code: string;
+  rating: Rating; // "Who's playing?", set in the lobby; default "teens"
   phase: Phase;
   mode: GameMode;
   partyName: string;
@@ -301,6 +314,7 @@ export interface GameState {
   mirrorIndex: number; // which mirror card is showing
   thanks: Record<string, number>; // ward id -> times they tapped "Thank them"
   log: LogEntry[];
+  solvedBy: string; // reveal line: "Solved by Ava's parallel parking and Ben's coffee." ("" until the reveal, or if nobody shared a skill)
   notes: DMNotes;
   busy: string;
 }

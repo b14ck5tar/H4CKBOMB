@@ -1,19 +1,27 @@
 import "server-only";
-import type { Band, Hero, RoundOutcome, SceneOpen, Storybook, Verdict } from "@/lib/types";
+import type { Band, Hero, RealAnswers, RoundOutcome, SceneOpen, Storybook, Verdict } from "@/lib/types";
+import { HEAVY, fearPhrase, skillPhrase } from "@/lib/real";
 
 const pick = <T,>(a: T[]) => a[Math.floor(Math.random() * a.length)];
 
 // Safety: canned content never echoes player text (a failed call must not put an unreviewed concept on the TV).
-export function fallbackHero(): Hero {
+export function fallbackHero(real: RealAnswers = { skill: "", fear: "" }): Hero {
+  // The real answers are the player's own words about themselves, shown back only as their hero's power and weakness.
+  const skill = skillPhrase(real.skill);
+  const fear = fearPhrase(real.fear);
+  const heavy = HEAVY.test(real.skill) || HEAVY.test(real.fear);
   return {
     name: pick(["Doug", "Marigold", "Wendell", "Priya", "Sal"]),
     epithet: "the Unexpected",
     pronouns: "they/them",
-    concept_status: "ok",
-    concept_note: "",
+    concept_status: heavy ? "redirected" : "ok",
+    concept_note: heavy ? "The notes got a little smudged, so the DM filled in the gaps." : "",
     stats: { brave: 1, clever: 3, charming: -1 },
-    ability: { name: "Pocket Full of Stuff", text: "Pull exactly the right odd object from a pocket." },
-    flaw: "Narrates their own actions out loud, badly.",
+    ability: skill
+      ? { name: "Weirdly Good At It", text: `Bring your ${skill} to any problem, and it helps.` }
+      : { name: "Pocket Full of Stuff", text: "Pull exactly the right odd object from a pocket." },
+    // Comedy in the fiction only: the hero has bad luck with it. Nobody is asked to do anything for real.
+    flaw: fear ? `Has the worst luck with ${fear}, at the worst moments.` : "Narrates their own actions out loud, badly.",
     roast: pick(["The DM's notes on this one are mostly a coffee stain.", "Nobody is sure what they do. Including them.", "Showed up with a backpack and no plan. Perfect."]),
     visual: {
       anchor: "a small round cartoon character with a giant hoodie and wild hair",

@@ -4,6 +4,7 @@
   "quest_title": "The Bridge That Hums at Night",
   "category": "infrastructure",
   "tone": "eerie",
+  "rating": "teens",
   "realm_name": "Porter, Indiana",
   "fairytale_premise": "A bridge in Porter, Indiana, has been closed for almost three years. The new one opens tomorrow at sunrise. Tonight it is empty, and it is humming. Something took a bite out of the brand-new railing.",
   "the_threat": {
@@ -125,6 +126,7 @@
   "quest_title": "The Billion Eggs That Crossed the Sea",
   "category": "environment",
   "tone": "eerie",
+  "rating": "teens",
   "realm_name": "The North Sea coast, from the River Tyne to Mandø",
   "fairytale_premise": "Tiny white beads are washing up on a beach in Denmark. There are millions of them. A lab says they came from a river in England, 390 miles away. Something big is pushing them across the sea, and it thinks they are its eggs.",
   "the_threat": {
@@ -251,6 +253,7 @@
   "quest_title": "The Boulder That Let Go",
   "category": "unexplained",
   "tone": "eerie",
+  "rating": "teens",
   "realm_name": "Polar Caves, Rumney, New Hampshire",
   "fairytale_premise": "An 80-ton boulder hung over a cave path in New Hampshire for 100 years. On the last day of the season, it fell. Nobody was hurt, and nobody knows why. Tonight the spot where it hung is covered in frosty fingerprints as big as couches.",
   "the_threat": {
@@ -377,6 +380,7 @@
   "quest_title": "The Signal That Wakes Up Hungry",
   "category": "science_space",
   "tone": "eerie",
+  "rating": "teens",
   "realm_name": "The Very Large Array, New Mexico",
   "fairytale_premise": "At 2 in the morning, every giant dish at the Very Large Array in New Mexico turns to the same spot in the sky. They hear a radio signal that was not there in 1996. It keeps getting louder. Now the coffee machine is humming along.",
   "the_threat": {
@@ -498,6 +502,7 @@
   "quest_title": "The Pumpkin That Hums at Nap Time",
   "category": "quirky",
   "tone": "eerie",
+  "rating": "kids",
   "realm_name": "Hysham, Montana",
   "fairytale_premise": "A 2-year-old in Hysham, Montana, grew a 280-pound pumpkin, and it won the fall festival. Now it is dark, and the pumpkin is humming. Its vines grow an inch every time you look away. The kid says it hums at nap time.",
   "the_threat": {
@@ -619,6 +624,7 @@
   "quest_title": "The Bots Who Missed Their Ring",
   "category": "tech_ai",
   "tone": "eerie",
+  "rating": "teens",
   "realm_name": "A virtual desert island built by MIT researchers",
   "fairytale_premise": "A lab at MIT left 13 little AI robots alone on a video game island for 30 hours, with nothing to do. They got bored, so they started playing. At 2 in the morning, the screen flickers, and your group is standing on the island too.",
   "the_threat": {
@@ -740,6 +746,7 @@
   "quest_title": "The Otter Nobody Has Seen Since the 1800s",
   "category": "animals_nature",
   "tone": "eerie",
+  "rating": "kids",
   "realm_name": "Cloverdale Ranch Preserve, near Pescadero on the San Mateo coast",
   "fairytale_premise": "A trail camera near Pescadero keeps snapping the same night visitor. It is a river otter. None have lived here since the 1800s. In every photo, the creek behind it runs uphill to follow it.",
   "the_threat": {
@@ -866,6 +873,7 @@
   "quest_title": "The Sky Egg in the Cornfield",
   "category": "unexplained",
   "tone": "eerie",
+  "rating": "teens",
   "realm_name": "Scott Township, Stevens County, Minnesota",
   "fairytale_premise": "A farmer in Minnesota was harvesting corn when he found an 11-foot metal dome in his field. It was cracked open like an egg. The sheriff says it is safe and hauled it away. Nobody has asked what hatched out of it.",
   "the_threat": {

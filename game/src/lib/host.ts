@@ -28,6 +28,8 @@ import {
 import { openRoom, type Msg, type Transport } from "./transport";
 import { mask } from "./mask";
 import { QUICK, coldOpenTimeline } from "./quick";
+import { DEFAULT_RATING, isRating, questAllowed } from "./rating";
+import { HEAVY, fearPhrase, realOf, skillPhrase, solvedByLine } from "./real";
 import type {
   Band,
   DMNotes,
@@ -40,6 +42,8 @@ import type {
   Pitch,
   Player,
   QuestSeed,
+  Rating,
+  RealAnswers,
   RollResult,
   RoundOutcome,
   Save,
@@ -195,6 +199,11 @@ const FALLBACK_BEAT: Record<Band, string[]> = {
   LEGENDARY: ["{name}, it works better than it has any right to. Someone nearby starts clapping and can't stop."],
 };
 
+/** The stories this group's rating allows (lib/rating.ts). */
+function questOptionsFor(rating: Rating) {
+  return SEEDS.filter((q) => questAllowed(q.rating, rating)).map((q) => ({ id: q.id, title: q.quest_title, teaser: q.fairytale_premise.split(/(?<=[.!?])\s/)[0] }));
+}
+
 export class GameHost {
   state: GameState;
   deadlineAt = 0;
@@ -231,6 +240,8 @@ export class GameHost {
   private mirrorFate = new Map<string, "kept" | "rewritten" | "dm">(); // guardian id -> what the kindness pass did
   private finalSafety: ReturnType<typeof setTimeout> | null = null;
   private truths: Record<string, string> = {}; // "one true thing" texts, kept off the wire until the storybook
+  private reals: Record<string, RealAnswers> = {};
+  private basePowers: Record<string, { ability: Hero["ability"]; flaw: string }> = {}; // the hero's own text, before answers // join answers (good at / small fear), kept off the wire until the reveal
   private skipping = false; // a presenter skip (Continue / S) isn't a player letting time run out
   // Online mode: /watch pages ask for state + media. Only then do we spend bandwidth on reactions and scene copies.
   private watched = false;
@@ -257,12 +268,13 @@ export class GameHost {
   constructor(code: string) {
     this.state = {
       code,
+      rating: DEFAULT_RATING,
       phase: "lobby",
       mode: "full",
       partyName: "",
       players: [],
       questId: "",
-      questOptions: SEEDS.map((s) => ({ id: s.id, title: s.quest_title, teaser: s.fairytale_premise.split(/(?<=[.!?])\s/)[0] })),
+      questOptions: questOptionsFor(DEFAULT_RATING),
       scenes: [],
       sceneIndex: 0,
       hope: HOPE_START,
@@ -297,6 +309,7 @@ export class GameHost {
       mirrorIndex: 0,
       thanks: {},
       log: [],
+      solvedBy: "",
       notes: emptyNotes(),
       busy: "",
     };
@@ -584,6 +597,12 @@ export class GameHost {
     );
   }
 
+  /** Every AI call carries the group's rating, so the DM's tone always matches who's playing. */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private ask<T>(task: string, input: any) {
+    return ai<T>(task, { ...input, rating: this.state.rating });
+  }
+
   private heroName(pid: string) {
     return this.player(pid)?.hero?.name ?? this.player(pid)?.name ?? "Someone";
   }
@@ -654,6 +673,8 @@ export class GameHost {
         return this.redraw(m.pid);
       case "truth":
         return this.onTruth(m.pid, m.text);
+      case "real":
+        return this.onReal(m.pid, m.skill, m.fear);
       case "pitch":
         return this.onPitch(m.pid, m.text, !!m.useAbility, !!m.embraceFlaw);
       case "boost":
@@ -779,7 +800,7 @@ export class GameHost {
     const others = this.heroes().filter((o) => o.id !== pid);
     const hero = await this.viaAI<Hero, Hero | undefined>(
       `${p.name}'s character card`,
-      ai<Hero>("character", {
+      this.ask<Hero>("character", {
         concept: text,
         partySoFar: others.map((o) => o.hero!.visual.anchor),
         avoidNames: others.map((o) => o.hero!.name),
@@ -799,7 +820,9 @@ export class GameHost {
           : "Character idea named a real person or famous character, so the DM made an original instead.",
       );
     }
+    delete this.basePowers[pid];
     this.patchPlayer(pid, { status: "ready", hero, abilityAvailable: true, heart: 1 });
+    this.applyReal(pid);
     const url = await image({ kind: "portrait", visual: hero.visual, flaw: hero.flaw, ability: hero.ability?.text });
     if (!url || this.player(pid)?.hero !== hero) return;
     this.portraits[pid] = url;
@@ -815,7 +838,9 @@ export class GameHost {
     if (!p || !q || p.status === "building" || this.state.phase !== "lobby") return;
     if (this.state.players.some((o) => o.id !== pid && o.pick === q.id)) return;
     const hero: Hero = structuredClone(q.hero);
+    delete this.basePowers[pid];
     this.patchPlayer(pid, { status: "ready", pick: q.id, concept: q.pitch, hero, hasPortrait: false, abilityAvailable: true, heart: 1 });
+    this.applyReal(pid);
     this.note("hero", hero.name, "Ready-made hero picked: written and painted ahead of time, so no AI call.");
     const url = `/heroes/${q.id}.webp`;
     this.portraits[pid] = url;
@@ -849,9 +874,52 @@ export class GameHost {
     if (truth) this.note("hero", p.hero?.name ?? p.name, "Shared one true thing about themselves. It stays private: the DM may nod to it once, gently, in one scene.");
   }
 
+  /** "Who's playing?" Kids / Teens / Adults. Filters the stories and sets the DM's tone. Lobby only. */
+  setRating(r: Rating) {
+    if (this.state.phase !== "lobby" || !isRating(r)) return;
+    const questOptions = questOptionsFor(r);
+    this.set({ rating: r, questOptions });
+    if (this.seed && !questAllowed(this.seed.rating, r)) {
+      this.seed = undefined;
+      this.set({ questId: "", quest: undefined, scenes: [] });
+    }
+  }
+
+  /**
+   * The two join questions (both optional). The text stays on the TV: the wire only says "answered".
+   * A usable answer becomes the hero's power / weakness right away (in code, no AI wait); the raw words come
+   * back only at the reveal, in the "Solved by" line.
+   */
+  private onReal(pid: string, skill: unknown, fear: unknown) {
+    const p = this.player(pid);
+    if (!p || this.state.phase !== "lobby") return;
+    const real = realOf({ skill, fear });
+    this.reals[pid] = real;
+    this.patchPlayer(pid, { real: { skill: "", fear: "" } });
+    this.applyReal(pid);
+    if (real.skill || real.fear) this.note("hero", p.hero?.name ?? p.name, "Answered the join questions. Their answers shape the hero's power and weakness, and stay private until the reveal.");
+  }
+
+  /** Turn a player's answers into their hero's power and weakness. Heavy answers are never used. */
+  private applyReal(pid: string) {
+    const p = this.player(pid);
+    const real = this.reals[pid];
+    if (!p?.hero || !real) return;
+    const skill = HEAVY.test(real.skill) ? "" : skillPhrase(real.skill);
+    const fear = HEAVY.test(real.fear) ? "" : fearPhrase(real.fear);
+    if (!skill && !fear) return;
+    const base = this.basePowers[pid] ?? (this.basePowers[pid] = { ability: p.hero.ability, flaw: p.hero.flaw });
+    const hero: Hero = {
+      ...p.hero,
+      ability: skill ? { name: "Weirdly Good At It", text: `Brings ${skill} to any problem, and it helps.` } : base.ability,
+      flaw: fear ? `Has the worst luck with ${fear}, at the worst moments.` : base.flaw,
+    };
+    this.patchPlayer(pid, { hero });
+  }
+
   chooseQuest(id: string) {
     const seed = SEEDS.find((s) => s.id === id);
-    if (!seed) return;
+    if (!seed || !questAllowed(seed.rating, this.state.rating)) return;
     this.seed = seed;
     this.sceneImages = {};
     this.set({ notes: { ...this.state.notes, safety: SAFETY_NOTES[seed.id] ?? SAFETY_GENERIC } });
@@ -1037,7 +1105,7 @@ export class GameHost {
 
   /** Start writing a scene early (Quick Tale asks during the cold open). */
   private prefetchScene(i: number) {
-    const p = ai<SceneOpen>("scene", this.sceneInput(i));
+    const p = this.ask<SceneOpen>("scene", this.sceneInput(i));
     p.catch(() => {}); // openScene reports any failure (DM's Notes); don't leave it unhandled meanwhile
     this.sceneP = { i, p };
   }
@@ -1084,7 +1152,7 @@ export class GameHost {
     const next = () => (isClimax ? this.startPitch(true) : this.startPitch(false));
     const sceneLabel = isClimax ? "Finale" : `Scene ${i + 1}`;
     try {
-      const res = await this.viaAI(`${sceneLabel} opening`, pre ?? ai<SceneOpen>("scene", this.sceneInput(i)), pre ? 12_000 : 16_000, (d, f) => (f ? fb() : d), fb);
+      const res = await this.viaAI(`${sceneLabel} opening`, pre ?? this.ask<SceneOpen>("scene", this.sceneInput(i)), pre ? 12_000 : 16_000, (d, f) => (f ? fb() : d), fb);
       if (this.state.phase !== "narrating" || this.state.sceneIndex !== i) return;
       this.note("scene", `${sceneLabel} · ${scene.kind}`, `The DM was given: the place (${scene.location}) and a twist seeded from a real fact: ${clip(scene.twist, 120)}`);
       this.note("scene", sceneLabel, `Question for the table: ${res.question || fb().question}`);
@@ -1184,7 +1252,7 @@ export class GameHost {
       appeal ? { ...appeal.previous, reason: "The DM didn't answer in time, so the first ruling stands", appealUnreviewed: true } : this.verdictFallback(pitch);
     return this.viaAI(
       appeal ? `Ruling on ${p.hero?.name}'s argument` : `Ruling on ${p.hero?.name}'s plan`,
-      ai<{ verdicts: (Verdict & { pitch_id: string })[] }>("verdict", {
+      this.ask<{ verdicts: (Verdict & { pitch_id: string })[] }>("verdict", {
         state: this.dmState(),
         rescue: r ? { hero_in_peril: this.player(r.victimId)?.hero?.name, peril: r.peril } : undefined,
         pitches: [
@@ -1468,7 +1536,7 @@ export class GameHost {
         on_failure: pitch.verdict?.on_failure ?? "",
       };
     });
-    const p: Promise<RoundOutcome> = ai<RoundOutcome>("round", {
+    const p: Promise<RoundOutcome> = this.ask<RoundOutcome>("round", {
       state: this.dmState(),
       rescue_of: r ? this.player(r.victimId)?.hero?.name ?? "" : "",
       actions,
@@ -1752,7 +1820,7 @@ export class GameHost {
     };
     this.epilogueP = this.viaAI(
       "Epilogue",
-      ai<string>("epilogue", {
+      this.ask<string>("epilogue", {
         state: st,
         final: finalInfo,
         log: this.state.log.map((l) => `${l.hero}: ${l.pitch} (${l.band})`),
@@ -1776,7 +1844,7 @@ export class GameHost {
     });
     this.storybookP = this.viaAI(
       "Storybook",
-      ai<Storybook>("storybook", {
+      this.ask<Storybook>("storybook", {
         state: st,
         title: this.state.quest?.title,
         heroes,
@@ -1913,7 +1981,7 @@ export class GameHost {
     };
     const p = this.viaAI(
       "Mirror kindness check",
-      ai<{ ok: boolean; sentence: string }>("kind", { ward_name: h.name, pronouns: h.pronouns, frame: mirrorFrame(h), moments, draft }),
+      this.ask<{ ok: boolean; sentence: string }>("kind", { ward_name: h.name, pronouns: h.pronouns, frame: mirrorFrame(h), moments, draft }),
       9000,
       (d, f) => {
         if (f) return local(); // the server's backup: unchecked, so the raw draft never shows
@@ -2089,7 +2157,10 @@ export class GameHost {
       });
       this.note("reveal", "The source", `Now revealed: "${rs.headline}" (${rs.source}, ${rs.date}).`);
     }
-    this.set({ phase: "reveal" });
+    // "Solved by Ava's parallel parking and Ben's coffee.": built in code from the join answers, never by the AI.
+    const solvedBy = solvedByLine(this.heroes().map((p) => ({ name: p.name, real: this.reals[p.id] })));
+    if (solvedBy) this.note("reveal", "Solved by", `${solvedBy} (built from the join answers, in code)`);
+    this.set({ phase: "reveal", solvedBy });
     const text = `${this.seed?.the_real_story.headline ?? ""} ${this.seed?.the_real_story.summary ?? ""}`;
     if (this.quick) return this.reading(text, () => this.showStorybook(), QUICK.revealMs, QUICK.revealMs);
     this.reading(text, () => this.showStorybook(), 15000);
@@ -2170,6 +2241,7 @@ export class GameHost {
       log: [],
       notes: emptyNotes(),
       rescue: null,
+      solvedBy: "",
       busy: "",
       ready: [],
     });

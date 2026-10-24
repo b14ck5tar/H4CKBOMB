@@ -15,9 +15,11 @@ import {
   VERDICT_SCHEMA,
   VERDICT_SYSTEM,
   storybookSchema,
+  withRating,
 } from "@/server/prompts";
 import { FALLBACK_EPILOGUE, fallbackHero, fallbackKind, fallbackRound, fallbackScene, fallbackStorybook, fallbackVerdict } from "@/server/fallbacks";
-import type { Hero, Stat } from "@/lib/types";
+import { cleanText, ratingOf, realOf } from "@/server/real";
+import type { Hero, Rating, Stat } from "@/lib/types";
 
 export const maxDuration = 60;
 
@@ -27,6 +29,11 @@ const TASKS = ["character", "scene", "verdict", "round", "epilogue", "storybook"
 function wrap(id: string, text: string, max = 240) {
   const clean = String(text ?? "").replace(/[<>]/g, "").slice(0, max);
   return `<player_input id="${id}">${clean}</player_input>`;
+}
+
+/** Like wrap, but a skipped answer stays "" so the model can see it was skipped. */
+function wrapOpt(id: string, text: string, max = 240) {
+  return text ? wrap(id, text, max) : "";
 }
 
 const STATS: Stat[] = ["brave", "clever", "charming"];
@@ -41,33 +48,44 @@ function fixStats(h: Hero): Hero {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Any = any;
 
-async function run(task: string, input: Any) {
+/**
+ * The system prompt ends with the group's AUDIENCE note, so each task has 3 prompt variants. The rating goes in the
+ * Muse task name (also the prompt cache key), so each variant keeps its own warm cache.
+ */
+async function run(task: string, input: Any, rating: Rating) {
+  const t = (name: string) => `dm-${name}-${rating}`;
   switch (task) {
     case "character": {
+      const real = realOf(input.real);
       const hero = await museJSON<Hero>({
-        task: "dm-character",
-        system: CHARACTER_SYSTEM,
+        task: t("character"),
+        system: withRating(CHARACTER_SYSTEM, rating),
         schema: CHARACTER_SCHEMA,
         effort: "low",
-        user: JSON.stringify({ concept: wrap("p", input.concept, 200), party_so_far: input.partySoFar ?? [], avoid_names: input.avoidNames ?? [] }),
+        user: JSON.stringify({
+          concept: wrapOpt("p", cleanText(input.concept, 200), 200),
+          real: { skill: wrapOpt("skill", real.skill, 120), fear: wrapOpt("fear", real.fear, 120) },
+          party_so_far: input.partySoFar ?? [],
+          avoid_names: input.avoidNames ?? [],
+        }),
       });
       return fixStats(hero);
     }
     case "scene":
       // Scene openers run ~1.7-2k tokens with reasoning; 2.5k truncated one mid-JSON in a playtest.
-      return museJSON({ task: "dm-scene", system: SCENE_SYSTEM, schema: SCENE_SCHEMA, effort: "low", maxTokens: 4000, user: JSON.stringify(input) });
+      return museJSON({ task: t("scene"), system: withRating(SCENE_SYSTEM, rating), schema: SCENE_SCHEMA, effort: "low", maxTokens: 4000, user: JSON.stringify(input) });
     case "verdict":
-      return museJSON({ task: "dm-verdict", system: VERDICT_SYSTEM, schema: VERDICT_SCHEMA, effort: "minimal", timeoutMs: 10_000, user: JSON.stringify(input) });
+      return museJSON({ task: t("verdict"), system: withRating(VERDICT_SYSTEM, rating), schema: VERDICT_SCHEMA, effort: "minimal", timeoutMs: 10_000, user: JSON.stringify(input) });
     case "round":
-      return museJSON({ task: "dm-round", system: ROUND_SYSTEM, schema: ROUND_SCHEMA, effort: "low", timeoutMs: 14_000, user: JSON.stringify(input) });
+      return museJSON({ task: t("round"), system: withRating(ROUND_SYSTEM, rating), schema: ROUND_SCHEMA, effort: "low", timeoutMs: 14_000, user: JSON.stringify(input) });
     case "kind":
-      return museJSON({ task: "dm-kind", system: KIND_SYSTEM, schema: KIND_SCHEMA, effort: "minimal", timeoutMs: 9000, maxTokens: 1200, user: JSON.stringify(input) });
+      return museJSON({ task: t("kind"), system: withRating(KIND_SYSTEM, rating), schema: KIND_SCHEMA, effort: "minimal", timeoutMs: 9000, maxTokens: 1200, user: JSON.stringify(input) });
     case "epilogue":
-      return museText({ task: "dm-epilogue", system: input?.quick_tale ? EPILOGUE_SYSTEM + EPILOGUE_QUICK : EPILOGUE_SYSTEM, user: JSON.stringify(input), effort: "low" });
+      return museText({ task: t("epilogue"), system: withRating(input?.quick_tale ? EPILOGUE_SYSTEM + EPILOGUE_QUICK : EPILOGUE_SYSTEM, rating), user: JSON.stringify(input), effort: "low" });
     case "storybook":
       return museJSON({
-        task: "dm-storybook",
-        system: STORYBOOK_SYSTEM,
+        task: t("storybook"),
+        system: withRating(STORYBOOK_SYSTEM, rating),
         schema: storybookSchema(input.available_images),
         effort: "low",
         timeoutMs: 40_000,
@@ -81,7 +99,7 @@ async function run(task: string, input: Any) {
 function fallback(task: string, input: Any) {
   switch (task) {
     case "character":
-      return fallbackHero();
+      return fallbackHero(realOf(input.real));
     case "scene":
       return fallbackScene(input.hero_ids ?? [], input.scene_plan ?? {}, input.state?.party ?? []);
     case "verdict":
@@ -174,7 +192,7 @@ export async function POST(req: Request) {
   const input = wrapPlayerText(task, rawInput ?? {});
   const fbInput = task === "kind" ? rawInput ?? {} : input;
   try {
-    let data: Any = await run(task, input);
+    let data: Any = await run(task, input, ratingOf(rawInput?.rating));
     if (task === "epilogue") {
       if (typeof data !== "string" || !data.trim()) throw new Error("empty epilogue");
       data = scrub(data);

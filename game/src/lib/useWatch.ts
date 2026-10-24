@@ -78,6 +78,7 @@ export class WatchSource {
   begin() {}
   nextTale() {}
   setMode() {}
+  setRating() {}
   startedAt = 0;
   endedAt = 0;
 

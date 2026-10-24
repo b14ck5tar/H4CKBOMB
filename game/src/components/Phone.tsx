@@ -276,6 +276,41 @@ function CharacterPicker({ state, me, send }: { state: GameState; me: Player; se
   );
 }
 
+/** The two join questions, both optional. They shape your hero's power and weakness, and stay private until the reveal. */
+function RealForm({ send }: { send: Send }) {
+  const [skill, setSkill] = useState("");
+  const [fear, setFear] = useState("");
+  return (
+    <form
+      className="page p-4 flex flex-col gap-3"
+      onSubmit={(e) => {
+        e.preventDefault();
+        send("real", { skill: skill.trim(), fear: fear.trim() });
+        vibrate(15);
+      }}
+    >
+      <p className="font-heading text-xl uppercase leading-snug">Two quick questions (optional)</p>
+      <label className="flex flex-col gap-1">
+        <span className="font-ui text-sm">What&apos;s something you&apos;re weirdly good at?</span>
+        <input className="input" value={skill} onChange={(e) => setSkill(e.target.value)} maxLength={80} placeholder="parallel parking, finding lost things" autoComplete="off" />
+      </label>
+      <label className="flex flex-col gap-1">
+        <span className="font-ui text-sm">What&apos;s a small thing that scares you?</span>
+        <input className="input" value={fear} onChange={(e) => setFear(e.target.value)} maxLength={80} placeholder="geese, voicemails, the deep end" autoComplete="off" />
+      </label>
+      <p className="text-ink-soft text-xs -mt-1">Your hero gets your knack. It stays secret until the end.</p>
+      <div className="grid grid-cols-2 gap-2">
+        <button type="button" className="btn btn-ghost" onClick={() => send("real", { skill: "", fear: "" })}>
+          Skip
+        </button>
+        <button className="btn btn-crimson" type="submit" disabled={!skill.trim() && !fear.trim()}>
+          Save
+        </button>
+      </div>
+    </form>
+  );
+}
+
 /** Optional, skippable: one small true thing about the real person (gradual self-disclosure). Never shown during play. */
 function TruthForm({ send }: { send: Send }) {
   const [text, setText] = useState("");
@@ -855,7 +890,7 @@ export function Phone({ code }: { code: string }) {
       body = me.hero && me.status === "ready" ? (
         <div className="flex flex-col gap-3">
           <HeroCard player={me} portrait={me.pick ? `/heroes/${me.pick}.webp` : me.hasPortrait ? portrait : undefined} />
-          {me.truth === undefined ? <TruthForm send={send} /> : <Watch text="Waiting for the story to start…" />}
+          {me.real === undefined ? <RealForm send={send} /> : <Watch text="Waiting for the story to start…" />}
           <button className="font-ui text-sm underline opacity-80" onClick={() => send("redraw")}>
             Redraw my character
           </button>

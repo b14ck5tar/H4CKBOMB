@@ -15,6 +15,7 @@ import { DMNotesPanel, HowThisWasMade } from "./DMNotes";
 import { KeepsakeQR } from "./Keepsake";
 import { Presenter } from "./Presenter";
 import { QuickTV } from "./QuickTV";
+import { RATINGS, RATING_BLURB, RATING_LABEL } from "@/lib/rating";
 
 const fmt = (n: number) => (n >= 0 ? `+${n}` : `${n}`);
 const initials = (s: string) => s.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
@@ -28,7 +29,7 @@ export type Stage = Pick<
   GameHost,
   | "subscribe" | "getState" | "deadlineAt" | "portraits" | "thumbs" | "sceneImages" | "realStory" | "questSeed"
   | "transportKind" | "onReaction" | "skip" | "setPartyName" | "chooseQuest" | "canBegin" | "begin" | "nextTale"
-  | "setMode" | "startedAt" | "endedAt"
+  | "setMode" | "startedAt" | "endedAt" | "setRating"
 > & { readOnly?: boolean; onToast?: GameHost["onToast"] };
 
 export function useHost(host: Stage) {
@@ -297,6 +298,18 @@ function Lobby({ host, s }: { host: Stage; s: GameState }) {
               <span className="font-heading text-2xl font-bold uppercase block">Full Story · ~15 min</span>
               <span className="text-sm text-ink-soft">Three scenes, rescues, Mirror, Mirror and the whole ending.</span>
             </button>
+          </div>
+        </section>
+
+        <section className="flex flex-col gap-3">
+          <h2 className="font-heading text-3xl uppercase text-[var(--gilt-bright)]">Who’s playing?</h2>
+          <div className="qt-mode">
+            {RATINGS.map((r) => (
+              <button key={r} aria-pressed={s.rating === r} disabled={host.readOnly} onClick={() => { sfx.unlock(); sfx.pageTurn(); host.setRating(r); }}>
+                <span className="font-heading text-2xl font-bold uppercase block">{RATING_LABEL[r]}</span>
+                <span className="text-sm text-ink-soft">{RATING_BLURB[r]}</span>
+              </button>
+            ))}
           </div>
         </section>
 
@@ -804,7 +817,7 @@ function Epilogue({ s }: { s: GameState }) {
   );
 }
 
-function Reveal({ host }: { host: Stage }) {
+function Reveal({ host, s }: { host: Stage; s: GameState }) {
   const rs = host.realStory;
   const seed = host.questSeed;
   const [qr, setQr] = useState("");
@@ -850,6 +863,7 @@ function Reveal({ host }: { host: Stage }) {
             <p>
               <b>Your goal</b> → {seed.the_goal.mapped_from}
             </p>
+            {s.solvedBy && <p className="font-bold text-2xl mt-2">{s.solvedBy}</p>}
           </div>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           {qr && <div className="flex flex-col items-center gap-2"><img src={qr} alt="QR code to the real article" className="w-44 h-44" /><span className="text-sm text-[#555]">Read the real story</span></div>}
@@ -1142,7 +1156,7 @@ export function TV({ host, embedded = false }: { host: Stage; embedded?: boolean
       main = <Epilogue s={s} />;
       break;
     case "reveal":
-      main = <Reveal host={host} />;
+      main = <Reveal host={host} s={s} />;
       break;
     case "storybook":
       main = <StorybookView host={host} s={s} />;

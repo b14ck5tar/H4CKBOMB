@@ -622,6 +622,11 @@ function RevealCard({ host, s }: { host: Stage; s: GameState }) {
           )}
         </div>
       </div>
+      {s.solvedBy && (
+        <p className="font-heading text-4xl uppercase text-[var(--gilt-bright)] text-center qt-rise" style={{ animationDelay: "1.6s" }}>
+          {s.solvedBy}
+        </p>
+      )}
       <p className="font-heading text-2xl uppercase tracking-[0.2em] text-parchment/75 qt-rise" style={{ animationDelay: "2s" }}>
         This tale was inspired by real events
       </p>
