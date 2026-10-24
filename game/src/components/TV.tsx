@@ -15,7 +15,7 @@ import { DMNotesPanel, HowThisWasMade } from "./DMNotes";
 import { KeepsakeQR } from "./Keepsake";
 import { Presenter } from "./Presenter";
 import { QuickTV } from "./QuickTV";
-import { RATINGS, RATING_BLURB, RATING_LABEL } from "@/lib/rating";
+import { RATINGS, RATING_LABEL } from "@/lib/rating";
 import { FEATURES } from "@/lib/features";
 
 const fmt = (n: number) => (n >= 0 ? `+${n}` : `${n}`);
@@ -196,18 +196,12 @@ function QuestBoard({ s }: { s: GameState }) {
 // ---------- lobby ----------
 function Lobby({ host, s }: { host: Stage; s: GameState }) {
   const [qr, setQr] = useState("");
-  const [shelf, setShelf] = useState<ShelfBook[]>([]);
   const [joinUrl, setJoinUrl] = useState("");
-  const [online, setOnline] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const watchUrl = joinUrl.replace("/play?", "/watch?");
-  const invite = `Join on your phone at ${joinUrl}, watch at ${watchUrl}`;
   const known = useRef(new Set<string>());
   useEffect(() => {
     const url = `${location.origin}/play?code=${s.code}`;
     setJoinUrl(url);
     QRCode.toDataURL(url, { margin: 1, width: 360, color: { dark: "#0A0612", light: "#F5F1FF" } }).then(setQr);
-    if (!host.readOnly) setShelf(loadShelf());
   }, [s.code]);
   useEffect(() => {
     s.players.forEach((p) => {
@@ -217,151 +211,81 @@ function Lobby({ host, s }: { host: Stage; s: GameState }) {
       }
     });
   }, [s.players]);
-  const ready = s.players.filter((p) => p.status === "ready").length;
+  const ready = s.players.filter((p) => p.hero || p.status === "building").length;
+  const status = host.readOnly
+    ? "The table starts it when everyone's in."
+    : ready === 0
+      ? "Scan the code with your phone camera to join."
+      : s.players.some((p) => !p.hero && p.status !== "building")
+        ? "Someone's still picking a hero. Start whenever you're ready."
+        : s.mode === "quick"
+          ? "Everyone's in. One scene, about three minutes."
+          : "Everyone's in. You'll vote on the story first.";
   return (
-    <div className="grid grid-cols-[minmax(0,420px)_minmax(0,1fr)] gap-8 px-8 pb-6 flex-1 min-h-0">
-      <div className="page p-6 flex flex-col gap-4 items-center text-center overflow-auto">
+    <div className="grid grid-cols-[minmax(0,26rem)_minmax(0,1fr)] gap-10 px-10 pb-8 pt-2 flex-1 min-h-0">
+      <div className="page p-7 flex flex-col gap-4 items-center text-center self-start">
         <p className="font-heading text-2xl uppercase">Scan to join</p>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        {qr && <img src={qr} alt="QR code to join" className="w-60 h-60 rounded" />}
-        <p className="font-ui text-ink-soft break-all text-sm">{joinUrl}</p>
-        <p className="font-ui uppercase tracking-[0.2em] text-sm text-ink-soft">Room code</p>
-        <p className="font-display text-7xl tracking-[0.2em]">{s.code}</p>
-        <div className="gilt-rule w-full" />
-        {host.readOnly ? (
-          s.partyName && <p className="font-heading text-2xl">{s.partyName}</p>
-        ) : (
-          <>
-            <label className="font-heading self-start uppercase" htmlFor="party">Group name</label>
-            <input
-              id="party"
-              className="input"
-              placeholder="The Cousins, Floor 3, The Night Owls…"
-              value={s.partyName}
-              onChange={(e) => host.setPartyName(e.target.value)}
-            />
-            <button className="btn btn-ghost !py-1 text-base self-start" onClick={() => setOnline((o) => !o)} aria-expanded={online}>
-              {online ? "▾" : "▸"} Online friends?
-            </button>
-            {online && (
-              <div className="w-full text-left flex flex-col gap-2 font-ui text-sm text-ink-soft fade-in">
-                <p>Friends somewhere else join on their phone and open the big screen on their laptop:</p>
-                <p className="break-all text-ink">{watchUrl}</p>
-                <button
-                  className="btn btn-gilt !py-1 text-base self-start"
-                  onClick={() => {
-                    navigator.clipboard?.writeText(invite).then(() => setCopied(true), () => {});
-                    setTimeout(() => setCopied(false), 2000);
-                  }}
-                >
-                  {copied ? "Copied ✓" : "Copy invite"}
-                </button>
-                <p className="italic">“{invite}”</p>
-                <p>Or just share this screen on FaceTime.</p>
-              </div>
-            )}
-          </>
-        )}
-        {host.transportKind === "local" && (
-          <p className="font-ui text-xs text-crimson">Local mode: phones on other devices can’t connect until Supabase keys are set.</p>
-        )}
+        {qr ? <img src={qr} alt="QR code to join" className="w-64 h-64 rounded" /> : <div className="w-64 h-64" />}
+        <p className="font-ui uppercase tracking-[0.2em] text-sm text-ink-soft">or go to {joinUrl.replace(/^https?:\/\//, "").replace(/\/play.*$/, "/play")}</p>
+        <p className="font-display text-7xl tracking-[0.2em] leading-none">{s.code}</p>
+        {host.transportKind === "local" && <p className="font-ui text-xs text-crimson">Local mode: phones on other devices can’t connect until Supabase keys are set.</p>}
       </div>
 
-      <div className="flex flex-col gap-5 min-h-0 overflow-auto pr-1">
+      <div className="flex flex-col gap-7 min-h-0">
         <section className="flex flex-col gap-3">
-          <h2 className="font-heading text-3xl uppercase text-[var(--gilt-bright)]">Your crew ({ready} ready)</h2>
-          {s.players.length === 0 && <p className="text-xl text-parchment/80 italic">Waiting for people. Scan the code with your phone camera.</p>}
-          <div className="grid grid-cols-2 xl:grid-cols-3 gap-4">
-            {s.players.map((p) =>
-              p.hero ? (
-                <HeroCard key={p.id} player={p} portrait={host.portraits[p.id]} />
-              ) : (
-                <div key={p.id} className="page p-4 flex items-center gap-3">
-                  <WaxSeal initials={initials(p.name)} color={p.color} size={48} pulse />
-                  <div>
-                    <p className="font-heading text-xl font-bold">{mask(p.name)}</p>
-                    <p className="italic text-ink-soft">{p.status === "building" ? "Drawing your character…" : "Thinking up a character…"}</p>
-                  </div>
-                </div>
-              ),
-            )}
-          </div>
-        </section>
-
-        <section className="flex flex-col gap-3">
-          <h2 className="font-heading text-3xl uppercase text-[var(--gilt-bright)]">How long have you got?</h2>
-          <div className="qt-mode">
-            <button aria-pressed={s.mode === "quick"} onClick={() => { sfx.unlock(); sfx.pageTurn(); host.setMode("quick"); }}>
-              <span className="font-heading text-2xl font-bold uppercase block">Quick Tale · 3 min</span>
-              <span className="text-sm text-ink-soft">One scene from a real headline, one big roll together.</span>
-            </button>
-            <button aria-pressed={s.mode === "full"} onClick={() => { sfx.unlock(); sfx.pageTurn(); host.setMode("full"); }}>
-              <span className="font-heading text-2xl font-bold uppercase block">Full Story · ~15 min</span>
-              <span className="text-sm text-ink-soft">Three scenes, rescues, Mirror, Mirror and the whole ending.</span>
-            </button>
-          </div>
-        </section>
-
-        <section className="flex flex-col gap-3">
-          <h2 className="font-heading text-3xl uppercase text-[var(--gilt-bright)]">Who’s playing?</h2>
-          <div className="qt-mode">
-            {RATINGS.map((r) => (
-              <button key={r} aria-pressed={s.rating === r} disabled={host.readOnly} onClick={() => { sfx.unlock(); sfx.pageTurn(); host.setRating(r); }}>
-                <span className="font-heading text-2xl font-bold uppercase block">{RATING_LABEL[r]}</span>
-                <span className="text-sm text-ink-soft">{RATING_BLURB[r]}</span>
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <section className="flex flex-col gap-3">
-          <h2 className="font-heading text-3xl uppercase text-[var(--gilt-bright)]">Pick tonight’s story</h2>
-          <p className="text-parchment/70 -mt-2">Each one starts from a real news story. You’ll find out which at the end.</p>
-          <div className="grid grid-cols-2 xl:grid-cols-3 gap-3">
-            {s.questOptions.map((q) => (
-              <button
-                key={q.id}
-                disabled={host.readOnly}
-                onClick={() => {
-                  sfx.unlock();
-                  sfx.pageTurn();
-                  host.chooseQuest(q.id);
-                }}
-                className={`page p-4 text-left flex flex-col gap-1 transition ${s.questId === q.id ? "ring-4 ring-[var(--gilt-bright)] scale-[1.01]" : "opacity-90 hover:opacity-100"}`}
-              >
-                <span className="font-heading text-xl font-bold leading-tight uppercase">{q.title}</span>
-                <span className="text-sm text-ink-soft leading-snug line-clamp-3">{q.teaser}</span>
-              </button>
-            ))}
-          </div>
-        </section>
-
-        <div className="flex items-center gap-4">
-          {!host.readOnly && (
-            <button className="btn btn-crimson text-2xl" disabled={!host.canBegin()} onClick={() => host.begin()}>
-              Start the story
-            </button>
-          )}
-          <span className="font-ui text-parchment/70">
-            {host.readOnly ? (s.questId ? "Story picked. The table starts it when everyone’s ready." : "The table is picking a story.") : !s.questId ? "Pick a story." : ready === 0 ? "Waiting for at least one character." : s.players.some((p) => p.status === "building") ? "Finishing characters…" : "Ready when you are."}
-          </span>
-        </div>
-
-        {shelf.length > 0 && (
-          <section className="flex flex-col gap-2">
-            <h2 className="font-heading text-2xl uppercase text-[var(--gilt-bright)]">Your shelf</h2>
-            <div className="flex gap-3 overflow-x-auto pb-2">
-              {shelf.map((b, i) => (
-                <div key={i} className="page p-2 w-44 shrink-0 flex flex-col gap-1">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  {b.cover && <img src={b.cover} alt="" className="rounded w-full aspect-video object-cover" />}
-                  <span className="font-heading font-bold leading-tight">{b.title}</span>
-                  <span className="font-ui text-xs text-ink-soft">{b.party} · {b.date}</span>
+          <h2 className="font-heading text-3xl uppercase text-[var(--gilt-bright)]">Your crew</h2>
+          {s.players.length === 0 ? (
+            <p className="text-2xl text-parchment/70">Nobody yet.</p>
+          ) : (
+            <div className="flex gap-6 flex-wrap">
+              {s.players.map((p) => (
+                <div key={p.id} className="flex flex-col items-center gap-2 w-28 text-center fade-in">
+                  {p.hero ? <Avatar host={host} p={p} size={88} /> : <WaxSeal initials={initials(p.name)} color={p.color} size={88} pulse />}
+                  <span className="font-heading text-xl uppercase leading-none">{p.hero ? p.hero.name.split(" ")[0] : mask(p.name)}</span>
+                  <span className="font-ui text-xs text-parchment/60">{p.hero ? mask(p.name) : p.status === "building" ? "drawing a hero…" : "picking a hero…"}</span>
                 </div>
               ))}
             </div>
-          </section>
+          )}
+        </section>
+
+        {!host.readOnly && (
+          <>
+            <section className="flex flex-col gap-3">
+              <h2 className="font-heading text-2xl uppercase text-[var(--gilt-bright)]">How long?</h2>
+              <div className="qt-mode">
+                <button aria-pressed={s.mode === "quick"} onClick={() => { sfx.unlock(); sfx.pageTurn(); host.setMode("quick"); }}>
+                  <span className="font-heading text-2xl font-bold uppercase block">Quick Tale · 3 min</span>
+                  <span className="text-sm text-ink-soft">One scene from a real headline.</span>
+                </button>
+                <button aria-pressed={s.mode === "full"} onClick={() => { sfx.unlock(); sfx.pageTurn(); host.setMode("full"); }}>
+                  <span className="font-heading text-2xl font-bold uppercase block">Full Story · ~7 min</span>
+                  <span className="text-sm text-ink-soft">Three scenes. You pick the story.</span>
+                </button>
+              </div>
+            </section>
+            <section className="flex flex-col gap-3">
+              <h2 className="font-heading text-2xl uppercase text-[var(--gilt-bright)]">Who’s playing?</h2>
+              <div className="grid grid-cols-3 gap-3">
+                {RATINGS.map((r) => (
+                  <button key={r} className={`gp-pill ${s.rating === r ? "on" : ""}`} aria-pressed={s.rating === r} onClick={() => { sfx.unlock(); sfx.pageTurn(); host.setRating(r); }}>
+                    {RATING_LABEL[r]}
+                  </button>
+                ))}
+              </div>
+            </section>
+          </>
         )}
+
+        <div className="flex items-center gap-5 mt-auto">
+          {!host.readOnly && (
+            <button className="btn btn-crimson text-3xl px-10" disabled={!host.canBegin()} onClick={() => host.begin()}>
+              Start
+            </button>
+          )}
+          <span className="font-ui text-lg text-parchment/75">{status}</span>
+        </div>
       </div>
     </div>
   );

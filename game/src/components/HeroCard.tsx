@@ -49,12 +49,12 @@ export function HeroCard({ player, portrait, compact = false, showRoast = true }
         {!compact && (
           <>
             <p className="text-sm leading-snug">
-              <b className="font-ui text-[0.72rem] uppercase tracking-[0.14em] text-[var(--signal)] mr-1">Ability</b>
+              <b className="font-ui text-[0.72rem] uppercase tracking-[0.14em] text-[var(--signal)] mr-1">Power</b>
               <b className="font-heading text-base">{h.ability.name}</b>
-              {player.abilityAvailable ? "" : " (used)"}: {h.ability.text}
+              : {h.ability.text}
             </p>
             <p className="text-sm leading-snug">
-              <b className="font-ui text-[0.72rem] uppercase tracking-[0.14em] text-crimson mr-1">Flaw</b> {h.flaw}
+              <b className="font-ui text-[0.72rem] uppercase tracking-[0.14em] text-crimson mr-1">Weakness</b> {h.flaw}
             </p>
             {showRoast && h.roast && <p className="text-sm italic text-ink-soft">“{h.roast}”</p>}
           </>
