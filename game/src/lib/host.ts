@@ -1,6 +1,7 @@
 "use client";
 import seedsJson from "@/data/seed_quests.json";
 import questImages from "@/data/quest_images.json";
+import quickHeroes from "@/data/quickstart_heroes.json";
 import { ai, image, thumbnail, withTimeout } from "./api";
 import {
   APPEAL_MS,
@@ -46,6 +47,8 @@ import type {
 } from "./types";
 
 const SEEDS = seedsJson as QuestSeed[];
+/** Ready-made characters for fast onboarding; portraits are pre-painted in public/heroes/<id>.webp. */
+export const QUICK_HEROES = quickHeroes as { id: string; pitch: string; hero: Hero }[];
 
 export interface ShelfBook {
   party: string;
@@ -458,6 +461,12 @@ export class GameHost {
         return this.onJoin(m.pid, m.name);
       case "concept":
         return this.buildCharacter(m.pid, m.text);
+      case "pick":
+        return this.pickHero(m.pid, m.heroId);
+      case "redraw":
+        return this.redraw(m.pid);
+      case "truth":
+        return this.onTruth(m.pid, m.text);
       case "pitch":
         return this.onPitch(m.pid, m.text, !!m.useAbility, !!m.embraceFlaw);
       case "boost":
@@ -551,6 +560,45 @@ export class GameHost {
     this.thumbs[pid] = await thumbnail(url);
     this.t.send({ type: "portrait", pid, url: this.thumbs[pid] });
     this.patchPlayer(pid, { hasPortrait: true });
+  }
+
+  /** A ready-made character: instant, no AI call, pre-painted portrait. One of each per table. */
+  async pickHero(pid: string, heroId: string) {
+    const p = this.player(pid);
+    const q = QUICK_HEROES.find((h) => h.id === heroId);
+    if (!p || !q || p.status === "building" || this.state.phase !== "lobby") return;
+    if (this.state.players.some((o) => o.id !== pid && o.pick === q.id)) return;
+    const hero: Hero = structuredClone(q.hero);
+    this.patchPlayer(pid, { status: "ready", pick: q.id, concept: q.pitch, hero, hasPortrait: false, abilityAvailable: true, heart: 1 });
+    this.note("hero", hero.name, "Ready-made hero picked: written and painted ahead of time, so no AI call.");
+    const url = `/heroes/${q.id}.webp`;
+    this.portraits[pid] = url;
+    const thumb = await thumbnail(url);
+    if (this.player(pid)?.hero !== hero) return;
+    if (thumb) {
+      this.thumbs[pid] = thumb;
+      this.t.send({ type: "portrait", pid, url: thumb });
+    }
+    this.patchPlayer(pid, { hasPortrait: true });
+  }
+
+  /** "Redraw my character": back to choosing (frees a ready-made for someone else). */
+  redraw(pid: string) {
+    const p = this.player(pid);
+    if (!p || p.status === "building" || this.state.phase !== "lobby") return;
+    delete this.portraits[pid];
+    delete this.thumbs[pid];
+    this.patchPlayer(pid, { status: "joined", hero: undefined, pick: undefined, hasPortrait: false });
+  }
+
+  /** "One true thing about the real you" (optional, "" = skipped). Private; only for one gentle nod and the storybook. */
+  private onTruth(pid: string, text: string) {
+    const p = this.player(pid);
+    if (!p || this.state.phase !== "lobby") return;
+    const truth = String(text ?? "").replace(/[<>]/g, "").trim().slice(0, 80);
+    this.patchPlayer(pid, { truth });
+    // The truth itself is PRIVATE: never put its text in the log.
+    if (truth) this.note("hero", p.hero?.name ?? p.name, "Shared one true thing about themselves. It stays private: the DM may nod to it once, gently, in one scene.");
   }
 
   chooseQuest(id: string) {
@@ -691,6 +739,7 @@ export class GameHost {
         titles: p.titles,
         peril: p.peril,
         clue: s.clues[p.id] ?? "",
+        truth_hint: s.sceneIndex === 1 ? p.truth ?? "" : "", // offered in one scene only, so the nod happens at most once
       })),
       canon: this.canon.slice(-10),
       ledger: this.ledger.slice(-3),
@@ -753,6 +802,8 @@ export class GameHost {
       this.note("scene", `${sceneLabel} · ${scene.kind}`, `The DM was given: the place (${scene.location}) and a twist seeded from a real fact: ${clip(scene.twist, 120)}`);
       this.note("scene", sceneLabel, `Question for the table: ${res.question || fb().question}`);
       if (rescue) this.note("scene", victim!.hero!.name, `In peril from last scene (${victim!.peril}). This scene is a rescue.`);
+      const truths = i === 1 ? this.heroes().filter((p) => p.truth).length : 0;
+      if (truths) this.note("scene", sceneLabel, `The DM was offered ${truths} player${truths > 1 ? "s'" : "'s"} "one true thing" for one gentle nod (private, not shown here).`);
       if (res.recap) this.recaps.push(res.recap);
       const suggestions: Record<string, string[]> = {};
       res.suggestions?.forEach((s) => s?.hero_id && Array.isArray(s.ideas) && (suggestions[s.hero_id] = s.ideas));

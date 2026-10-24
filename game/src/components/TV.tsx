@@ -780,6 +780,11 @@ function StorybookView({ host, s }: { host: GameHost; s: GameState }) {
                           <b className="not-italic font-ui text-sm uppercase tracking-widest text-[var(--crimson)]">Said about you:</b> {said(hp.hero_id)}
                         </p>
                       )}
+                      {p.truth && (
+                        <p className="text-lg leading-snug mt-1">
+                          <b className="font-ui text-sm uppercase tracking-widest text-[var(--signal)]">Fun fact, really true:</b> {p.name} says “{p.truth}”
+                        </p>
+                      )}
                     </div>
                   </div>
                 );

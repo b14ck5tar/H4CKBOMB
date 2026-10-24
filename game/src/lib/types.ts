@@ -23,6 +23,8 @@ export interface Player {
   color: string;
   status: "joined" | "building" | "ready";
   concept?: string;
+  pick?: string; // id of the ready-made character they picked (absent = they made their own)
+  truth?: string; // "one true thing about the real you": undefined = not asked yet, "" = skipped. Never shown during play.
   hero?: Hero;
   hasPortrait: boolean;
   abilityAvailable: boolean;
@@ -161,6 +163,7 @@ export interface MirrorCard {
 /** DM's Notes: one line in the AI-transparency log. Small strings only (it rides along in every state message). */
 export type NoteKind =
   | "source"
+  | "hero"
   | "scene"
   | "clue"
   | "ruling"

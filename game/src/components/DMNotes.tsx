@@ -21,6 +21,7 @@ const KIND: Record<NoteKind, { label: string; color: string }> = {
   source: { label: "Source", color: "#FFB648" },
   reveal: { label: "Reveal", color: "#FFB648" },
   scene: { label: "Scene", color: "#3DE7FF" },
+  hero: { label: "Hero", color: "#7CC4FF" },
   clue: { label: "Clue", color: "#8FDCFF" },
   ruling: { label: "Ruling", color: "#FF9A1F" },
   appeal: { label: "Argument", color: "#B98CFF" },

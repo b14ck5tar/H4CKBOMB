@@ -8,6 +8,7 @@ import { MicButton } from "./MicButton";
 import { Hourglass } from "./Effects";
 import { Stamp } from "./Stamp";
 import type { GameState, Hero, Player } from "@/lib/types";
+import quickHeroes from "@/data/quickstart_heroes.json";
 
 const EXAMPLES = [
   "a night-shift barista who can hear electricity",
@@ -184,6 +185,90 @@ function ConceptForm({ send, building }: { send: Send; building: boolean }) {
       <button type="button" className="font-ui text-sm underline text-ink-soft" onClick={() => setText(ex)}>
         Use the example
       </button>
+    </form>
+  );
+}
+
+const QUICK = quickHeroes as { id: string; pitch: string; hero: Hero }[];
+
+/** Character step: ready-made characters first (fast for strangers), "make your own" one tap away. */
+function CharacterPicker({ state, me, send }: { state: GameState; me: Player; send: Send }) {
+  const [own, setOwn] = useState(false);
+  const building = me.status === "building";
+  if (own || building) {
+    return (
+      <div className="flex flex-col gap-2">
+        <ConceptForm send={send} building={building} />
+        {!building && (
+          <button type="button" className="font-ui text-sm underline opacity-80" onClick={() => setOwn(false)}>
+            Back to the ready-made characters
+          </button>
+        )}
+      </div>
+    );
+  }
+  const takenBy = (id: string) => state.players.find((p) => p.id !== me.id && p.pick === id);
+  return (
+    <div className="page p-4 flex flex-col gap-3">
+      <h2 className="font-heading text-2xl uppercase">Who are you tonight?</h2>
+      <p className="text-ink-soft -mt-2">Pick one to jump in fast.</p>
+      <div className="grid grid-cols-2 gap-3">
+        {QUICK.map((q) => {
+          const taken = !!takenBy(q.id);
+          return (
+            <button
+              key={q.id}
+              type="button"
+              disabled={taken}
+              className={`relative text-left rounded border-2 border-white/15 bg-black/30 p-2 flex flex-col gap-1 transition active:scale-95 ${taken ? "opacity-40" : "hover:border-[var(--signal)]"}`}
+              onClick={() => {
+                sfx.unlock();
+                vibrate(15);
+                send("pick", { heroId: q.id });
+              }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={`/heroes/${q.id}.webp`} alt="" className="w-full aspect-[2/3] object-cover rounded" loading="lazy" />
+              <span className="font-heading font-bold uppercase leading-none">{q.hero.name}</span>
+              <span className="text-xs leading-snug opacity-80">{q.pitch}</span>
+              {taken && (
+                <span className="absolute top-3 left-1/2 -translate-x-1/2 font-ui text-xs font-bold uppercase tracking-widest bg-black/80 px-2 py-0.5 rounded">
+                  Taken
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+      <button type="button" className="btn btn-ghost text-lg" onClick={() => setOwn(true)}>
+        Or make your own
+      </button>
+    </div>
+  );
+}
+
+/** Optional, skippable: one small true thing about the real person (gradual self-disclosure). Never shown during play. */
+function TruthForm({ send }: { send: Send }) {
+  const [text, setText] = useState("");
+  return (
+    <form
+      className="page p-4 flex flex-col gap-2"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (text.trim()) send("truth", { text: text.trim() });
+      }}
+    >
+      <label className="font-heading uppercase leading-snug" htmlFor="truth">One true thing about the real you (optional)</label>
+      <p className="text-ink-soft text-sm -mt-1">A weird talent, a small fear, a dream job… It stays secret until the very end.</p>
+      <input id="truth" className="input" value={text} onChange={(e) => setText(e.target.value)} maxLength={80} placeholder="I can whistle with my mouth closed" autoComplete="off" />
+      <div className="grid grid-cols-2 gap-2">
+        <button type="button" className="btn btn-ghost" onClick={() => send("truth", { text: "" })}>
+          Skip
+        </button>
+        <button className="btn btn-crimson" type="submit" disabled={!text.trim()}>
+          Save it
+        </button>
+      </div>
     </form>
   );
 }
@@ -535,14 +620,14 @@ export function Phone({ code }: { code: string }) {
     case "lobby":
       body = me.hero && me.status === "ready" ? (
         <div className="flex flex-col gap-3">
-          <HeroCard player={me} portrait={portrait} />
-          <Watch text="Waiting for the story to start…" />
-          <button className="font-ui text-sm underline opacity-80" onClick={() => send("concept", { text: me.concept ?? "" })}>
+          <HeroCard player={me} portrait={me.pick ? `/heroes/${me.pick}.webp` : me.hasPortrait ? portrait : undefined} />
+          {me.truth === undefined ? <TruthForm send={send} /> : <Watch text="Waiting for the story to start…" />}
+          <button className="font-ui text-sm underline opacity-80" onClick={() => send("redraw")}>
             Redraw my character
           </button>
         </div>
       ) : (
-        <ConceptForm send={send} building={me.status === "building"} />
+        <CharacterPicker state={state} me={me} send={send} />
       );
       break;
     case "quest":
