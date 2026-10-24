@@ -260,17 +260,17 @@ export const STORYBOOK_SYSTEM = `${DM_CORE}
 
 TASK: CASE FILE WRITER. Turn this session into a short illustrated keepsake the players will share. Past tense, warm, funny, specific to what actually happened in the log. Quote players' own pitches where they're funny. Never contradict the log.
 - title ≤8 words. dedication ≤18 words, to the heroes by name.
-- pages: 4–6 pages in story order. Each page text ≤50 words, plus image_ref chosen ONLY from available_images (reuse is fine). The last page is the ending.
+- pages: 4–6 pages in story order (only 1–2 if the input says long is false: a short keepsake, the whole story in two pages at most). Each page text ≤50 words, plus image_ref chosen ONLY from available_images (reuse is fine). The last page is the ending.
 - hero_pages: exactly one per hero: best moment ≤30 words and an award ≤5 words ("Most Likely to Pet It").
 - thank_yous (if any): moments a hero thanked a friend for saving them. Work at least one into a page or hero_page, warmly and briefly ("Ricky thanked Mara for the save").
 - moral: one dry, funny lesson ≤14 words.
 - real_story_bridge: ≤40 words, the transition to the real headline, using ONLY facts in real_story. Neutral and respectful. Map 1–2 invented elements to real ones ("The thing under the bridge was, officially, ...").`;
 
-export function storybookSchema(images: string[]) {
+export function storybookSchema(images: string[], long = false) {
   return obj({
     title: str,
     dedication: str,
-    pages: { type: "array", minItems: 4, maxItems: 6, items: obj({ text: str, image_ref: { type: "string", enum: images } }) },
+    pages: { type: "array", minItems: long ? 4 : 1, maxItems: long ? 6 : 2, items: obj({ text: str, image_ref: { type: "string", enum: images } }) },
     hero_pages: { type: "array", items: obj({ hero_id: str, best_moment: str, award: str }) },
     moral: str,
     real_story_bridge: str,

@@ -9,6 +9,7 @@ import { Hourglass } from "./Effects";
 import { Stamp } from "./Stamp";
 import type { GameState, Hero, Player } from "@/lib/types";
 import quickHeroes from "@/data/quickstart_heroes.json";
+import { FEATURES } from "@/lib/features";
 
 const EXAMPLES = [
   "a night-shift barista who can hear electricity",
@@ -115,7 +116,7 @@ function Watch({ text = "Eyes on the TV" }: { text?: string }) {
 }
 
 function Clue({ text, because }: { text?: string; because?: string }) {
-  if (!text) return null;
+  if (!text || !FEATURES.clueBox) return null;
   return (
     <div className="rounded border-2 border-[var(--signal)] bg-black/40 p-4 flex flex-col gap-1">
       <span className="font-ui text-xs uppercase tracking-[0.2em] text-[var(--signal)]">🔍 Only you noticed…</span>
@@ -359,7 +360,7 @@ function PitchForm({ state, me, send, deadlineAt }: { state: GameState; me: Play
       {victim && <p className="font-ui font-bold text-crimson">You're stuck: {me.peril}. Yell something useful.</p>}
       <p className="font-heading text-xl leading-snug">{final ? "This is it. What's your final move?" : state.situation || "What do you do?"}</p>
       <textarea id="pitch" className="input min-h-24" value={text} onChange={(e) => setText(e.target.value)} maxLength={200} placeholder="I…" />
-      {ideas.length > 0 && (
+      {FEATURES.suggestions && ideas.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {ideas.map((i) => (
             <button type="button" key={i} className="chip text-left normal-case" onClick={() => setText(i)}>
@@ -406,7 +407,7 @@ function WhileWaiting({ state, me, send }: { state: GameState; me: Player; send:
           !final && <span className="font-ui text-sm text-ink-soft animate-pulse">The DM is reading it…</span>
         )}
       </div>
-      {!final && others.length > 0 && (
+      {FEATURES.boost && !final && others.length > 0 && (
         <>
           <p className="font-heading uppercase text-lg">Like a friend's plan? 🔥 it</p>
           {others.map((p) => {
@@ -428,7 +429,7 @@ function WhileWaiting({ state, me, send }: { state: GameState; me: Player; send:
           })}
         </>
       )}
-      {(final || others.length === 0) && <Watch text="Waiting on the others…" />}
+      {(final || others.length === 0 || !FEATURES.boost) && <Watch text="Waiting on the others…" />}
     </div>
   );
 }

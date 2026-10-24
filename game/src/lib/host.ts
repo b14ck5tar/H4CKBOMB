@@ -28,6 +28,7 @@ import {
 import { openRoom, type Msg, type Transport } from "./transport";
 import { mask } from "./mask";
 import { QUICK, coldOpenTimeline } from "./quick";
+import { FEATURES } from "./features";
 import { DEFAULT_RATING, isRating, questAllowed } from "./rating";
 import { HEAVY, fearPhrase, realOf, skillPhrase, solvedByLine } from "./real";
 import type {
@@ -260,7 +261,7 @@ export class GameHost {
     epilogue: (done) => this.startEpilogue(done),
   };
   /** Which ending modules run, in order, per mode. Quick Tale skips Mirror for now (pluggable later). */
-  private endingPlan: Record<GameMode, string[]> = { full: ["mirror", "epilogue"], quick: ["epilogue"] };
+  private endingPlan: Record<GameMode, string[]> = { full: FEATURES.mirror ? ["mirror", "epilogue"] : ["epilogue"], quick: ["epilogue"] };
   /** When the current Quick Tale started (ms), for the TV's run clock. 0 = not running. */
   startedAt = 0;
   endedAt = 0;
@@ -1012,7 +1013,7 @@ export class GameHost {
       players,
       scenes,
       sceneIndex: 0,
-      wards: quick ? {} : this.assignWards(players.map((p) => p.id)),
+      wards: quick || !FEATURES.mirror ? {} : this.assignWards(players.map((p) => p.id)),
       mirrorMoments: {},
       mirror: [],
       mirrorIndex: 0,
@@ -1219,7 +1220,7 @@ export class GameHost {
   }
 
   private onBoost(pid: string, pitchId: string) {
-    if (this.state.phase !== "pitch" || this.isFinal()) return;
+    if (!FEATURES.boost || this.state.phase !== "pitch" || this.isFinal()) return;
     const target = this.state.pitches.find((p) => p.id === pitchId);
     if (!target || target.playerId === pid || !this.player(pid)?.hero) return;
     if (this.state.boosts[pid] === pitchId) return;
@@ -1317,7 +1318,7 @@ export class GameHost {
     if (this.state.phase !== "pitch") return;
     this.set({ pitches: judged, busy: "" });
     // "Convince the DM": anyone whose plan needs a roll gets one shot to argue for it.
-    if (judged.some((p) => !autoSucceeds(p.verdict!.tier) && !p.auto)) {
+    if (FEATURES.appeal && judged.some((p) => !autoSucceeds(p.verdict!.tier) && !p.auto)) {
       this.set({ phase: "appeal" });
       this.setTimer(this.quick ? QUICK.appealMs : APPEAL_MS, () => this.endAppeal());
       this.maybeEndAppeal();
@@ -1482,7 +1483,7 @@ export class GameHost {
   private afterRoll() {
     if (this.state.phase !== "roll") return;
     const failed = this.state.rolls.filter((r) => isFailure(r.band) && !r.rescuerId);
-    if (failed.length && !this.caughtThisRound) {
+    if (FEATURES.catch && failed.length && !this.caughtThisRound) {
       const catchers = this.heroes()
         .filter((p) => p.heart === 1 && !p.away && failed.some((f) => f.playerId !== p.id))
         .map((p) => p.id);
@@ -1854,6 +1855,7 @@ export class GameHost {
         crowd_favorite: crowd,
         thank_yous: this.thankYous(),
         available_images: images,
+        long: FEATURES.longStorybook,
         real_story: this.seed?.the_real_story,
       }),
       30_000,

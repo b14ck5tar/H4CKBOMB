@@ -86,7 +86,7 @@ async function run(task: string, input: Any, rating: Rating) {
       return museJSON({
         task: t("storybook"),
         system: withRating(STORYBOOK_SYSTEM, rating),
-        schema: storybookSchema(input.available_images),
+        schema: storybookSchema(input.available_images, !!input.long),
         effort: "low",
         timeoutMs: 40_000,
         maxTokens: 5000,

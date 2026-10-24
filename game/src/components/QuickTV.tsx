@@ -16,6 +16,7 @@ import { Hourglass, ScreenFlash, TypeReveal } from "./Effects";
 import { Reactions } from "./Reactions";
 import { Avatar, Hope, PartyDice, ThankHearts, useFastNow } from "./TV";
 import { KeepsakeQR } from "./Keepsake";
+import { FEATURES } from "@/lib/features";
 
 const READING = ["quest", "narrating", "outcome", "epilogue", "reveal"];
 type Mood = "push" | "scene" | "action" | "final" | "end";
@@ -136,7 +137,7 @@ function QTopBar({ host, s, onNotes, notesOpen }: { host: Stage; s: GameState; o
       <span className="on-air">Quick Tale</span>
       {s.quest && <span className="font-heading text-xl uppercase truncate text-parchment/85">{s.quest.title}</span>}
       <span className="flex-1" />
-      <Hope hope={s.hope} max={s.hopeMax} />
+      {FEATURES.hopeDisplay && <Hope hope={s.hope} max={s.hopeMax} />}
       {left > 0 && !reading && <span className="qt-secs tabular-nums">{Math.ceil(left / 1000)}</span>}
       {host.deadlineAt > 0 && reading && !host.readOnly && (
         <button className="btn btn-ghost !py-1 !px-4 text-base" onClick={() => host.skip()} title="Spacebar works too">

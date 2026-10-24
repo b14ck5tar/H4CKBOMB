@@ -16,6 +16,7 @@ import { KeepsakeQR } from "./Keepsake";
 import { Presenter } from "./Presenter";
 import { QuickTV } from "./QuickTV";
 import { RATINGS, RATING_BLURB, RATING_LABEL } from "@/lib/rating";
+import { FEATURES } from "@/lib/features";
 
 const fmt = (n: number) => (n >= 0 ? `+${n}` : `${n}`);
 const initials = (s: string) => s.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
@@ -73,7 +74,7 @@ function TopBar({ host, s, notesOpen, onNotes }: { host: Stage; s: GameState; no
       <span className="font-display text-2xl text-[var(--gilt-bright)] uppercase">Group Project</span>
       {s.quest && <span className="font-heading text-xl truncate opacity-90">{s.quest.title}</span>}
       <span className="flex-1" />
-      {s.phase !== "lobby" && <Hope hope={s.hope} max={s.hopeMax} />}
+      {s.phase !== "lobby" && FEATURES.hopeDisplay && <Hope hope={s.hope} max={s.hopeMax} />}
       {left > 0 && !reading && <span className="tabular-nums font-bold text-2xl w-14 text-right">{Math.ceil(left / 1000)}s</span>}
       {host.deadlineAt > 0 && reading && !host.readOnly && (
         <button className="btn btn-ghost !py-1 !px-4 text-base" onClick={() => host.skip()} title="Spacebar works too">
@@ -529,7 +530,7 @@ function RoundStage({ host, s }: { host: Stage; s: GameState }) {
                   <b className="font-heading uppercase">{s.npcLine.speaker}:</b> “{s.npcLine.line}”
                 </p>
               )}
-              <p className="font-ui text-[var(--signal)]">🔍 Check your phone: you each noticed something different.</p>
+              {FEATURES.clueBox && <p className="font-ui text-[var(--signal)]">🔍 Check your phone: you each noticed something different.</p>}
             </div>
           )}
         </div>
@@ -548,7 +549,7 @@ function RoundStage({ host, s }: { host: Stage; s: GameState }) {
         ) : (
           !final && s.pitches.length > 0 && <PlanCards host={host} s={s} />
         )}
-        {!final && s.phase === "pitch" && s.pitches.length > 0 && (
+        {FEATURES.boost && !final && s.phase === "pitch" && s.pitches.length > 0 && (
           <p className="text-center font-ui text-parchment/70">Like someone’s plan? 🔥 it on your phone to give them a better roll.</p>
         )}
       </div>
