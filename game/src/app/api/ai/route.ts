@@ -53,7 +53,8 @@ async function run(task: string, input: Any) {
       return fixStats(hero);
     }
     case "scene":
-      return museJSON({ task: "dm-scene", system: SCENE_SYSTEM, schema: SCENE_SCHEMA, effort: "low", user: JSON.stringify(input) });
+      // Scene openers run ~1.7-2k tokens with reasoning; 2.5k truncated one mid-JSON in a playtest.
+      return museJSON({ task: "dm-scene", system: SCENE_SYSTEM, schema: SCENE_SCHEMA, effort: "low", maxTokens: 4000, user: JSON.stringify(input) });
     case "verdict":
       return museJSON({ task: "dm-verdict", system: VERDICT_SYSTEM, schema: VERDICT_SCHEMA, effort: "minimal", timeoutMs: 10_000, user: JSON.stringify(input) });
     case "round":
