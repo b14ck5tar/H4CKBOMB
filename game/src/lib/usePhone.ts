@@ -31,6 +31,10 @@ export function usePhone(code: string | null) {
   const [pid, setPid] = useState("");
   const tRef = useRef<Transport | null>(null);
   const reactId = useRef(0);
+  const missingArt = useRef<() => boolean>(() => false);
+  missingArt.current = () =>
+    state?.screen === "phones" &&
+    (state.players.some((p) => p.hasPortrait && !portraits[p.id]) || state.scenes.some((sc, i) => sc.hasImage && !scenes[`${state.questId}:${i}`]));
   const addReaction = useCallback((emoji: string, from: string) => {
     setReactions((rs) => [...rs.slice(-40), { id: ++reactId.current, emoji: String(emoji).slice(0, 4), pid: from }]);
   }, []);
@@ -57,10 +61,11 @@ export function usePhone(code: string | null) {
     });
     // Say hello until the table answers, and again whenever it's been quiet for a while,
     // so a dropped message (flaky Wi-Fi, phone asleep) heals itself within seconds.
-    // `fresh` asks the host to re-send the art too: only when we have nothing yet or were away, not on every keepalive.
+    // `fresh` asks the host to re-send the art too: only when we have nothing yet, were away, or a portrait/scene
+    // message got lost (no-TV mode), not on every keepalive.
     t.send({ type: "hello", pid, fresh: true });
     const iv = setInterval(() => {
-      if (Date.now() - lastHeard > (lastHeard ? 5000 : 1500)) t.send({ type: "hello", pid, fresh: lastHeard === 0 });
+      if (Date.now() - lastHeard > (lastHeard ? 5000 : 1500)) t.send({ type: "hello", pid, fresh: lastHeard === 0 || missingArt.current() });
     }, 1500);
     const onVisible = () => document.visibilityState === "visible" && t.send({ type: "hello", pid, fresh: true });
     document.addEventListener("visibilitychange", onVisible);

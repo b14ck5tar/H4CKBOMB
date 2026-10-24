@@ -152,22 +152,35 @@ export function HostBar({ host }: { host: GameHost }) {
     return () => clearInterval(iv);
   }, []);
   // The game lives on this device: keep it awake, and warn before a refresh or close wipes it mid-story.
+  // Wake lock needs HTTPS and a recent browser, is dropped whenever the tab is hidden, and some browsers want a tap,
+  // so re-grab on return and on the first touch, and tell the host when it didn't take.
+  const [awake, setAwake] = useState(true);
   useEffect(() => {
     let lock: { release: () => Promise<void> } | null = null;
     const grab = async () => {
       try {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        lock = await (navigator as any).wakeLock?.request("screen");
-      } catch {}
+        lock = (await (navigator as any).wakeLock?.request("screen")) ?? null;
+      } catch {
+        lock = null;
+      }
+      setAwake(!!lock);
     };
     grab();
-    const onVis = () => document.visibilityState === "visible" && grab();
+    const onVis = () => {
+      if (document.visibilityState !== "visible") return;
+      host.resume(); // timers froze while hidden: catch up and re-sync every phone
+      grab();
+    };
+    const onTouch = () => !lock && grab();
     document.addEventListener("visibilitychange", onVis);
+    window.addEventListener("pointerdown", onTouch);
     return () => {
       document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("pointerdown", onTouch);
       lock?.release().catch(() => {});
     };
-  }, []);
+  }, [host]);
   // Leaving loses the room for everyone once anyone has a character (lobby and storybook included).
   const midGame = s.players.some((p) => p.hero);
   useEffect(() => {
@@ -179,11 +192,14 @@ export function HostBar({ host }: { host: GameHost }) {
     window.addEventListener("beforeunload", warn);
     return () => window.removeEventListener("beforeunload", warn);
   }, [midGame]);
-  if (s.phase === "lobby") return null;
+  const hint = awake
+    ? "You’re hosting · keep this screen open"
+    : "You’re hosting · keep this screen open and on. Turn off auto-lock for now, or the game pauses for everyone.";
+  if (s.phase === "lobby") return <p className="font-ui text-xs text-parchment/80">{hint}</p>;
   const reading = ["quest", "narrating", "outcome", "mirror_reveal", "epilogue", "reveal"].includes(s.phase);
   return (
     <div className="flex items-center gap-2 font-ui text-xs text-parchment/80">
-      <span className="flex-1">You’re hosting · keep this tab open</span>
+      <span className="flex-1">{hint}</span>
       {reading && host.deadlineAt > 0 && !s.busy && (
         <button className="btn btn-ghost !py-1 !px-3 text-sm" onClick={() => host.skip()}>
           Continue ▸

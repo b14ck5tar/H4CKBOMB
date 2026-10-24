@@ -148,6 +148,7 @@ export class GameHost {
   private lastThanks: Record<string, number> = {};
   private lastChat: Record<string, number> = {};
   private chatId = 0;
+  private lastArtBlast = 0;
 
   constructor(code: string, opts: { screen?: GameState["screen"] } = {}) {
     this.state = {
@@ -277,6 +278,15 @@ export class GameHost {
     this.broadcastSoon();
   }
 
+  /**
+   * The host's tab came back (phone unlocked, app switched back). Mobile browsers freeze timers while hidden,
+   * so run anything that came due in the meantime, then bring every phone up to date.
+   */
+  resume() {
+    if (this.pending && this.deadlineAt && Date.now() >= this.deadlineAt) this.skip();
+    this.broadcastNow();
+  }
+
   /** A reading screen: advances on Continue, when every hero taps Ready, or after a generous safety timer. */
   private reading(text: string, next: () => void, minMs = 7000) {
     this.set({ ready: [] });
@@ -301,9 +311,16 @@ export class GameHost {
         if (now - (this.lastPortraitSend[m.pid] ?? 0) < 5000) break;
         this.lastPortraitSend[m.pid] = now;
         if (this.state.screen === "phones") {
-          // No TV: every phone shows the story, so a (re)joining phone needs everyone's art.
-          Object.entries(this.thumbs).forEach(([pid, url]) => this.t.send({ type: "portrait", pid, url }));
-          Object.entries(this.sceneThumbs).forEach(([i, url]) => this.t.send({ type: "scene", questId: this.state.questId, i: Number(i), url }));
+          // No TV: every phone shows the story, so a (re)joining phone needs everyone's art. Every send reaches
+          // every phone, so one blast per few seconds covers a whole room unlocking at once; space the sends
+          // out so a host on cell data doesn't burst.
+          if (now - this.lastArtBlast < 3000) break;
+          this.lastArtBlast = now;
+          const msgs = [
+            ...Object.entries(this.thumbs).map(([pid, url]) => ({ type: "portrait", pid, url })),
+            ...Object.entries(this.sceneThumbs).map(([i, url]) => ({ type: "scene", questId: this.state.questId, i: Number(i), url })),
+          ];
+          msgs.forEach((msg, k) => setTimeout(() => this.t.send(msg), k * 120));
         } else if (this.thumbs[m.pid]) {
           this.t.send({ type: "portrait", pid: m.pid, url: this.thumbs[m.pid] });
         }
@@ -386,7 +403,9 @@ export class GameHost {
   private async shareScene(i: number, url: string) {
     if (this.state.screen !== "phones") return;
     const questId = this.state.questId;
-    const small = url.startsWith("data:") ? await thumbnail(url, 560, 0.7) : url;
+    let small = url.startsWith("data:") ? await thumbnail(url, 560, 0.7) : url;
+    // Supabase broadcasts cap at 256 KB; busy art can get close, so shrink harder rather than lose it.
+    if (small.length > 200_000) small = await thumbnail(url, 420, 0.5);
     if (!small || this.state.questId !== questId) return;
     this.sceneThumbs[i] = small;
     this.t.send({ type: "scene", questId, i, url: small });
