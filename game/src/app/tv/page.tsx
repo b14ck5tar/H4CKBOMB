@@ -18,6 +18,14 @@ export default function TVPage() {
       } catch {}
     }
     const h = new GameHost(code);
+    // Connector link contract: /tv?party=<name>&quest=<seed id>. Unknown quest ids are ignored.
+    try {
+      const qs = new URLSearchParams(window.location.search);
+      const party = qs.get("party")?.trim();
+      const quest = qs.get("quest")?.trim();
+      if (party) h.setPartyName(party);
+      if (quest) h.chooseQuest(quest);
+    } catch {}
     setHost(h);
     return () => h.close();
   }, []);

@@ -1,5 +1,5 @@
 /**
- * Once Upon a Roll: MCP server for Meta Muse ("custom connector").
+ * Group Project: MCP server for Meta Muse ("custom connector").
  *
  * Transport: MCP Streamable HTTP, JSON-only (no SSE). Clients POST JSON-RPC 2.0 messages
  * (single or batch) to /api/mcp and get application/json back. Notifications get 202, no body.
@@ -13,7 +13,7 @@
  *   /tv?party=<urlencoded party name>&quest=<quest id>
  *     party  optional. Prefill GameState.partyName (e.g. "The Cousins").
  *     quest  optional. Preselect this quest id (a seed id from src/data/seed_quests.json such as
- *            "fifty-giants", or a QuestSeed.id returned by GET /api/news). Unknown ids should be
+ *            "rust-wyrm", or a QuestSeed.id returned by GET /api/news). Unknown ids should be
  *            ignored (fall back to the normal quest picker).
  *   Both params are always URL-encoded; either may be absent.
  * ─────────────────────────────────────────────────────────────────────────────────────────────
@@ -28,7 +28,7 @@ export const maxDuration = 30;
 const SEEDS = seedsJson as unknown as QuestSeed[];
 const PROTOCOL_VERSION = "2025-06-18";
 const SUPPORTED_VERSIONS = ["2025-06-18", "2025-03-26", "2024-11-05"];
-const SERVER_INFO = { name: "once-upon-a-roll", version: "1.0.0", title: "Once Upon a Roll" };
+const SERVER_INFO = { name: "group-project", version: "1.0.0", title: "Group Project" };
 const NEWS_TIMEOUT_MS = 4000;
 
 // ─── JSON-RPC plumbing ───────────────────────────────────────────────────────────────────────
@@ -148,11 +148,13 @@ async function getTales(origin: string): Promise<Tale[]> {
 
 // Vibe words → categories/keywords. Category hits score highest; free-text keyword hits add up.
 const VIBES: Record<string, string[]> = {
-  animals_nature: ["nature", "outdoors", "animal", "animals", "forest", "tree", "trees", "river", "wild", "wildlife", "green", "earth", "garden", "cozy", "wholesome", "bugs", "birds"],
-  environment: ["ocean", "sea", "beach", "water", "climate", "pollution", "eco", "environment", "mystery", "spooky", "creepy", "eerie", "ghost", "haunted", "dark"],
-  sports: ["sports", "sport", "game", "football", "soccer", "basketball", "competitive", "underdog", "tournament", "team", "epic", "battle", "action"],
-  quirky: ["silly", "funny", "weird", "quirky", "goofy", "chaos", "chaotic", "kids", "family", "food", "halloween", "pumpkin", "autumn", "fall", "festival", "harvest", "spooky"],
-  infrastructure: ["city", "town", "bridge", "engineering", "build", "builders", "monster", "dragon", "heroic", "classic", "adventure"],
+  unexplained: ["spooky", "creepy", "eerie", "ghost", "haunted", "dark", "unexplained", "unknown", "supernatural", "paranormal", "mystery", "mysterious", "strange", "weird", "uncanny", "rocks", "boulder", "cave", "caves", "hiking"],
+  science_space: ["space", "science", "stars", "star", "galaxy", "astronomy", "radio", "signal", "alien", "aliens", "telescope", "desert", "sci", "scifi", "cosmic", "mystery", "spooky"],
+  environment: ["ocean", "sea", "beach", "water", "climate", "pollution", "eco", "environment", "nature", "outdoors", "coast", "tide", "tides", "plastic", "mystery", "spooky", "eerie"],
+  infrastructure: ["city", "town", "bridge", "road", "engineering", "build", "builders", "monster", "river", "night", "urban", "small", "heroic", "adventure", "mystery", "spooky"],
+  quirky: ["silly", "funny", "goofy", "quirky", "chaos", "chaotic", "kids", "kid", "family", "food", "halloween", "pumpkin", "autumn", "fall", "festival", "harvest", "garden", "cozy", "wholesome", "small", "spooky", "weird"],
+  animals_nature: ["nature", "outdoors", "animal", "animals", "forest", "tree", "trees", "wild", "wildlife", "green", "earth", "garden", "cozy", "wholesome", "bugs", "birds"],
+  sports: ["sports", "sport", "football", "soccer", "basketball", "competitive", "underdog", "tournament", "team", "epic", "action"],
 };
 
 function pickByVibe(tales: Tale[], vibe: string): Tale | undefined {
@@ -185,16 +187,16 @@ const TOOLS = [
     name: "start_game_night",
     title: "Start a game night",
     description:
-      "Start a new Once Upon a Roll game night: a co-op fairytale tabletop adventure (like D&D with no Dungeon Master) for 2–6 people in the same room, where each quest is secretly based on a real news story. " +
+      "Start a new Group Project game night: a co-op tabletop story game for 2–6 people in the same room, where Muse is the Dungeon Master and every story starts from a real news headline retold as modern urban fantasy. " +
       "Call this when the user wants to start, host, set up, or kick off a game night, party game, family game, or 'a story game' with friends. " +
       "Returns a link that opens the game table (open it on a TV or laptop) with the party name and quest preselected; everyone then joins by scanning the QR code with their phone. " +
-      "Use `vibe` for what the user asked for (e.g. 'nature', 'spooky', 'sports', 'silly'); the best-matching quest is chosen. Use `quest_id` only with an id from list_todays_tales.",
+      "Use `vibe` for what the user asked for (e.g. 'spooky', 'space', 'unexplained', 'nature', 'silly', 'mystery'); the best-matching quest is chosen. Use `quest_id` only with an id from list_todays_tales.",
     inputSchema: {
       type: "object",
       properties: {
         party_name: { type: "string", description: "Name of the group playing, e.g. 'The Cousins' or 'Friday Crew'." },
         quest_id: { type: "string", description: "Exact quest id from list_todays_tales. Overrides vibe." },
-        vibe: { type: "string", description: "Desired theme or mood in a few words, e.g. 'nature', 'spooky', 'sports', 'silly', 'ocean mystery'." },
+        vibe: { type: "string", description: "Desired theme or mood in a few words, e.g. 'spooky', 'space', 'nature', 'silly', 'ocean mystery'." },
       },
       additionalProperties: false,
     },
@@ -204,8 +206,8 @@ const TOOLS = [
     name: "list_todays_tales",
     title: "List today's tales",
     description:
-      "List the fairytale quests available to play in Once Upon a Roll right now: classic tales plus 'Tales from Today' freshly adapted from today's news. " +
-      "Each has an id, title, one-line teaser and category. The real headline behind each tale is deliberately hidden (it is revealed at the end of the game, so don't guess it). " +
+      "List the quests available to play in Group Project right now: ready-made stories plus any freshly built from today's news. " +
+      "Each has an id, title, one-line teaser and category. The real headline behind each quest is deliberately hidden (it is revealed at the end of the game, so don't spoil it). " +
       "Call this when the user asks what stories, quests or adventures they can play, or wants to choose one before start_game_night.",
     inputSchema: { type: "object", properties: {}, additionalProperties: false },
     annotations: { readOnlyHint: true, openWorldHint: false },
@@ -214,7 +216,7 @@ const TOOLS = [
     name: "invite_message",
     title: "Write a game-night invite",
     description:
-      "Write a short, fun, fairytale-style group-chat invite for a Once Upon a Roll game night that the user can paste to friends, including how to join (phones only, no app). " +
+      "Write a short, fun group-chat invite for a Group Project game night that the user can paste to friends, including how to join (phones only, no app). " +
       "Call this when the user wants to invite friends or family, announce a game night, or asks for a message to send. Returns the text only; it does not send anything.",
     inputSchema: {
       type: "object",
@@ -250,7 +252,7 @@ const tableLink = (origin: string, party: string, questId: string) => {
 };
 
 const JOIN_STEPS =
-  "Open this on a TV or laptop; everyone scans the QR with their phone. (Or go to /play on a phone and type the 4-letter room code.) 2–6 players, about 4 minutes for a Quick Tale, no app or account needed.";
+  "Open this on a TV or laptop; everyone scans the QR with their phone. (Or go to /play on a phone and type the 4-letter room code.) 2–6 players, a few minutes to set up, no app or account needed. Muse is the Dungeon Master.";
 
 async function startGameNight(args: Record<string, unknown>, origin: string): Promise<ToolResult> {
   const party = str(args.party_name, 60);
@@ -281,7 +283,7 @@ async function startGameNight(args: Record<string, unknown>, origin: string): Pr
     `${quest.teaser}\n\n` +
     `Open the table: ${url}\n\n` +
     `${JOIN_STEPS}\n` +
-    `The real story behind the tale stays secret until the final page.`;
+    `The real headline behind the story stays secret until the reveal at the end.`;
 
   return {
     content: [{ type: "text", text }],
@@ -303,8 +305,8 @@ async function listTodaysTales(origin: string): Promise<ToolResult> {
   );
   const fresh = tales.filter((t) => t.source === "todays_news").length;
   const text =
-    `${tales.length} tales are on the shelf${fresh ? ` (${fresh} adapted from today's news)` : ""}:\n\n${lines.join("\n")}\n\n` +
-    `Each one is secretly based on a real news story, revealed at the end. To play one, call start_game_night with its quest_id.`;
+    `${tales.length} quests are on the board${fresh ? ` (${fresh} adapted from today's news)` : ""}:\n\n${lines.join("\n")}\n\n` +
+    `Each one starts from a real news story, revealed at the end. To play one, call start_game_night with its quest_id.`;
   return {
     content: [{ type: "text", text }],
     structuredContent: {
@@ -314,23 +316,23 @@ async function listTodaysTales(origin: string): Promise<ToolResult> {
 }
 
 const OPENERS = [
-  "Hear ye, hear ye!",
-  "Once upon a time (specifically, very soon)…",
-  "By royal decree of the Storyteller's Guild:",
-  "A raven has arrived with urgent news!",
-  "Gather 'round, brave souls!",
+  "Heads up, group chat!",
+  "Something strange is in the news, and we are the only ones who can look into it.",
+  "Official notice from the Muse Dungeon Master Union:",
+  "Breaking news (the weird kind)!",
+  "Gather round, brave souls!",
 ];
 const HOOKS = [
-  "A dragon, a disaster, and one very questionable plan await.",
-  "The realm is in peril and, frankly, only we are available.",
-  "Legends will be forged. Dice will be blamed.",
-  "Heroes are needed. Competence is optional.",
-  "There will be quests, there will be chaos, there will be a d20.",
+  "A real headline, an uncanny explanation, and one very questionable plan await.",
+  "Something is off in a small town and, frankly, only we are available.",
+  "Cases will be cracked. Dice will be blamed.",
+  "Investigators are needed. Competence is optional.",
+  "There will be clues, there will be chaos, there will be a d20.",
 ];
 const CLOSERS = [
   "Bring your phone, your wits, and your worst ideas.",
-  "No Dungeon Master needed. No dragons harmed (probably).",
-  "Come for the adventure, stay for the Shame Titles.",
+  "Muse is the Dungeon Master, so nobody has to prep. No one harmed (probably).",
+  "Come for the mystery, stay for the Shame Titles.",
   "Your character sheet is your phone. Charge it like your life depends on it.",
 ];
 
@@ -340,7 +342,7 @@ function inviteMessage(args: Record<string, unknown>, origin: string): ToolResul
   const seed = party + when;
   const whenLine = when ? `The quest begins ${when}.` : "The quest begins soon (watch this chat for the signal).";
   const text = [
-    `${pick(OPENERS, seed)} ${party}, you are summoned to a night of Once Upon a Roll!`,
+    `${pick(OPENERS, seed)} ${party}, you are summoned to Group Project, a game night where we all talk and Muse runs the story!`,
     `${pick(HOOKS, seed + "h")} ${whenLine}`,
     `How to join: when we're together, scan the QR code on the TV with your phone (or open ${origin}/play and type the 4-letter room code). No app, no account, no prep.`,
     pick(CLOSERS, seed + "c"),
@@ -385,7 +387,7 @@ async function handle(msg: unknown, origin: string): Promise<JsonRpcResponse | n
         capabilities: { tools: {} },
         serverInfo: SERVER_INFO,
         instructions:
-          "Once Upon a Roll is a co-op fairytale party game played on one TV/laptop plus everyone's phones. " +
+          "Group Project is a co-op game night played on one TV/laptop plus everyone's phones. Muse is the Dungeon Master, and every story starts from a real news headline retold as modern urban fantasy. " +
           "Use start_game_night to give the user a link to open the game table, list_todays_tales to browse quests, and invite_message to draft a group-chat invite.",
       });
     }
@@ -425,7 +427,7 @@ function authorized(req: NextRequest): boolean {
 export async function POST(req: NextRequest) {
   if (!authorized(req)) {
     return json(err(null, -32001, "Unauthorized: missing or invalid bearer token"), 401, {
-      "WWW-Authenticate": 'Bearer realm="once-upon-a-roll"',
+      "WWW-Authenticate": 'Bearer realm="group-project"',
     });
   }
 
