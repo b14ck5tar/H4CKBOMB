@@ -26,6 +26,34 @@ Meta judges score: **Human connection 30% · AI essential and integrated 25% · 
 ## The thesis (say it in your own words)
 People avoid each other mostly out of uncertainty, not fear. We follow the crowd's silence. And we underestimate how much others enjoy us. Tabletop games fix this by giving everyone a role, a reason and a script. The only problem is that someone has to prep as Dungeon Master. Muse is the DM.
 
+## How it works
+*Full-screen version: `design/how-it-works.html`. Say: "Muse writes and judges. Code rolls and checks. Players play." If asked what the AI does behind the scenes, point at the DM's Notes, which shows every decision live.*
+
+```mermaid
+flowchart LR
+  subgraph L1["1. Story pipeline"]
+    direction LR
+    N["Real news<br/>SerpApi Google News + RSS"] --> F["Safety filter<br/>keyword block + Muse classifier<br/>no deaths, politics, private people"] --> S["Muse: facts become a<br/>supernatural story<br/>each fact maps to an element"] --> P["Muse Image:<br/>pre-painted scenes"]
+  end
+  subgraph L2["2. One round at the table"]
+    direction LR
+    C["Secret clue<br/>on each phone"] --> Q["Everyone pitches<br/>type or Muse Voice"] --> R["Muse rules each plan<br/>Clever = no roll ... Miracle<br/>with a reason"] --> V["Convince the DM<br/>argue once"] --> D["Real random dice<br/>code, never AI"] --> B["Muse writes one beat<br/>per hero, quoting them"] --> K["Server checks + scrubs<br/>schema, kind-only, no AI tells"] --> T["TV + phones"]
+  end
+  P -.-> C
+  X["Context the DM keeps:<br/>goal, canon facts, open complications,<br/>each hero's clue/titles/peril, last recaps"] -.-> R
+  X -.-> B
+  classDef muse fill:#FF2E7E,color:#0A0612
+  classDef code fill:#3DE7FF,color:#0A0612
+  classDef chk fill:#2CF5C0,color:#0A0612
+  classDef ppl fill:#FFB648,color:#0A0612
+  class S,P,R,B muse
+  class N,C,D,T code
+  class F,K chk
+  class Q,V ppl
+```
+
+**Guardrails:** dice are real RNG. AI judges ideas, never people. No real people or brands. Player text is in-world speech (typed "ignore all previous instructions" and got "Pip shouts gibberish magic words at the sky."). Mirror sentences are kind-only. Fallbacks, so the table never freezes. DM's Notes shows every decision live.
+
 ## 4-minute table demo (built on the 30/25/20/20 rubric)
 
 Tags in brackets show which criterion each beat is scoring. Demo quest: the 80-ton boulder that fell at a New Hampshire park (nobody hurt).

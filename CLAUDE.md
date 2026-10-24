@@ -39,6 +39,13 @@ Read `SPEC.md` first (the source of truth), then `design/` for the details behin
 - UI: `components/TV.tsx`, `components/Phone.tsx`, juice in `D20`, `Stamp`, `Effects`, `Reactions`, `lib/sfx.ts`.
 - Dice always come from `crypto` RNG in code. The AI never decides numbers; it picks tiers and writes narration.
 
+## Design principles (creative directors' calls, Sat afternoon)
+- **People talk to each other, not to the AI.** The AI is the host. Typing is the default input (voice is optional) so a room isn't everyone talking over each other at a machine. Every feature should create a reason to turn to the person next to you.
+- The feeling we optimize: **"we laughed so hard"**, plus a little "I learned something about them" and, when they win, "we pulled it off together".
+- Nobody ever rates a person. AI judges ideas, never people. Everything the AI does must be explainable to a judge (DM's Notes).
+- Heavy/real-world news is a pitched future mode with guardrails, not tonight's build. Tonight: eerie, harmless news.
+- Judging demo is ~4 minutes, and judges should feel free to leave and want to come back.
+
 ## How we work
 - Commit after every working step and push to `origin main` (b14ck5tar/H4CKBOMB). End messages with the
   Co-Authored-By line.
