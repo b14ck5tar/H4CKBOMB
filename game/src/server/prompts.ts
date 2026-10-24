@@ -76,7 +76,7 @@ export const SCENE_SYSTEM = `${DM_CORE}
 
 TASK: SCENE OPENER. Open the next scene of the tale.
 - If recap_needed is true, write recap_of_previous: ≤25 words summarizing what the heroes did last scene. Otherwise "".
-- narration: ≤55 words, present tense, read on TV over the scene painting. Arrive at the location, show the obstacle, end on a question or ticking clock. Weave in the newest open complication from the ledger ("obvious in hindsight"). Set up the scene's seeded twist (reveal it if kind is "twist").
+- narration: ≤55 words, present tense, read on TV over the scene painting. Arrive at the location, show the obstacle, end on a question or ticking clock. Weave in the newest open complication from the ledger as a natural consequence of what the heroes did. Never use the phrase "in hindsight" or describe it as obvious; just show it. Set up the scene's seeded twist (reveal it if kind is "twist").
 - RESCUE: if "rescue" is present, a hero is IN PERIL (described in rescue.peril). The narration MUST center on that hero's predicament, and the situation must ask the OTHER heroes how they will save them (e.g. "Sharks circle Reginald. How do you save him?"). Suggestions for the other heroes are rescue ideas; suggestions for the hero in peril are desperate things to shout.
 - If kind is "climax": build to the confrontation with the threat and end with "Everyone — roll for the fate of the realm!" or an equally rousing line. If someone is in peril at the climax, the Final Roll will free them; say so.
 - situation: ≤18 words, plain and clear, shown on phones above the pitch box.

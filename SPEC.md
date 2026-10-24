@@ -41,7 +41,7 @@ Details live in `design/01`–`04`. This file is the source of truth wherever th
 ## Decisions (resolving conflicts between the design docs)
 - **Name: Once Upon a Roll.** Docs 01 and 02 say "Once Upon a Headline"; ignore that.
 - **Verdicts run per pitch as each arrives** (doc 03), not batched (doc 01). Code derives the DC as 15 − the tier modifier, so the stamp reads, e.g., `RISKY · DC 18`.
-- **Dice:** the server's real RNG pre-rolls each die. The AI never touches numbers.
+- **Dice:** the table (TV) pre-rolls each die with the browser's cryptographic RNG. The AI never touches numbers.
 - **Room sync:** Supabase Realtime. The TV browser runs the game; phones send inputs. AI calls go through Next.js API routes so keys stay on the server.
 - **AI:** `muse-spark-1.3` with strict JSON schemas, `muse-image-1.0`, and `muse-voice-transcribe-1.0` (push-to-talk, sending a file to `/asr/transcribe`). Never use `-contributor` models. Fallbacks: Gemini, then canned text. The TV is never idle for more than about 3 s.
 - **Art: "Illuminated Storybook."** Parchment and ink, gilt accents, a midnight frame. Fonts are Cinzel Decorative, Cinzel, EB Garamond and Alegreya Sans. Use one image style string for every image.

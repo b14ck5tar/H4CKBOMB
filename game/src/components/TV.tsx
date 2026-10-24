@@ -238,6 +238,29 @@ function Lobby({ host, s }: { host: GameHost; s: GameState }) {
   );
 }
 
+/** Always on screen during play, so anyone glancing at the TV knows the goal and the current problem. */
+function QuestPanel({ s }: { s: GameState }) {
+  const scene = s.scenes[s.sceneIndex];
+  const now = s.rescue
+    ? `Save ${s.players.find((p) => p.id === s.rescue!.victimId)?.hero?.name}: ${s.rescue.peril}`
+    : s.situation || s.banner || scene?.location || "";
+  return (
+    <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1fr)] gap-4 font-ui">
+      <div className="rounded-lg border border-[var(--gilt)]/50 bg-black/25 px-4 py-2">
+        <span className="uppercase tracking-[0.2em] text-xs text-[var(--gilt-bright)]">The quest</span>
+        <p className="text-lg leading-snug text-parchment line-clamp-2">{s.quest?.goal}</p>
+      </div>
+      <div className="rounded-lg border border-[var(--crimson)]/60 bg-black/25 px-4 py-2">
+        <span className="uppercase tracking-[0.2em] text-xs text-[#ff9aa0]">
+          Right now · Scene {s.sceneIndex + 1} of {s.scenes.length}
+          {scene ? ` · ${scene.location}` : ""}
+        </span>
+        <p className="text-lg leading-snug text-parchment line-clamp-2">{now}</p>
+      </div>
+    </div>
+  );
+}
+
 // ---------- scene phases ----------
 function PitchWall({ s }: { s: GameState }) {
   const counts: Record<string, number> = {};
@@ -380,8 +403,9 @@ function SceneStage({ host, s }: { host: GameHost; s: GameState }) {
   const fullStage = s.phase === "vote" || s.phase === "roll" || s.phase === "rolling" || s.phase === "catch";
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col gap-4 px-8 pb-2">
+    <div className="flex-1 min-h-0 flex flex-col gap-3 px-8 pb-2">
       <ScreenFlash kind={flash.kind} trigger={flash.n} />
+      <QuestPanel s={s} />
       {fullStage ? (
         <div className="flex-1 min-h-0 flex flex-col gap-5 justify-center overflow-auto">
           {s.phase === "vote" &&
@@ -638,6 +662,15 @@ function QuestIntro({ host, s }: { host: GameHost; s: GameState }) {
 export function TV({ host }: { host: GameHost }) {
   const s = useHost(host);
   const [reactions, setReactions] = useState<{ id: number; emoji: string; color?: string }[]>([]);
+  // 10-foot UI: scale every rem with the screen width so text stays readable from across a room.
+  useEffect(() => {
+    const root = document.documentElement;
+    const prev = root.style.fontSize;
+    root.style.fontSize = "clamp(16px, 1.3vw, 30px)";
+    return () => {
+      root.style.fontSize = prev;
+    };
+  }, []);
   // The game lives in this tab: warn before an accidental refresh or close wipes it mid-tale.
   const midGame = s.phase !== "lobby" && s.phase !== "storybook";
   useEffect(() => {

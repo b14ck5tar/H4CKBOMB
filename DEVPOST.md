@@ -100,7 +100,7 @@ Meta scores human connection (30%), how essential and well integrated the AI is 
 
 **Originality (20%).** Three ideas in one product: an AI Dungeon Master, quests drawn from real headlines this week and filtered to be safe and repairable, and the newsprint reveal ("This tale was inspired by real events") that turns a joke into a conversation.
 
-**Technical execution (20%).** A working game from QR code to keepsake storybook. Next.js on Vercel, Supabase Realtime keeping a TV and phones in sync, server-side AI calls with strict JSON schemas, a server RNG, pre-generated and cached news, and a fallback chain (Muse, then Gemini, then canned text) so the demo does not stall.
+**Technical execution (20%).** A working game from QR code to keepsake storybook. Next.js on Vercel, Supabase Realtime keeping a TV and phones in sync, server-side AI calls with strict JSON schemas, cryptographic dice rolled by the game code (never the AI), pre-generated and cached news, and a fallback chain (Muse, then Gemini, then canned text) so the demo does not stall.
 
 **Research grounding.** We designed around the evidence on how people bond:
 - Shared laughter releases endorphins and bonds groups (Dunbar et al. 2012, *Proc. Royal Society B*; PET evidence in Manninen et al. 2017, *J. Neuroscience*).
