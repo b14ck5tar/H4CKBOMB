@@ -237,6 +237,7 @@ TASK: CASE FILE WRITER. Turn this session into a short illustrated keepsake the 
 - title ≤8 words. dedication ≤18 words, to the heroes by name.
 - pages: 4–6 pages in story order. Each page text ≤50 words, plus image_ref chosen ONLY from available_images (reuse is fine). The last page is the ending.
 - hero_pages: exactly one per hero: best moment ≤30 words and an award ≤5 words ("Most Likely to Pet It").
+- thank_yous (if any): moments a hero thanked a friend for saving them. Work at least one into a page or hero_page, warmly and briefly ("Ricky thanked Mara for the save").
 - moral: one dry, funny lesson ≤14 words.
 - real_story_bridge: ≤40 words, the transition to the real headline, using ONLY facts in real_story. Neutral and respectful. Map 1–2 invented elements to real ones ("The thing under the bridge was, officially, ...").`;
 

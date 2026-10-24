@@ -580,12 +580,161 @@ function BigButton({ label, sub, onClick, tone = "crimson" }: { label: string; s
   );
 }
 
+// ---------- Final Roll, all together ----------
+const SHAKE_THRESHOLD = 14; // m/s² of motion (gravity removed): a deliberate shake, not a wobble
+
+/** iOS only lets a page read motion after asking, and only from inside a tap. */
+function askMotion(): Promise<unknown> {
+  try {
+    const DME = (typeof window !== "undefined" ? window.DeviceMotionEvent : undefined) as unknown as { requestPermission?: () => Promise<string> } | undefined;
+    if (DME && typeof DME.requestPermission === "function") return DME.requestPermission().catch(() => "denied");
+  } catch {}
+  return Promise.resolve("granted");
+}
+
+function FinalRollPhone({ state, me, send, deadlineAt }: { state: GameState; me: Player; send: Send; deadlineAt: number }) {
+  const f = state.final;
+  const stage = f?.stage ?? "arm";
+  const [armedAt, setArmedAt] = useState(0);
+  const [sentAt, setSentAt] = useState(0);
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const iv = setInterval(() => setNow(Date.now()), 60);
+    return () => clearInterval(iv);
+  }, []);
+  const left = deadlineAt ? Math.max(0, deadlineAt - now) : 0;
+  const beat = stage === "count" && left > 0 ? Math.max(1, Math.min(3, Math.ceil(left / 1000))) : 0;
+  const shakeTime = stage === "shake" || (stage === "count" && left === 0);
+  // Optimistic for a moment after a tap; if the table never heard it, the button comes back.
+  const armed = !!f?.armed?.includes(me.id) || (armedAt > 0 && now - armedAt < 2500);
+  const shook = !!f?.shook?.includes(me.id) || (sentAt > 0 && now - sentAt < 1500);
+  const auto = !!f?.auto?.includes(me.id);
+
+  const roll = useRef<() => void>(() => {});
+  roll.current = () => {
+    if (shook) return;
+    send("roll");
+    setSentAt(Date.now());
+    vibrate([30, 30, 30, 30, 120]);
+  };
+
+  useEffect(() => {
+    if (beat) vibrate(beat === 1 ? 120 : 70);
+  }, [beat]);
+  useEffect(() => {
+    if (shakeTime) vibrate(250);
+  }, [shakeTime]);
+  useEffect(() => {
+    if (!shakeTime || shook) return;
+    const onMotion = (e: DeviceMotionEvent) => {
+      let mag = 0;
+      const a = e.acceleration;
+      if (a && a.x != null) mag = Math.hypot(a.x ?? 0, a.y ?? 0, a.z ?? 0);
+      else {
+        const g = e.accelerationIncludingGravity;
+        if (g && g.x != null) mag = Math.abs(Math.hypot(g.x ?? 0, g.y ?? 0, g.z ?? 0) - 9.81);
+      }
+      if (mag > SHAKE_THRESHOLD) roll.current();
+    };
+    window.addEventListener("devicemotion", onMotion);
+    return () => window.removeEventListener("devicemotion", onMotion);
+  }, [shakeTime, shook]);
+
+  if (stage === "landed" || state.phase === "final_result")
+    return <Watch text={`You rolled a ${f?.dice[me.id] ?? "…"}! Eyes on the TV`} />;
+  if (stage === "tumble" || (shook && stage === "shake"))
+    return (
+      <div className="page p-6 flex flex-col items-center gap-3 text-center">
+        <p className="font-display text-5xl uppercase">In the air!</p>
+        <p className="font-heading text-xl uppercase">{auto ? "The table rolled for you. Watch the TV" : "Watch the TV: everyone lands together"}</p>
+      </div>
+    );
+  if (shakeTime)
+    return <BigButton label="SHAKE!" sub="Shake your phone, or tap here" tone="gilt" onClick={() => roll.current()} />;
+  if (stage === "count")
+    return (
+      <div className="page p-6 flex flex-col items-center gap-2 text-center">
+        <span key={beat} className="font-display leading-none ouar-stamp-slam" style={{ fontSize: "9rem", ["--ouar-rot" as string]: "0deg" }}>
+          {beat}
+        </span>
+        <p className="font-heading text-2xl uppercase">Yell your battle cry on SHAKE!</p>
+      </div>
+    );
+  if (armed)
+    return (
+      <div className="page p-6 flex flex-col items-center gap-3 text-center">
+        <p className="font-display text-5xl uppercase">Armed ✓</p>
+        <p className="font-heading text-xl uppercase">Waiting for everyone. When the TV says SHAKE, shake your phone.</p>
+      </div>
+    );
+  return (
+    <BigButton
+      label="ARM"
+      sub="Tap to arm your die. Then we all shake at once."
+      onClick={() => {
+        sfx.unlock();
+        vibrate(30);
+        setArmedAt(Date.now());
+        // Ask for motion inside the tap (iOS), then tell the table we're ready.
+        askMotion().then(() => send("arm"));
+      }}
+    />
+  );
+}
+
+// ---------- Thank-you after a save ----------
+function ThankSave({ state, me, send }: { state: GameState; me: Player; send: Send }) {
+  const [sent, setSent] = useState<string[]>([]);
+  const mine = (state.saves ?? []).filter((x) => x.savedId === me.id && x.scene === state.sceneIndex);
+  const save = mine.find((x) => !x.thanked && !sent.includes(x.id)) ?? mine[mine.length - 1];
+  if (!save || state.busy) return null;
+  const names = save.byIds.map((id) => state.players.find((p) => p.id === id)?.hero?.name.split(" ")[0] ?? "them");
+  const who = names.length > 1 ? `${names.slice(0, -1).join(", ")} & ${names[names.length - 1]}` : names[0];
+  if (save.thanked || sent.includes(save.id))
+    return (
+      <div className="page p-4 text-center flex flex-col gap-1">
+        <p className="font-heading text-2xl uppercase">❤️ Sent</p>
+        <p className="text-ink-soft">{who} just felt that.</p>
+      </div>
+    );
+  return (
+    <button
+      className="btn btn-crimson w-full min-h-32 flex flex-col items-center justify-center gap-1"
+      onClick={() => {
+        send("thank_save", { saveId: save.id });
+        setSent((s) => [...s, save.id]);
+        sfx.thanks();
+        vibrate(25);
+      }}
+    >
+      <span className="font-display text-4xl">❤️ Thank {who}</span>
+      <span className="font-ui text-base normal-case tracking-normal">{save.kind === "catch" ? "They spent their heart to catch you" : "They got you out"}</span>
+    </button>
+  );
+}
+
 export function Phone({ code }: { code: string }) {
   const { state, me, portrait, deadlineAt, send } = usePhone(code);
-  const [rolledFinal, setRolledFinal] = useState(false);
+  // Someone you saved said thanks: buzz, and show it for a few seconds.
+  const thankedMe = me ? (state?.saves ?? []).filter((x) => x.thanked && x.byIds.includes(me.id)) : [];
+  const thankKey = thankedMe.map((x) => x.id).join(",");
+  const seenThanks = useRef<Set<string> | null>(null);
+  const [thankNote, setThankNote] = useState<{ id: string; name: string } | null>(null);
   useEffect(() => {
-    if (state?.phase !== "final_roll") setRolledFinal(false);
-  }, [state?.phase]);
+    if (!state || !me) return;
+    if (!seenThanks.current) {
+      seenThanks.current = new Set(thankedMe.map((x) => x.id));
+      return;
+    }
+    const fresh = thankedMe.find((x) => !seenThanks.current!.has(x.id));
+    if (!fresh) return;
+    seenThanks.current.add(fresh.id);
+    setThankNote({ id: fresh.id, name: state.players.find((p) => p.id === fresh.savedId)?.hero?.name ?? "A friend" });
+    vibrate([40, 60, 40, 60, 120]);
+    sfx.thanks();
+    setTimeout(() => setThankNote((n) => (n?.id === fresh.id ? null : n)), 5000);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [thankKey, !!state, !!me]);
   const myWard = me ? state?.wards?.[me.id] : undefined;
   const thanked = myWard ? state?.thanks?.[myWard] ?? 0 : 0;
   const lastThanked = useRef(0);
@@ -721,6 +870,7 @@ export function Phone({ code }: { code: string }) {
               <p className="text-lg leading-snug">{myBeat.text}</p>
             </div>
           )}
+          <ThankSave state={state} me={me} send={send} />
           {state.busy ? <Watch text={state.busy} /> : <Watch text="Eyes on the TV" />}
           <ReadyButton state={state} me={me} send={send} />
         </div>
@@ -728,19 +878,7 @@ export function Phone({ code }: { code: string }) {
       break;
     }
     case "final_roll":
-      body = rolledFinal || state.final?.rolled.includes(me.id) ? (
-        <Watch text={`You rolled a ${state.final?.dice[me.id] ?? "…"}! Waiting on the others…`} />
-      ) : (
-        <BigButton
-          label="ROLL"
-          sub="Everyone rolls together"
-          onClick={() => {
-            send("roll");
-            setRolledFinal(true);
-            vibrate([20, 40, 20, 40, 60]);
-          }}
-        />
-      );
+      body = <FinalRollPhone state={state} me={me} send={send} deadlineAt={deadlineAt} />;
       break;
     case "mirror_write":
       body = <MirrorWrite state={state} me={me} send={send} deadlineAt={deadlineAt} />;
@@ -792,6 +930,9 @@ export function Phone({ code }: { code: string }) {
       {me.peril && state.phase !== "pitch" && <p className="font-ui font-bold text-center text-[var(--gilt-bright)]">You're stuck: {me.peril}</p>}
       {wardHero && PLAY_PHASES.includes(state.phase) && (
         <p className="font-ui text-xs text-center text-parchment/70">🪞 Secretly watching {wardHero.name}. Look for one great moment.</p>
+      )}
+      {thankNote && (
+        <p key={thankNote.id} className="page p-4 text-center font-heading text-2xl uppercase fade-in ring-4 ring-[var(--crimson)]">❤️ {thankNote.name} says thanks</p>
       )}
       {wardHero && thanked > 0 && (
         <p key={thanked} className="page p-3 text-center font-heading text-xl fade-in">❤️ {wardHero.name} says thanks</p>

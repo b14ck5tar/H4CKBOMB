@@ -28,6 +28,7 @@ const KIND: Record<NoteKind, { label: string; color: string }> = {
   roll: { label: "Dice", color: "#2CF5C0" },
   boost: { label: "Boost", color: "#FF7A45" },
   catch: { label: "Catch!", color: "#FF7A45" },
+  thanks: { label: "Thanks", color: "#FF8FB8" },
   hope: { label: "Hope", color: "#FF2E7E" },
   safety: { label: "Safety", color: "#9CFF8A" },
   fallback: { label: "Backup", color: "#FFE14D" },

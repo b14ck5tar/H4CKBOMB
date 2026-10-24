@@ -39,6 +39,7 @@ import type {
   QuestSeed,
   RollResult,
   RoundOutcome,
+  Save,
   SceneOpen,
   SceneView,
   Stat,
@@ -67,6 +68,12 @@ const READING = new Set(["quest", "narrating", "outcome", "mirror_reveal", "epil
 const MIRROR_WRITE_MS = 40_000;
 const MIRROR_GUESS_MS = 20_000;
 const MIRROR_PHASES = ["mirror_write", "mirror_guess", "mirror_reveal"];
+// All-together Final Roll: arm (up to 8 s), "3, 2, 1" (3.5 s), SHAKE window (6 s), shared tumble, land.
+const FINAL_ARM_MS = 8000;
+const FINAL_COUNT_MS = 3500;
+const FINAL_SHAKE_MS = 6000;
+const FINAL_TUMBLE_MS = 2200;
+const FINAL_LAND_MS = 1800;
 const BAND_RANK: Record<Band, number> = { LEGENDARY: 0, SUCCESS: 1, YES_BUT: 2, FAIL: 3, CATASTROPHE: 4 };
 
 /** Uniform-enough random int in [0, n) from crypto. */
@@ -196,6 +203,7 @@ export class GameHost {
   private lastThanks: Record<string, number> = {};
   private notesStart = Date.now();
   private mirrorFate = new Map<string, "kept" | "rewritten" | "dm">(); // guardian id -> what the kindness pass did
+  private finalSafety: ReturnType<typeof setTimeout> | null = null;
 
   constructor(code: string) {
     this.state = {
@@ -224,6 +232,7 @@ export class GameHost {
       rolls: [],
       revealed: [],
       catchers: [],
+      saves: [],
       round: null,
       beatIndex: 0,
       ready: [],
@@ -489,6 +498,10 @@ export class GameHost {
         return this.onMirrorGuess(m.pid, m.text);
       case "thanks":
         return this.onThanks(m.pid);
+      case "arm":
+        return this.onArm(m.pid);
+      case "thank_save":
+        return this.onThankSave(m.pid, m.saveId);
     }
   }
 
@@ -686,6 +699,7 @@ export class GameHost {
       mirrorIndex: 0,
       thanks: {},
       phase: "quest",
+      saves: [],
       hope: HOPE_START,
       log: [],
       narration: this.seed!.fairytale_premise,
@@ -1290,6 +1304,7 @@ export class GameHost {
       return { ...p, titles: [...new Set(titles)].slice(-4), peril, abilityAvailable };
     });
 
+    this.recordSaves(rolls, rescue, !!rescued);
     if (out.complication) this.ledger.push(out.complication);
     this.canon.push(...out.new_canon);
     if (out.threat_mood) this.threatMood = out.threat_mood;
@@ -1325,38 +1340,89 @@ export class GameHost {
     this.openScene(this.state.sceneIndex + 1);
   }
 
-  // ---------- final roll ----------
+  // ---------- final roll (all together) ----------
+  /** Arm your die, then one shared "3, 2, 1, SHAKE!" on the TV and every phone, then all the dice land at once. */
   private startFinalRoll() {
     this.finalDice = {};
     this.heroes().forEach((p) => (this.finalDice[p.id] = d20()));
     this.set({
       phase: "final_roll",
-      final: { dice: {}, rolled: [], best: "", hopeBonus: this.state.hope, total: 0, ending: "BITTERSWEET" },
+      final: { dice: {}, rolled: [], best: "", hopeBonus: this.state.hope, total: 0, ending: "BITTERSWEET", stage: "arm", armed: [], shook: [], auto: [] },
     });
-    this.setTimer(FINAL_ROLL_MS, () => this.finish(false));
+    this.setTimer(FINAL_ARM_MS, () => this.startCountdown());
+    // Safety net: whatever happens to the phones, the ending always arrives.
+    if (this.finalSafety) clearTimeout(this.finalSafety);
+    this.finalSafety = setTimeout(() => this.state.phase === "final_roll" && this.finish(false), FINAL_ROLL_MS + 20_000);
   }
 
+  private patchFinal(patch: Partial<NonNullable<GameState["final"]>>) {
+    if (this.state.final) this.set({ final: { ...this.state.final, ...patch } });
+  }
+
+  private onArm(pid: string) {
+    const f = this.state.final;
+    if (this.state.phase !== "final_roll" || f?.stage !== "arm" || !(pid in this.finalDice) || f.armed?.includes(pid)) return;
+    const armed = [...(f.armed ?? []), pid];
+    this.patchFinal({ armed });
+    if (Object.keys(this.finalDice).every((id) => armed.includes(id))) this.startCountdown();
+  }
+
+  private startCountdown() {
+    if (this.state.phase !== "final_roll" || this.state.final?.stage !== "arm") return;
+    this.patchFinal({ stage: "count" });
+    // The deadline rides along with state, so the TV and every phone count down to the same moment.
+    this.setTimer(FINAL_COUNT_MS, () => this.startShake());
+    this.broadcastNow();
+  }
+
+  private startShake() {
+    if (this.state.phase !== "final_roll" || this.state.final?.stage !== "count") return;
+    this.patchFinal({ stage: "shake" });
+    this.setTimer(FINAL_SHAKE_MS, () => this.startTumble());
+    this.broadcastNow();
+  }
+
+  /** A shake (or the big tap fallback). A hair early is fine: phones and the TV are never perfectly in sync. */
   private revealFinalDie(pid: string) {
     const f = this.state.final;
-    if (!f || f.rolled.includes(pid) || !(pid in this.finalDice)) return;
-    const next = { ...f, rolled: [...f.rolled, pid], dice: { ...f.dice, [pid]: this.finalDice[pid] } };
-    this.set({ final: next });
-    const die = this.finalDice[pid];
-    setTimeout(() => {
+    if (!f || !(pid in this.finalDice) || f.shook?.includes(pid)) return;
+    const early = f.stage === "count" && this.deadlineAt - Date.now() < 700;
+    if (f.stage !== "shake" && !early) return;
+    const shook = [...(f.shook ?? []), pid];
+    this.patchFinal({ shook });
+    if (Object.keys(this.finalDice).every((id) => shook.includes(id))) this.startTumble();
+  }
+
+  /** Whoever didn't shake in time gets rolled for, then every die tumbles together under one drumroll. */
+  private startTumble() {
+    const f = this.state.final;
+    if (this.state.phase !== "final_roll" || !f || (f.stage !== "shake" && f.stage !== "count")) return;
+    const ids = Object.keys(this.finalDice);
+    const auto = ids.filter((id) => !f.shook?.includes(id));
+    this.patchFinal({ stage: "tumble", shook: ids, auto });
+    this.setTimer(FINAL_TUMBLE_MS, () => this.landFinal());
+  }
+
+  private landFinal() {
+    if (this.state.phase !== "final_roll") return;
+    const dice = { ...this.finalDice };
+    this.patchFinal({ stage: "landed", dice, rolled: Object.keys(dice) });
+    const auto = new Set(this.state.final?.auto ?? []);
+    Object.entries(dice).forEach(([pid, die]) => {
       this.bump("rolls");
       if (die === 1) this.bump("nat1");
       if (die === 20) this.bump("nat20");
-      this.note("roll", this.heroName(pid), `Final roll: d20 rolled ${die}.${die === 20 ? " Natural 20." : die === 1 ? " Natural 1." : ""}`);
-    }, ROLL_ANIM_MS);
-    if (next.rolled.length === Object.keys(this.finalDice).length) {
-      this.clearTimer();
-      setTimeout(() => this.finish(false), 1500);
-    }
+      const how = auto.has(pid) ? "Didn't shake in time, so the game rolled for them" : "Shook their phone";
+      this.note("roll", this.heroName(pid), `Final roll: ${how}. d20 rolled ${die}.${die === 20 ? " Natural 20." : die === 1 ? " Natural 1." : ""}`);
+    });
+    this.setTimer(FINAL_LAND_MS, () => this.finish(false));
   }
 
   private finish(grim: boolean) {
     if (["final_result", ...MIRROR_PHASES, "epilogue", "reveal", "storybook"].includes(this.state.phase)) return;
     this.clearTimer();
+    if (this.finalSafety) clearTimeout(this.finalSafety);
+    this.finalSafety = null;
     const dice = grim ? {} : { ...this.finalDice };
     const best = Object.entries(dice).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "";
     const total = grim ? 0 : (dice[best] ?? 0) + this.state.hope;
@@ -1429,6 +1495,7 @@ export class GameHost {
         final_moves: finalInfo.final_moves,
         ending: final.ending,
         crowd_favorite: crowd,
+        thank_yous: this.thankYous(),
         available_images: images,
         real_story: this.seed?.the_real_story,
       }),
@@ -1597,6 +1664,51 @@ export class GameHost {
     }
   }
 
+  // ---------- thank-you after a save ----------
+  /** Called from applyRound: a Catch! re-roll, or a stuck hero freed by friends, is a save worth thanking. */
+  private recordSaves(rolls: RollResult[], rescue: GameState["rescue"], rescued: boolean) {
+    const scene = this.state.sceneIndex;
+    const fresh: Save[] = [];
+    rolls
+      .filter((r) => r.rescuerId)
+      .forEach((r) => fresh.push({ id: `c${scene}-${r.playerId}`, savedId: r.playerId, byIds: [r.rescuerId], kind: "catch", scene, thanked: false }));
+    if (rescue && rescued) {
+      const by = rolls.filter((r) => r.playerId !== rescue.victimId && SUCCESS_BANDS.includes(r.band)).map((r) => r.playerId);
+      if (by.length) fresh.push({ id: `r${scene}-${rescue.victimId}`, savedId: rescue.victimId, byIds: by, kind: "rescue", scene, thanked: false });
+    }
+    const known = new Set(this.state.saves.map((x) => x.id));
+    const add = fresh.filter((x) => !known.has(x.id));
+    if (add.length) this.set({ saves: [...this.state.saves, ...add] });
+  }
+
+  private onThankSave(pid: string, saveId: string) {
+    const phase = this.state.phase;
+    if (phase !== "outcome" && phase !== "narrating") return;
+    const save = this.state.saves.find((x) => x.id === saveId);
+    if (!save || save.savedId !== pid || save.thanked) return;
+    this.set({ saves: this.state.saves.map((x) => (x.id === saveId ? { ...x, thanked: true } : x)) });
+    const by = save.byIds.map((id) => this.heroName(id)).join(" and ");
+    this.note("thanks", this.heroName(pid), `Thanked ${by || "a friend"} for ${save.kind === "catch" ? "the save" : "the rescue"}. Player to player: no AI involved.`);
+    // Like a reaction burst: a thank-you shouldn't get cut off by the reading timer.
+    const now = Date.now();
+    if (READING.has(phase) && this.deadlineAt && this.deadlineAt - now < 3000 && this.pending) {
+      const fn = this.pending;
+      this.setTimer(this.deadlineAt - now + 2500, fn);
+    }
+  }
+
+  /** "Ricky thanked Mara for the save", for the storybook. */
+  thankYous() {
+    const name = (id: string) => this.player(id)?.hero?.name ?? "";
+    return this.state.saves
+      .filter((x) => x.thanked)
+      .map((x) => {
+        const by = x.byIds.map(name).filter(Boolean);
+        const list = by.length > 1 ? `${by.slice(0, -1).join(", ")} and ${by[by.length - 1]}` : by[0] ?? "a friend";
+        return `${name(x.savedId)} thanked ${list} for ${x.kind === "catch" ? "the save" : "the rescue"}`;
+      });
+  }
+
   private async startEpilogue() {
     this.clearTimer();
     this.set({ phase: "epilogue", busy: "The DM wraps it up…", ready: [] });
@@ -1696,6 +1808,7 @@ export class GameHost {
       mirror: [],
       mirrorIndex: 0,
       thanks: {},
+      saves: [],
       log: [],
       notes: emptyNotes(),
       rescue: null,

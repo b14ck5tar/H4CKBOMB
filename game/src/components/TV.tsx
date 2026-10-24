@@ -122,7 +122,7 @@ function Crew({ host, s, mark }: { host: GameHost; s: GameState; mark?: (p: Play
         .map((p) => {
           const m = mark?.(p) ?? "";
           return (
-            <div key={p.id} className={`flex flex-col items-center gap-1 w-28 text-center transition ${m === "…" ? "opacity-60" : ""}`}>
+            <div key={p.id} data-crew-pid={p.id} className={`flex flex-col items-center gap-1 w-28 text-center transition ${m === "…" ? "opacity-60" : ""}`}>
               <Avatar host={host} p={p} size={56} />
               <span className="font-heading text-base leading-tight text-parchment">{p.hero!.name.split(" ")[0]}</span>
               {m && <span className="font-ui text-xs text-[var(--gilt-bright)]">{m}</span>}
@@ -513,27 +513,72 @@ function RoundStage({ host, s }: { host: GameHost; s: GameState }) {
   );
 }
 
+/** Ticks fast enough for a countdown to land on the beat. */
+function useFastNow(active: boolean) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!active) return;
+    const iv = setInterval(() => setNow(Date.now()), 60);
+    return () => clearInterval(iv);
+  }, [active]);
+  return now;
+}
+
+/** The Final Roll, all together: arm, one shared "3, 2, 1, SHAKE!", every die in the air, one drumroll, one landing. */
 function FinalRollView({ host, s }: { host: GameHost; s: GameState }) {
   const f = s.final;
   const heroes = s.players.filter((p) => p.hero);
   const result = s.phase === "final_result";
+  const stage = result ? "landed" : f?.stage ?? "arm";
+  const now = useFastNow(stage === "count");
+  const left = host.deadlineAt ? Math.max(0, host.deadlineAt - now) : 0;
+  const beat = stage === "count" ? Math.max(1, Math.min(3, Math.ceil(left / 1000))) : 0;
+  const shook = f?.shook ?? [];
+  const shookCount = useRef(0);
   useEffect(() => {
-    if (s.phase === "final_roll") sfx.heartbeat();
+    if (s.phase === "final_roll" && stage === "arm") sfx.heartbeat();
+    if (stage === "shake") sfx.countBeat(true);
+    if (stage === "tumble") sfx.drumroll(2100);
+    if (stage === "landed" && !result) sfx.diceLand();
+  }, [s.phase, stage, result]);
+  useEffect(() => {
+    if (beat) sfx.countBeat(false);
+  }, [beat]);
+  useEffect(() => {
+    if (stage === "shake" && shook.length > shookCount.current) sfx.pop();
+    shookCount.current = shook.length;
+  }, [stage, shook.length]);
+  useEffect(() => {
     if (result) {
       if (f?.ending === "TRIUMPHANT") sfx.fanfare();
       else if (f?.ending === "GRIM_BUT_HILARIOUS") sfx.sadTrombone();
       else sfx.stamp();
     }
-  }, [s.phase, result, f?.ending]);
+  }, [result, f?.ending]);
+  const big = stage === "count" ? String(beat) : stage === "shake" ? "SHAKE!" : "";
   return (
-    <div className="flex-1 flex flex-col items-center justify-center gap-8 px-8">
+    <div className="flex-1 flex flex-col items-center justify-center gap-8 px-8 relative">
       <h2 className="font-display text-6xl uppercase text-[var(--gilt-bright)] text-center">The Final Roll</h2>
       <div className="flex gap-10 flex-wrap justify-center">
         {heroes.map((p) => {
           const v = f?.dice[p.id];
+          const inAir = (stage === "shake" || stage === "tumble") && shook.includes(p.id);
+          const sub =
+            stage === "arm"
+              ? f?.armed?.includes(p.id)
+                ? "armed ✓"
+                : "tap to arm…"
+              : stage === "shake"
+                ? inAir
+                  ? "in the air!"
+                  : "SHAKE!"
+                : stage === "tumble" && f?.auto?.includes(p.id)
+                  ? "rolled for them"
+                  : "";
           return (
             <div key={p.id} className="flex flex-col items-center gap-2 w-52 text-center">
-              <D20 value={v ?? null} rolling={!result && v === undefined} size={170} tone={f?.best === p.id && result ? "gold" : "ink"} label={p.hero!.name} />
+              <D20 value={inAir ? null : v ?? null} rolling={inAir} size={170} tone={f?.best === p.id && result ? "gold" : "ink"} label={p.hero!.name} />
+              {sub && <span className="font-ui text-base text-[var(--gilt-bright)]">{sub}</span>}
               {s.finalMoves[p.id] && <p className="italic text-parchment/80 line-clamp-3">“{mask(s.finalMoves[p.id])}”</p>}
             </div>
           );
@@ -549,8 +594,27 @@ function FinalRollView({ host, s }: { host: GameHost; s: GameState }) {
           <Stamp text={ENDING_LABEL[f.ending]} size="xl" tone={f.ending === "TRIUMPHANT" ? "gilt" : f.ending === "BITTERSWEET" ? "forest" : "crimson"} />
         </div>
       )}
-      {!result && <p className="font-heading text-3xl uppercase animate-pulse">Everyone, roll on your phone!</p>}
-      {!result && host && null}
+      {!result && stage === "arm" && (
+        <div className="flex flex-col items-center gap-2 text-center">
+          <p className="font-heading text-4xl uppercase animate-pulse">Phones out. Tap to arm your die.</p>
+          <p className="font-ui text-xl text-parchment/75">Then we all shake at once. Yell your battle cry on SHAKE.</p>
+        </div>
+      )}
+      {!result && stage === "tumble" && <p className="font-heading text-4xl uppercase animate-pulse">Here it comes…</p>}
+      {!result && big && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none bg-black/55">
+          <span
+            key={big}
+            className="ouar-stamp-slam font-display leading-none text-[var(--gilt-bright)] drop-shadow-[0_0_30px_rgba(255,46,126,0.8)]"
+            style={{ fontSize: stage === "count" ? "16rem" : "12rem", ["--ouar-rot" as string]: stage === "count" ? "0deg" : "-4deg" }}
+          >
+            {big}
+          </span>
+          <p className="font-heading text-5xl uppercase text-parchment mt-4">
+            {stage === "count" ? "Yell your battle cry on SHAKE!" : "Battle cry! Shake your phone!"}
+          </p>
+        </div>
+      )}
     </div>
   );
 }
@@ -790,6 +854,14 @@ function StorybookView({ host, s }: { host: GameHost; s: GameState }) {
                 );
               })}
             </div>
+            {host.thankYous().length > 0 && (
+              <div className="flex flex-col gap-1">
+                <p className="font-ui uppercase tracking-widest text-sm text-[var(--crimson)]">Thank-yous</p>
+                {host.thankYous().map((t, i) => (
+                  <p key={i} className="text-lg">❤️ {t}.</p>
+                ))}
+              </div>
+            )}
             {quotes.length > 0 && (
               <div className="flex flex-col gap-1">
                 <p className="font-ui uppercase tracking-widest text-sm text-ink-soft">In their own words</p>
@@ -842,6 +914,66 @@ function QuestIntro({ host, s }: { host: GameHost; s: GameState }) {
       <Crew host={host} s={s} mark={(p) => (s.ready.includes(p.id) ? "ready ✓" : "")} />
     </div>
   );
+}
+
+/** A save got thanked: a big heart floats from the saved hero's avatar to whoever saved them. */
+function ThankHearts({ s }: { s: GameState }) {
+  const seen = useRef<Set<string> | null>(null);
+  const layer = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const thanked = (s.saves ?? []).filter((x) => x.thanked);
+    if (!seen.current) {
+      seen.current = new Set(thanked.map((x) => x.id));
+      return;
+    }
+    const fresh = thanked.filter((x) => !seen.current!.has(x.id));
+    fresh.forEach((save) => {
+      seen.current!.add(save.id);
+      sfx.thanks();
+      const box = layer.current;
+      if (!box) return;
+      const center = (pid: string) => {
+        const el = document.querySelector(`[data-crew-pid="${pid}"]`);
+        const r = el?.getBoundingClientRect();
+        return r ? { x: r.left + r.width / 2, y: r.top + 28 } : null;
+      };
+      const from = center(save.savedId) ?? { x: window.innerWidth / 2, y: window.innerHeight * 0.75 };
+      const first = (pid: string) => s.players.find((p) => p.id === pid)?.hero?.name.split(" ")[0] ?? "";
+      save.byIds.forEach((by, i) => {
+        const to = center(by) ?? { x: window.innerWidth / 2, y: window.innerHeight * 0.4 };
+        const el = document.createElement("div");
+        el.style.cssText = "position:fixed;left:0;top:0;display:flex;flex-direction:column;align-items:center;pointer-events:none;";
+        const heart = document.createElement("span");
+        heart.textContent = "❤️";
+        heart.style.cssText = "font-size:7rem;line-height:1;filter:drop-shadow(0 0 18px #FF2E7E)";
+        const cap = document.createElement("span");
+        cap.className = "font-heading uppercase";
+        cap.style.cssText = "font-size:1.6rem;color:#fff;text-shadow:0 2px 8px #000;white-space:nowrap";
+        cap.textContent = `${first(save.savedId)} → ${first(by)}: thank you!`;
+        el.append(heart, cap);
+        box.appendChild(el);
+        const mid = { x: (from.x + to.x) / 2, y: Math.min(from.y, to.y) - window.innerHeight * 0.35 };
+        const at = (pt: { x: number; y: number }, sc: number) => `translate(${pt.x}px, ${pt.y}px) translate(-50%, -50%) scale(${sc})`;
+        try {
+          const anim = el.animate(
+            [
+              { transform: at(from, 0.3), opacity: 0 },
+              { transform: at(from, 1.2), opacity: 1, offset: 0.15 },
+              { transform: at(mid, 1.4), opacity: 1, offset: 0.55 },
+              { transform: at(to, 1), opacity: 1, offset: 0.85 },
+              { transform: at(to, 1.6), opacity: 0 },
+            ],
+            { duration: 2600, delay: i * 350, easing: "ease-in-out", fill: "both" },
+          );
+          anim.onfinish = () => el.remove();
+        } catch {
+          /* no Web Animations: the timeout below still cleans up */
+        }
+        setTimeout(() => el.remove(), 4000 + i * 350);
+      });
+    });
+  }, [s.saves, s.players]);
+  return <div ref={layer} aria-hidden style={{ position: "fixed", inset: 0, pointerEvents: "none", zIndex: 70 }} />;
 }
 
 // ---------- root ----------
@@ -934,6 +1066,7 @@ export function TV({ host }: { host: GameHost }) {
       {main}
       <Footer />
       <Reactions items={reactions} />
+      <ThankHearts s={s} />
       <DMNotesPanel s={s} open={notesOpen} onClose={() => setNotesOpen(false)} />
     </div>
   );
