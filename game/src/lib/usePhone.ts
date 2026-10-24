@@ -34,9 +34,18 @@ export function usePhone(code: string | null) {
     const t = openRoom(code);
     tRef.current = t;
     let lastHeard = 0;
+    let lastPing = 0;
+    // Autopilot presence: a quiet "still here" every few seconds (the table marks a silent phone away after ~25 s).
+    // Also sent from the message handler, because background tabs throttle timers but still get events.
+    const ping = () => {
+      if (Date.now() - lastPing < 8000) return;
+      lastPing = Date.now();
+      t.send({ type: "ping", pid });
+    };
     const off = t.on((m: Msg) => {
       if (m.type === "state") {
         lastHeard = Date.now(); // only the table's state counts; other phones chatting doesn't mean we're in sync
+        ping();
         setState(m.state as GameState);
         setDeadlineAt(m.state.deadline ? Date.now() + m.state.deadline : 0);
       } else if (m.type === "portrait" && m.pid === pid) {
@@ -48,6 +57,7 @@ export function usePhone(code: string | null) {
     t.send({ type: "hello", pid });
     const iv = setInterval(() => {
       if (Date.now() - lastHeard > (lastHeard ? 5000 : 1500)) t.send({ type: "hello", pid });
+      else ping();
     }, 1500);
     const onVisible = () => document.visibilityState === "visible" && t.send({ type: "hello", pid });
     document.addEventListener("visibilitychange", onVisible);

@@ -86,6 +86,10 @@ const FINAL_COUNT_MS = 3500;
 const FINAL_SHAKE_MS = 6000;
 const FINAL_TUMBLE_MS = 2200;
 const FINAL_LAND_MS = 1800;
+// Autopilot: a phone that's said nothing for this long (mid-story) is away; its hero keeps playing on its own.
+const AWAY_SILENCE_MS = 25_000;
+const AWAY_AFTER_TIMEOUTS = 2;
+const PRESENCE_ONLY = new Set(["hello", "ping", "away"]); // these don't count as "I'm back"
 const BAND_RANK: Record<Band, number> = { LEGENDARY: 0, SUCCESS: 1, YES_BUT: 2, FAIL: 3, CATASTROPHE: 4 };
 
 /** Uniform-enough random int in [0, n) from crypto. */
@@ -219,6 +223,12 @@ export class GameHost {
   // Online mode: /watch pages ask for state + media. Only then do we spend bandwidth on reactions and scene copies.
   private watched = false;
   private sceneCopies = new Map<string, Promise<string>>(); // `${questId}:${index}` -> image small enough for a realtime message
+  private lastSeen: Record<string, number> = {};
+  private timeouts: Record<string, number> = {}; // consecutive phases this player let time out
+  private awayWhy: Record<string, "silent" | "idle" | "stepped"> = {};
+  private toastSubs = new Set<(t: { text: string; id: number }) => void>();
+  private toastId = 0;
+  private presenceIv: ReturnType<typeof setInterval> | null = null;
 
   constructor(code: string) {
     this.state = {
@@ -267,6 +277,7 @@ export class GameHost {
     };
     this.t = openRoom(code);
     this.t.on((m) => this.handle(m));
+    this.presenceIv = setInterval(() => this.checkPresence(), 2000);
   }
 
   get transportKind() {
@@ -285,6 +296,13 @@ export class GameHost {
     this.reactionSubs.add(fn);
     return () => {
       this.reactionSubs.delete(fn);
+    };
+  }
+
+  onToast(fn: (t: { text: string; id: number }) => void) {
+    this.toastSubs.add(fn);
+    return () => {
+      this.toastSubs.delete(fn);
     };
   }
 
@@ -359,7 +377,117 @@ export class GameHost {
     if (!this.player(pid)?.hero || this.state.ready.includes(pid)) return;
     const ready = [...this.state.ready, pid];
     this.set({ ready });
-    if (this.heroes().every((h) => ready.includes(h.id))) this.skip();
+    if (this.allPresent((id) => ready.includes(id))) this.skip();
+  }
+
+  // ---------- autopilot (presence) ----------
+  /** Heroes whose phones are with us. */
+  private present() {
+    return this.heroes().filter((p) => !p.away);
+  }
+
+  /** Everyone who's here has done it. Never true when nobody is here, so an empty table runs on timers. */
+  private allPresent(done: (pid: string) => boolean) {
+    const here = this.present();
+    return here.length > 0 && here.every((p) => done(p.id));
+  }
+
+  private inStory() {
+    return this.state.phase !== "lobby" && this.state.phase !== "storybook";
+  }
+
+  private toast(text: string) {
+    const t = { text, id: ++this.toastId };
+    this.toastSubs.forEach((f) => f(t));
+  }
+
+  private setAway(pid: string, why: "silent" | "idle" | "stepped") {
+    const p = this.player(pid);
+    if (!p?.hero) return;
+    this.awayWhy[pid] = why;
+    if (p.away) return;
+    this.patchPlayer(pid, { away: true });
+    const why2 = why === "stepped" ? "They tapped Step away" : why === "silent" ? "Their phone went quiet" : "Two timers in a row ran out on them";
+    this.note("hero", p.hero.name, `On autopilot: ${why2}. Their hero plays its own suggestions and rolls itself; nobody waits.`);
+    this.nudge();
+  }
+
+  private setBack(pid: string) {
+    const p = this.player(pid);
+    delete this.awayWhy[pid];
+    this.timeouts[pid] = 0;
+    if (!p?.away) return;
+    // One line on what their hero did without them (skipped when "Your moment" is already on their phone).
+    const s = this.state;
+    const beatAt = s.round?.beats.findIndex((b) => b.hero_id === pid) ?? -1;
+    const onScreen = s.phase === "outcome" && beatAt >= 0 && s.beatIndex >= beatAt;
+    const last = [...s.log].reverse().find((l) => l.heroId === pid)?.narration;
+    const catchUp = onScreen ? "" : last || "Not much yet. Your hero kept your seat warm.";
+    this.patchPlayer(pid, { away: false, catchUp });
+    if (catchUp) setTimeout(() => this.player(pid)?.catchUp === catchUp && this.patchPlayer(pid, { catchUp: "" }), 20_000);
+    if (p.hero) {
+      this.toast(`${p.hero.name} is back`);
+      this.note("hero", p.hero.name, "Back from autopilot.");
+    }
+  }
+
+  /** Every message from a phone says "I'm here". Pings only undo a silent away; a real tap undoes any. */
+  private touch(m: Msg) {
+    const pid = m.pid as string;
+    if (!pid || !this.player(pid)) return;
+    this.lastSeen[pid] = Date.now();
+    if (m.type === "away") {
+      if (this.inStory()) this.setAway(pid, "stepped");
+      return;
+    }
+    if (!PRESENCE_ONLY.has(m.type) || this.awayWhy[pid] === "silent") this.setBack(pid);
+  }
+
+  /** A phase ran out on these players. Two in a row and their hero goes on autopilot. */
+  private timedOut(pids: string[]) {
+    pids.forEach((pid) => {
+      const p = this.player(pid);
+      if (!p?.hero || p.away) return;
+      this.timeouts[pid] = (this.timeouts[pid] ?? 0) + 1;
+      if (this.timeouts[pid] >= AWAY_AFTER_TIMEOUTS) this.setAway(pid, "idle");
+    });
+  }
+
+  private checkPresence() {
+    if (!this.inStory()) return;
+    const now = Date.now();
+    this.heroes().forEach((p) => {
+      if (!p.away && now - (this.lastSeen[p.id] ?? now) > AWAY_SILENCE_MS) this.setAway(p.id, "silent");
+    });
+  }
+
+  /** Someone just went away: if everyone still here has already acted, don't make them wait. */
+  private nudge() {
+    const s = this.state;
+    const pitched = (id: string) => s.pitches.some((x) => x.playerId === id);
+    switch (s.phase) {
+      case "pitch":
+        if (!s.busy && this.allPresent(pitched)) this.endPitch();
+        return;
+      case "appeal":
+        return this.maybeEndAppeal();
+      case "roll":
+        if (s.revealed.length < s.rolls.length && this.allPresent((id) => s.revealed.includes(id) || !s.rolls.some((r) => r.playerId === id))) this.revealAll();
+        return;
+      case "final_roll":
+        // All-together roll: stop waiting at "arm" or "shake" once everyone still here has done it.
+        if (s.final?.stage === "arm" && this.allPresent((id) => !!s.final?.armed?.includes(id))) this.startCountdown();
+        else if (s.final?.stage === "shake" && this.allPresent((id) => !!s.final?.shook?.includes(id))) this.startTumble();
+        return;
+      case "mirror_write":
+        if (this.allPresent((id) => !s.mirror.some((c) => c.guardianId === id && !c.written))) this.endMirrorWrite();
+        return;
+      case "mirror_guess":
+        if (this.allPresent((id) => !s.mirror.some((c) => c.wardId === id && !c.guess))) this.startMirrorReveal();
+        return;
+      default:
+        if (READING.has(s.phase) && !s.busy && this.pending && this.allPresent((id) => s.ready.includes(id))) this.skip();
+    }
   }
 
   // ---------- DM's Notes ----------
@@ -471,6 +599,7 @@ export class GameHost {
 
   // ---------- messages from phones ----------
   private handle(m: Msg) {
+    this.touch(m);
     switch (m.type) {
       case "hello": {
         this.broadcastSoon();
@@ -519,6 +648,7 @@ export class GameHost {
         return this.onArm(m.pid);
       case "thank_save":
         return this.onThankSave(m.pid, m.saveId);
+      // "ping", "away" and "back" are handled by touch()
     }
   }
 
@@ -712,7 +842,11 @@ export class GameHost {
 
   begin() {
     if (!this.canBegin()) return;
-    const players = this.state.players.filter((p) => p.hero).map((p) => ({ ...p, peril: "", abilityAvailable: true, heart: 1 as const }));
+    const players = this.state.players.filter((p) => p.hero).map((p) => ({ ...p, peril: "", abilityAvailable: true, heart: 1 as const, away: false }));
+    const now = Date.now();
+    players.forEach((p) => (this.lastSeen[p.id] = Math.max(this.lastSeen[p.id] ?? 0, now)));
+    this.timeouts = {};
+    this.awayWhy = {};
     this.canon = [];
     this.ledger = [];
     this.recaps = [];
@@ -915,7 +1049,7 @@ export class GameHost {
     const pitch: Pitch = { id: `${this.state.sceneIndex}-${pid}`, playerId: pid, text: clean, useAbility, embraceFlaw };
     this.set({ pitches: [...this.state.pitches, pitch] });
     if (!this.isFinal()) this.fireVerdict(pitch);
-    if (this.heroes().every((h) => this.state.pitches.some((x) => x.playerId === h.id))) this.endPitch();
+    if (this.allPresent((id) => this.state.pitches.some((x) => x.playerId === id))) this.endPitch();
   }
 
   private onBoost(pid: string, pitchId: string) {
@@ -993,6 +1127,7 @@ export class GameHost {
     this.clearTimer();
     // Nobody is skipped: whoever ran out of time does the first thing that comes to mind.
     const missing = this.heroes().filter((h) => !this.state.pitches.some((p) => p.playerId === h.id));
+    this.timedOut(missing.map((h) => h.id));
     const autos: Pitch[] = missing.map((h) => ({
       id: `${this.state.sceneIndex}-${h.id}`,
       playerId: h.id,
@@ -1000,6 +1135,7 @@ export class GameHost {
       useAbility: false,
       embraceFlaw: false,
       auto: true,
+      autopilot: !!this.player(h.id)?.away,
     }));
     this.set({ pitches: [...this.state.pitches, ...autos] });
     // Plans are locked, so the secret clues can go public in the notes.
@@ -1018,6 +1154,7 @@ export class GameHost {
     if (judged.some((p) => !autoSucceeds(p.verdict!.tier) && !p.auto)) {
       this.set({ phase: "appeal" });
       this.setTimer(APPEAL_MS, () => this.endAppeal());
+      this.maybeEndAppeal();
     } else {
       this.startRoll();
     }
@@ -1067,14 +1204,21 @@ export class GameHost {
     this.maybeEndAppeal();
   }
 
+  /** Players the appeal phase is still waiting on (away players don't hold it up). */
+  private appealWaiting() {
+    return this.state.pitches.filter((p) => p.verdict && !autoSucceeds(p.verdict.tier) && !p.auto && !p.appealed && !p.appeal && !this.player(p.playerId)?.away);
+  }
+
   private maybeEndAppeal() {
-    const waiting = this.state.pitches.some((p) => p.verdict && !autoSucceeds(p.verdict.tier) && !p.auto && !p.appealed);
-    if (!waiting) this.endAppeal();
+    if (this.state.phase !== "appeal" || this.state.busy) return;
+    const pending = this.state.pitches.some((p) => p.appeal && !p.appealed);
+    if (!pending && !this.appealWaiting().length) this.endAppeal();
   }
 
   private async endAppeal() {
-    if (this.state.phase !== "appeal") return;
+    if (this.state.phase !== "appeal" || this.state.busy) return;
     this.clearTimer();
+    // Appeals are optional, so letting one lapse doesn't count toward autopilot.
     if (this.appeals.size) {
       this.set({ busy: "The DM is considering your arguments…" });
       const settled = await Promise.all(
@@ -1138,7 +1282,8 @@ export class GameHost {
     this.roundP = this.fetchRound(rolls);
     this.set({ phase: "roll", rolls, revealed, catchers: [] });
     if (revealed.length === rolls.length) return this.afterRoll();
-    this.setTimer(ROLL_MS, () => this.revealAll());
+    this.setTimer(ROLL_MS, () => this.revealAll(true));
+    this.nudge(); // only away heroes left to roll: their dice roll themselves
   }
 
   private onRoll(pid: string) {
@@ -1151,15 +1296,16 @@ export class GameHost {
       if (revealed.length === this.state.rolls.length) {
         this.clearTimer();
         setTimeout(() => this.afterRoll(), ROLL_ANIM_MS);
-      }
+      } else this.nudge();
       return;
     }
     if (this.state.phase === "final_roll") return this.revealFinalDie(pid);
   }
 
-  private revealAll() {
+  private revealAll(timedOut = false) {
     if (this.state.phase !== "roll") return;
     this.clearTimer();
+    if (timedOut) this.timedOut(this.state.rolls.filter((r) => !this.state.revealed.includes(r.playerId)).map((r) => r.playerId));
     this.state.rolls.filter((r) => !this.state.revealed.includes(r.playerId)).forEach((r) => this.noteRoll(r));
     this.set({ revealed: this.state.rolls.map((r) => r.playerId) });
     setTimeout(() => this.afterRoll(), ROLL_ANIM_MS);
@@ -1170,7 +1316,7 @@ export class GameHost {
     const failed = this.state.rolls.filter((r) => isFailure(r.band) && !r.rescuerId);
     if (failed.length && !this.caughtThisRound) {
       const catchers = this.heroes()
-        .filter((p) => p.heart === 1 && failed.some((f) => f.playerId !== p.id))
+        .filter((p) => p.heart === 1 && !p.away && failed.some((f) => f.playerId !== p.id))
         .map((p) => p.id);
       if (catchers.length) {
         this.set({ phase: "catch", catchers });
@@ -1395,6 +1541,7 @@ export class GameHost {
     // Safety net: whatever happens to the phones, the ending always arrives.
     if (this.finalSafety) clearTimeout(this.finalSafety);
     this.finalSafety = setTimeout(() => this.state.phase === "final_roll" && this.finish(false), FINAL_ROLL_MS + 20_000);
+    this.nudge(); // away heroes don't need to arm
   }
 
   private patchFinal(patch: Partial<NonNullable<GameState["final"]>>) {
@@ -1406,7 +1553,7 @@ export class GameHost {
     if (this.state.phase !== "final_roll" || f?.stage !== "arm" || !(pid in this.finalDice) || f.armed?.includes(pid)) return;
     const armed = [...(f.armed ?? []), pid];
     this.patchFinal({ armed });
-    if (Object.keys(this.finalDice).every((id) => armed.includes(id))) this.startCountdown();
+    if (this.allPresent((id) => armed.includes(id))) this.startCountdown();
   }
 
   private startCountdown() {
@@ -1420,7 +1567,7 @@ export class GameHost {
   private startShake() {
     if (this.state.phase !== "final_roll" || this.state.final?.stage !== "count") return;
     this.patchFinal({ stage: "shake" });
-    this.setTimer(FINAL_SHAKE_MS, () => this.startTumble());
+    this.setTimer(FINAL_SHAKE_MS, () => this.startTumble(true));
     this.broadcastNow();
   }
 
@@ -1432,16 +1579,17 @@ export class GameHost {
     if (f.stage !== "shake" && !early) return;
     const shook = [...(f.shook ?? []), pid];
     this.patchFinal({ shook });
-    if (Object.keys(this.finalDice).every((id) => shook.includes(id))) this.startTumble();
+    if (this.allPresent((id) => shook.includes(id))) this.startTumble();
   }
 
   /** Whoever didn't shake in time gets rolled for, then every die tumbles together under one drumroll. */
-  private startTumble() {
+  private startTumble(timedOut = false) {
     const f = this.state.final;
     if (this.state.phase !== "final_roll" || !f || (f.stage !== "shake" && f.stage !== "count")) return;
     const ids = Object.keys(this.finalDice);
     const auto = ids.filter((id) => !f.shook?.includes(id));
     this.patchFinal({ stage: "tumble", shook: ids, auto });
+    if (timedOut) this.timedOut(auto); // the shake window ran out on them (two in a row = autopilot)
     this.setTimer(FINAL_TUMBLE_MS, () => this.landFinal());
   }
 
@@ -1454,7 +1602,7 @@ export class GameHost {
       this.bump("rolls");
       if (die === 1) this.bump("nat1");
       if (die === 20) this.bump("nat20");
-      const how = auto.has(pid) ? "Didn't shake in time, so the game rolled for them" : "Shook their phone";
+      const how = !auto.has(pid) ? "Shook their phone" : this.player(pid)?.away ? "On autopilot, so the game rolled for them" : "Didn't shake in time, so the game rolled for them";
       this.note("roll", this.heroName(pid), `Final roll: ${how}. d20 rolled ${die}.${die === 20 ? " Natural 20." : die === 1 ? " Natural 1." : ""}`);
     });
     this.setTimer(FINAL_LAND_MS, () => this.finish(false));
@@ -1588,7 +1736,8 @@ export class GameHost {
       ready: [],
       busy: "",
     });
-    this.setTimer(MIRROR_WRITE_MS, () => this.endMirrorWrite());
+    this.setTimer(MIRROR_WRITE_MS, () => this.endMirrorWrite(true));
+    this.nudge();
   }
 
   /** Run one sentence through the kindness pass. Never blocks: a local version stands in after 9 s. */
@@ -1626,17 +1775,20 @@ export class GameHost {
     const mirror = this.state.mirror.map((c) => (c.guardianId === pid ? { ...c, written: true } : c));
     this.set({ mirror });
     if (mirror.every((c) => c.written)) this.endMirrorWrite();
+    else this.nudge();
   }
 
-  private endMirrorWrite() {
+  private endMirrorWrite(timedOut = false) {
     if (this.state.phase !== "mirror_write") return;
     this.clearTimer();
+    if (timedOut) this.timedOut(this.state.mirror.filter((c) => !c.written).map((c) => c.guardianId));
     // Whoever ran out of time: the DM writes one warm line from what their ward actually did.
     this.state.mirror.forEach((c) => {
       if (!this.mirrorP.has(c.guardianId)) this.polish(c.guardianId, "");
     });
     this.set({ phase: "mirror_guess" });
     this.setTimer(MIRROR_GUESS_MS, () => this.startMirrorReveal());
+    this.nudge();
   }
 
   private onMirrorGuess(pid: string, text: string) {
@@ -1647,6 +1799,7 @@ export class GameHost {
     const mirror = this.state.mirror.map((c) => (c.wardId === pid ? { ...c, guess: clean } : c));
     this.set({ mirror });
     if (mirror.every((c) => c.guess)) this.startMirrorReveal();
+    else this.nudge();
   }
 
   private async startMirrorReveal() {
@@ -1858,6 +2011,7 @@ export class GameHost {
 
   close() {
     this.clearTimer();
+    if (this.presenceIv) clearInterval(this.presenceIv);
     this.t.close();
   }
 }

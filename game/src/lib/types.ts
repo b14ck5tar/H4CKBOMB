@@ -31,6 +31,8 @@ export interface Player {
   heart: 0 | 1;
   titles: string[];
   peril: string; // "" when safe
+  away?: boolean; // autopilot: their phone went quiet, they timed out twice, or they tapped "Step away"
+  catchUp?: string; // "While you were away": shown on their phone for a few seconds after they're back
 }
 
 export interface Verdict {
@@ -58,6 +60,7 @@ export interface Pitch {
   appeal?: string; // "Convince the DM": the player's argument, if they made one
   appealed?: boolean; // true once the DM has ruled on the appeal
   auto?: boolean; // filled in for a player who ran out of time
+  autopilot?: boolean; // filled in because the player was away (TV shows "on autopilot")
 }
 
 export interface RollResult {
