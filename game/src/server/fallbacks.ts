@@ -3,7 +3,8 @@ import type { Band, Hero, RoundOutcome, SceneOpen, Storybook, Verdict } from "@/
 
 const pick = <T,>(a: T[]) => a[Math.floor(Math.random() * a.length)];
 
-export function fallbackHero(concept: string): Hero {
+// Safety: canned content never echoes player text (a failed call must not put an unreviewed concept on the TV).
+export function fallbackHero(): Hero {
   return {
     name: pick(["Doug", "Marigold", "Wendell", "Priya", "Sal"]),
     epithet: "the Unexpected",
@@ -13,7 +14,7 @@ export function fallbackHero(concept: string): Hero {
     stats: { brave: 1, clever: 3, charming: -1 },
     ability: { name: "Pocket Full of Stuff", text: "Pull exactly the right odd object from a pocket." },
     flaw: "Narrates their own actions out loud, badly.",
-    roast: `The notes just say "${concept.slice(0, 40)}" and a coffee stain.`,
+    roast: pick(["The DM's notes on this one are mostly a coffee stain.", "Nobody is sure what they do. Including them.", "Showed up with a backpack and no plan. Perfect."]),
     visual: {
       anchor: "a small round cartoon character with a giant hoodie and wild hair",
       outfit: "oversized hoodie, mismatched sneakers",
@@ -24,7 +25,20 @@ export function fallbackHero(concept: string): Hero {
   };
 }
 
-export function fallbackScene(heroIds: string[], plan: { location?: string; seeded_twist?: string; kind?: string }): SceneOpen {
+type PartyHero = { id?: string; ability?: { name?: string; text?: string } };
+
+/** A clue that still comes from the hero's own edge when the AI is down. Mirrored in host.ts (fallbackClue). */
+export function fallbackClue(h: PartyHero, location = "this place") {
+  const name = String(h.ability?.name ?? "").trim();
+  const text = String(h.ability?.text ?? "").trim().replace(/[.!]+$/, "");
+  return {
+    hero_id: String(h.id ?? ""),
+    clue: name ? `Your ${name} picks up the one weak spot in ${location} that nobody else sees.` : `You spot the one weak spot in ${location} that nobody else sees.`,
+    because: text ? `you can ${text[0].toLowerCase()}${text.slice(1)}` : "you were paying attention",
+  };
+}
+
+export function fallbackScene(heroIds: string[], plan: { location?: string; seeded_twist?: string; kind?: string }, party: PartyHero[] = []): SceneOpen {
   const where = plan.location ?? "The next stop";
   return {
     recap: "",
@@ -33,7 +47,7 @@ export function fallbackScene(heroIds: string[], plan: { location?: string; seed
     situation: plan.kind === "climax" ? "This is it. What's your final move?" : "What do you do?",
     banner: "Trouble",
     npc_line: { speaker: "", line: "" },
-    clues: [],
+    clues: heroIds.map((id) => fallbackClue(party.find((p) => p.id === id) ?? { id }, where)),
     suggestions: heroIds.map((id) => ({ hero_id: id, ideas: ["Go straight at it", "Look for another way in", "Ask whoever's in charge"] })),
     music: "eerie",
   };
@@ -51,6 +65,7 @@ export function fallbackVerdict(pitchId: string, bestStat: Verdict["stat"]): Ver
     on_success: "It works.",
     on_failure: "It doesn't.",
     moderation: "ok",
+    reason: "Backup ruling: the AI didn't answer, so every plan counts as Solid",
   };
 }
 
@@ -81,9 +96,6 @@ export function fallbackRound(actions: { hero_id: string; hero_name?: string; ba
 export const FALLBACK_EPILOGUE =
   "The dice land and, somehow, it holds. Everyone goes home with a story nobody will believe. And that's the version they'll never print.";
 
-/** Words that mean a draft can't be shown as written when the kindness pass is unavailable. */
-const UNKIND = /\b(stupid|dumb|idiot|moron|ugly|fat|hate|hated|sucks?|sucked|loser|worst|annoying|useless|lame|trash|garbage|pathetic|shut up|creep|weirdo|fuck\w*|shit\w*|bitch\w*|ass|asshole|crap)\b/i;
-
 export interface KindInput {
   ward_name?: string;
   pronouns?: string;
@@ -92,18 +104,17 @@ export interface KindInput {
   draft?: string;
 }
 
-/** Mirror, Mirror without Muse: keep a kind draft, otherwise write a warm line from the ward's own best moment. */
+/**
+ * Mirror, Mirror without Muse. Safety: unchecked text is never shown, so neither the guardian's draft nor the
+ * ward's raw lines are echoed. A warm canned line stands in, picked from whether the ward had a moment tonight.
+ */
 export function fallbackKind(input: KindInput): { ok: boolean; sentence: string } {
   const frame = String(input.frame || `${input.ward_name || "They"} was at their best when`).trim();
   const subj = input.pronouns === "he/him" ? "he" : input.pronouns === "she/her" ? "she" : "they";
-  const draft = String(input.draft ?? "").replace(/[<>]/g, "").replace(/\s+/g, " ").trim();
-  let rest = draft.toLowerCase().startsWith(frame.toLowerCase()) ? draft.slice(frame.length).trim() : draft;
-  rest = rest.replace(/^(when|…|\.\.\.)\s*/i, "").replace(/[\s.!?,]+$/, "");
-  if (rest.split(/\s+/).length >= 2 && !UNKIND.test(rest)) return { ok: true, sentence: `${frame} ${rest}.` };
-  const pitch = String(input.moments?.[0]?.pitch ?? "").replace(/[<>"“”]/g, "").replace(/[\s.!?]+$/, "").slice(0, 70);
+  const had = (input.moments ?? []).length > 0;
   return {
-    ok: !draft,
-    sentence: pitch ? `${frame} ${subj} said "${pitch}" and went all in.` : `${frame} ${subj} stayed in it with everyone, start to finish.`,
+    ok: false,
+    sentence: had ? `${frame} ${subj} went all in on a plan and made the whole table lean closer.` : `${frame} ${subj} stayed in it with everyone, start to finish.`,
   };
 }
 

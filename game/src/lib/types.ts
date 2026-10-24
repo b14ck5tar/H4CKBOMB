@@ -41,6 +41,9 @@ export interface Verdict {
   on_success: string;
   on_failure: string;
   moderation: "ok" | "redirected" | "flag";
+  reason: string; // DM's Notes: plain, ≤16 words, what made it this tier (or why an argument changed it)
+  fallback?: boolean; // set by the table when the AI never ruled (the plan text was not reviewed)
+  appealUnreviewed?: boolean; // set when the AI never read the player's argument
 }
 
 export interface Pitch {
@@ -89,7 +92,7 @@ export interface SceneOpen {
   situation: string;
   banner: string;
   npc_line: { speaker: string; line: string };
-  clues: { hero_id: string; clue: string }[];
+  clues: { hero_id: string; clue: string; because?: string }[];
   suggestions: { hero_id: string; ideas: string[] }[];
   music: string;
 }
@@ -155,6 +158,56 @@ export interface MirrorCard {
   sentence: string; // "" until the reveal starts
 }
 
+/** DM's Notes: one line in the AI-transparency log. Small strings only (it rides along in every state message). */
+export type NoteKind =
+  | "source"
+  | "scene"
+  | "clue"
+  | "ruling"
+  | "appeal"
+  | "roll"
+  | "boost"
+  | "catch"
+  | "hope"
+  | "safety"
+  | "fallback"
+  | "mirror"
+  | "reveal";
+
+export interface DMNote {
+  t: number; // seconds since the notes started
+  kind: NoteKind;
+  who: string;
+  text: string;
+}
+
+export interface DMNotes {
+  safety: string; // why this story is safe to play (shown from the start)
+  /** The real story. null until the reveal, so the twist is never spoiled (phones receive this state too). */
+  source: {
+    headline: string;
+    source: string;
+    date: string;
+    link: string;
+    summary: string;
+    mappings: { story: string; real: string }[];
+  } | null;
+  canon: string[]; // facts the DM must not contradict
+  open: string[]; // open complications the DM is carrying into the next scene
+  log: DMNote[]; // oldest first, capped
+  stats: {
+    rounds: number;
+    plans: number;
+    appeals: number;
+    appealsChanged: number;
+    rolls: number;
+    nat1: number;
+    nat20: number;
+    safety: number;
+    fallbacks: number;
+  };
+}
+
 export type Phase =
   | "lobby"
   | "quest"
@@ -195,6 +248,7 @@ export interface GameState {
   npcLine: { speaker: string; line: string };
   suggestions: Record<string, string[]>;
   clues: Record<string, string>; // private per hero (phones only show their own)
+  clueBecause: Record<string, string>; // why only that hero noticed it ("your Brains", "you're a night-shift baker")
   rescue: { victimId: string; peril: string } | null;
   // Round
   pitches: Pitch[];
@@ -219,5 +273,6 @@ export interface GameState {
   mirrorIndex: number; // which mirror card is showing
   thanks: Record<string, number>; // ward id -> times they tapped "Thank them"
   log: LogEntry[];
+  notes: DMNotes;
   busy: string;
 }

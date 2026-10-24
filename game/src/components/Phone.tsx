@@ -84,12 +84,13 @@ function Watch({ text = "Eyes on the TV" }: { text?: string }) {
   );
 }
 
-function Clue({ text }: { text?: string }) {
+function Clue({ text, because }: { text?: string; because?: string }) {
   if (!text) return null;
   return (
     <div className="rounded border-2 border-[var(--signal)] bg-black/40 p-4 flex flex-col gap-1">
-      <span className="font-ui text-xs uppercase tracking-[0.2em] text-[var(--signal)]">🔍 Only you noticed</span>
+      <span className="font-ui text-xs uppercase tracking-[0.2em] text-[var(--signal)]">🔍 Only you noticed…</span>
       <p className="text-lg leading-snug">{text}</p>
+      {because && <span className="font-ui text-xs text-[var(--signal)]/80">because {because}</span>}
       <span className="text-xs text-parchment/60">Tell the others, or use it in your plan.</span>
     </div>
   );
@@ -250,6 +251,7 @@ function WhileWaiting({ state, me, send }: { state: GameState; me: Player; send:
           <div className="flex items-center gap-2 flex-wrap">
             <Stamp text={stampText(mine.verdict.tier)} size="sm" slam rotate={-3} tone={autoSucceeds(mine.verdict.tier) ? "forest" : "crimson"} />
             <span className="italic text-ink-soft text-sm">{mine.verdict.quip}</span>
+            {mine.verdict.reason && <span className="font-ui text-xs text-ink-soft w-full">Why: {mine.verdict.reason}</span>}
           </div>
         ) : (
           !final && <span className="font-ui text-sm text-ink-soft animate-pulse">The DM is reading it…</span>
@@ -302,6 +304,7 @@ function Appeal({ state, me, send, deadlineAt }: { state: GameState; me: Player;
       <div className="page p-5 flex flex-col gap-2 items-center text-center">
         <Stamp text={stampText(mine.verdict.tier)} size="md" tone={autoSucceeds(mine.verdict.tier) ? "forest" : "crimson"} />
         <p className="text-ink-soft">{mine.appeal && !mine.appealed ? "The DM is considering your argument…" : mine.verdict.quip}</p>
+        {mine.appealed && mine.verdict.reason && <p className="font-ui text-xs text-ink-soft">Why: {mine.verdict.reason}</p>}
       </div>
     );
   return (
@@ -317,6 +320,7 @@ function Appeal({ state, me, send, deadlineAt }: { state: GameState; me: Player;
       <div className="flex items-center gap-2 flex-wrap">
         <Stamp text={stampText(mine.verdict.tier)} size="sm" slam={false} tone="crimson" />
         <span className="italic text-ink-soft text-sm">{mine.verdict.quip}</span>
+        {mine.verdict.reason && <span className="font-ui text-xs text-ink-soft w-full">Why: {mine.verdict.reason}</span>}
       </div>
       <p className="font-heading text-xl uppercase">Convince the DM?</p>
       <p className="text-ink-soft text-sm">Say why it should work. Use your clue, your ability, or something that already happened. A good argument can make it just work.</p>
@@ -548,7 +552,7 @@ export function Phone({ code }: { code: string }) {
       body = (
         <div className="flex flex-col gap-3">
           {state.phase === "quest" && <MissionCard state={state} me={me} />}
-          {state.phase === "narrating" && <Clue text={myClue} />}
+          {state.phase === "narrating" && <Clue text={myClue} because={state.clueBecause?.[me.id]} />}
           {state.busy ? <Watch text={state.busy} /> : <Watch text={state.phase === "reveal" ? "Look at the TV. This really happened." : "Eyes on the TV"} />}
           <ReadyButton state={state} me={me} send={send} />
         </div>
@@ -558,7 +562,7 @@ export function Phone({ code }: { code: string }) {
       const pitched = state.pitches.some((p) => p.playerId === me.id);
       body = (
         <div className="flex flex-col gap-3">
-          <Clue text={myClue} />
+          <Clue text={myClue} because={state.clueBecause?.[me.id]} />
           {pitched ? <WhileWaiting state={state} me={me} send={send} /> : <PitchForm key={state.sceneIndex} state={state} me={me} send={send} deadlineAt={deadlineAt} />}
         </div>
       );

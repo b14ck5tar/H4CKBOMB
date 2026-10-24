@@ -79,9 +79,9 @@ async function run(task: string, input: Any) {
 function fallback(task: string, input: Any) {
   switch (task) {
     case "character":
-      return fallbackHero(input.concept ?? "");
+      return fallbackHero();
     case "scene":
-      return fallbackScene(input.hero_ids ?? [], input.scene_plan ?? {});
+      return fallbackScene(input.hero_ids ?? [], input.scene_plan ?? {}, input.state?.party ?? []);
     case "verdict":
       return { verdicts: ((input.pitches as Any[]) ?? []).map((p) => fallbackVerdict(p.pitch_id, p.best_stat ?? "brave")) };
     case "round":
@@ -185,6 +185,8 @@ export async function POST(req: Request) {
         ...v,
         tier: TIERS.includes(v?.tier) ? v.tier : "solid",
         stat: STATS.includes(v?.stat) ? v.stat : input.pitches?.[0]?.best_stat ?? "brave",
+        // DM's Notes: one short plain line, never a wall of text.
+        reason: String(v?.reason ?? "").replace(/<\/?player_input[^>]*>/g, "").split(/\s+/).slice(0, 20).join(" ").slice(0, 140),
       }));
     }
     return NextResponse.json({ data, fallback: false });

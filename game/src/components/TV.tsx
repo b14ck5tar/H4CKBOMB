@@ -10,6 +10,8 @@ import { Stamp, WaxSeal } from "./Stamp";
 import { Reactions } from "./Reactions";
 import { Hourglass, ScreenFlash, TypeReveal } from "./Effects";
 import { HeroCard } from "./HeroCard";
+import { mask } from "@/lib/mask";
+import { DMNotesPanel, HowThisWasMade } from "./DMNotes";
 
 const fmt = (n: number) => (n >= 0 ? `+${n}` : `${n}`);
 const initials = (s: string) => s.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
@@ -46,7 +48,7 @@ function Hope({ hope, max }: { hope: number; max: number }) {
   );
 }
 
-function TopBar({ host, s }: { host: GameHost; s: GameState }) {
+function TopBar({ host, s, notesOpen, onNotes }: { host: GameHost; s: GameState; notesOpen: boolean; onNotes: () => void }) {
   const now = useNow(!!host.deadlineAt);
   const left = host.deadlineAt ? Math.max(0, host.deadlineAt - now) : 0;
   const [muted, setMuted] = useState(false);
@@ -63,6 +65,14 @@ function TopBar({ host, s }: { host: GameHost; s: GameState }) {
           Continue ▸
         </button>
       )}
+      <button
+        className={`btn btn-ghost !py-1 !px-3 text-sm ${notesOpen ? "ring-2 ring-[var(--crimson)]" : ""}`}
+        onClick={onNotes}
+        title="What the AI is doing, and why (press N)"
+        aria-pressed={notesOpen}
+      >
+        DM&apos;s Notes
+      </button>
       <button
         className="btn btn-ghost !py-1 !px-3 text-sm"
         onClick={() => {
@@ -215,7 +225,7 @@ function Lobby({ host, s }: { host: GameHost; s: GameState }) {
                 <div key={p.id} className="page p-4 flex items-center gap-3">
                   <WaxSeal initials={initials(p.name)} color={p.color} size={48} pulse />
                   <div>
-                    <p className="font-heading text-xl font-bold">{p.name}</p>
+                    <p className="font-heading text-xl font-bold">{mask(p.name)}</p>
                     <p className="italic text-ink-soft">{p.status === "building" ? "Drawing your character…" : "Thinking up a character…"}</p>
                   </div>
                 </div>
@@ -289,8 +299,8 @@ function PlanCards({ host, s }: { host: GameHost; s: GameState }) {
               <span className="font-heading text-xl font-bold uppercase flex-1">{pl.hero?.name}</span>
               {!!boosts[p.id] && <span className="font-ui text-lg">{"🔥".repeat(boosts[p.id])}</span>}
             </div>
-            <p className="text-xl leading-snug">“{p.text}”</p>
-            {p.appeal && <p className="text-base italic text-ink-soft">Argued: “{p.appeal}”</p>}
+            <p className="text-xl leading-snug">{p.verdict && p.verdict.moderation !== "ok" ? p.verdict.interpretation : `“${mask(p.text)}”`}</p>
+            {p.appeal && <p className="text-base italic text-ink-soft">Argued: “{mask(p.appeal)}”</p>}
             {p.verdict && (
               <div className="flex items-center gap-3 flex-wrap">
                 <Stamp text={stampText(p.verdict.tier)} size="sm" rotate={-3} slam={false} tone={autoSucceeds(p.verdict.tier) ? "forest" : p.verdict.tier === "solid" ? "ink" : p.verdict.tier === "miracle" ? "gilt" : "crimson"} />
@@ -384,7 +394,7 @@ function BeatCards({ host, s }: { host: GameHost; s: GameState }) {
       </div>
       <div className="flex flex-col gap-4 min-w-0">
         <p className="font-heading text-3xl uppercase text-[var(--gilt-bright)]">{pl?.hero?.name}</p>
-        {pitch && <p className="text-2xl italic text-ink-soft">“{pitch.text}”</p>}
+        {pitch && <p className="text-2xl italic text-ink-soft">“{pitch.verdict && pitch.verdict.moderation !== "ok" ? pitch.verdict.interpretation : mask(pitch.text)}”</p>}
         <TypeReveal text={beat.text} className="text-[2.1rem] leading-snug" />
         <p className="font-ui text-sm text-ink-soft">
           {i + 1} of {round.beats.length}
@@ -524,7 +534,7 @@ function FinalRollView({ host, s }: { host: GameHost; s: GameState }) {
           return (
             <div key={p.id} className="flex flex-col items-center gap-2 w-52 text-center">
               <D20 value={v ?? null} rolling={!result && v === undefined} size={170} tone={f?.best === p.id && result ? "gold" : "ink"} label={p.hero!.name} />
-              {s.finalMoves[p.id] && <p className="italic text-parchment/80 line-clamp-3">“{s.finalMoves[p.id]}”</p>}
+              {s.finalMoves[p.id] && <p className="italic text-parchment/80 line-clamp-3">“{mask(s.finalMoves[p.id])}”</p>}
             </div>
           );
         })}
@@ -620,11 +630,11 @@ function MirrorRevealCard({ host, s }: { host: GameHost; s: GameState }) {
             ward && <Avatar host={host} p={ward} size={180} />
           )}
           <p className="font-heading text-3xl uppercase text-center leading-tight">{ward?.hero?.name}</p>
-          {ward && <p className="font-ui text-base text-ink-soft">played by {ward.name}</p>}
+          {ward && <p className="font-ui text-base text-ink-soft">played by {mask(ward.name)}</p>}
         </div>
         <div className="flex flex-col gap-6 min-w-0">
           <p className="text-2xl italic text-ink-soft">
-            You guessed: {card.guess ? `“${card.guess}”` : "you were too shy to guess"}
+            You guessed: {card.guess ? `“${mask(card.guess)}”` : "you were too shy to guess"}
           </p>
           <div className="min-h-[7em]">
             {shown ? (
@@ -722,7 +732,7 @@ function StorybookView({ host, s }: { host: GameHost; s: GameState }) {
     );
   }
   const pages = book.pages;
-  const total = pages.length + 2;
+  const total = pages.length + 3; // cover, pages, crew, the end, how this story was made
   const imgIndex = (ref: string) => Math.max(0, Number(String(ref).replace("scene_", "")) - 1);
   const said = (id: string) => s.mirror.find((c) => c.wardId === id)?.sentence ?? "";
   const quotes = s.log
@@ -731,7 +741,7 @@ function StorybookView({ host, s }: { host: GameHost; s: GameState }) {
     .slice(0, 4);
   return (
     <div className="flex-1 min-h-0 flex flex-col gap-4 px-8 pb-4">
-      <div className="flex-1 min-h-0 page p-8 grid grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] gap-8 items-center">
+      <div className={`flex-1 min-h-0 page p-8 grid grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] gap-8 items-center ${page === total ? "grid-rows-[minmax(0,1fr)]" : ""}`}>
         {page === 0 && (
           <>
             <SceneImage host={host} index={s.scenes.length - 1} />
@@ -747,7 +757,7 @@ function StorybookView({ host, s }: { host: GameHost; s: GameState }) {
         {page > 0 && page <= pages.length && (
           <>
             <SceneImage host={host} index={imgIndex(pages[page - 1].image_ref)} />
-            <TypeReveal key={page} text={pages[page - 1].text} className="text-[1.8rem] leading-snug" />
+            <TypeReveal key={page} text={mask(pages[page - 1].text)} className="text-[1.8rem] leading-snug" />
           </>
         )}
         {page === pages.length + 1 && (
@@ -780,7 +790,7 @@ function StorybookView({ host, s }: { host: GameHost; s: GameState }) {
                 <p className="font-ui uppercase tracking-widest text-sm text-ink-soft">In their own words</p>
                 {quotes.map((l, i) => (
                   <p key={i} className="text-lg italic">
-                    “{l.pitch}” — {l.hero}
+                    “{mask(l.pitch)}” — {l.hero}
                   </p>
                 ))}
               </div>
@@ -796,8 +806,10 @@ function StorybookView({ host, s }: { host: GameHost; s: GameState }) {
             <button className="btn btn-crimson text-xl" onClick={() => host.nextTale()}>
               Next chapter
             </button>
+            <p className="font-ui text-sm text-ink-soft">One more page: how the AI made this story ▸</p>
           </div>
         )}
+        {page === pages.length + 3 && <HowThisWasMade s={s} />}
       </div>
       <div className="flex items-center justify-center gap-4">
         <button className="btn btn-ghost" disabled={page === 0} onClick={() => { setPage((p) => p - 1); sfx.pageTurn(); }}>◂ Back</button>
@@ -830,6 +842,7 @@ function QuestIntro({ host, s }: { host: GameHost; s: GameState }) {
 // ---------- root ----------
 export function TV({ host }: { host: GameHost }) {
   const s = useHost(host);
+  const [notesOpen, setNotesOpen] = useState(false);
   const [reactions, setReactions] = useState<{ id: number; emoji: string; color?: string }[]>([]);
   // 10-foot UI: scale every rem with the screen width so text stays readable from across a room.
   useEffect(() => {
@@ -843,7 +856,13 @@ export function TV({ host }: { host: GameHost }) {
   // Spacebar / clicker = Continue on reading screens.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if ((e.key === " " || e.key === "PageDown" || e.key === "ArrowRight") && !(e.target instanceof HTMLInputElement)) {
+      const typing = e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement;
+      if ((e.key === "n" || e.key === "N") && !typing && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        setNotesOpen((o) => !o);
+        return;
+      }
+      if (e.key === "Escape") setNotesOpen(false);
+      if ((e.key === " " || e.key === "PageDown" || e.key === "ArrowRight") && !typing) {
         e.preventDefault();
         if (READING.includes(host.getState().phase)) host.skip();
       }
@@ -906,10 +925,11 @@ export function TV({ host }: { host: GameHost }) {
 
   return (
     <div className="h-full flex flex-col overflow-hidden" onPointerDown={() => sfx.unlock()}>
-      <TopBar host={host} s={s} />
+      <TopBar host={host} s={s} notesOpen={notesOpen} onNotes={() => setNotesOpen((o) => !o)} />
       {main}
       <Footer />
       <Reactions items={reactions} />
+      <DMNotesPanel s={s} open={notesOpen} onClose={() => setNotesOpen(false)} />
     </div>
   );
 }

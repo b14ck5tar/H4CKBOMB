@@ -4,7 +4,9 @@ import questImages from "@/data/quest_images.json";
 import { ai, image, thumbnail, withTimeout } from "./api";
 import {
   APPEAL_MS,
+  BAND_LABEL,
   CATCH_MS,
+  ENDING_LABEL,
   FINAL_ROLL_MS,
   HOPE_MAX,
   HOPE_START,
@@ -12,6 +14,8 @@ import {
   PLAYER_COLORS,
   ROLL_ANIM_MS,
   ROLL_MS,
+  STAT_LABEL,
+  TIER_LABEL,
   TIER_MOD,
   autoSucceeds,
   band,
@@ -21,11 +25,14 @@ import {
   readMs,
 } from "./rules";
 import { openRoom, type Msg, type Transport } from "./transport";
+import { mask } from "./mask";
 import type {
   Band,
+  DMNotes,
   GameState,
   Hero,
   MirrorCard,
+  NoteKind,
   Pitch,
   Player,
   QuestSeed,
@@ -58,7 +65,6 @@ const MIRROR_WRITE_MS = 40_000;
 const MIRROR_GUESS_MS = 20_000;
 const MIRROR_PHASES = ["mirror_write", "mirror_guess", "mirror_reveal"];
 const BAND_RANK: Record<Band, number> = { LEGENDARY: 0, SUCCESS: 1, YES_BUT: 2, FAIL: 3, CATASTROPHE: 4 };
-const UNKIND = /\b(stupid|dumb|idiot|moron|ugly|fat|hate|hated|sucks?|sucked|loser|worst|annoying|useless|lame|trash|garbage|pathetic|shut up|creep|weirdo|fuck\w*|shit\w*|bitch\w*|ass|asshole|crap)\b/i;
 
 /** Uniform-enough random int in [0, n) from crypto. */
 function randInt(n: number) {
@@ -73,17 +79,58 @@ function mirrorFrame(h: Hero) {
   return `${h.name} was at ${poss} best when`;
 }
 
-/** Client-side safety net when the kindness pass doesn't answer in time. Mirrors fallbackKind on the server. */
-function kindFallback(h: Hero, moments: { pitch: string }[], draft: string) {
+/**
+ * Client-side safety net when the kindness pass doesn't answer. Mirrors fallbackKind on the server.
+ * Safety: never shows unchecked text (not the guardian's draft, not the ward's raw lines), only a warm canned line.
+ */
+function kindFallback(h: Hero, moments: { pitch: string }[]) {
   const frame = mirrorFrame(h);
   const subj = h.pronouns === "he/him" ? "he" : h.pronouns === "she/her" ? "she" : "they";
-  let rest = draft.toLowerCase().startsWith(frame.toLowerCase()) ? draft.slice(frame.length).trim() : draft.trim();
-  rest = rest.replace(/^(when|…|\.\.\.)\s*/i, "").replace(/[\s.!?,]+$/, "");
-  if (rest.split(/\s+/).length >= 2 && !UNKIND.test(rest)) return `${frame} ${rest}.`;
-  const pitch = (moments[0]?.pitch ?? "").replace(/["“”]/g, "").replace(/[\s.!?]+$/, "").slice(0, 70);
-  return pitch ? `${frame} ${subj} said "${pitch}" and went all in.` : `${frame} ${subj} stayed in it with everyone, start to finish.`;
+  return moments.length
+    ? `${frame} ${subj} went all in on a plan and made the whole table lean closer.`
+    : `${frame} ${subj} stayed in it with everyone, start to finish.`;
 }
 const SUCCESS_BANDS: Band[] = ["YES_BUT", "SUCCESS", "LEGENDARY"];
+
+// ---------- DM's Notes (AI transparency) ----------
+const NOTES_CAP = 60;
+const TIER_RANK = { miracle: 0, absurd: 1, risky: 2, solid: 3, clever: 4 } as const;
+/** Why each seed story is safe to play. Short and static: these five were checked by hand. */
+const SAFETY_NOTES: Record<string, string> = {
+  "rust-wyrm": "No one hurt. The bridge closed as a precaution and is reopening. No real people in the story.",
+  "billion-pearls": "No one hurt. The spill was in July and the beach clean-up is underway. No real people in the story.",
+  "hanging-boulder": "No one hurt. The rock fell on a closed walkway and the event is over. No real people in the story.",
+  "galactic-signal": "Nobody involved at all: a radio source 49,000+ light-years away. No danger. No real people in the story.",
+  "littlest-gardener": "Happy local news: a festival pumpkin win. No one hurt. The young grower is never named or shown.",
+  "idle-island": "Nothing happened to anyone: it was a computer simulation in a research study. No real people in the story.",
+  "returned-otter": "Good wildlife news: an otter came home. No one hurt. No real people in the story.",
+  "cornfield-dome": "Space debris landed in an empty field, was secured, and posed no danger. No one hurt. No real people in the story.",
+};
+const SAFETY_GENERIC = "Passed the tragedy filter: no deaths, injuries, crime, war, disease or politics. No real people in the story.";
+
+function emptyNotes(): DMNotes {
+  return {
+    safety: "",
+    source: null,
+    canon: [],
+    open: [],
+    log: [],
+    stats: { rounds: 0, plans: 0, appeals: 0, appealsChanged: 0, rolls: 0, nat1: 0, nat20: 0, safety: 0, fallbacks: 0 },
+  };
+}
+
+const fmtMod = (n: number) => (n >= 0 ? `+${n}` : `${n}`);
+const end = (t: string) => t.trim().replace(/[\s.!?,]+$/, "") + ".";
+const clip = (t: string, n: number) => (t.length > n ? t.slice(0, n - 1).trimEnd() + "…" : t);
+
+/** A clue from the hero's own edge, for when the AI is down. Mirrors fallbackClue on the server. */
+function fallbackClue(h: Hero, location: string) {
+  const text = (h.ability?.text ?? "").trim().replace(/[.!]+$/, "");
+  return {
+    clue: h.ability?.name ? `Your ${h.ability.name} picks up the one weak spot in ${location} that nobody else sees.` : `You spot the one weak spot in ${location} that nobody else sees.`,
+    because: text ? `you can ${text[0].toLowerCase()}${text.slice(1)}` : "you were paying attention",
+  };
+}
 
 function bestStat(h?: Hero): Stat {
   if (!h) return "brave";
@@ -144,6 +191,8 @@ export class GameHost {
   private lastPortraitSend: Record<string, number> = {};
   private mirrorP = new Map<string, Promise<string>>(); // guardian id -> their finished, kind sentence
   private lastThanks: Record<string, number> = {};
+  private notesStart = Date.now();
+  private mirrorFate = new Map<string, "kept" | "rewritten" | "dm">(); // guardian id -> what the kindness pass did
 
   constructor(code: string) {
     this.state = {
@@ -165,6 +214,7 @@ export class GameHost {
       npcLine: { speaker: "", line: "" },
       suggestions: {},
       clues: {},
+      clueBecause: {},
       rescue: null,
       pitches: [],
       boosts: {},
@@ -185,6 +235,7 @@ export class GameHost {
       mirrorIndex: 0,
       thanks: {},
       log: [],
+      notes: emptyNotes(),
       busy: "",
     };
     this.t = openRoom(code);
@@ -284,6 +335,113 @@ export class GameHost {
     if (this.heroes().every((h) => ready.includes(h.id))) this.skip();
   }
 
+  // ---------- DM's Notes ----------
+  /** One line in the transparency log. Small strings only: this rides along in every state message. */
+  private note(kind: NoteKind, who: string, text: string) {
+    const n = this.state.notes;
+    const entry = {
+      t: Math.max(0, Math.round((Date.now() - this.notesStart) / 1000)),
+      kind,
+      who: clip(who, 40),
+      text: clip(text.replace(/\s+/g, " ").trim(), 240),
+    };
+    this.set({ notes: { ...n, log: [...n.log, entry].slice(-NOTES_CAP) } });
+  }
+
+  private bump(k: keyof DMNotes["stats"], by = 1) {
+    const n = this.state.notes;
+    this.set({ notes: { ...n, stats: { ...n.stats, [k]: n.stats[k] + by } } });
+  }
+
+  /** Honesty: say so every time a canned backup stood in for the AI. */
+  private fellBack(what: string, why: string) {
+    this.bump("fallbacks");
+    this.note("fallback", "Backup used", `${what}: ${why}. Canned text stood in so the table never freezes.`);
+  }
+
+  /**
+   * Every AI call goes through here: a timeout, an error, a server-side fallback, or an unusable answer
+   * all get logged once, then `fb` stands in.
+   */
+  private viaAI<T, R>(what: string, p: Promise<{ data: T; fallback: boolean }>, ms: number, use: (d: T, fallback: boolean) => R | null | undefined, fb: () => R): Promise<R> {
+    let done = false;
+    const flag = (why: string) => {
+      if (done) return;
+      done = true;
+      this.fellBack(what, why);
+    };
+    return withTimeout(
+      p.then(
+        (res) => {
+          if (done) return undefined as unknown as R; // lost the race to the timer; the value is ignored
+          const out = use(res.data, res.fallback);
+          if (res.fallback || out == null) {
+            flag(res.fallback ? "the AI call failed" : "the AI's answer was unusable");
+            return out ?? fb();
+          }
+          done = true;
+          return out;
+        },
+        () => {
+          flag("the AI call errored");
+          return fb();
+        },
+      ),
+      ms,
+      () => {
+        // withTimeout runs this when its timer fires even if the call already answered: then it's a no-op.
+        if (done) return undefined as unknown as R;
+        flag(`no answer within ${Math.round(ms / 1000)}s`);
+        return fb();
+      },
+    );
+  }
+
+  private heroName(pid: string) {
+    return this.player(pid)?.hero?.name ?? this.player(pid)?.name ?? "Someone";
+  }
+
+  /** What the DM ruled, in plain words. Redirected plans are described, never quoted. */
+  private noteRuling(pitch: Pitch, v: Verdict) {
+    this.bump("plans");
+    const name = this.heroName(pitch.playerId);
+    // Safety: player text that never reached the AI's moderation is not printed.
+    const plan = v.fallback ? "(plan hidden: not reviewed)" : v.moderation === "ok" ? `"${clip(mask(pitch.text), 90)}"` : `(${clip(v.interpretation, 80)})`;
+    const tier = `${TIER_LABEL[v.tier]}${autoSucceeds(v.tier) ? ", no roll" : ` (${STAT_LABEL[v.stat]})`}`;
+    this.note("ruling", name, `${pitch.auto ? "Out of time, so the DM used a suggestion: " : ""}${plan} → ${tier}. ${end(v.reason || "No reason given")}`);
+    if (v.moderation === "redirected") {
+      this.bump("safety");
+      this.note("safety", name, "Plan steered to the nearest harmless version. The original is never repeated.");
+    } else if (v.moderation === "flag") {
+      this.bump("safety");
+      this.note("safety", name, "Plan flagged for care. The DM answered gently and kept it at Solid.");
+    }
+  }
+
+  /** The die, the bonuses, the total and the band: all computed in code, never by the AI. */
+  private noteRoll(r: RollResult, delay = ROLL_ANIM_MS) {
+    const write = () => {
+      const name = this.heroName(r.playerId);
+      const v = this.state.pitches.find((p) => p.playerId === r.playerId)?.verdict;
+      if (r.noRoll) return this.note("roll", name, "No roll: a Clever plan just works.");
+      this.bump("rolls");
+      if (r.kept === 1) this.bump("nat1");
+      if (r.kept === 20) this.bump("nat20");
+      const pitch = this.state.pitches.find((p) => p.playerId === r.playerId);
+      const advWhy = [r.boosted && "🔥 table boost", pitch?.useAbility && v?.ability_fits && "used their ability"].filter(Boolean).join(" + ");
+      const dice =
+        r.dice.length > 1
+          ? `d20 rolled ${r.dice.join(" and ")}, kept ${r.kept} (${r.advantage === "adv" ? `advantage: ${advWhy}` : "disadvantage: walked into their flaw"})`
+          : `d20 rolled ${r.kept}`;
+      const mods = v ? `, ${fmtMod(r.statBonus)} ${STAT_LABEL[v.stat]}, ${fmtMod(r.tierMod)} ${TIER_LABEL[v.tier]}` : "";
+      const nat = r.kept === 1 ? " Natural 1." : r.kept === 20 ? " Natural 20." : "";
+      const miracle = v?.tier === "miracle" && r.kept !== 20 ? " (only a natural 20 makes a miracle)" : "";
+      this.note("roll", name, `${dice}${mods} = ${r.total} → ${end(BAND_LABEL[r.band].replace(/…$/, "") + miracle)}${nat}${r.rescuerId ? ` Caught by ${this.heroName(r.rescuerId)}.` : ""}`);
+    };
+    if (delay > 0) setTimeout(write, delay);
+    else write();
+  }
+
   // ---------- messages from phones ----------
   private handle(m: Msg) {
     switch (m.type) {
@@ -364,12 +522,28 @@ export class GameHost {
     const text = String(concept ?? "").slice(0, 200);
     this.patchPlayer(pid, { status: "building", concept: text, hasPortrait: false });
     const others = this.heroes().filter((o) => o.id !== pid);
-    const { data: hero } = await ai<Hero>("character", {
-      concept: text,
-      partySoFar: others.map((o) => o.hero!.visual.anchor),
-      avoidNames: others.map((o) => o.hero!.name),
-    }).catch(() => ({ data: undefined as unknown as Hero }));
+    const hero = await this.viaAI<Hero, Hero | undefined>(
+      `${p.name}'s character card`,
+      ai<Hero>("character", {
+        concept: text,
+        partySoFar: others.map((o) => o.hero!.visual.anchor),
+        avoidNames: others.map((o) => o.hero!.name),
+      }),
+      45_000,
+      (d) => d,
+      () => undefined,
+    );
     if (!hero) return this.patchPlayer(pid, { status: "joined" });
+    if (hero.concept_status === "redirected" || hero.concept_status === "reimagined") {
+      this.bump("safety");
+      this.note(
+        "safety",
+        hero.name,
+        hero.concept_status === "redirected"
+          ? "Character idea steered to a harmless, funny version. The original is never repeated."
+          : "Character idea named a real person or famous character, so the DM made an original instead.",
+      );
+    }
     this.patchPlayer(pid, { status: "ready", hero, abilityAvailable: true, heart: 1 });
     const url = await image({ kind: "portrait", visual: hero.visual, flaw: hero.flaw, ability: hero.ability?.text });
     if (!url || this.player(pid)?.hero !== hero) return;
@@ -384,6 +558,7 @@ export class GameHost {
     if (!seed) return;
     this.seed = seed;
     this.sceneImages = {};
+    this.set({ notes: { ...this.state.notes, safety: SAFETY_NOTES[seed.id] ?? SAFETY_GENERIC } });
     const locs = seed.locations;
     const idx = [0, Math.floor(locs.length / 2), locs.length - 1];
     const kinds = ["hook", "twist", "climax"] as const;
@@ -443,6 +618,18 @@ export class GameHost {
     this.threatMood = this.seed!.the_threat.description.split(".")[0];
     this.reactionCounts = {};
     this.mirrorP.clear();
+    this.mirrorFate.clear();
+    const seed = this.seed!;
+    // Keep anything the notes caught in the lobby (character safety, backups); the story starts fresh.
+    this.set({
+      notes: { ...this.state.notes, safety: SAFETY_NOTES[seed.id] ?? SAFETY_GENERIC, source: null, canon: [], open: [] },
+    });
+    this.note(
+      "source",
+      "The story",
+      `Built from a real news story${seed.category ? ` (${seed.category.replace(/_/g, " ")})` : ""}. The headline stays hidden until the end so it can't spoil the twist.`,
+    );
+    this.note("safety", "Why it's safe", SAFETY_NOTES[seed.id] ?? SAFETY_GENERIC);
     this.set({
       players,
       wards: this.assignWards(players.map((p) => p.id)),
@@ -527,6 +714,7 @@ export class GameHost {
       banner: "",
       npcLine: { speaker: "", line: "" },
       clues: {},
+      clueBecause: {},
       rescue,
       pitches: [],
       boosts: {},
@@ -553,23 +741,29 @@ export class GameHost {
       situation: isClimax ? "This is it. What's your final move?" : rescue ? `${victim!.hero!.name} is stuck. How do you get them out?` : "What do you do?",
       banner: rescue ? "Someone's Stuck" : "Trouble",
       npc_line: { speaker: "", line: "" },
-      clues: [],
+      clues: this.heroes().map((p) => ({ hero_id: p.id, ...fallbackClue(p.hero!, scene.location) })),
       suggestions: heroIds.map((id) => ({ hero_id: id, ideas: ["Go straight at it", "Look for another way in", "Talk to whoever's in charge"] })),
       music: "eerie",
     });
     const next = () => (isClimax ? this.startPitch(true) : this.startPitch(false));
+    const sceneLabel = isClimax ? "Finale" : `Scene ${i + 1}`;
     try {
-      const res = await withTimeout(
-        ai<SceneOpen>("scene", input).then((r) => (r.fallback ? fb() : r.data)),
-        16_000,
-        fb,
-      );
+      const res = await this.viaAI(`${sceneLabel} opening`, ai<SceneOpen>("scene", input), 16_000, (d, f) => (f ? fb() : d), fb);
       if (this.state.phase !== "narrating" || this.state.sceneIndex !== i) return;
+      this.note("scene", `${sceneLabel} · ${scene.kind}`, `The DM was given: the place (${scene.location}) and a twist seeded from a real fact: ${clip(scene.twist, 120)}`);
+      this.note("scene", sceneLabel, `Question for the table: ${res.question || fb().question}`);
+      if (rescue) this.note("scene", victim!.hero!.name, `In peril from last scene (${victim!.peril}). This scene is a rescue.`);
       if (res.recap) this.recaps.push(res.recap);
       const suggestions: Record<string, string[]> = {};
       res.suggestions?.forEach((s) => s?.hero_id && Array.isArray(s.ideas) && (suggestions[s.hero_id] = s.ideas));
       const clues: Record<string, string> = {};
-      res.clues?.forEach((c) => c?.hero_id && c.clue && (clues[c.hero_id] = c.clue));
+      const clueBecause: Record<string, string> = {};
+      res.clues?.forEach((c) => {
+        if (!c?.hero_id || !c.clue) return;
+        clues[c.hero_id] = c.clue;
+        const h = this.player(c.hero_id)?.hero;
+        clueBecause[c.hero_id] = String(c.because ?? "").trim() || (h ? fallbackClue(h, scene.location).because : "");
+      });
       const npcLine = res.npc_line ?? { speaker: "", line: "" };
       this.set({
         narration: res.narration || fb().narration,
@@ -580,13 +774,16 @@ export class GameHost {
         npcLine,
         suggestions,
         clues,
+        clueBecause,
         busy: "",
       });
       this.reading(`${res.narration ?? ""} ${npcLine.line ?? ""}`, next);
     } catch (e) {
       console.error("[host] openScene failed", e);
       const f = fb();
-      this.set({ narration: f.narration, situation: f.situation, question: f.question, banner: f.banner, npcLine: f.npc_line, busy: "" });
+      const clues = Object.fromEntries(f.clues.map((c) => [c.hero_id, c.clue]));
+      const clueBecause = Object.fromEntries(f.clues.map((c) => [c.hero_id, c.because ?? ""]));
+      this.set({ narration: f.narration, situation: f.situation, question: f.question, banner: f.banner, npcLine: f.npc_line, clues, clueBecause, busy: "" });
       this.reading(f.narration, next);
     }
   }
@@ -619,13 +816,16 @@ export class GameHost {
     if (this.state.phase !== "pitch" || this.isFinal()) return;
     const target = this.state.pitches.find((p) => p.id === pitchId);
     if (!target || target.playerId === pid || !this.player(pid)?.hero) return;
+    if (this.state.boosts[pid] === pitchId) return;
     this.set({ boosts: { ...this.state.boosts, [pid]: pitchId } });
+    this.note("boost", this.heroName(pid), `🔥 boosted ${this.heroName(target.playerId)}'s plan.`);
   }
 
   private verdictFallback(pitch: Pitch): Verdict {
     const p = this.player(pitch.playerId);
     return {
-      interpretation: pitch.text.slice(0, 80),
+      interpretation: "tries their plan",
+      fallback: true,
       stat: bestStat(p?.hero),
       tier: "solid",
       ability_fits: false,
@@ -634,6 +834,7 @@ export class GameHost {
       on_success: "It works.",
       on_failure: "It doesn't.",
       moderation: "ok",
+      reason: "Backup ruling: the AI didn't answer in time, so it counts as Solid",
     };
   }
 
@@ -641,7 +842,10 @@ export class GameHost {
     const p = this.player(pitch.playerId)!;
     const r = this.state.rescue;
     const others = this.state.pitches.filter((x) => x.id !== pitch.id).map((x) => x.text);
-    return withTimeout(
+    const fb = (): Verdict =>
+      appeal ? { ...appeal.previous, reason: "The DM didn't answer in time, so the first ruling stands", appealUnreviewed: true } : this.verdictFallback(pitch);
+    return this.viaAI(
+      appeal ? `Ruling on ${p.hero?.name}'s argument` : `Ruling on ${p.hero?.name}'s plan`,
       ai<{ verdicts: (Verdict & { pitch_id: string })[] }>("verdict", {
         state: this.dmState(),
         rescue: r ? { hero_in_peril: this.player(r.victimId)?.hero?.name, peril: r.peril } : undefined,
@@ -660,9 +864,10 @@ export class GameHost {
           },
         ],
         other_pitches: others,
-      }).then((res) => res.data.verdicts[0] ?? appeal?.previous ?? this.verdictFallback(pitch)),
+      }),
       9000,
-      () => appeal?.previous ?? this.verdictFallback(pitch),
+      (d, f): Verdict | null => (f ? fb() : (d?.verdicts?.[0] ?? null)),
+      fb,
     );
   }
 
@@ -672,6 +877,7 @@ export class GameHost {
     // Show each stamp as soon as it lands, so the phone can offer "Convince the DM" right away.
     v.then((verdict) => {
       if (this.state.phase !== "pitch" && this.state.phase !== "appeal") return;
+      this.noteRuling(pitch, verdict);
       this.set({ pitches: this.state.pitches.map((x) => (x.id === pitch.id ? { ...x, verdict } : x)) });
     });
   }
@@ -690,7 +896,10 @@ export class GameHost {
       auto: true,
     }));
     this.set({ pitches: [...this.state.pitches, ...autos] });
+    // Plans are locked, so the secret clues can go public in the notes.
+    this.heroes().forEach((h) => this.state.clues[h.id] && this.note("clue", h.hero!.name, `Secret clue the DM gave them${this.state.clueBecause[h.id] ? ` (because ${this.state.clueBecause[h.id]})` : ""}: ${this.state.clues[h.id]}`));
     if (this.isFinal()) {
+      this.note("ruling", "Finale", "Final moves are in. No rulings in the finale: one shared roll decides (best die + Hope).");
       this.set({ finalMoves: Object.fromEntries(this.state.pitches.map((p) => [p.playerId, p.text])) });
       return this.startFinalRoll();
     }
@@ -722,11 +931,22 @@ export class GameHost {
     const previous = pitch.verdict!;
     const v = this.askVerdict({ ...pitch, appeal: clean }, { text: clean, previous }).then((nv) => {
       // An argument can only help: never lower the tier.
-      const rank = { miracle: 0, absurd: 1, risky: 2, solid: 3, clever: 4 } as const;
-      return rank[nv.tier] >= rank[previous.tier] ? nv : { ...nv, tier: previous.tier };
+      if (TIER_RANK[nv.tier] >= TIER_RANK[previous.tier]) return nv;
+      return { ...nv, tier: previous.tier, reason: `${nv.reason ? nv.reason + ". " : ""}An argument can only help, so it stays ${TIER_LABEL[previous.tier]}` };
     });
     this.appeals.set(pitch.id, v);
     v.then((verdict) => {
+      const changed = verdict.tier !== previous.tier;
+      this.bump("appeals");
+      if (changed) this.bump("appealsChanged");
+      const arg = verdict.appealUnreviewed
+        ? "Made an argument (hidden: not reviewed). "
+        : verdict.moderation === "ok"
+          ? `Argued "${clip(mask(clean), 80)}". `
+          : "Made an argument (steered to a harmless version). ";
+      const ruling = changed ? `${TIER_LABEL[previous.tier]} → ${TIER_LABEL[verdict.tier]}` : `Stays ${TIER_LABEL[verdict.tier]}`;
+      this.note("appeal", this.heroName(pid), `${arg}${ruling}: ${end(verdict.reason || "no reason given")}`);
+      if (verdict.moderation !== "ok" && previous.moderation === "ok") this.bump("safety");
       if (this.state.phase !== "appeal") return;
       this.set({ pitches: this.state.pitches.map((x) => (x.id === pitch.id ? { ...x, verdict, appealed: true } : x)) });
       this.maybeEndAppeal();
@@ -800,6 +1020,15 @@ export class GameHost {
       if (p.useAbility && p.verdict?.ability_fits && this.player(p.playerId)?.abilityAvailable) this.patchPlayer(p.playerId, { abilityAvailable: false });
     });
     const revealed = rolls.filter((r) => r.noRoll).map((r) => r.playerId);
+    const boostedId = this.boostedPitchId();
+    if (boostedId) {
+      const n = Object.values(this.state.boosts).filter((id) => id === boostedId).length;
+      const owner = this.state.pitches.find((p) => p.id === boostedId)?.playerId ?? "";
+      this.note("boost", this.heroName(owner), `Most 🔥 from the table (${n}): rolls with advantage, 2 dice, keep the higher.`);
+    } else if (Object.keys(this.state.boosts).length) {
+      this.note("boost", "The table", "🔥 votes tied, so nobody gets the boost this round.");
+    }
+    rolls.filter((r) => r.noRoll).forEach((r) => this.noteRoll(r, 0));
     this.roundP = this.fetchRound(rolls);
     this.set({ phase: "roll", rolls, revealed, catchers: [] });
     if (revealed.length === rolls.length) return this.afterRoll();
@@ -811,6 +1040,8 @@ export class GameHost {
       if (!this.state.rolls.some((r) => r.playerId === pid) || this.state.revealed.includes(pid)) return;
       const revealed = [...this.state.revealed, pid];
       this.set({ revealed });
+      const r = this.state.rolls.find((x) => x.playerId === pid);
+      if (r) this.noteRoll(r);
       if (revealed.length === this.state.rolls.length) {
         this.clearTimer();
         setTimeout(() => this.afterRoll(), ROLL_ANIM_MS);
@@ -823,6 +1054,7 @@ export class GameHost {
   private revealAll() {
     if (this.state.phase !== "roll") return;
     this.clearTimer();
+    this.state.rolls.filter((r) => !this.state.revealed.includes(r.playerId)).forEach((r) => this.noteRoll(r));
     this.set({ revealed: this.state.rolls.map((r) => r.playerId) });
     setTimeout(() => this.afterRoll(), ROLL_ANIM_MS);
   }
@@ -853,6 +1085,8 @@ export class GameHost {
     this.patchPlayer(pid, { heart: 0 });
     const pitch = this.state.pitches.find((p) => p.playerId === target.playerId)!;
     const reroll = this.makeRoll(pitch, pid, true);
+    this.note("catch", this.heroName(pid), `Catch! Spent their one heart to re-roll ${this.heroName(target.playerId)}'s ${BAND_LABEL[target.band]}.`);
+    this.noteRoll(reroll);
     const rolls = this.sortRolls(this.state.rolls.map((r) => (r.playerId === target.playerId ? reroll : r)));
     this.roundP = this.fetchRound(rolls);
     this.set({ phase: "roll", rolls, catchers: [], revealed: this.state.revealed });
@@ -882,12 +1116,15 @@ export class GameHost {
         on_failure: pitch.verdict?.on_failure ?? "",
       };
     });
-    const p = ai<RoundOutcome>("round", {
+    const p: Promise<RoundOutcome> = ai<RoundOutcome>("round", {
       state: this.dmState(),
       rescue_of: r ? this.player(r.victimId)?.hero?.name ?? "" : "",
       actions,
       recent_lines: this.recentLines.slice(-6),
-    }).then((res) => res.data);
+    }).then((res) => {
+      if (res.fallback && this.roundP === p) this.fellBack("Round narration", "the AI call failed");
+      return res.data;
+    });
     p.catch(() => {});
     return p;
   }
@@ -915,8 +1152,17 @@ export class GameHost {
     if (this.state.phase !== "catch" && !(fromCatch && this.state.phase === "roll") && this.state.phase !== "roll") return;
     this.clearTimer();
     this.set({ phase: "outcome", catchers: [], busy: "The DM is writing it all down…", beatIndex: 0, round: null });
-    let out = await withTimeout(this.roundP ?? Promise.resolve(this.roundFallback()), 14_000, () => this.roundFallback());
-    if (!out || !Array.isArray(out.beats)) out = this.roundFallback();
+    // withTimeout calls its fallback when the timer fires even if the call already won, so only log a real miss.
+    let settled = false;
+    const rp = (this.roundP ?? Promise.resolve(this.roundFallback())).then((o) => ((settled = true), o));
+    let out = await withTimeout(rp, 14_000, () => {
+      if (!settled) this.fellBack("Round narration", "no answer within 14s");
+      return this.roundFallback();
+    });
+    if (!out || !Array.isArray(out.beats)) {
+      this.fellBack("Round narration", "the AI's answer was unusable");
+      out = this.roundFallback();
+    }
     // One beat per hero, in roll order, even if the model dropped one.
     const fb = this.roundFallback();
     const beats = this.state.rolls.map((r) => out.beats.find((b) => b.hero_id === r.playerId) ?? fb.beats.find((b) => b.hero_id === r.playerId)!);
@@ -944,12 +1190,34 @@ export class GameHost {
     const fails = rolls.filter((r) => isFailure(r.band)).length;
     const wins = rolls.length - fails;
     const nat1s = rolls.filter((r) => r.kept === 1).length;
-    let hope = this.state.hope;
-    if (fails > wins) hope -= 1;
-    hope -= Math.min(2, nat1s);
-    if (rolls.some((r) => r.kept === 20)) hope += 1;
-    if (this.state.pitches.some((p) => p.embraceFlaw && SUCCESS_BANDS.includes(rolls.find((r) => r.playerId === p.playerId)?.band ?? "FAIL"))) hope += 1;
+    const before = this.state.hope;
+    let hope = before;
+    const why: string[] = [];
+    if (fails > wins) {
+      hope -= 1;
+      why.push("more plans failed than worked (−1)");
+    }
+    if (nat1s) {
+      hope -= Math.min(2, nat1s);
+      why.push(`natural 1 (−${Math.min(2, nat1s)})`);
+    }
+    if (rolls.some((r) => r.kept === 20)) {
+      hope += 1;
+      why.push("natural 20 (+1)");
+    }
+    if (this.state.pitches.some((p) => p.embraceFlaw && SUCCESS_BANDS.includes(rolls.find((r) => r.playerId === p.playerId)?.band ?? "FAIL"))) {
+      hope += 1;
+      why.push("someone leaned into their flaw and it worked (+1)");
+    }
     hope = Math.max(0, Math.min(this.state.hopeMax, hope));
+    this.bump("rounds");
+    this.note(
+      "hope",
+      "Hope",
+      hope === before
+        ? `Stays at ${hope}${why.length ? `: ${why.join(", ")}` : ": failures didn't outnumber wins, and no natural 1s or 20s"}${why.length && hope === this.state.hopeMax ? " (already full)" : ""}.`
+        : `${before} → ${hope}: ${why.join(", ")}${hope === 0 ? ". Hope ran out, so the story ends early" : ""}.`,
+    );
 
     const rescued = rescue && rolls.some((r) => r.playerId !== rescue.victimId && SUCCESS_BANDS.includes(r.band));
     const catastrophes = rolls.filter((r) => r.band === "CATASTROPHE");
@@ -974,6 +1242,9 @@ export class GameHost {
     if (out.complication) this.ledger.push(out.complication);
     this.canon.push(...out.new_canon);
     if (out.threat_mood) this.threatMood = out.threat_mood;
+    if (perilId) this.note("roll", this.heroName(perilId), `Natural 1: now stuck (${clip(perilText, 80)}). Friends rescue them next scene.`);
+    if (rescued) this.note("roll", this.heroName(rescue!.victimId), "Rescued: a friend's plan worked, so they're free.");
+    this.set({ notes: { ...this.state.notes, canon: this.canon.slice(-10), open: this.ledger.slice(-3) } });
     this.recentLines.push(...out.beats.map((b) => b.text));
     this.set({
       hope,
@@ -1019,6 +1290,13 @@ export class GameHost {
     if (!f || f.rolled.includes(pid) || !(pid in this.finalDice)) return;
     const next = { ...f, rolled: [...f.rolled, pid], dice: { ...f.dice, [pid]: this.finalDice[pid] } };
     this.set({ final: next });
+    const die = this.finalDice[pid];
+    setTimeout(() => {
+      this.bump("rolls");
+      if (die === 1) this.bump("nat1");
+      if (die === 20) this.bump("nat20");
+      this.note("roll", this.heroName(pid), `Final roll: d20 rolled ${die}.${die === 20 ? " Natural 20." : die === 1 ? " Natural 1." : ""}`);
+    }, ROLL_ANIM_MS);
     if (next.rolled.length === Object.keys(this.finalDice).length) {
       this.clearTimer();
       setTimeout(() => this.finish(false), 1500);
@@ -1040,7 +1318,25 @@ export class GameHost {
       ending: grim ? ("GRIM_BUT_HILARIOUS" as const) : ending(total, this.state.hope),
     };
     const players = this.state.players.map((p) => ({ ...p, peril: "" }));
+    const tapped = this.state.final?.rolled ?? [];
     this.set({ phase: "final_result", final, players, ready: [] });
+    if (grim) {
+      this.note("roll", "The ending", `Hope hit 0, so it ends early: ${ENDING_LABEL[final.ending]}. Still a happy-ish ending, never a cruel one.`);
+    } else {
+      this.bump("rounds");
+      const unrolled = Object.keys(dice).filter((id) => !tapped.includes(id));
+      unrolled.forEach((id) => {
+        this.bump("rolls");
+        if (dice[id] === 1) this.bump("nat1");
+        if (dice[id] === 20) this.bump("nat20");
+      });
+      const auto = unrolled.length ? ` (the game rolled for ${unrolled.length} who didn't tap in time)` : "";
+      // After the last die's own note (those wait for the roll animation).
+      setTimeout(
+        () => this.note("roll", "The ending", `Best die ${dice[best] ?? 0} + Hope ${final.hopeBonus} = ${total} → ${ENDING_LABEL[final.ending]}${auto}. 20+ wins, 12+ mostly works.`),
+        ROLL_ANIM_MS + 200,
+      );
+    }
 
     const heroes = this.heroes().map((p) => ({ id: p.id, name: p.hero!.name }));
     const st = this.dmState();
@@ -1053,9 +1349,11 @@ export class GameHost {
       ending: final.ending,
       final_moves: Object.fromEntries(Object.entries(this.state.finalMoves).map(([k, v]) => [name(k), v])),
     };
-    this.epilogueP = withTimeout(
-      ai<string>("epilogue", { state: st, final: finalInfo, log: this.state.log.map((l) => `${l.hero}: ${l.pitch} (${l.band})`) }).then((r) => r.data),
+    this.epilogueP = this.viaAI(
+      "Epilogue",
+      ai<string>("epilogue", { state: st, final: finalInfo, log: this.state.log.map((l) => `${l.hero}: ${l.pitch} (${l.band})`) }),
       20_000,
+      (d) => (typeof d === "string" && d.trim() ? d : null),
       () => "The dice land and, somehow, it holds. Everyone goes home with a story nobody will believe. And that's the version they'll never print.",
     );
     const crowd = Object.entries(this.reactionCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "";
@@ -1070,7 +1368,8 @@ export class GameHost {
       moral: "Go together or don't go.",
       real_story_bridge: "",
     });
-    this.storybookP = withTimeout(
+    this.storybookP = this.viaAI(
+      "Storybook",
       ai<Storybook>("storybook", {
         state: st,
         title: this.state.quest?.title,
@@ -1081,8 +1380,9 @@ export class GameHost {
         crowd_favorite: crowd,
         available_images: images,
         real_story: this.seed?.the_real_story,
-      }).then((r) => (Array.isArray(r.data?.pages) && r.data.pages.length ? r.data : bookFallback())),
+      }),
       30_000,
+      (d) => (Array.isArray(d?.pages) && d.pages.length ? d : null),
       bookFallback,
     );
     this.setTimer(grim ? 2500 : 4500, () => (Object.keys(this.state.wards).length ? this.startMirror() : this.startEpilogue()));
@@ -1137,12 +1437,23 @@ export class GameHost {
     const h = this.player(wardId)?.hero;
     if (!h) return;
     const moments = this.wardMoments(wardId);
-    const p = withTimeout(
-      ai<{ ok: boolean; sentence: string }>("kind", { ward_name: h.name, pronouns: h.pronouns, frame: mirrorFrame(h), moments, draft }).then((r) =>
-        r.data?.sentence ? r.data.sentence : kindFallback(h, moments, draft),
-      ),
+    // DM's Notes: remember what the kindness pass did, but only report it (without names) at the reveal,
+    // so the log never gives away who was watching whom.
+    const local = () => {
+      this.mirrorFate.set(guardianId, "dm"); // unchecked drafts are never shown: a warm canned line stands in
+      return kindFallback(h, moments);
+    };
+    const p = this.viaAI(
+      "Mirror kindness check",
+      ai<{ ok: boolean; sentence: string }>("kind", { ward_name: h.name, pronouns: h.pronouns, frame: mirrorFrame(h), moments, draft }),
       9000,
-      () => kindFallback(h, moments, draft),
+      (d, f) => {
+        if (f) return local(); // the server's backup: unchecked, so the raw draft never shows
+        if (!d?.sentence) return null;
+        this.mirrorFate.set(guardianId, !draft.trim() ? "dm" : d.ok === false ? "rewritten" : "kept");
+        return d.sentence;
+      },
+      local,
     );
     this.mirrorP.set(guardianId, p);
   }
@@ -1185,11 +1496,23 @@ export class GameHost {
     const mirror = await Promise.all(
       this.state.mirror.map(async (c) => {
         const h = this.player(c.wardId)!.hero!;
-        const sentence = (await this.mirrorP.get(c.guardianId)?.catch(() => "")) || kindFallback(h, this.wardMoments(c.wardId), "");
+        const sentence = (await this.mirrorP.get(c.guardianId)?.catch(() => "")) || kindFallback(h, this.wardMoments(c.wardId));
         return { ...c, sentence };
       }),
     );
     if ((this.state.phase as string) !== "mirror_reveal") return; // moved on while we waited
+    const fates = mirror.map((c) => this.mirrorFate.get(c.guardianId) ?? "dm");
+    const count = (f: string) => fates.filter((x) => x === f).length;
+    const [kept, rewritten, dm] = [count("kept"), count("rewritten"), count("dm")];
+    this.note(
+      "mirror",
+      "Mirror, Mirror",
+      `${mirror.length} kind sentences. ${kept} in the guardian's own words${dm ? `, ${dm} written by the DM instead (time ran out or the kindness check was down, and unchecked text is never shown)` : ""}. Nobody gets rated.`,
+    );
+    if (rewritten) {
+      this.bump("safety", rewritten);
+      this.note("safety", "Mirror, Mirror", `${rewritten} sentence${rewritten > 1 ? "s" : ""} rewritten to stay kind. The hurtful part is never shown.`);
+    }
     this.set({ mirror, busy: "" });
     this.stepMirror(0);
   }
@@ -1232,6 +1555,29 @@ export class GameHost {
   }
 
   private startReveal() {
+    const seed = this.seed;
+    if (seed) {
+      const rs = seed.the_real_story;
+      const used = this.state.scenes.map((sc) => seed.locations.find((l) => l.name === sc.location)).filter((l) => !!l);
+      this.set({
+        notes: {
+          ...this.state.notes,
+          source: {
+            headline: rs.headline,
+            source: rs.source,
+            date: rs.date,
+            link: rs.link,
+            summary: rs.summary,
+            mappings: [
+              { story: seed.the_threat.name, real: seed.the_threat.mapped_from },
+              { story: "The goal", real: seed.the_goal.mapped_from },
+              ...used.map((l) => ({ story: l!.name, real: l!.mapped_from })),
+            ],
+          },
+        },
+      });
+      this.note("reveal", "The source", `Now revealed: "${rs.headline}" (${rs.source}, ${rs.date}).`);
+    }
     this.set({ phase: "reveal" });
     this.reading(`${this.seed?.the_real_story.headline ?? ""} ${this.seed?.the_real_story.summary ?? ""}`, () => this.showStorybook(), 15000);
   }
@@ -1300,11 +1646,14 @@ export class GameHost {
       mirrorIndex: 0,
       thanks: {},
       log: [],
+      notes: emptyNotes(),
       rescue: null,
       busy: "",
       ready: [],
     });
+    this.notesStart = Date.now();
     this.mirrorP.clear();
+    this.mirrorFate.clear();
   }
 
   close() {

@@ -92,7 +92,8 @@ TASK: SCENE OPENER. Open the next scene.
 - situation: ≤15 words, exactly one question to the players ("The clerk won't open the door without a receipt. How do you get in?").
 - banner: ≤5 words, a plain label for the problem ("The Clerk Wants a Receipt").
 - npc_line: ≤16 words from the threat or a named NPC who wants something (speaker "" and line "" for none).
-- clues: for EACH hero id, one secret detail ONLY that hero notices, ≤14 words, true, concrete, and useful for solving the problem, matched to their best stat (guts: something physical; brains: how a thing works; charm: what someone wants). Different for each hero. These go to their phones privately, so the table has to talk.
+- clues: for EACH hero id, one secret detail ONLY that hero would notice BECAUSE of who they are: their ability, strange edge, or job (a crossing guard notices the lights blink in a pattern; a night-shift baker smells the yeast in the cave air). The clue must name or clearly imply that quality. ≤14 words, true, concrete, and useful for solving the problem. Different for each hero. These go to their phones privately, so the table has to talk.
+  - because: ≤8 words, the quality that let them notice it, said to them ("you're a night-shift baker", "your Always Has Rope", "your Brains").
 - suggestions: for EACH hero id, exactly 3 ideas, ≤8 words, typed the way a player would, each a verb plus a specific object. One uses the best stat, one the ability or flaw, one strange but specific.
 - RESCUE: if "rescue" is present, a hero is IN PERIL (rescue.peril). Open with that predicament plainly. The situation asks the OTHER heroes how they save them. The hero in peril's suggestions are short things they'd yell.
 - If kind is "climax": this is the final confrontation. End the narration with a short line telling everyone to make their final move. The situation asks for each hero's final move. If someone is in peril, the final roll frees them; say so.
@@ -109,7 +110,7 @@ export const SCENE_SCHEMA = obj({
   situation: str,
   banner: str,
   npc_line: obj({ speaker: str, line: str }),
-  clues: { type: "array", items: obj({ hero_id: str, clue: str }) },
+  clues: { type: "array", items: obj({ hero_id: str, clue: str, because: str }) },
   suggestions: {
     type: "array",
     items: obj({ hero_id: str, ideas: { type: "array", minItems: 3, maxItems: 3, items: str } }),
@@ -135,7 +136,8 @@ For each pitch decide:
 - quip: the DM's ruling shown before the roll, ≤10 words, deadpan, plain ("Sure. The raccoon will remember this."). No dashes, no caps, no "!".
 - on_success / on_failure: ≤10 words each, what is at stake.
 - moderation: "ok"; "redirected" if you rewrote an inappropriate pitch; "flag" for self-harm or emergencies (tier solid, kind quip).
-CONVINCE THE DM: if a pitch has an "appeal", the player is arguing that their plan should work (previous_tier is what you ruled before). Judge the ARGUMENT like a fair, good-humored DM: a specific reason that uses the scene, their clue, their ability, or something that happened earlier can raise the tier (even to clever, which means it just works). A vague or silly argument keeps the previous tier. Never lower it. The quip answers their argument directly ("Fine. You did say the raccoon owes you.").`;
+- reason: ≤16 words, the plain, specific reason for this tier, shown to players and judges in the DM's Notes. Name the thing in the pitch or the scene that decided it ("Used her secret clue about the rope anchor", "Tackling a boulder alone, no leverage", "A muffin bribe. The guard is on a diet"). Never mention numbers, rules, or the player's skill. If moderation is not "ok", describe the harmless version only.
+CONVINCE THE DM: if a pitch has an "appeal", the player is arguing that their plan should work (previous_tier is what you ruled before). Judge the ARGUMENT like a fair, good-humored DM: a specific reason that uses the scene, their clue, their ability, or something that happened earlier can raise the tier (even to clever, which means it just works). A vague or silly argument keeps the previous tier. Never lower it. The quip answers their argument directly ("Fine. You did say the raccoon owes you."). The reason says why the argument did or didn't change the tier, naming what in it mattered ("Argument used the Grip's own words: it wants a nap", "Nice speech, but nothing new about the boulder").`;
 
 export const VERDICT_SCHEMA = obj({
   verdicts: {
@@ -151,6 +153,7 @@ export const VERDICT_SCHEMA = obj({
       on_success: str,
       on_failure: str,
       moderation: { type: "string", enum: ["ok", "redirected", "flag"] },
+      reason: str,
     }),
   },
 });
