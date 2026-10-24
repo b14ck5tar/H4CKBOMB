@@ -16,9 +16,15 @@ try {
   /* no parent key file (e.g. on Vercel) */
 }
 
-const KEYS = ["MODEL_API_KEY", "SERPAPI_KEY", "GEMINI_API_KEY", "NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY", "MCP_TOKEN"];
+// Locally, pass the parent file's keys through. On Vercel, server secrets are read at runtime from project
+// settings, so only the public (browser-safe) values are passed here and secrets are never baked into a build.
+const KEYS = process.env.VERCEL
+  ? ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY"]
+  : ["MODEL_API_KEY", "SERPAPI_KEY", "GEMINI_API_KEY", "NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY", "MCP_TOKEN"];
 const env: Record<string, string> = {};
 for (const k of KEYS) {
+  // Defense in depth: never let an admin/secret key ride along in a NEXT_PUBLIC_ variable.
+  if (k.startsWith("NEXT_PUBLIC_") && /^(sb_secret_|eyJ.*service_role)/.test(process.env[k] || parentEnv[k] || "")) continue;
   const v = process.env[k] || parentEnv[k];
   if (v) env[k] = v;
 }
