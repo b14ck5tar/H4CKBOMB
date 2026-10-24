@@ -10,19 +10,35 @@ export const TIER_LABEL: Record<Tier, string> = {
   miracle: "ONLY A MIRACLE",
 };
 
-/** DC shown on the stamp: the d20 + stat needed for a clean success. */
-export function stampText(tier: Tier): string {
-  if (tier === "miracle") return "ONLY A MIRACLE · NAT 20";
-  return `${TIER_LABEL[tier]} · DC ${15 - TIER_MOD[tier]}`;
+/** "Convince the DM": clever plans just work, no roll. Everything else is uncertain, so the dice decide. */
+export function autoSucceeds(tier: Tier) {
+  return tier === "clever";
 }
 
-export const STAT_LABEL: Record<Stat, string> = { brave: "Brave", clever: "Clever", charming: "Charming" };
+/** Plain-language label on the stamp (no DC jargon for non-gamers). */
+export function stampText(tier: Tier): string {
+  switch (tier) {
+    case "clever":
+      return "THAT WORKS · NO ROLL";
+    case "solid":
+      return "SOLID · ROLL IT";
+    case "risky":
+      return "RISKY · ROLL IT";
+    case "absurd":
+      return "ABSURD · GOOD LUCK";
+    case "miracle":
+      return "ONLY A MIRACLE · NEED A 20";
+  }
+}
+
+/** Stats keep their schema keys; players see modern names. */
+export const STAT_LABEL: Record<Stat, string> = { brave: "Guts", clever: "Brains", charming: "Charm" };
 
 export const BAND_LABEL: Record<Band, string> = {
-  CATASTROPHE: "CATASTROPHE",
-  FAIL: "FAILURE",
+  CATASTROPHE: "DISASTER",
+  FAIL: "NOPE",
   YES_BUT: "YES, BUT…",
-  SUCCESS: "SUCCESS",
+  SUCCESS: "IT WORKS",
   LEGENDARY: "LEGENDARY",
 };
 
@@ -53,21 +69,28 @@ export function ending(total: number, hope: number): Ending {
 }
 
 export const ENDING_LABEL: Record<Ending, string> = {
-  TRIUMPHANT: "A TRIUMPHANT ENDING",
-  BITTERSWEET: "A BITTERSWEET ENDING",
-  GRIM_BUT_HILARIOUS: "A GRIM (BUT HILARIOUS) ENDING",
+  TRIUMPHANT: "YOU DID IT",
+  BITTERSWEET: "MOSTLY FINE",
+  GRIM_BUT_HILARIOUS: "WELL, IT'S A STORY",
 };
 
-export const PLAYER_COLORS = ["#A3282E", "#2E5E4E", "#C8952E", "#3B4A8C", "#7A3E8E", "#B5602A"];
+/** Neon set, readable on the dark UI. */
+export const PLAYER_COLORS = ["#FF2E7E", "#3DE7FF", "#FFB648", "#2CF5C0", "#B98CFF", "#FF7A45"];
 
-export const REACTIONS = ["😂", "🔥", "😱", "🛡️", "🐉", "❤️"];
+export const REACTIONS = ["😂", "🔥", "😱", "👏", "👀", "❤️"];
 
-export const PITCH_MS = 25_000;
-export const RESCUE_PITCH_MS = 30_000;
-export const VOTE_MS = 12_000;
-export const ROLL_MS = 10_000;
-export const CATCH_MS = 6_000;
-export const FINAL_ROLL_MS = 12_000;
-export const ROLL_ANIM_MS = 1_800;
+// Timers. Action phases end early when everyone has acted; reading phases advance on Continue or all-Ready.
+export const PITCH_MS = 40_000;
+export const APPEAL_MS = 20_000;
+export const ROLL_MS = 12_000;
+export const CATCH_MS = 8_000;
+export const FINAL_ROLL_MS = 14_000;
+export const ROLL_ANIM_MS = 1_600;
 export const HOPE_START = 3;
 export const HOPE_MAX = 6;
+
+/** Safety auto-advance for reading screens: ~150 wpm plus slack for laughing, never shorter than 7 s. */
+export function readMs(text: string, min = 7000) {
+  const words = text.trim().split(/\s+/).filter(Boolean).length;
+  return Math.max(min, words * 400 + 5000);
+}

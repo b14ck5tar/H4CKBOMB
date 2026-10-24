@@ -1,0 +1,87 @@
+<title>Group Project Brief</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+/* Layout: a single "case file" column, readable on a phone held out to someone at a sponsor table. */
+:root {
+  --bg: #0a0612; --card: #160d24; --fg: #f3ecff; --muted: #b9a9d6; --line: #3a2656;
+  --magenta: #ff3ea5; --cyan: #2ef2ff; --orange: #ffb238;
+  --display: "Anton", "Impact", "Arial Narrow", sans-serif;
+  --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", "Consolas", monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--body); font-size: 17px; line-height: 1.5; padding-inline: 16px; padding-block: 22px 48px; }
+.wrap { max-width: 720px; margin: 0 auto; display: grid; gap: 18px; }
+.tag { font-family: var(--mono); font-size: 12px; letter-spacing: .18em; text-transform: uppercase; color: var(--cyan); }
+h1 { font-family: var(--display); font-weight: 400; font-size: clamp(40px, 11vw, 72px); line-height: .95; margin: 0; letter-spacing: .01em; text-wrap: balance; }
+h1 span { color: var(--magenta); }
+.lede { font-size: 20px; margin: 0; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 16px 18px; display: grid; gap: 10px; min-width: 0; }
+h2 { font-family: var(--mono); font-size: 13px; letter-spacing: .16em; text-transform: uppercase; color: var(--orange); margin: 0; font-weight: 600; }
+p { margin: 0; }
+ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+b { color: #fff; }
+.muse { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (max-width: 520px) { .muse { grid-template-columns: minmax(0, 1fr); } }
+.muse div { border-left: 3px solid var(--cyan); padding: 4px 0 4px 12px; }
+.muse b { font-family: var(--mono); font-size: 14px; color: var(--cyan); display: block; }
+.loop { display: flex; flex-wrap: wrap; gap: 8px; font-family: var(--mono); font-size: 14px; }
+.loop span { border: 1px solid var(--magenta); color: var(--magenta); padding: 4px 10px; border-radius: 3px; }
+.loop i { color: var(--muted); font-style: normal; align-self: center; }
+.reveal { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 10px; }
+@media (max-width: 520px) { .reveal { grid-template-columns: minmax(0, 1fr); } }
+.reveal div { padding: 12px; border-radius: 4px; }
+.official { background: #f4f1ea; color: #151515; font-family: Georgia, serif; }
+.official small, .uncovered small { display: block; font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; margin-bottom: 4px; }
+.uncovered { background: linear-gradient(135deg, #2a0f3f, #12233f); border: 1px solid var(--magenta); }
+.link { font-family: var(--mono); font-size: 15px; word-break: break-all; color: var(--cyan); }
+.foot { color: var(--muted); font-size: 14px; }
+</style>
+
+<div class="wrap">
+  <span class="tag">HackTX ’26 · Meta track · Bringing people closer together with AI</span>
+  <h1>Group <span>Project</span></h1>
+  <p class="lede">The one group project everyone actually wants to be in. A game night that gives everyone an excuse to talk: Muse runs the table, your phones are the controllers, and every story starts from a real headline.</p>
+
+  <div class="card">
+    <h2>The problem</h2>
+    <p>People avoid each other less out of fear than uncertainty: nobody knows how to start, so everyone stays quiet, and research says we underestimate how much others enjoy talking to us. Tabletop games like D&amp;D fix that by giving everyone a role and a reason, but someone has to spend hours prepping as Dungeon Master, so most groups never play. We made Muse the Dungeon Master. Game night starts in 30 seconds: open the TV page, everyone scans a QR code, no app or account. Families, roommates, long-distance friends, coworkers.</p>
+  </div>
+
+  <div class="card">
+    <h2>How a round plays</h2>
+    <div class="loop"><span>Scene</span><i>→</i><span>Everyone pitches</span><i>→</i><span>Muse rules</span><i>→</i><span>Everyone rolls</span><i>→</i><span>Your beat</span></div>
+    <ul>
+      <li><b>Everyone acts every round.</b> Each player gets their own die and hears their own words come to life in the story.</li>
+      <li><b>Secret clues</b> go to each phone, so the table has to talk to solve the scene.</li>
+      <li><b>Catch!</b> spends your one Heart to reroll a friend’s failure. A disaster leaves a hero in peril, and friends pitch the rescue.</li>
+      <li>Ends with a shareable case file saved to the group’s shelf: chapter 2 next week.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Muse is the engine, not a feature</h2>
+    <div class="muse">
+      <div><b>Muse Spark</b>Builds hero cards, writes every scene, rules each idea Clever / Risky / Absurd, narrates everyone’s results. Strict JSON schemas; the dice stay real RNG.</div>
+      <div><b>Muse Image</b>Hero portraits, scene art, and the keepsake cover.</div>
+      <div><b>Muse Voice Transcribe</b>Hold to talk: say your move or your battle cry instead of typing (~1.3 s).</div>
+      <div><b>Muse connector</b>MCP endpoint: “Hey Muse, start a game night for The Cousins.”</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>The twist at the end</h2>
+    <div class="reveal">
+      <div class="official"><small>The official story</small>A road with a new bridge reopens after nearly three years.</div>
+      <div class="uncovered"><small>What your group uncovered</small>Something coppery was living under the old one, and it had opinions about steel.</div>
+    </div>
+    <p class="foot">Real headlines from Google News (SerpApi), filtered so tragedies and real victims never become a game.</p>
+  </div>
+
+  <div class="card">
+    <h2>Play it now</h2>
+    <p class="link">once-upon-a-roll.vercel.app/tv</p>
+    <p class="foot">Open on a laptop, scan the QR with your phone. Built this weekend with Claude Code orchestrating parallel agents; grounded in research on group bonding and what makes great Dungeon Masters.</p>
+  </div>
+</div>

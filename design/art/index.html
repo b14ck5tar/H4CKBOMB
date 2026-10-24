@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Art Direction Contact Sheet</title>
+<style>
+  :root { --bg:#0e0b1a; --card:#1a1530; --ink:#efeaff; --dim:#a79fc7; --hot:#ff3fb4; --cyan:#33e6ff; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.45 system-ui, -apple-system, Segoe UI, sans-serif; padding:24px 16px 64px; }
+  h1 { margin:0 0 4px; font-size:26px; }
+  h2 { margin:40px 0 6px; font-size:20px; border-left:4px solid var(--hot); padding-left:10px; }
+  h2.win { border-color:var(--cyan); }
+  p.note { color:var(--dim); margin:0 0 12px; max-width:900px; }
+  .score { display:inline-block; background:#2a2250; border-radius:6px; padding:2px 8px; margin-left:8px; font-size:14px; color:var(--cyan); }
+  .grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap:14px; }
+  figure { margin:0; background:var(--card); border-radius:10px; overflow:hidden; }
+  figure a { display:block; }
+  figure img { width:100%; display:block; background:#000; }
+  figure.tall img { aspect-ratio: 2/3; object-fit: cover; }
+  figure.wide img { aspect-ratio: 16/9; object-fit: cover; }
+  figcaption { padding:8px 10px 10px; font-size:13px; color:var(--dim); }
+  figcaption b { color:var(--ink); }
+  .avatars { display:flex; gap:18px; align-items:center; flex-wrap:wrap; margin-top:8px; }
+  .avatars div { text-align:center; font-size:12px; color:var(--dim); }
+  .avatars img { width:56px; height:56px; border-radius:50%; object-fit:cover; object-position:50% 22%; display:block; margin:0 auto 4px; border:2px solid #2a2250; }
+</style>
+</head>
+<body>
+<h1>Once Upon a Roll: art direction contact sheet</h1>
+<p class="note">All images generated with Meta Muse <code>muse-image-1.0</code>, reasoning_strength high unless marked. Same 3 subjects across 4 directions, then 2 refinement rounds of the winner (E). Click any image for full size. Scores are the average of 6 criteria (see design/12-art-direction.md).</p>
+
+<h2>A: Graphic novel (baseline) <span class="score">7.5 / 10</span></h2>
+<div class="grid">
+  <figure class="wide"><a href="A_graphic_novel/a_bridge.webp"><img src="A_graphic_novel/a_bridge.webp" alt=""></a><figcaption><b>A_graphic_novel/a_bridge.webp</b>: scene, bridge serpent (23.8 s)</figcaption></figure>
+  <figure class="tall"><a href="A_graphic_novel/b_barista.webp"><img src="A_graphic_novel/b_barista.webp" alt=""></a><figcaption><b>A_graphic_novel/b_barista.webp</b>: portrait (17.1 s)</figcaption></figure>
+  <figure class="wide"><a href="A_graphic_novel/c_laundromat.webp"><img src="A_graphic_novel/c_laundromat.webp" alt=""></a><figcaption><b>A_graphic_novel/c_laundromat.webp</b>: moment (36.4 s)</figcaption></figure>
+</div>
+
+<h2>B: Spider-Verse comic halftone <span class="score">8.0 / 10</span></h2>
+<div class="grid">
+  <figure class="wide"><a href="B_spiderverse/a_bridge.webp"><img src="B_spiderverse/a_bridge.webp" alt=""></a><figcaption><b>B_spiderverse/a_bridge.webp</b>: scene (28.9 s)</figcaption></figure>
+  <figure class="tall"><a href="B_spiderverse/b_barista.webp"><img src="B_spiderverse/b_barista.webp" alt=""></a><figcaption><b>B_spiderverse/b_barista.webp</b>: portrait (17.4 s)</figcaption></figure>
+  <figure class="wide"><a href="B_spiderverse/c_laundromat.webp"><img src="B_spiderverse/c_laundromat.webp" alt=""></a><figcaption><b>B_spiderverse/c_laundromat.webp</b>: moment (26.1 s)</figcaption></figure>
+</div>
+
+<h2>C: Uncanny photoreal film still <span class="score">6.5 / 10</span></h2>
+<div class="grid">
+  <figure class="wide"><a href="C_uncanny_photo/a_bridge.webp"><img src="C_uncanny_photo/a_bridge.webp" alt=""></a><figcaption><b>C_uncanny_photo/a_bridge.webp</b>: scene (24.9 s)</figcaption></figure>
+  <figure class="tall"><a href="C_uncanny_photo/b_barista.webp"><img src="C_uncanny_photo/b_barista.webp" alt=""></a><figcaption><b>C_uncanny_photo/b_barista.webp</b>: portrait (15.3 s)</figcaption></figure>
+  <figure class="wide"><a href="C_uncanny_photo/c_laundromat.webp"><img src="C_uncanny_photo/c_laundromat.webp" alt=""></a><figcaption><b>C_uncanny_photo/c_laundromat.webp</b>: moment, garbled neon sign (24.4 s)</figcaption></figure>
+</div>
+
+<h2>D: Risograph / screenprint poster <span class="score">7.7 / 10</span></h2>
+<div class="grid">
+  <figure class="wide"><a href="D_risograph/a_bridge.webp"><img src="D_risograph/a_bridge.webp" alt=""></a><figcaption><b>D_risograph/a_bridge.webp</b>: scene (30.2 s)</figcaption></figure>
+  <figure class="tall"><a href="D_risograph/b_barista.webp"><img src="D_risograph/b_barista.webp" alt=""></a><figcaption><b>D_risograph/b_barista.webp</b>: portrait (26.7 s)</figcaption></figure>
+  <figure class="wide"><a href="D_risograph/c_laundromat.webp"><img src="D_risograph/c_laundromat.webp" alt=""></a><figcaption><b>D_risograph/c_laundromat.webp</b>: moment (20.4 s)</figcaption></figure>
+</div>
+
+<h2 class="win">E round 2: "Neon Uncanny" (B + color script + composition rules) <span class="score">8.8 / 10</span></h2>
+<p class="note">Rule added: the real world stays indigo and sodium-orange; only the impossible thing glows magenta/cyan. Lower third calm, one focal point.</p>
+<div class="grid">
+  <figure class="wide"><a href="E_r2/hook_bridge.webp"><img src="E_r2/hook_bridge.webp" alt=""></a><figcaption><b>E_r2/hook_bridge.webp</b>: hook (26.2 s). Best wow, but serpent lost its copper</figcaption></figure>
+  <figure class="wide"><a href="E_r2/climax_substation.webp"><img src="E_r2/climax_substation.webp" alt=""></a><figcaption><b>E_r2/climax_substation.webp</b>: climax (25.0 s). Strongest image of the test</figcaption></figure>
+  <figure class="wide"><a href="E_r2/moment_laundromat.webp"><img src="E_r2/moment_laundromat.webp" alt=""></a><figcaption><b>E_r2/moment_laundromat.webp</b>: moment, high (21.7 s)</figcaption></figure>
+  <figure class="wide"><a href="E_r2/moment_laundromat_LOW.webp"><img src="E_r2/moment_laundromat_LOW.webp" alt=""></a><figcaption><b>E_r2/moment_laundromat_LOW.webp</b>: same prompt, reasoning_strength <b>low</b> (10.8 s). Lost the heartbeat idea</figcaption></figure>
+  <figure class="tall"><a href="E_r2/portrait_barista.webp"><img src="E_r2/portrait_barista.webp" alt=""></a><figcaption><b>E_r2/portrait_barista.webp</b>: hero portrait (18.0 s)</figcaption></figure>
+  <figure class="tall"><a href="E_r2/cover_bridge.webp"><img src="E_r2/cover_bridge.webp" alt=""></a><figcaption><b>E_r2/cover_bridge.webp</b>: storybook cover, title space on top (37.5 s). Creature too cute</figcaption></figure>
+</div>
+
+<h2 class="win">E round 3: material fix, twist, and identity test</h2>
+<div class="grid">
+  <figure class="wide"><a href="E_r3/hook_bridge_v3.webp"><img src="E_r3/hook_bridge_v3.webp" alt=""></a><figcaption><b>E_r3/hook_bridge_v3.webp</b>: hook v3 (24.6 s). Copper and verdigris back, but coils read as pipes</figcaption></figure>
+  <figure class="wide"><a href="E_r3/twist_watertower.webp"><img src="E_r3/twist_watertower.webp" alt=""></a><figcaption><b>E_r3/twist_watertower.webp</b>: twist, same town (11.7 s)</figcaption></figure>
+  <figure class="wide"><a href="E_r3/edit_barista_in_laundromat.webp"><img src="E_r3/edit_barista_in_laundromat.webp" alt=""></a><figcaption><b>E_r3/edit_barista_in_laundromat.webp</b>: /images/edits with the portrait as reference (32.0 s). Identity holds</figcaption></figure>
+  <figure class="wide"><a href="E_r3/control_barista_in_laundromat_noref.webp"><img src="E_r3/control_barista_in_laundromat_noref.webp" alt=""></a><figcaption><b>E_r3/control_barista_in_laundromat_noref.webp</b>: control, text description only (11.9 s). Same costume, different face</figcaption></figure>
+</div>
+
+<h2>Portraits at phone-avatar size (56 px)</h2>
+<div class="avatars">
+  <div><img src="A_graphic_novel/b_barista.webp" alt="">A</div>
+  <div><img src="B_spiderverse/b_barista.webp" alt="">B</div>
+  <div><img src="C_uncanny_photo/b_barista.webp" alt="">C</div>
+  <div><img src="D_risograph/b_barista.webp" alt="">D</div>
+  <div><img src="E_r2/portrait_barista.webp" alt="">E</div>
+</div>
+</body>
+</html>

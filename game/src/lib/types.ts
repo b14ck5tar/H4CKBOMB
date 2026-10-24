@@ -50,32 +50,32 @@ export interface Pitch {
   useAbility: boolean;
   embraceFlaw: boolean;
   verdict?: Verdict;
-  partnerId?: string; // set on a ⚔ Team Up combo
-  abilityBy?: string; // on a combo: whose ability gets spent
+  appeal?: string; // "Convince the DM": the player's argument, if they made one
+  appealed?: boolean; // true once the DM has ruled on the appeal
+  auto?: boolean; // filled in for a player who ran out of time
 }
 
 export interface RollResult {
   playerId: string;
-  dice: number[];
-  kept: number;
+  dice: number[]; // empty when the plan worked without a roll
+  kept: number; // 0 when no roll
   advantage: "adv" | "dis" | "none";
-  baseAdvantage?: "adv" | "dis" | "none"; // before the Team Up bonus, so a Catch! reroll starts from the same footing
   statBonus: number;
   tierMod: number;
   total: number;
   band: Band;
   rescuerId: string; // "" unless this roll came from a Catch!
+  noRoll: boolean; // "That works": a clever plan, no dice needed
+  boosted: boolean;
 }
 
-export interface Outcome {
+export interface RoundOutcome {
   headline: string;
-  narration: string;
-  yes_but_cost: "none" | "hope" | "complication";
+  beats: { hero_id: string; text: string }[];
+  now: string;
   complication: string;
-  shame_title: string;
-  glory_title: string;
-  savior_title: string;
-  peril: string;
+  titles: { hero_id: string; kind: "shame" | "glory" | "savior"; title: string }[];
+  peril: { hero_id: string; text: string };
   new_canon: string[];
   threat_mood: string;
   highlight_score: number;
@@ -83,11 +83,13 @@ export interface Outcome {
 }
 
 export interface SceneOpen {
-  recap_of_previous: string;
+  recap: string;
   narration: string;
+  question: string;
   situation: string;
   banner: string;
   npc_line: { speaker: string; line: string };
+  clues: { hero_id: string; clue: string }[];
   suggestions: { hero_id: string; ideas: string[] }[];
   music: string;
 }
@@ -118,7 +120,6 @@ export interface QuestSeed {
 export interface LogEntry {
   scene: number;
   heroId: string;
-  partnerId?: string;
   hero: string;
   pitch: string;
   band: Band;
@@ -150,9 +151,8 @@ export type Phase =
   | "quest"
   | "narrating"
   | "pitch"
-  | "vote"
+  | "appeal"
   | "roll"
-  | "rolling"
   | "catch"
   | "outcome"
   | "final_roll"
@@ -168,28 +168,38 @@ export interface GameState {
   players: Player[];
   questId: string;
   questOptions: { id: string; title: string; teaser: string }[];
-  quest?: { title: string; realm: string; premise: string; threat: string; goal: string };
+  quest?: { title: string; realm: string; premise: string; threat: string; goal: string; goalShort: string };
   scenes: SceneView[];
   sceneIndex: number;
   hope: number;
   hopeMax: number;
+  // Quest board
+  question: string; // the scene's dramatic question ("Right now")
+  lastTime: string; // recap / wrap of the last round
+  // Scene
   narration: string;
   situation: string;
   banner: string;
   npcLine: { speaker: string; line: string };
   suggestions: Record<string, string[]>;
+  clues: Record<string, string>; // private per hero (phones only show their own)
   rescue: { victimId: string; peril: string } | null;
+  // Round
   pitches: Pitch[];
-  votes: Record<string, string>;
-  deadline: number; // ms remaining when this state was sent, 0 = no timer
-  rollerId: string;
-  winningPitchId: string;
-  roll: RollResult | null;
+  boosts: Record<string, string>; // booster id -> pitch id
+  rolls: RollResult[]; // in reveal order (lowest result first)
+  revealed: string[]; // player ids whose die is shown
   catchers: string[];
-  outcome: Outcome | null;
+  round: RoundOutcome | null;
+  beatIndex: number; // which beat card is showing; === beats.length shows the wrap
+  // Reading screens
+  ready: string[];
+  deadline: number; // ms remaining when this state was sent, 0 = no timer
+  // Ending
   final: FinalRoll | null;
+  finalMoves: Record<string, string>;
   epilogue: string;
   storybook: Storybook | null;
   log: LogEntry[];
-  busy: string; // "" or a short "the scribes are inking…" message
+  busy: string;
 }

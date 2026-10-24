@@ -4,60 +4,57 @@ import { useEffect, useId, useMemo, useRef, useState, type CSSProperties } from 
 
 /* ================================================================== */
 /* ScreenFlash                                                         */
+/*   legendary   -> electric burst: white-hot flash, rays, shockwave   */
+/*                  rings and a shower of neon shards                  */
+/*   catastrophe -> glitch: static, tearing bars, "SIGNAL LOST", then  */
+/*                  a CRT switch-off wipe                              */
 /* ================================================================== */
 
-type Leaf = { left: number; w: number; h: number; dur: number; delay: number; drift: number; spin: number; flutter: number; shape: number; hue: number };
+type Shard = { left: number; w: number; h: number; dur: number; delay: number; drift: number; spin: number; flutter: number; shape: number; hue: number };
 
-const LEAF_SHAPES = [
-  "polygon(8% 0, 100% 12%, 88% 100%, 0 84%)",
-  "polygon(0 18%, 70% 0, 100% 66%, 26% 100%)",
-  "polygon(14% 8%, 92% 0, 100% 90%, 6% 100%)",
-  "polygon(0 0, 100% 30%, 80% 100%, 10% 70%)",
+const SHARD_SHAPES = [
+  "polygon(50% 0, 100% 100%, 0 70%)",
+  "polygon(0 0, 100% 20%, 60% 100%)",
+  "polygon(20% 0, 100% 0, 80% 100%, 0 100%)",
+  "polygon(50% 0, 100% 50%, 50% 100%, 0 50%)",
 ];
-const LEAF_GRADS = [
-  "linear-gradient(135deg, #FFF0B8 0%, #E3B652 35%, #C8952E 60%, #8A6118 100%)",
-  "linear-gradient(160deg, #FBE7A6 0%, #C8952E 50%, #A67A22 100%)",
-  "linear-gradient(120deg, #F6D57A 0%, #FFF6D6 40%, #C8952E 75%, #7A5418 100%)",
-];
+const SHARD_COLORS = ["#3DE7FF", "#FF2E7E", "#FFB648", "#FFFFFF", "#2CF5C0", "#FF9A1F"];
 
-function makeLeaves(n: number): Leaf[] {
+function makeShards(n: number): Shard[] {
   return Array.from({ length: n }, () => ({
     left: Math.random() * 100,
-    w: 8 + Math.random() * 12,
-    h: 10 + Math.random() * 14,
-    dur: 1.5 + Math.random() * 0.9,
-    delay: Math.random() * 0.55,
-    drift: Math.random() * 160 - 80,
-    spin: Math.random() * 720 - 360,
-    flutter: 0.35 + Math.random() * 0.4,
-    shape: Math.floor(Math.random() * LEAF_SHAPES.length),
-    hue: Math.floor(Math.random() * LEAF_GRADS.length),
+    w: 6 + Math.random() * 10,
+    h: 10 + Math.random() * 22,
+    dur: 1.3 + Math.random() * 0.9,
+    delay: Math.random() * 0.5,
+    drift: Math.random() * 200 - 100,
+    spin: Math.random() * 900 - 450,
+    flutter: 0.25 + Math.random() * 0.35,
+    shape: Math.floor(Math.random() * SHARD_SHAPES.length),
+    hue: Math.floor(Math.random() * SHARD_COLORS.length),
   }));
 }
 
-type Splat = { cx: number; cy: number; r: number };
+type Bar = { top: number; h: number; x: number; color: string; delay: number; dur: number };
+const BAR_COLORS = ["#FF2E7E", "#3DE7FF", "#FFFFFF", "#FF9A1F", "#0A0612"];
 
-function makeSplats(): Splat[] {
-  const s: Splat[] = [{ cx: 50, cy: 50, r: 17 }];
-  for (let i = 0; i < 9; i++) {
-    const a = Math.random() * Math.PI * 2;
-    const d = 12 + Math.random() * 12;
-    s.push({ cx: 50 + Math.cos(a) * d, cy: 50 + Math.sin(a) * d, r: 4 + Math.random() * 6 });
-  }
-  for (let i = 0; i < 12; i++) {
-    const a = Math.random() * Math.PI * 2;
-    const d = 22 + Math.random() * 14;
-    s.push({ cx: 50 + Math.cos(a) * d, cy: 50 + Math.sin(a) * d, r: 0.8 + Math.random() * 2.2 });
-  }
-  return s;
+function makeBars(): Bar[] {
+  return Array.from({ length: 14 }, () => ({
+    top: Math.random() * 100,
+    h: 0.4 + Math.random() * 4.5,
+    x: Math.random() * 30 - 15,
+    color: BAR_COLORS[Math.floor(Math.random() * BAR_COLORS.length)],
+    delay: Math.random() * 0.5,
+    dur: 0.18 + Math.random() * 0.3,
+  }));
 }
 
 export function ScreenFlash({ kind, trigger }: { kind: "legendary" | "catastrophe" | null; trigger: number }) {
-  const [active, setActive] = useState<{ kind: "legendary" | "catastrophe"; key: number; leaves: Leaf[]; splats: Splat[] } | null>(null);
+  const [active, setActive] = useState<{ kind: "legendary" | "catastrophe"; key: number; shards: Shard[]; bars: Bar[] } | null>(null);
   const prev = useRef(trigger);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rawId = useId();
-  const gooId = "ouar-goo-" + rawId.replace(/[^a-zA-Z0-9_-]/g, "");
+  const noiseId = "ouar-static-" + rawId.replace(/[^a-zA-Z0-9_-]/g, "");
 
   useEffect(() => {
     if (trigger === prev.current) return;
@@ -66,8 +63,8 @@ export function ScreenFlash({ kind, trigger }: { kind: "legendary" | "catastroph
     setActive({
       kind,
       key: trigger,
-      leaves: kind === "legendary" ? makeLeaves(72) : [],
-      splats: kind === "catastrophe" ? makeSplats() : [],
+      shards: kind === "legendary" ? makeShards(70) : [],
+      bars: kind === "catastrophe" ? makeBars() : [],
     });
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => setActive(null), kind === "legendary" ? 2700 : 1700);
@@ -89,7 +86,9 @@ export function ScreenFlash({ kind, trigger }: { kind: "legendary" | "catastroph
       <div key={active.key} style={base} aria-hidden>
         <div className="ouar-flash-rays" />
         <div className="ouar-flash-white" />
-        {active.leaves.map((l, i) => (
+        <div className="ouar-flash-ring" />
+        <div className="ouar-flash-ring ouar-flash-ring-2" />
+        {active.shards.map((l, i) => (
           <div
             key={i}
             className="ouar-leaf-fall"
@@ -108,8 +107,8 @@ export function ScreenFlash({ kind, trigger }: { kind: "legendary" | "catastroph
               style={{
                 width: l.w,
                 height: l.h,
-                clipPath: LEAF_SHAPES[l.shape],
-                background: LEAF_GRADS[l.hue],
+                clipPath: SHARD_SHAPES[l.shape],
+                background: SHARD_COLORS[l.hue],
                 animationDuration: `${l.flutter}s`,
               }}
             />
@@ -121,20 +120,36 @@ export function ScreenFlash({ kind, trigger }: { kind: "legendary" | "catastroph
 
   return (
     <div key={active.key} style={base} aria-hidden>
-      <div className="ouar-blot-wipe" style={{ position: "absolute", inset: 0 }}>
-        <svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" style={{ display: "block" }}>
+      <div className="ouar-glitch-wipe" style={{ position: "absolute", inset: 0 }}>
+        <div style={{ position: "absolute", inset: 0, background: "rgba(10, 6, 18, 0.72)" }} />
+        <svg className="ouar-static" width="100%" height="100%" preserveAspectRatio="none" style={{ position: "absolute", inset: "-60px", width: "calc(100% + 120px)", height: "calc(100% + 120px)" }}>
           <defs>
-            <filter id={gooId} x="-50%" y="-50%" width="200%" height="200%">
-              <feGaussianBlur in="SourceGraphic" stdDeviation="1.6" result="b" />
-              <feColorMatrix in="b" type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 22 -9" />
+            <filter id={noiseId} x="0" y="0" width="100%" height="100%">
+              <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" seed={active.key % 50} />
+              <feColorMatrix type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1.6 -0.55" />
             </filter>
           </defs>
-          <g className="ouar-blot-spread" filter={`url(#${gooId})`} fill="#2A1E16">
-            {active.splats.map((s, i) => (
-              <circle key={i} cx={s.cx} cy={s.cy} r={s.r} />
-            ))}
-          </g>
+          <rect width="100%" height="100%" filter={`url(#${noiseId})`} />
         </svg>
+        {active.bars.map((b, i) => (
+          <div
+            key={i}
+            className="ouar-glitch-bar"
+            style={
+              {
+                top: `${b.top}%`,
+                height: `${b.h}%`,
+                background: b.color,
+                animationDelay: `${b.delay}s`,
+                animationDuration: `${b.dur}s`,
+                "--ouar-bar-x": `${b.x}%`,
+              } as CSSProperties
+            }
+          />
+        ))}
+        <div className="ouar-signal-lost">
+          <span>Signal lost</span>
+        </div>
       </div>
     </div>
   );
@@ -142,6 +157,8 @@ export function ScreenFlash({ kind, trigger }: { kind: "legendary" | "catastroph
 
 /* ================================================================== */
 /* TypeReveal                                                          */
+/*   phrase-by-phrase reveal; the first word is a caption-box          */
+/*   highlight and a cursor blinks once the line is fully transmitted  */
 /* ================================================================== */
 
 const BREAKS = ",.;!?—";
@@ -174,17 +191,25 @@ function splitPhrases(s: string): string[] {
 }
 
 export function TypeReveal({ text, phraseMs = 380, className }: { text: string; phraseMs?: number; className?: string }) {
-  const { cap, phrases } = useMemo(() => {
+  const { lead, gap, phrases } = useMemo(() => {
     const t = text ?? "";
-    const m = /[A-Za-z0-9À-ɏ]/.exec(t);
-    if (!m) return { cap: "", phrases: splitPhrases(t) };
-    const idx = m.index;
-    return { cap: t.slice(0, idx + 1).trimStart(), phrases: splitPhrases(t.slice(idx + 1)) };
+    // first word (must contain a letter or digit), keeping any punctuation glued to it
+    const m = /^\s*([^\s]*[A-Za-z0-9À-ɏ][^\s]*)([ \t]*)/.exec(t);
+    if (!m) return { lead: "", gap: "", phrases: splitPhrases(t) };
+    return { lead: m[1], gap: m[2], phrases: splitPhrases(t.slice(m[0].length)) };
   }, [text]);
+
+  const visible = phrases.filter((p) => p !== "\n").length;
+  const done = 0.18 + (phrases.length * phraseMs) / 1000 + 0.3;
 
   return (
     <div className={className} key={text}>
-      {cap && <span className="ouar-dropcap">{cap}</span>}
+      {lead && (
+        <>
+          <span className="ouar-lead">{lead}</span>
+          {gap ? " " : ""}
+        </>
+      )}
       {phrases.map((p, i) =>
         p === "\n" ? (
           <br key={i} />
@@ -194,73 +219,58 @@ export function TypeReveal({ text, phraseMs = 380, className }: { text: string; 
           </span>
         ),
       )}
+      {(lead || visible > 0) && <span className="ouar-cursor" aria-hidden style={{ animationDelay: `${done}s, ${done}s` }} />}
     </div>
   );
 }
 
 /* ================================================================== */
-/* Hourglass                                                           */
+/* Hourglass -> signal scan (radar sweep with blips). Same props.      */
 /* ================================================================== */
-
-const GLASS =
-  "M20 9 C20 22 29 27 30.5 32 C29 37 20 42 20 55 L44 55 C44 42 35 37 33.5 32 C35 27 44 22 44 9 Z";
 
 export function Hourglass({ size = 64 }: { size?: number }) {
   const uid = "ouar-hg-" + useId().replace(/[^a-zA-Z0-9_-]/g, "");
-  const flow = { dur: "2s", repeatCount: "indefinite" as const };
+  const loop = { dur: "2.4s", repeatCount: "indefinite" as const };
   return (
     <svg viewBox="0 0 64 64" width={size} height={size} role="img" aria-label="Waiting" style={{ display: "inline-block", overflow: "visible" }}>
       <defs>
+        <linearGradient id={uid + "-sweep"} gradientUnits="userSpaceOnUse" x1="32" y1="3" x2="57.1" y2="17.5">
+          <stop offset="0" stopColor="#3DE7FF" stopOpacity="0" />
+          <stop offset="1" stopColor="#3DE7FF" stopOpacity="0.6" />
+        </linearGradient>
+        <radialGradient id={uid + "-bg"} cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0" stopColor="#14213A" />
+          <stop offset="1" stopColor="#07040C" />
+        </radialGradient>
         <clipPath id={uid + "-clip"}>
-          <path d={GLASS} />
+          <circle cx="32" cy="32" r="29" />
         </clipPath>
-        <linearGradient id={uid + "-gilt"} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#F6D57A" />
-          <stop offset="0.5" stopColor="#C8952E" />
-          <stop offset="1" stopColor="#8A6118" />
-        </linearGradient>
-        <linearGradient id={uid + "-post"} x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stopColor="#8A6118" />
-          <stop offset="0.45" stopColor="#F6D57A" />
-          <stop offset="1" stopColor="#7A5418" />
-        </linearGradient>
       </defs>
-      <g>
-        <animateTransform
-          attributeName="transform"
-          type="rotate"
-          values="0 32 32;0 32 32;180 32 32"
-          keyTimes="0;0.8;1"
-          calcMode="spline"
-          keySplines="0 0 1 1;0.6 0 0.3 1"
-          {...flow}
-        />
-        {/* glass */}
-        <path d={GLASS} fill="#F4E9D0" fillOpacity="0.35" />
-        <g clipPath={`url(#${uid}-clip)`} fill="#D9A441">
-          <rect x="14" y="14" width="36" height="18">
-            <animate attributeName="y" values="14;32;32" keyTimes="0;0.8;1" {...flow} />
-            <animate attributeName="height" values="18;0;0" keyTimes="0;0.8;1" {...flow} />
-          </rect>
-          <rect x="14" y="55" width="36" height="0">
-            <animate attributeName="y" values="55;39;39" keyTimes="0;0.8;1" {...flow} />
-            <animate attributeName="height" values="0;16;16" keyTimes="0;0.8;1" {...flow} />
-          </rect>
-          <line x1="32" y1="31" x2="32" y2="55" stroke="#D9A441" strokeWidth="1.3" strokeDasharray="2 1.6">
-            <animate attributeName="stroke-dashoffset" values="0;-7.2" dur="0.4s" repeatCount="indefinite" />
-            <animate attributeName="opacity" values="1;1;0;0" keyTimes="0;0.76;0.8;1" {...flow} />
-          </line>
-        </g>
-        <path d={GLASS} fill="none" stroke="#2A1E16" strokeWidth="1.4" strokeLinejoin="round" />
-        <path d="M23 12 C23 20 27 25 29.5 29" fill="none" stroke="#fff" strokeOpacity="0.55" strokeWidth="1" strokeLinecap="round" />
-        {/* frame */}
-        <rect x="12.5" y="8" width="3" height="48" rx="1" fill={`url(#${uid}-post)`} stroke="#2A1E16" strokeWidth="0.8" />
-        <rect x="48.5" y="8" width="3" height="48" rx="1" fill={`url(#${uid}-post)`} stroke="#2A1E16" strokeWidth="0.8" />
-        <rect x="9" y="3" width="46" height="6" rx="2" fill={`url(#${uid}-gilt)`} stroke="#2A1E16" strokeWidth="1" />
-        <rect x="9" y="55" width="46" height="6" rx="2" fill={`url(#${uid}-gilt)`} stroke="#2A1E16" strokeWidth="1" />
-        <circle cx="32" cy="6" r="1.1" fill="#2A1E16" opacity="0.6" />
-        <circle cx="32" cy="58" r="1.1" fill="#2A1E16" opacity="0.6" />
+      {/* scope */}
+      <circle cx="32" cy="32" r="29" fill={`url(#${uid}-bg)`} />
+      <g fill="none" stroke="#3DE7FF">
+        <circle cx="32" cy="32" r="29" strokeWidth="1.6" strokeOpacity="0.9" />
+        <circle cx="32" cy="32" r="19.5" strokeWidth="0.8" strokeOpacity="0.35" />
+        <circle cx="32" cy="32" r="10" strokeWidth="0.8" strokeOpacity="0.35" />
+        <path d="M32 3 V61 M3 32 H61" strokeWidth="0.6" strokeOpacity="0.3" />
+        <circle cx="32" cy="32" r="31.5" strokeWidth="1.4" strokeOpacity="0.6" strokeDasharray="0.8 3.1" />
       </g>
+      {/* sweep */}
+      <g clipPath={`url(#${uid}-clip)`}>
+        <g>
+          <animateTransform attributeName="transform" type="rotate" values="0 32 32;360 32 32" {...loop} />
+          <path d="M32 32 L32 3 A29 29 0 0 1 57.1 17.5 Z" fill={`url(#${uid}-sweep)`} />
+          <line x1="32" y1="32" x2="57.1" y2="17.5" stroke="#3DE7FF" strokeWidth="1.6" strokeLinecap="round" />
+        </g>
+      </g>
+      {/* blips light up as the sweep passes */}
+      <circle cx="43.3" cy="20.7" r="2.6" fill="#FF2E7E">
+        <animate attributeName="opacity" values="0.6;0;0;1" keyTimes="0;0.5;0.955;1" {...loop} />
+      </circle>
+      <circle cx="25.2" cy="50.6" r="2.1" fill="#FFB648">
+        <animate attributeName="opacity" values="0;0;1;0" keyTimes="0;0.38;0.4;1" {...loop} />
+      </circle>
+      <circle cx="32" cy="32" r="1.8" fill="#FFFFFF" />
     </svg>
   );
 }

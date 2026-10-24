@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 
@@ -6,6 +6,31 @@ type Item = { id: number; emoji: string; color?: string };
 type Floater = Item & { x: number; dur: number; sway: number; swayDur: number; size: number; tilt: number; born: number };
 
 const MAX = 40;
+
+/** Push any color (e.g. the storybook player palette) toward a bright neon glow. */
+function neon(color: string) {
+  const m = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec((color || "").trim());
+  if (!m) return color;
+  let hex = m[1];
+  if (hex.length === 3) hex = hex.split("").map((c) => c + c).join("");
+  const r = parseInt(hex.slice(0, 2), 16) / 255;
+  const g = parseInt(hex.slice(2, 4), 16) / 255;
+  const b = parseInt(hex.slice(4, 6), 16) / 255;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const d = max - min;
+  let h = 0;
+  if (d) {
+    if (max === r) h = ((g - b) / d) % 6;
+    else if (max === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h *= 60;
+    if (h < 0) h += 360;
+  }
+  const l0 = (max + min) / 2;
+  const s0 = d === 0 ? 0 : d / (1 - Math.abs(2 * l0 - 1));
+  return `hsl(${Math.round(h)} ${Math.round((d === 0 ? 0 : Math.max(s0, 0.85)) * 100)}% ${Math.round(Math.max(l0, 0.62) * 100)}%)`;
+}
 
 export function Reactions({ items }: { items: { id: number; emoji: string; color?: string }[] }) {
   const [live, setLive] = useState<Floater[]>([]);
@@ -85,8 +110,8 @@ export function Reactions({ items }: { items: { id: number; emoji: string; color
                 lineHeight: 1,
                 transform: "translateX(-50%)",
                 filter: f.color
-                  ? `drop-shadow(0 0 6px ${f.color}) drop-shadow(0 0 2px ${f.color})`
-                  : "drop-shadow(0 3px 4px rgba(22,27,51,0.45))",
+                  ? `drop-shadow(0 0 10px ${neon(f.color)}) drop-shadow(0 0 3px ${neon(f.color)}) drop-shadow(0 4px 6px rgba(0,0,0,0.5))`
+                  : "drop-shadow(0 0 10px rgba(61,231,255,0.55)) drop-shadow(0 4px 6px rgba(0,0,0,0.5))",
               }}
             >
               {f.emoji}

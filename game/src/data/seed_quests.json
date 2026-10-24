@@ -1,370 +1,367 @@
 [
  {
-  "quest_title": "The Rust-Wyrm of Mineral Springs",
+  "id": "rust-wyrm",
+  "quest_title": "The Bridge That Hums at Night",
   "category": "infrastructure",
-  "tone": "joyful",
-  "realm_name": "The Twin Banks of Porterholm",
-  "fairytale_premise": "For nearly three winters, the two halves of Porterholm have only been able to wave at each other across the Lesser Calumet River. A Rust-Wyrm coiled beneath the old iron bridge and licked its beams into flaky orange lace, until the Royal Inspector declared it unsafe for so much as a goose. Bread arrives stale via the Endless Detour. Grandmothers shout recipes across the water. Enough is enough.",
+  "tone": "eerie",
+  "realm_name": "Porter, Indiana",
+  "fairytale_premise": "Tomorrow morning, Mineral Springs Road in Porter, Indiana, reopens after almost three years. Tonight the new bridge is finished, floodlit and empty. The old steel beams lie stacked by the river, chewed hollow. Something under the water is humming, and it sounds hungry. Your flashlight finds fresh teeth marks on the brand-new rail.",
   "the_threat": {
-   "name": "The Rust-Wyrm",
-   "description": "A long, damp, copper-orange serpent that eats iron and breathes humidity. Wherever it naps, steel turns to crumbly red flakes. It is not evil, just extremely hungry and extremely snacky.",
-   "mapped_from": "The bridge's steel beams deteriorated until inspectors found the structure unsafe for all traffic."
+   "name": "The Iron-Maw",
+   "description": "A long, shy river thing with rust-red teeth that licks and chews bridge steel until it flakes away. It hums when it feeds, and it has had three years to get hungry.",
+   "mapped_from": "Inspectors found the old bridge's steel beams had deteriorated; it closed Dec 1, 2023 as unsafe for all traffic."
   },
   "the_goal": {
-   "description": "Coax the Rust-Wyrm out from under the girders, help the Bridgewrights raise a new span the Wyrm can't eat, and lead the first cart across to reunite the Twin Banks.",
-   "mapped_from": "A replacement bridge was built and the road is set to reopen after nearly 3 years."
+   "description": "Drive the Iron-Maw back down the Little Calumet and keep the new span unchewed until the first car crosses at dawn.",
+   "mapped_from": "A newly built replacement bridge lets the road reopen after nearly three years."
   },
   "locations": [
    {
-    "name": "The Shouting Banks",
-    "description": "Two riverside villages that have been yelling small talk across the water for three years. Their voices are VERY strong now.",
-    "mapped_from": "The road closure split the route over the Little Calumet River."
+    "description": "Orange barricades, a dark traffic light, and a span that hums when the wind is still.",
+    "mapped_from": "Road closed Dec 1 2023 as unsafe for traffic",
+    "name": "The Closed Bridge"
    },
    {
-    "name": "The Endless Detour",
-    "description": "A road that loops so many times that travelers pack lunch, then dinner, then breakfast.",
-    "mapped_from": "Traffic was detoured while the bridge was closed."
+    "description": "Muddy bank, shopping carts, and long scrape trails leading up to the steel beams.",
+    "mapped_from": "Bridge over Little Calumet River in Porter",
+    "name": "Little Calumet Riverbank"
    },
    {
-    "name": "The Inspector's Spire",
-    "description": "Home of Inspector Pemberly, a monocled gnome with a clipboard who has never once said 'looks fine'.",
-    "mapped_from": "The county inspection that closed the bridge."
+    "description": "Narrow county roads, tired detour signs, and a gas station with hand-drawn maps.",
+    "mapped_from": "Traffic detoured for nearly three years",
+    "name": "The Three-Year Detour"
    },
    {
-    "name": "The Underspan Nest",
-    "description": "A dripping cavern beneath the girders, glittering with half-chewed rivets.",
-    "mapped_from": "The deteriorated steel beams beneath the deck."
-   },
-   {
-    "name": "The Guildhall of Sealed Bids",
-    "description": "Where rival Bridgewright guilds slide wax-sealed scrolls under the door and glare at one another.",
-    "mapped_from": "The replacement was put out to bid and awarded to a contractor."
+    "description": "Cranes, fresh concrete, new steel beams, and a night-shift trailer with floodlights.",
+    "mapped_from": "Replacement bridge built by contractor and inspected",
+    "name": "The New Span Work Site"
    }
   ],
   "complications": [
    {
     "stage": 1,
-    "title": "Your Sword Is a Snack",
-    "what_happens": "The first hero to draw an iron weapon watches the Wyrm eat it like a breadstick. It now wants more.",
-    "why_obvious_in_hindsight": "It's literally an iron-eating monster. Bring wood, stone, or snacks that aren't you.",
-    "mapped_from": "Steel deterioration: iron is the thing being consumed."
+    "title": "It Eats Your Tools",
+    "what_happens": "Flashlights flicker and anything iron left near the beams pits and flakes. The crowbar is gone. The team has to work with rope, wood and nerve.",
+    "why_obvious_in_hindsight": "Of course an iron-eater would snack on a crowbar too.",
+    "mapped_from": "Steel beams deteriorated and rusted through"
    },
    {
     "stage": 2,
-    "title": "No Bridge Without a Bid",
-    "what_happens": "The Wyrm is gone, but the Bridgewrights won't lift a hammer until the Guildhall opens the sealed bids. Two guilds are now locked in a staring contest.",
-    "why_obvious_in_hindsight": "Public works always go out to bid. Someone has to pick a builder.",
-    "mapped_from": "Bids for the new bridge were opened and awarded before construction."
+    "title": "The Road Won't Stay Open",
+    "what_happens": "Detour signs spin and phones reroute everyone in circles. The team must map the loop on foot and mark the true path.",
+    "why_obvious_in_hindsight": "A closed road for three years forgets how to let people through.",
+    "mapped_from": "Road closed nearly three years with detour"
    },
    {
     "stage": 3,
-    "title": "The Trial of Weight",
-    "what_happens": "The shiny new bridge is finished, and Inspector Pemberly refuses to open it until it holds the heaviest thing in the realm. Every villager is now rolling their prize pumpkin toward the river.",
-    "why_obvious_in_hindsight": "The same inspector who closed the old bridge was always going to test the new one.",
-    "mapped_from": "New bridges are inspected and load-checked before reopening."
+    "title": "The Final Hum",
+    "what_happens": "The inspector's truck pulls up at dawn. The Iron-Maw picks that moment to hum, and the whole span shivers. Make it look like a bridge that passes.",
+    "why_obvious_in_hindsight": "It always hummed loudest right before an inspection. That is how the old bridge failed one.",
+    "mapped_from": "New bridges are inspected before they reopen; the old one failed its inspection."
    }
   ],
   "the_real_story": {
-   "summary": "A road in Porter, Indiana, that has been closed for nearly three years is set to reopen with a newly built bridge.",
+   "summary": "A road in Porter, Indiana, closed for nearly three years is set to reopen with a newly built bridge.",
    "headline": "Road with new bridge in Porter to reopen after nearly 3 years",
    "source": "Chicago Tribune",
    "date": "2026-10-24",
    "link": "https://news.google.com/rss/articles/CBMigAFBVV95cUxNVmxaS290dEV3MHNGQ2Z2dUxhcDR2a0NJN2N3amZJRm52ckQxeDc2SzRaRGR1UUFMYnB0NnpMcXl2SkVLZ0VlN2tyNno3dHZMdnZ3QTVGME9MMWxMQ1JwLTdyUWhKYkRaU1lpTHFHXzd4emdZcWdFUXdaSGYwM0Q5ag?oc=5",
    "context_note": "Likely Mineral Springs Road over the Little Calumet River, closed Dec 1, 2023 for deteriorated steel beams (Town of Porter notice). Verify against the article before demo."
   },
-  "art_style_hint": "Cozy storybook gouache, autumn Midwest palette (rust orange, river teal, harvest gold), a sheepish copper serpent curled under a steel truss bridge, villagers waving from both banks.",
-  "id": "rust-wyrm"
+  "art_style_hint": "The floodlit new bridge on Mineral Springs Road at night, a rust-red river serpent coiled under the old stacked beams, in a bold neon graphic-novel style."
  },
  {
-  "quest_title": "The Billion Pearls of the Grey Sea",
+  "id": "billion-pearls",
+  "quest_title": "The Billion Eggs That Crossed the Sea",
   "category": "environment",
-  "tone": "neutral",
-  "realm_name": "The Tidelands, from the Mouth of Tyne to the Wadden Isles",
-  "fairytale_premise": "In midsummer, a careless cargo-giant at the Mouth of Tyne spilled a sack of one billion tiny milk-white pearls. Nobody chased them. Now the Grey Sea's great current has carried them 390 miles east, and a lighthouse keeper with a flying glass eye has found them carpeting the shores of the Wadden Isles. The gulls think they're fish eggs. The crabs are very confused. Someone has to prove where they came from and sweep the tide clean.",
+  "tone": "eerie",
+  "realm_name": "The North Sea coast, from the River Tyne to Mandø",
+  "fairytale_premise": "A drone photographing the Danish island of Mandø finds the beach dotted with tiny white beads. Lab tests say they left an English river in July and crossed 390 miles of North Sea to get here, as if they knew the way. The gulls peck at them, then stop and stare at you. The beads are warm.",
   "the_threat": {
-   "name": "The Pearl Plague",
-   "description": "A billion false pearls, each smaller than a lentil, that look exactly like fish roe and fool every bird, seal and crab on the coast. They never dissolve, and they never stop traveling.",
-   "mapped_from": "A spill of roughly one billion plastic nurdles (pre-production pellets) in the River Tyne in July."
+   "description": "A patient tide-thing that slipped a billion pale eggs into the Tyne in July and is herding them across the North Sea on the currents. They look exactly like fish roe.",
+   "mapped_from": "About one billion plastic nurdles (pre-production pellets) spilled into the River Tyne in July.",
+   "name": "The Hatch-Mother Tide"
   },
   "the_goal": {
-   "description": "Trace the pearls back across the sea, prove their origin to the Alchemists of Aarhus, and rally both shores to sweep the tidelines before the gulls feast.",
-   "mapped_from": "Denmark's Environment Protection Agency and Aarhus University tested the pellets and linked them to the Tyne spill."
+   "description": "Trace the eggs back to the Tyne, prove where they came from, and bag every last one before the Hatch-Mother calls them home.",
+   "mapped_from": "Denmark's EPA and Aarhus University linked the pellets to the Tyne spill; beach clean-up continues."
   },
   "locations": [
    {
-    "name": "The Isle of Mandø",
-    "description": "A pristine tidal island where the pearls first appeared, so thick on the sand it looks like it snowed.",
-    "mapped_from": "Nurdles first spotted on Mandø, Denmark, on 26 September."
+    "description": "Wide tidal flat where drone photos first showed white dots scattered on dark sand.",
+    "mapped_from": "Nurdles first spotted on Mandø 26 September",
+    "name": "Mandø White Strand"
    },
    {
-    "name": "The Watchtower of the Flying Eye",
-    "description": "Home of a lighthouse keeper whose enchanted glass drone can spot a single pearl from the clouds.",
-    "mapped_from": "The finder runs a startup that detects microplastics from drone images."
+    "description": "Small garage office full of screens showing drone maps of the beach.",
+    "mapped_from": "Startup detected pellets using drone images",
+    "name": "The Drone Hut"
    },
    {
-    "name": "The Current Road",
-    "description": "A swirling invisible highway across the Grey Sea. Anything dropped in at Tyne eventually turns up somewhere else.",
-    "mapped_from": "Arrival timing matched North Sea currents and circulation."
+    "description": "Bright university lab with microscopes and trays sorting pellets by size and color.",
+    "mapped_from": "Aarhus University tested pellets with EPA",
+    "name": "The Pellet Lab at Aarhus"
    },
    {
-    "name": "The Alchemists' Tower of Aarhus",
-    "description": "Robed scholars who won't believe anything they haven't put under a lens and tested three times.",
-    "mapped_from": "Aarhus University tested the pellets with the Danish EPA."
+    "description": "Windy German island beach where a second line of the same pellets was bagged.",
+    "mapped_from": "Samples also collected on Sylt, Germany",
+    "name": "Sylt South Beach"
    },
    {
-    "name": "The Mouth of Tyne",
-    "description": "The bustling river harbor where the sack first split.",
-    "mapped_from": "The July spill in north-east England."
+    "description": "A rusty riverside dock on the Tyne at low tide, where a billion pale beads went into the water in July. The mud still glitters.",
+    "mapped_from": "The July nurdle spill in the River Tyne, north-east England.",
+    "name": "Tyne Spill Dock"
    }
   ],
   "complications": [
    {
     "stage": 1,
-    "title": "The Tide Giveth (Again)",
-    "what_happens": "The party sweeps the whole beach spotless. Six hours later the tide delivers a fresh batch.",
-    "why_obvious_in_hindsight": "You can't empty a beach while the sea keeps refilling it. Get ahead of the current, not behind it.",
-    "mapped_from": "Nurdles kept washing up wherever the tide reached."
+    "title": "The Gulls Won't Stop",
+    "what_happens": "Flocks land to eat the pale eggs and carry them inland, spreading the nest.",
+    "why_obvious_in_hindsight": "Hungry birds always think small round things are fish eggs.",
+    "mapped_from": "Birds mistake nurdles for fish eggs"
    },
    {
     "stage": 2,
-    "title": "Pearls Know No Borders",
-    "what_happens": "The pearls have drifted south onto the sands of Sylt, in the neighboring realm, and its wardens won't take orders from strangers.",
-    "why_obvious_in_hindsight": "The sea doesn't stop at borders. Cleanup takes two kingdoms working together.",
-    "mapped_from": "Samples were also collected on Sylt, Germany."
+    "title": "The Tide Brings More",
+    "what_happens": "Just as the beach looks clear, the high tide drops a fresh white line of eggs.",
+    "why_obvious_in_hindsight": "A billion eggs drifting 390 miles never arrive all at once.",
+    "mapped_from": "Arrival timing matched North Sea currents"
    },
    {
     "stage": 3,
-    "title": "Prove It Wasn't Anyone Else",
-    "what_happens": "The Alchemists agree the pearls match Tyne's, but won't seal the verdict until the party proves no OTHER ship spilled any. To the Harbor Ledgers!",
-    "why_obvious_in_hindsight": "A match isn't proof until you rule out other suspects.",
-    "mapped_from": "The agency noted there were no other recorded spills in the area that could explain the pellets."
+    "title": "Everything Matches",
+    "what_happens": "The last lab test comes back: every bead has the same mother. That night, every bagged bead starts rolling toward the water at once.",
+    "why_obvious_in_hindsight": "If no other spill fits, all eggs share one source.",
+    "mapped_from": "The agency found no other recorded spill that could explain the pellets: one source."
    }
   ],
   "the_real_story": {
-   "summary": "Denmark's Environment Protection Agency says plastic pellets that washed up on its coast likely came from a July spill of about one billion nurdles in the River Tyne, roughly 390 miles away.",
+   "summary": "Plastic pellets found on Denmark's coast likely came from a July spill of about one billion nurdles in England's River Tyne, about 390 miles away.",
    "headline": "Denmark nurdles may be from Tyne spill, agency says",
    "source": "BBC News",
    "date": "2026-10-23",
-   "link": "https://www.bbc.co.uk/news/articles/cqy43xv1jwv2o"
+   "link": "https://www.bbc.co.uk/news/articles/cqy43xv1jwv2o",
+   "context_note": "Spill happened in July; pellets were first seen in Denmark on 26 September."
   },
-  "art_style_hint": "Soft watercolor seascape in cool grey-blue and sand, milky pearl highlights scattered like snow on a tidal flat, a lighthouse with a tiny glass drone, curious gulls. Avoid Viking or horned-helmet clichés.",
-  "id": "billion-pearls"
+  "art_style_hint": "Mandø's tidal flats at night glittering with pale beads under a drone spotlight, a vast shape moving under the waves, in a bold neon graphic-novel style."
  },
  {
-  "quest_title": "The Last Fifty Giants of Thamesreach",
-  "category": "animals_nature",
-  "tone": "wholesome",
-  "realm_name": "The Floodplain Kingdom of Thamesreach",
-  "fairytale_premise": "Long ago, gnarled Black Poplar Giants lined every river in Thamesreach. They drank the floods and sheltered the Hornet-Moth folk. Then came the axes, the Drain-Sprites and the lost meadows. Now only fifty Giants remain in all of Oxenshire, standing so far apart they've forgotten each other's voices. The Druids of Long Mead have a plan: read each Giant's secret bloodline, take cuttings, and grow a new grove before the river rises again.",
+  "id": "hanging-boulder",
+  "quest_title": "The Boulder That Let Go",
+  "category": "unexplained",
+  "tone": "eerie",
+  "realm_name": "Polar Caves, Rumney, New Hampshire",
+  "fairytale_premise": "On the last day of the season at Polar Caves in Rumney, New Hampshire, the 80-ton boulder that hung over the walkway for a century finally lets go. Nobody is underneath. Nobody can say why. Tonight the park is locked, the stone is still warm, and if you press your ear to it, it is breathing very slowly.",
   "the_threat": {
-   "name": "The Drain-Sprites and the Great Sundering",
-   "description": "Tiny mischief-sprites who pull the plugs out of marshes and sip the floodplains dry, leaving the Giants stranded in lonely patches. The real curse is distance: the Giants are too scattered to renew themselves.",
-   "mapped_from": "Black poplar numbers fell due to decades of felling, land drainage and habitat loss. The remaining population is 'extremely fragmented'."
+   "description": "A cold grip left behind by the glacier that dropped these rocks. For a hundred years it held the boulder up over the walkway. On closing day it got tired and let go.",
+   "mapped_from": "The park has not given a cause for the 80-ton boulder's fall after more than a century.",
+   "name": "The Ice Age Grip"
   },
   "the_goal": {
-   "description": "Read each Giant's bloodline with the Lineage Rune, take cuttings from the true Giants, raise saplings, and plant a new guardian grove along the river.",
-   "mapped_from": "The project uses DNA analysis of existing trees, propagates cuttings and plants them in suitable sites."
+   "description": "Find out why the Grip let go, put it back to sleep, and keep the trail clear until the park reopens in 2027.",
+   "mapped_from": "The park will assess the site over the offseason and plans to reopen for the 2027 season."
   },
   "locations": [
    {
-    "name": "The Long Mead Druid Circle",
-    "description": "A cheerful grove-council who call the Giants 'extraordinary survivors' and speak to moths.",
-    "mapped_from": "The Long Mead Foundation in Swindon is involved in the project."
+    "description": "Narrow granite walls with a pale empty socket overhead where the rock hung for a century.",
+    "mapped_from": "Glacial talus caves left by continental glacier",
+    "name": "The Hollow Where It Hung"
    },
    {
-    "name": "The Gnarled Giant of the Ford",
-    "description": "A colossal tree with a trunk like a twisted castle tower, wise but very lonely.",
-    "mapped_from": "Black poplars' 'great gnarled trunks' that look like something out of a fantasy epic."
+    "description": "Small hut with last-day tickets, lost hats, and a wall of visitor photos under the boulder.",
+    "mapped_from": "Fell Oct. 18 on final day, open since 1922",
+    "name": "Closing-Day Ticket Hut"
    },
    {
-    "name": "The Thirsty Fens",
-    "description": "Once-soggy marshland now dry and cracked where the Drain-Sprites partied.",
-    "mapped_from": "Land drainage as a cause of decline."
+    "name": "The Talus Caves",
+    "description": "Tight crawlways between granite blocks the size of vans, dropped by a glacier. Cold air breathes out of the cracks even in October.",
+    "mapped_from": "Polar Caves are glacially formed talus caves from the last ice age."
    },
    {
-    "name": "The Swollen Thames",
-    "description": "A river that keeps creeping over its banks now that no Giants hold it back.",
-    "mapped_from": "Black poplars reduce flood risk by lining rivers and floodplains."
+    "description": "Cold trailer with trail maps, cones, and a 2027 reopening calendar on the wall.",
+    "mapped_from": "Park to assess site in offseason",
+    "name": "Winter Watch Trailer"
    },
    {
-    "name": "The Treasury of Oxenshire",
-    "description": "A council vault with a strict ledger-keeper who will match gold, but only up to a point.",
-    "mapped_from": "The county council will match-fund the fundraiser up to £10,000."
+    "description": "Splintered boards pinned under 80 tons of stone, blocking any walk past.",
+    "mapped_from": "Wooden walkway used by thousands, now smashed",
+    "name": "The Smashed Boardwalk"
    }
   ],
   "complications": [
    {
     "stage": 1,
-    "title": "Not Every Giant Is a Giant",
-    "what_happens": "The Lineage Rune reveals that some trees calling themselves Giants are look-alike imposters. Plant their cuttings and you'll grow the wrong forest.",
-    "why_obvious_in_hindsight": "If telling them apart by eye were easy, nobody would need the DNA test.",
-    "mapped_from": "The project relies on DNA testing of existing trees before propagation."
+    "title": "The Trail Is Blocked",
+    "what_happens": "The boulder seals the narrow passage. Loose rocks tick down. You must rig a rope line and spot each other to get around safely.",
+    "why_obvious_in_hindsight": "An 80-ton rock does not land neatly. Of course the only way through is blocked.",
+    "mapped_from": "80-ton rock smashed walkway and blocks trail"
    },
    {
     "stage": 2,
-    "title": "The Gold Runs Half-Way",
-    "what_happens": "The Treasury will match every coin the villagers raise, but only up to 10,000. The grove needs 20,000. Time to throw a fundraiser feast.",
-    "why_obvious_in_hindsight": "Matched funding means someone still has to raise the first half.",
-    "mapped_from": "Project aims to raise £20,000, with council matching up to £10,000."
+    "title": "The Gates Are Locking",
+    "what_happens": "Staff close the gates for winter. Lights go out. Your phones lose signal, and you must work by flashlight and shouted directions.",
+    "why_obvious_in_hindsight": "It fell on closing day. Of course there is nobody left to keep the power on.",
+    "mapped_from": "Fell on final day of season, park now closed"
    },
    {
     "stage": 3,
-    "title": "Plant It and the River Takes It",
-    "what_happens": "The first saplings go in right at the water's edge and the swollen Thames promptly floats them away.",
-    "why_obvious_in_hindsight": "Trees that tame floods need to grow up first. Saplings need sheltered 'suitable sites'.",
-    "mapped_from": "Cuttings are planted in suitable sites along the Thames and its flood plain."
+    "title": "It Shifts Again",
+    "what_happens": "The stone groans and settles deeper. You must freeze, listen together, then coax it still with steady weight and wedged boards.",
+    "why_obvious_in_hindsight": "Freshly fallen rock keeps moving. Of course it was not done settling on night one.",
+    "mapped_from": "No cause given, site to be assessed"
    }
   ],
   "the_real_story": {
-   "summary": "Conservation groups in the Thames Valley are using DNA testing, cuttings and new plantings to restore England's rare black poplar trees, with only about 50 recorded in Oxfordshire.",
-   "headline": "Project to restore rare native trees with DNA testing",
-   "source": "BBC News",
-   "date": "2026-10-24",
-   "link": "https://www.bbc.co.uk/news/articles/cw240ln41mq2o"
+   "summary": "Polar Caves in Rumney says its 80-ton hanging boulder fell on Oct. 18, smashing a walkway, with no injuries reported.",
+   "headline": "Massive 80-ton boulder comes crashing down after more than a century at New Hampshire attraction",
+   "source": "FOX Weather",
+   "date": "2026-10-20",
+   "link": "https://www.foxweather.com/earth-space/historic-hanging-boulder-falls-new-hampshire",
+   "context_note": "Nobody was hurt; the park has not said what caused the fall."
   },
-  "art_style_hint": "Arthur Rackham-style ink and wash: huge gnarled poplars with faces in the bark, misty English floodplain, glowing moth-folk, druids in muddy wellies.",
-  "id": "fifty-giants"
+  "art_style_hint": "A granite cave trail in the New Hampshire woods at night, an 80-ton boulder on a smashed boardwalk with pale frost-hands still cupping it, in a bold neon graphic-novel style."
  },
  {
-  "quest_title": "The Fall of the Undefeated Sky-Colossus",
-  "category": "sports",
-  "tone": "joyful",
-  "realm_name": "The League of Twenty Banners",
-  "fairytale_premise": "All season, the Sky-Blue Colossus of the Northern Citadel has won every tourney it played. Bards have pre-written the 'Ballad of the Perfect Season'. Now the Colossus marches on Villa Keep, home of the Claret Lions, who are underdogs but not quite under-lions. You are the Lions' scrappy war council. Your mission: do the impossible, and give the bards something new to sing about.",
+  "id": "galactic-signal",
+  "quest_title": "The Signal That Wakes Up Hungry",
+  "category": "science_space",
+  "tone": "eerie",
+  "realm_name": "The Very Large Array, New Mexico",
+  "fairytale_premise": "At 2 a.m., every dish at the Very Large Array in the New Mexico desert swings toward the same empty patch of sky. The printout shows a radio source that was not there in 1996. It flared in 2014, went quiet, then woke up again last winter. Tonight its pitch keeps changing while you listen, like it is trying to find your frequency.",
   "the_threat": {
-   "name": "The Aura of Inevitability",
-   "description": "A shimmering sky-blue fog that rolls off the Colossus and whispers 'you've already lost' to every opponent. It works great, until somebody stops listening.",
-   "mapped_from": "Manchester City arrived with a 100% winning record in the Premier League."
+   "description": "A dark, hungry mouth circling a bright companion star, sipping its light and singing radio songs across decades. Every time it feeds, it gets louder.",
+   "mapped_from": "The leading explanation is an accreting black hole or neutron star pulling material from a companion star.",
+   "name": "The Far Feeder"
   },
   "the_goal": {
-   "description": "Break the Aura and win the Tourney of Villa Keep, ending the Colossus's perfect streak.",
-   "mapped_from": "Aston Villa beat Manchester City, ending City's 100% Premier League record."
+   "description": "Pin down the signal's source and prove it is a hungry thing 49,000 light-years away feeding on a star, not something knocking on Earth's door.",
+   "mapped_from": "Astronomers' leading idea: a black hole or neutron star feeding on a companion star, far beyond the Norma-Cygnus arm."
   },
   "locations": [
    {
-    "name": "The Bards' Quarter",
-    "description": "Minstrels nervously rehearsing a ballad with the ending already written.",
-    "mapped_from": "Media buzz about a perfect season."
+    "description": "A low-lit control room full of monitors, printouts, and cold coffee where the sky survey scrolls past.",
+    "mapped_from": "Very Large Array Sky Survey data in New Mexico",
+    "name": "Night-Shift Control Room"
    },
    {
-    "name": "Villa Keep",
-    "description": "A claret-and-blue fortress whose crowd roars so loud pigeons migrate early.",
-    "mapped_from": "Aston Villa's home ground."
+    "description": "Dusty shelves of old sky maps and hard drives, with a blank page where the signal should be.",
+    "mapped_from": "Absent in 1996 survey, bright by 2014",
+    "name": "Archive Trailer"
    },
    {
-    "name": "The Scrying Pool of Tactics",
-    "description": "Where the Colossus has studied every move the Lions have ever made.",
-    "mapped_from": "Top clubs' heavy opposition scouting and analysis."
+    "description": "A small concrete shed with headphones and dials for catching the shifting radio pitch.",
+    "mapped_from": "Spectrum peak jumping and no X-rays found",
+    "name": "Listening Shed"
    },
    {
-    "name": "The Tourney Green",
-    "description": "The great field where the match itself unfolds.",
-    "mapped_from": "The match pitch."
+    "description": "Rows of huge white dishes pointed at black sky, humming faintly as they track the same spot.",
+    "mapped_from": "VLA radio telescope array in New Mexico",
+    "name": "The Dish Field"
    }
   ],
   "complications": [
    {
     "stage": 1,
-    "title": "They've Seen This Before",
-    "what_happens": "The Lions' favorite trick play fails instantly. The Colossus has watched it in the Scrying Pool a hundred times.",
-    "why_obvious_in_hindsight": "An unbeaten giant got that way by studying everyone. You need a plan nobody has ever tried.",
-    "mapped_from": "Elite teams scout opponents thoroughly."
+    "title": "The Missing First Tape",
+    "what_happens": "The old 1996 survey shows empty sky where the signal should be, so your charts will not line up.",
+    "why_obvious_in_hindsight": "You cannot track something that was asleep before you started looking.",
+    "mapped_from": "Absent in 1996, peaked around 2014, faded"
    },
    {
     "stage": 2,
-    "title": "The Roar Is the Real Magic",
-    "what_happens": "The Aura only breaks when the whole Keep believes at once, and half the crowd is still queuing for pies.",
-    "why_obvious_in_hindsight": "Home advantage only works if the home crowd shows up loud.",
-    "mapped_from": "Villa won at home."
+    "title": "The Station Keeps Moving",
+    "what_happens": "Every tuned receiver goes quiet because the signal jumps to a new radio pitch while you listen.",
+    "why_obvious_in_hindsight": "A restless singer will not stay on one note for long.",
+    "mapped_from": "Spectrum peak jumped 1.9, 0.8, 2.2 GHz"
    },
    {
     "stage": 3,
-    "title": "The Colossus Wakes Up",
-    "what_happens": "You've taken the lead! Now the Colossus throws every knight forward at once. Hold the line until the final horn.",
-    "why_obvious_in_hindsight": "A champion that's losing for the first time all season won't go quietly.",
-    "mapped_from": "A favorite pushing hard late after falling behind (typical match dynamic)."
+    "title": "It Wakes Up Again",
+    "what_happens": "Just as you finish logging it, the monitors spike bright again for one final flare.",
+    "why_obvious_in_hindsight": "A thing that flares every few years was always due for one more show.",
+    "mapped_from": "Brightened again late 2025, decades-long cycle"
    }
   ],
   "the_real_story": {
-   "summary": "Aston Villa beat Manchester City, ending City's 100% winning record in the Premier League this season.",
-   "headline": "Man City lose 100% Premier League record with defeat at Aston Villa",
-   "source": "ESPN",
-   "date": "2026-10-24",
-   "link": "https://news.google.com/rss/articles/CBMiqgFBVV95cUxQcm44T3BmNVFnVk1SQzlYT0FtUnNqSU93MEw1QmtHbDJxWnVVQ3kyWnZFS2czQVNsaDhpay1DVHppcGdpZTZqNl9SdmNVaVRNTVlLM1hWYlB3VUl2alJfangyQ3hLYlZzVnZtejlEbG1oWE1nTF9lSm5UaWdtU1M4Nlhnb3Joa1JDemFiUWhpZE1tdzdrS0p6S21aQ055SFBUd2FSTEsta1Y2Zw?oc=5",
-   "context_note": "No players are named in the fiction; club names appear only in the reveal."
+   "summary": "Astronomers found a distant radio source, VT J1906+0849, that appeared, faded and brightened again over decades in ways that match no known type of object.",
+   "headline": "A Strange Radio Signal in The Far Reaches of The Milky Way Is Behaving Like Nothing Else in The Galaxy",
+   "source": "ScienceAlert",
+   "date": "2026-10-22",
+   "link": "https://www.sciencealert.com/a-strange-radio-signal-in-the-far-reaches-of-the-milky-way-is-behaving-like-nothing-else-in-the-galaxy",
+   "context_note": "No danger to Earth; source is at least 49,000 light-years away."
   },
-  "art_style_hint": "Illuminated medieval manuscript meets sports poster: a towering sky-blue armored colossus facing a pride of claret lions in a roaring castle stadium, gold-leaf borders.",
-  "id": "sky-colossus"
+  "art_style_hint": "The white dishes of the Very Large Array in the New Mexico desert at night, all aimed at one point where an impossible beam of light falls from deep space, in a bold neon graphic-novel style."
  },
  {
-  "quest_title": "The Littlest Gardener and the Pumpkin That Ate the Fair",
+  "id": "littlest-gardener",
+  "quest_title": "The Pumpkin That Hums at Nap Time",
   "category": "quirky",
-  "tone": "joyful",
-  "realm_name": "The Treasure Vale of Hysham",
-  "fairytale_premise": "At the Fall Fun Festival in the Treasure Vale, the Great Gourd Crown is up for grabs. The favorite isn't a grizzled farmer. It's the Littlest Gardener, two years old and about knee-high, whose pumpkin weighs 280 pounds, roughly ten times the gardener. The pumpkin is still in the patch. The scales are across the fairgrounds. Nap time is in one hour.",
+  "tone": "eerie",
+  "realm_name": "Hysham, Montana",
+  "fairytale_premise": "At the Fall Fun Festival in Hysham, Montana, the weigh-off winner is a 280-pound pumpkin grown by a two-year-old. After dark it sits by the hay bales under string lights. The vines are still growing, an inch every time you look away. The scale reads 280 with nothing on it. The kid just says it hums at nap time.",
   "the_threat": {
-   "name": "The Gourd of Unstoppable Momentum",
-   "description": "A colossal, gleaming orange pumpkin too heavy to lift and far too round to steer. Once it starts rolling, it has opinions about where it's going.",
-   "mapped_from": "The winning pumpkin weighed 280 pounds."
+   "description": "An old root-mind under the patch that hears lullabies and puffs pumpkins huge overnight.",
+   "mapped_from": "A 280-pound pumpkin, grown locally by a 2-year-old, won the festival weigh-off.",
+   "name": "The Patch That Listens"
   },
   "the_goal": {
-   "description": "Get the Great Gourd from the patch to the Royal Scales in one piece and crown the Littlest Gardener before nap time.",
-   "mapped_from": "A 2-year-old's pumpkin won the festival's weigh-off."
+   "description": "Get the humming champion onto the festival scale for an honest weigh-in, and lull the patch back to sleep before the vines take the fairground.",
+   "mapped_from": "The 280-pound pumpkin won the Fall Fun Festival weigh-off."
   },
   "locations": [
    {
-    "name": "The Patch of Plenty",
-    "description": "Where the Great Gourd sits like a sleeping orange moon.",
-    "mapped_from": "The pumpkin was grown locally."
+    "description": "A fenced backyard patch with trampled vines, one huge hollow pumpkin, and a tiny watering can.",
+    "mapped_from": "locally grown giant pumpkin",
+    "name": "The Toddler's Pumpkin Patch"
    },
    {
-    "name": "Hayride Hill",
-    "description": "A gentle slope that is not gentle at all if you're a 280-pound pumpkin.",
-    "mapped_from": "Typical fall-festival grounds (hayrides, fields)."
+    "description": "Food tables, game booths, and flyers for the Fall Fun Festival in small-town Hysham.",
+    "mapped_from": "Fall Fun Festival in Hysham Montana",
+    "name": "Festival Midway Row"
    },
    {
-    "name": "The Midway of Distractions",
-    "description": "Kettle corn, ring toss, a petting zoo. Everything a toddler would rather do than win a crown.",
-    "mapped_from": "The Fall Fun Festival setting."
+    "description": "A heavy steel platform scale beside the festival tent, its old dial needle trembling and its bulbs flickering with nothing on it.",
+    "mapped_from": "festival weigh-in scale",
+    "name": "The Weigh-Off Scale"
    },
    {
-    "name": "The Royal Scales",
-    "description": "An enormous brass weighing platform guarded by a very serious Weigh-Master.",
-    "mapped_from": "The festival's pumpkin weigh-in."
+    "description": "A stubble field with hay bales, string lights, and a tractor waiting for evening hayrides.",
+    "mapped_from": "typical fall-festival hayrides and fields",
+    "name": "Hayride Field at Dusk"
    }
   ],
   "complications": [
    {
     "stage": 1,
-    "title": "Too Heavy to Lift",
-    "what_happens": "Four heroes heave. The pumpkin doesn't notice. It weighs more than the whole party's packs combined.",
-    "why_obvious_in_hindsight": "It's 280 pounds. You need a wagon, a lever, or a very polite ox.",
-    "mapped_from": "The pumpkin's 280-pound weight."
+    "title": "It Will Not Roll",
+    "what_happens": "The 280-pound pumpkin sinks, sticks, and leans away from the truck every time you push.",
+    "why_obvious_in_hindsight": "Of course a thing that grew that fast holds the dirt tight.",
+    "mapped_from": "Moving giant pumpkins is notoriously tricky"
    },
    {
     "stage": 2,
-    "title": "What Goes Down Hayride Hill...",
-    "what_happens": "The party gets it rolling, and now it won't stop. It's headed straight for the Midway at alarming speed.",
-    "why_obvious_in_hindsight": "Big, round, heavy, downhill. Physics was always going to win.",
-    "mapped_from": "Moving giant pumpkins is notoriously tricky."
+    "title": "The Scale Is Awake",
+    "what_happens": "The festival scale buzzes and reads heavy with nothing on it, lights flickering in rhythm.",
+    "why_obvious_in_hindsight": "Of course the scale noticed all that extra growing energy first.",
+    "mapped_from": "Festival weigh-in scale and weigh-off contest"
    },
    {
     "stage": 3,
-    "title": "The Champion Is Asleep",
-    "what_happens": "The pumpkin is weighed and the crown is ready, but the Littlest Gardener has fallen fast asleep in a hay bale. Wake them gently, or the ceremony is a bust.",
-    "why_obvious_in_hindsight": "The champion is two. It was always going to come down to nap time.",
-    "mapped_from": "The winner is a 2-year-old."
+    "title": "Nap-Time Price",
+    "what_happens": "The vines wrap the festival gate and will not let go. They only loosen for the nap-time song, and nobody on the team knows the words.",
+    "why_obvious_in_hindsight": "Of course it only listens to the voice that sang to it all summer.",
+    "mapped_from": "Pumpkin grown by 2-year-old, festival win"
    }
   ],
   "the_real_story": {
-   "summary": "A 2-year-old grew the 280-pound pumpkin that won the weigh-off at the Fall Fun Festival in Hysham, Montana.",
+   "summary": "A 280-pound locally grown pumpkin won the weigh-off at the Fall Fun Festival in Hysham, Montana.",
    "headline": "A 2-year-old grew the 280-pound winning pumpkin at Hysham's Fall Fun Festival",
    "source": "KTVQ",
    "date": "2026-10-24",
    "link": "https://news.google.com/rss/articles/CBMipAFBVV95cUxOODhVb0ItQktJNE0zMkJlRlJaUU5GakVSb1p3U2RRQWpzXzU3S3drQnRoX1lJN3ZaY3FUMWI4NTliVVR1aV9vME9OVFVSMkJJaVliMGxFRHFobnlWbmhyRWh5UWZtMnRUUGx6N2Izb3NsWGUyNVJJZks4T2JYRWVZNzJjNWoxRTVxSnh3aHlPc3JFQUhFX011MHltZVd2WUl2NXZYeg?oc=5",
-   "context_note": "The child is never named in the game. The reveal shows only the headline and link."
+   "context_note": "The young grower is unnamed in coverage; keep it that way in play."
   },
-  "art_style_hint": "Warm Richard Scarry-style busy fairground, big-sky Montana prairie at golden hour, a gigantic shiny pumpkin dwarfing a tiny gardener in overalls, hay bales and bunting.",
-  "id": "littlest-gardener"
+  "art_style_hint": "A small-town Montana fall festival at night, one enormous glowing pumpkin by the hay bales with vines creeping over the fairground, in a bold neon graphic-novel style."
  }
 ]

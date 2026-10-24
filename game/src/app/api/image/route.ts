@@ -8,7 +8,8 @@ export async function POST(req: Request) {
   const body = await req.json();
   try {
     if (body.kind === "portrait") {
-      const img = await museImage({ prompt: portraitPrompt(body.visual, body.flaw ?? ""), size: "1024x1536", quality: "fast" });
+      // "high" keeps the uncanny tell (low dropped it in testing); ~18 s, hidden behind card reveals.
+      const img = await museImage({ prompt: portraitPrompt(body.visual, body.flaw ?? "", body.ability ?? ""), size: "1024x1536", quality: "best" });
       return NextResponse.json(img);
     }
     if (body.kind === "scene") {

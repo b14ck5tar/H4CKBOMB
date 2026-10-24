@@ -1,0 +1,332 @@
+[
+  {
+    "out": "A_graphic_novel/b_barista.webp",
+    "ok": true,
+    "secs": 17.125,
+    "size": "1024x1536",
+    "strength": "high",
+    "edit": false,
+    "prompt": "bold cinematic graphic-novel illustration, thick confident ink linework, explosive saturated color: electric magenta, acid cyan, sodium-orange streetlight glow and deep violet shadows, modern real-world setting with one impossible supernatural element, dramatic rim lighting, high contrast, dynamic composition. Character portrait, waist-up, centered, three-quarter view, looking toward the viewer, on a plain flat solid background: a nervous night-shift barista who can hear electricity, wide alert eyes, holding a paper to-go cup, wearing a work apron, big headphones resting around the neck, tiny arcs of visible electricity crackling near their ears. Original fictional young adult character, clear readable face and silhouette. Original fictional characters only, no real people, no celebrities, no logos or brands. No text, no letters, no words, no numbers, no captions, no signage, no watermark, no signature. Family-friendly, no gore.",
+    "revised_prompt": null,
+    "usage": {
+      "input_tokens": 19357,
+      "output_tokens": 2256,
+      "total_tokens": 21613
+    }
+  },
+  {
+    "out": "B_spiderverse/b_barista.webp",
+    "ok": true,
+    "secs": 17.358,
+    "size": "1024x1536",
+    "strength": "high",
+    "edit": false,
+    "prompt": "Spider-Verse style animated comic art, mixed-media: bold ink outlines with painterly brushwork underneath, Ben-Day halftone dots and screentone in the shadows, subtle CMYK print misregistration and chromatic aberration on the edges, hot magenta, electric cyan and acid-yellow light against deep indigo, kinetic tilted camera angle, glowing motion streaks, modern real-world setting with one impossible supernatural element, high contrast, explosive but clean shapes. Character portrait, waist-up, centered, three-quarter view, looking toward the viewer, on a plain flat solid background: a nervous night-shift barista who can hear electricity, wide alert eyes, holding a paper to-go cup, wearing a work apron, big headphones resting around the neck, tiny arcs of visible electricity crackling near their ears. Original fictional young adult character, clear readable face and silhouette. Original fictional characters only, no real people, no celebrities, no logos or brands. No text, no letters, no words, no numbers, no captions, no signage, no watermark, no signature. Family-friendly, no gore. No speech bubbles, no sound-effect lettering, no comic panels or borders.",
+    "revised_prompt": null,
+    "usage": {
+      "input_tokens": 19314,
+      "output_tokens": 2233,
+      "total_tokens": 21547
+    }
+  },
+  {
+    "out": "A_graphic_novel/a_bridge.webp",
+    "ok": true,
+    "secs": 23.803,
+    "size": "1920x1080",
+    "strength": "high",
+    "edit": false,
+    "prompt": "bold cinematic graphic-novel illustration, thick confident ink linework, explosive saturated color: electric magenta, acid cyan, sodium-orange streetlight glow and deep violet shadows, modern real-world setting with one impossible supernatural element, dramatic rim lighting, high contrast, dynamic composition. Wide cinematic establishing shot: a freshly reopened small-town steel truss bridge at dusk over a dark river, new paint and work lights still up, and something enormous and coppery coiled underneath it: a colossal serpent-like body of verdigris-flecked copper scales wrapped around the bridge piers, one huge glowing eye just opening in the shadows. No people. Clear single focal point, keep the lower third calm and uncluttered. Original fictional characters only, no real people, no celebrities, no logos or brands. No text, no letters, no words, no numbers, no captions, no signage, no watermark, no signature. Family-friendly, no gore.",
+    "revised_prompt": null,
+    "usage": {
+      "input_tokens": 30582,
+      "output_tokens": 3241,
+      "total_tokens": 33823
+    }
+  },
+  {
+    "out": "B_spiderverse/c_laundromat.webp",
+    "ok": true,
+    "secs": 26.057,
+    "size": "1920x1080",
+    "strength": "high",
+    "edit": false,
+    "prompt": "Spider-Verse style animated comic art, mixed-media: bold ink outlines with painterly brushwork underneath, Ben-Day halftone dots and screentone in the shadows, subtle CMYK print misregistration and chromatic aberration on the edges, hot magenta, electric cyan and acid-yellow light against deep indigo, kinetic tilted camera angle, glowing motion streaks, modern real-world setting with one impossible supernatural element, high contrast, explosive but clean shapes. Uncanny close-up moment: inside a laundromat at 3am, a long row of front-loading dryers all spinning in perfect synchronization, the tumbling clothes forming the same shape in every window, the overhead lights pulsing like a heartbeat, an empty plastic chair and a forgotten laundry basket. No people. Clear single focal point. Original fictional characters only, no real people, no celebrities, no logos or brands. No text, no letters, no words, no numbers, no captions, no signage, no watermark, no signature. Family-friendly, no gore. No speech bubbles, no sound-effect lettering, no comic panels or borders.",
+    "revised_prompt": null,
+    "usage": {
+      "input_tokens": 20058,
+      "output_tokens": 2715,
+      "total_tokens": 22773
+    }
+  },
+  {
+    "out": "B_spiderverse/a_bridge.webp",
+    "ok": true,
+    "secs": 28.856,
+    "size": "1920x1080",
+    "strength": "high",
+    "edit": false,
+    "prompt": "Spider-Verse style animated comic art, mixed-media: bold ink outlines with painterly brushwork underneath, Ben-Day halftone dots and screentone in the shadows, subtle CMYK print misregistration and chromatic aberration on the edges, hot magenta, electric cyan and acid-yellow light against deep indigo, kinetic tilted camera angle, glowing motion streaks, modern real-world setting with one impossible supernatural element, high contrast, explosive but clean shapes. Wide cinematic establishing shot: a freshly reopened small-town steel truss bridge at dusk over a dark river, new paint and work lights still up, and something enormous and coppery coiled underneath it: a colossal serpent-like body of verdigris-flecked copper scales wrapped around the bridge piers, one huge glowing eye just opening in the shadows. No people. Clear single focal point, keep the lower third calm and uncluttered. Original fictional characters only, no real people, no celebrities, no logos or brands. No text, no letters, no words, no numbers, no captions, no signage, no watermark, no signature. Family-friendly, no gore. No speech bubbles, no sound-effect lettering, no comic panels or borders.",
+    "revised_prompt": null,
+    "usage": {
+      "input_tokens": 31658,
+      "output_tokens": 3525,
+      "total_tokens": 35183
+    }
+  },
+  {
+    "out": "C_uncanny_photo/b_barista.webp",
+    "ok": true,
+    "secs": 15.282,
+    "size": "1024x1536",
+    "strength": "high",
+    "edit": false,
+    "prompt": "cinematic photoreal night photography, 35mm film still, anamorphic lens, practical lighting only: sodium-vapor streetlights, buzzing neon and cold fluorescent tubes, rich teal-and-magenta color grade with deep violet shadows, fine film grain, slight lens halation, shallow depth of field, an ordinary real-world place documented plainly, with exactly one impossible supernatural element rendered completely photorealistically as if it truly happened. Character portrait, waist-up, centered, three-quarter view, looking toward the viewer, on a plain flat solid background: a nervous night-shift barista who can hear electricity, wide alert eyes, holding a paper to-go cup, wearing a work apron, big headphones resting around the neck, tiny arcs of visible electricity crackling near their ears. Original fictional young adult character, clear readable face and silhouette. Original fictional characters only, no real people, no celebrities, no logos or brands. No text, no letters, no words, no numbers, no captions, no signage, no watermark, no signature. Family-friendly, no gore. No timestamp overlay, no camera UI, no HUD, no date stamp. Not a painting, not a cartoon.",
+    "revised_prompt": null,
+    "usage": {
+      "input_tokens": 19212,
+      "output_tokens": 1920,
+      "total_tokens": 21132
+    }
+  },
+  {
+    "out": "A_graphic_novel/c_laundromat.webp",
+    "ok": true,
+    "secs": 36.38,
+    "size": "1920x1080",
+    "strength": "high",
+    "edit": false,
+    "prompt": "bold cinematic graphic-novel illustration, thick confident ink linework, explosive saturated color: electric magenta, acid cyan, sodium-orange streetlight glow and deep violet shadows, modern real-world setting with one impossible supernatural element, dramatic rim lighting, high contrast, dynamic composition. Uncanny close-up moment: inside a laundromat at 3am, a long row of front-loading dryers all spinning in perfect synchronization, the tumbling clothes forming the same shape in every window, the overhead lights pulsing like a heartbeat, an empty plastic chair and a forgotten laundry basket. No people. Clear single focal point. Original fictional characters only, no real people, no celebrities, no logos or brands. No text, no letters, no words, no numbers, no captions, no signage, no watermark, no signature. Family-friendly, no gore.",
+    "revised_prompt": null,
+    "usage": {
+      "input_tokens": 30746,
+      "output_tokens": 3334,
+      "total_tokens": 34080
+    }
+  },
+  {
+    "out": "C_uncanny_photo/a_bridge.webp",
+    "ok": true,
+    "secs": 24.877,
+    "size": "1920x1080",
+    "strength": "high",
+    "edit": false,
+    "prompt": "cinematic photoreal night photography, 35mm film still, anamorphic lens, practical lighting only: sodium-vapor streetlights, buzzing neon and cold fluorescent tubes, rich teal-and-magenta color grade with deep violet shadows, fine film grain, slight lens halation, shallow depth of field, an ordinary real-world place documented plainly, with exactly one impossible supernatural element rendered completely photorealistically as if it truly happened. Wide cinematic establishing shot: a freshly reopened small-town steel truss bridge at dusk over a dark river, new paint and work lights still up, and something enormous and coppery coiled underneath it: a colossal serpent-like body of verdigris-flecked copper scales wrapped around the bridge piers, one huge glowing eye just opening in the shadows. No people. Clear single focal point, keep the lower third calm and uncluttered. Original fictional characters only, no real people, no celebrities, no logos or brands. No text, no letters, no words, no numbers, no captions, no signage, no watermark, no signature. Family-friendly, no gore. No timestamp overlay, no camera UI, no HUD, no date stamp. Not a painting, not a cartoon.",
+    "revised_prompt": null,
+    "usage": {
+      "input_tokens": 31845,
+      "output_tokens": 3654,
+      "total_tokens": 35499
+    }
+  },
+  {
+    "out": "C_uncanny_photo/c_laundromat.webp",
+    "ok": true,
+    "secs": 24.412,
+    "size": "1920x1080",
+    "strength": "high",
+    "edit": false,
+    "prompt": "cinematic photoreal night photography, 35mm film still, anamorphic lens, practical lighting only: sodium-vapor streetlights, buzzing neon and cold fluorescent tubes, rich teal-and-magenta color grade with deep violet shadows, fine film grain, slight lens halation, shallow depth of field, an ordinary real-world place documented plainly, with exactly one impossible supernatural element rendered completely photorealistically as if it truly happened. Uncanny close-up moment: inside a laundromat at 3am, a long row of front-loading dryers all spinning in perfect synchronization, the tumbling clothes forming the same shape in every window, the overhead lights pulsing like a heartbeat, an empty plastic chair and a forgotten laundry basket. No people. Clear single focal point. Original fictional characters only, no real people, no celebrities, no logos or brands. No text, no letters, no words, no numbers, no captions, no signage, no watermark, no signature. Family-friendly, no gore. No timestamp overlay, no camera UI, no HUD, no date stamp. Not a painting, not a cartoon.",
+    "revised_prompt": null,
+    "usage": {
+      "input_tokens": 30211,
+      "output_tokens": 3041,
+      "total_tokens": 33252
+    }
+  },
+  {
+    "out": "D_risograph/c_laundromat.webp",
+    "ok": true,
+    "secs": 20.42,
+    "size": "1920x1080",
+    "strength": "high",
+    "edit": false,
+    "prompt": "risograph screenprint poster art, limited four-ink palette of fluorescent pink, electric teal, sunflower yellow and deep purple on near-black paper, visible riso grain and halftone texture, slight ink misregistration, bold flat graphic shapes, strong readable silhouettes, overprinted color where inks overlap, modern real-world setting with one impossible supernatural element, striking iconic composition. Uncanny close-up moment: inside a laundromat at 3am, a long row of front-loading dryers all spinning in perfect synchronization, the tumbling clothes forming the same shape in every window, the overhead lights pulsing like a heartbeat, an empty plastic chair and a forgotten laundry basket. No people. Clear single focal point. Original fictional characters only, no real people, no celebrities, no logos or brands. No text, no letters, no words, no numbers, no captions, no signage, no watermark, no signature. Family-friendly, no gore. Image only, no typography, no title, no poster lettering, no border text.",
+    "revised_prompt": null,
+    "usage": {
+      "input_tokens": 20370,
+      "output_tokens": 2848,
+      "total_tokens": 23218
+    }
+  },
+  {
+    "out": "D_risograph/b_barista.webp",
+    "ok": true,
+    "secs": 26.693,
+    "size": "1024x1536",
+    "strength": "high",
+    "edit": false,
+    "prompt": "risograph screenprint poster art, limited four-ink palette of fluorescent pink, electric teal, sunflower yellow and deep purple on near-black paper, visible riso grain and halftone texture, slight ink misregistration, bold flat graphic shapes, strong readable silhouettes, overprinted color where inks overlap, modern real-world setting with one impossible supernatural element, striking iconic composition. Character portrait, waist-up, centered, three-quarter view, looking toward the viewer, on a plain flat solid background: a nervous night-shift barista who can hear electricity, wide alert eyes, holding a paper to-go cup, wearing a work apron, big headphones resting around the neck, tiny arcs of visible electricity crackling near their ears. Original fictional young adult character, clear readable face and silhouette. Original fictional characters only, no real people, no celebrities, no logos or brands. No text, no letters, no words, no numbers, no captions, no signage, no watermark, no signature. Family-friendly, no gore. Image only, no typography, no title, no poster lettering, no border text.",
+    "revised_prompt": null,
+    "usage": {
+      "input_tokens": 31190,
+      "output_tokens": 3440,
+      "total_tokens": 34630
+    }
+  },
+  {
+    "out": "D_risograph/a_bridge.webp",
+    "ok": true,
+    "secs": 30.19,
+    "size": "1920x1080",
+    "strength": "high",
+    "edit": false,
+    "prompt": "risograph screenprint poster art, limited four-ink palette of fluorescent pink, electric teal, sunflower yellow and deep purple on near-black paper, visible riso grain and halftone texture, slight ink misregistration, bold flat graphic shapes, strong readable silhouettes, overprinted color where inks overlap, modern real-world setting with one impossible supernatural element, striking iconic composition. Wide cinematic establishing shot: a freshly reopened small-town steel truss bridge at dusk over a dark river, new paint and work lights still up, and something enormous and coppery coiled underneath it: a colossal serpent-like body of verdigris-flecked copper scales wrapped around the bridge piers, one huge glowing eye just opening in the shadows. No people. Clear single focal point, keep the lower third calm and uncluttered. Original fictional characters only, no real people, no celebrities, no logos or brands. No text, no letters, no words, no numbers, no captions, no signage, no watermark, no signature. Family-friendly, no gore. Image only, no typography, no title, no poster lettering, no border text.",
+    "revised_prompt": null,
+    "usage": {
+      "input_tokens": 32288,
+      "output_tokens": 3798,
+      "total_tokens": 36086
+    }
+  },
+  {
+    "out": "E_r2/moment_laundromat_LOW.webp",
+    "ok": true,
+    "secs": 10.824,
+    "size": "1920x1080",
+    "strength": "low",
+    "edit": false,
+    "ref": null,
+    "prompt": "Spider-Verse style animated comic art: bold confident ink outlines over painterly brushwork, Ben-Day halftone dots and screentone in the shadows, subtle CMYK misregistration and chromatic aberration on the edges, cinematic camera with a slight dutch tilt, crisp clean graphic shapes, high contrast. Uncanny moment, close-up: inside a fluorescent-lit laundromat at 3am, a row of front-loading dryers all spinning in perfect synchronization, the tumbling clothes forming the identical swirl in every round window, the overhead tube lights pulsing like a heartbeat, an empty plastic chair and a forgotten laundry basket. No people. Color script: the ordinary real world is grounded and believable, painted in deep indigo night with warm sodium-orange streetlight; the single impossible supernatural element is the brightest, most saturated thing in the frame, glowing hot magenta and electric cyan with acid-yellow sparks, so the eye goes straight to it. Composition: one clear focal point in the upper two-thirds, one big bold readable silhouette against a simpler background, at most three major shapes, generous negative space, the lower third darker, calm and uncluttered. Ordinary modern details (traffic cones, phone-lit windows, chain-link, a parked pickup) make it feel like a real local-news location. Original fictional characters only, no real people, no celebrities, no logos or brands. No text, no letters, no words, no numbers, no captions, no readable signs, all screens and labels blank, no speech bubbles, no sound-effect lettering, no comic panels or borders, no watermark, no signature. Family-friendly, no gore.",
+    "usage": {
+      "input_tokens": 4334,
+      "output_tokens": 1831,
+      "total_tokens": 6165
+    }
+  },
+  {
+    "out": "E_r2/portrait_barista.webp",
+    "ok": true,
+    "secs": 17.953,
+    "size": "1024x1536",
+    "strength": "high",
+    "edit": false,
+    "ref": null,
+    "prompt": "Spider-Verse style animated comic art: bold confident ink outlines over painterly brushwork, Ben-Day halftone dots and screentone in the shadows, subtle CMYK misregistration and chromatic aberration on the edges, cinematic camera with a slight dutch tilt, crisp clean graphic shapes, high contrast. Hero portrait: a nervous night-shift barista who can hear electricity, original fictional young adult with a distinctive look (short teal-dyed undercut, round glasses, freckles), wide alert eyes, holding a paper to-go cup, dark green work apron, big headphones resting around the neck, tiny magenta and cyan arcs of electricity crackling near the ears. Composition: bust portrait, head and shoulders fill the frame, face in the upper half, centered, strong clean silhouette with a bright rim light, against a plain flat solid deep-indigo background with only a few halftone motion streaks behind; the face must read clearly even as a tiny circular avatar. Original fictional characters only, no real people, no celebrities, no logos or brands. No text, no letters, no words, no numbers, no captions, no readable signs, all screens and labels blank, no speech bubbles, no sound-effect lettering, no comic panels or borders, no watermark, no signature. Family-friendly, no gore.",
+    "usage": {
+      "input_tokens": 19996,
+      "output_tokens": 2547,
+      "total_tokens": 22543
+    }
+  },
+  {
+    "out": "E_r2/moment_laundromat.webp",
+    "ok": true,
+    "secs": 21.726,
+    "size": "1920x1080",
+    "strength": "high",
+    "edit": false,
+    "ref": null,
+    "prompt": "Spider-Verse style animated comic art: bold confident ink outlines over painterly brushwork, Ben-Day halftone dots and screentone in the shadows, subtle CMYK misregistration and chromatic aberration on the edges, cinematic camera with a slight dutch tilt, crisp clean graphic shapes, high contrast. Uncanny moment, close-up: inside a fluorescent-lit laundromat at 3am, a row of front-loading dryers all spinning in perfect synchronization, the tumbling clothes forming the identical swirl in every round window, the overhead tube lights pulsing like a heartbeat, an empty plastic chair and a forgotten laundry basket. No people. Color script: the ordinary real world is grounded and believable, painted in deep indigo night with warm sodium-orange streetlight; the single impossible supernatural element is the brightest, most saturated thing in the frame, glowing hot magenta and electric cyan with acid-yellow sparks, so the eye goes straight to it. Composition: one clear focal point in the upper two-thirds, one big bold readable silhouette against a simpler background, at most three major shapes, generous negative space, the lower third darker, calm and uncluttered. Ordinary modern details (traffic cones, phone-lit windows, chain-link, a parked pickup) make it feel like a real local-news location. Original fictional characters only, no real people, no celebrities, no logos or brands. No text, no letters, no words, no numbers, no captions, no readable signs, all screens and labels blank, no speech bubbles, no sound-effect lettering, no comic panels or borders, no watermark, no signature. Family-friendly, no gore.",
+    "usage": {
+      "input_tokens": 20991,
+      "output_tokens": 3019,
+      "total_tokens": 24010
+    }
+  },
+  {
+    "out": "E_r2/climax_substation.webp",
+    "ok": true,
+    "secs": 24.976,
+    "size": "1920x1080",
+    "strength": "high",
+    "edit": false,
+    "ref": null,
+    "prompt": "Spider-Verse style animated comic art: bold confident ink outlines over painterly brushwork, Ben-Day halftone dots and screentone in the shadows, subtle CMYK misregistration and chromatic aberration on the edges, cinematic camera with a slight dutch tilt, crisp clean graphic shapes, high contrast. Climax scene: a suburban power substation at midnight during a citywide blackout, every house dark, and rising out of the transformers a towering translucent jellyfish-like creature made of crackling electricity, its trailing tendrils plugged into the power lines. No people. Color script: the ordinary real world is grounded and believable, painted in deep indigo night with warm sodium-orange streetlight; the single impossible supernatural element is the brightest, most saturated thing in the frame, glowing hot magenta and electric cyan with acid-yellow sparks, so the eye goes straight to it. Composition: one clear focal point in the upper two-thirds, one big bold readable silhouette against a simpler background, at most three major shapes, generous negative space, the lower third darker, calm and uncluttered. Ordinary modern details (traffic cones, phone-lit windows, chain-link, a parked pickup) make it feel like a real local-news location. Original fictional characters only, no real people, no celebrities, no logos or brands. No text, no letters, no words, no numbers, no captions, no readable signs, all screens and labels blank, no speech bubbles, no sound-effect lettering, no comic panels or borders, no watermark, no signature. Family-friendly, no gore.",
+    "usage": {
+      "input_tokens": 21257,
+      "output_tokens": 3176,
+      "total_tokens": 24433
+    }
+  },
+  {
+    "out": "E_r2/hook_bridge.webp",
+    "ok": true,
+    "secs": 26.24,
+    "size": "1920x1080",
+    "strength": "high",
+    "edit": false,
+    "ref": null,
+    "prompt": "Spider-Verse style animated comic art: bold confident ink outlines over painterly brushwork, Ben-Day halftone dots and screentone in the shadows, subtle CMYK misregistration and chromatic aberration on the edges, cinematic camera with a slight dutch tilt, crisp clean graphic shapes, high contrast. Wide establishing shot, hook scene: a freshly reopened small-town steel truss bridge at dusk over a dark river, new paint, orange work lights and traffic barrels still on the deck, and underneath it, half-submerged in the water, something enormous and coppery coiled around the bridge piers: colossal verdigris-flecked copper serpent coils, one huge glowing eye just opening beneath the deck. No people. Color script: the ordinary real world is grounded and believable, painted in deep indigo night with warm sodium-orange streetlight; the single impossible supernatural element is the brightest, most saturated thing in the frame, glowing hot magenta and electric cyan with acid-yellow sparks, so the eye goes straight to it. Composition: one clear focal point in the upper two-thirds, one big bold readable silhouette against a simpler background, at most three major shapes, generous negative space, the lower third darker, calm and uncluttered. Ordinary modern details (traffic cones, phone-lit windows, chain-link, a parked pickup) make it feel like a real local-news location. Original fictional characters only, no real people, no celebrities, no logos or brands. No text, no letters, no words, no numbers, no captions, no readable signs, all screens and labels blank, no speech bubbles, no sound-effect lettering, no comic panels or borders, no watermark, no signature. Family-friendly, no gore.",
+    "usage": {
+      "input_tokens": 21181,
+      "output_tokens": 3231,
+      "total_tokens": 24412
+    }
+  },
+  {
+    "out": "E_r2/cover_bridge.webp",
+    "ok": true,
+    "secs": 37.521,
+    "size": "1024x1536",
+    "strength": "high",
+    "edit": false,
+    "ref": null,
+    "prompt": "Spider-Verse style animated comic art: bold confident ink outlines over painterly brushwork, Ben-Day halftone dots and screentone in the shadows, subtle CMYK misregistration and chromatic aberration on the edges, cinematic camera with a slight dutch tilt, crisp clean graphic shapes, high contrast. Storybook cover art, vertical poster composition: looking up from the riverbank at a small-town steel truss bridge at night, an enormous glowing copper serpent rising from the dark water and coiling around it, one giant eye. Keep the top fifth as clean empty dark sky for a title to be added later, and the bottom fifth calm dark water. Color script: the ordinary real world is grounded and believable, painted in deep indigo night with warm sodium-orange streetlight; the single impossible supernatural element is the brightest, most saturated thing in the frame, glowing hot magenta and electric cyan with acid-yellow sparks, so the eye goes straight to it. Original fictional characters only, no real people, no celebrities, no logos or brands. No text, no letters, no words, no numbers, no captions, no readable signs, all screens and labels blank, no speech bubbles, no sound-effect lettering, no comic panels or borders, no watermark, no signature. Family-friendly, no gore.",
+    "usage": {
+      "input_tokens": 32377,
+      "output_tokens": 3961,
+      "total_tokens": 36338
+    }
+  },
+  {
+    "out": "E_r3/twist_watertower.webp",
+    "ok": true,
+    "secs": 11.699,
+    "size": "1920x1080",
+    "strength": "high",
+    "edit": false,
+    "ref": null,
+    "prompt": "Spider-Verse style animated comic art: bold confident ink outlines over painterly brushwork, Ben-Day halftone dots and screentone in the shadows, subtle CMYK misregistration and chromatic aberration on the edges, cinematic camera with a slight dutch tilt, crisp clean graphic shapes, high contrast. Twist scene: the same small town's old water tower on its steel legs at midnight, its round tank cracking open like an enormous egg, hammered copper light spilling out of the cracks, a single giant copper scale falling away. Quiet houses and a gas-station canopy below. No people. Color script: the ordinary real world is grounded and believable, deep indigo night and warm sodium-orange streetlight. The single impossible element keeps its own described materials but is the brightest, most saturated thing in the frame, edged and lit from within by hot magenta and electric cyan glow with acid-yellow sparks, so the eye goes straight to it. Composition: one clear focal point in the upper two-thirds, one big bold readable silhouette against a simpler background, at most three major shapes, generous negative space; the lower third darker, calm and uncluttered. Include two or three ordinary, specific modern details of this exact place so it feels like a real local-news location. Original fictional characters only, no real people, no celebrities, no logos or brands. No text, no letters, no words, no numbers, no captions, no readable signs, all screens and labels blank, no speech bubbles, no sound-effect lettering, no comic panels or borders, no watermark, no signature. Family-friendly, no gore.",
+    "usage": {
+      "input_tokens": 11391,
+      "output_tokens": 1682,
+      "total_tokens": 13073
+    }
+  },
+  {
+    "out": "E_r3/control_barista_in_laundromat_noref.webp",
+    "ok": true,
+    "secs": 11.945,
+    "size": "1920x1080",
+    "strength": "high",
+    "edit": false,
+    "ref": null,
+    "prompt": "Spider-Verse style animated comic art: bold confident ink outlines over painterly brushwork, Ben-Day halftone dots and screentone in the shadows, subtle CMYK misregistration and chromatic aberration on the edges, cinematic camera with a slight dutch tilt, crisp clean graphic shapes, high contrast. Wide scene: inside a fluorescent-lit laundromat at 3am, a row of front-loading dryers all spinning in perfect synchronization, the tumbling clothes forming the identical glowing swirl in every round window, the overhead tube lights pulsing like a heartbeat. a nervous night-shift barista: original fictional young adult with a short teal-dyed undercut, round black glasses, freckles, dark green work apron over a black shirt, big black headphones around the neck, holding a paper to-go cup, tiny magenta and cyan arcs of electricity crackling near the ears, stands in the left third of the frame, three-quarter body, frozen mid-step, staring at the dryers. Color script: the ordinary real world is grounded and believable, deep indigo night and warm sodium-orange streetlight. The single impossible element keeps its own described materials but is the brightest, most saturated thing in the frame, edged and lit from within by hot magenta and electric cyan glow with acid-yellow sparks, so the eye goes straight to it. Original fictional characters only, no real people, no celebrities, no logos or brands. No text, no letters, no words, no numbers, no captions, no readable signs, all screens and labels blank, no speech bubbles, no sound-effect lettering, no comic panels or borders, no watermark, no signature. Family-friendly, no gore.",
+    "usage": {
+      "input_tokens": 11405,
+      "output_tokens": 1694,
+      "total_tokens": 13099
+    }
+  },
+  {
+    "out": "E_r3/hook_bridge_v3.webp",
+    "ok": true,
+    "secs": 24.628,
+    "size": "1920x1080",
+    "strength": "high",
+    "edit": false,
+    "ref": null,
+    "prompt": "Spider-Verse style animated comic art: bold confident ink outlines over painterly brushwork, Ben-Day halftone dots and screentone in the shadows, subtle CMYK misregistration and chromatic aberration on the edges, cinematic camera with a slight dutch tilt, crisp clean graphic shapes, high contrast. Wide establishing shot, hook scene: a freshly reopened small-town steel truss bridge at dusk over a dark river, and underneath it, half-submerged in the water, something enormous coiled around the bridge piers: colossal serpent coils of aged hammered copper with green verdigris patina, one huge eye just opening in the shadow beneath the deck. No people. Color script: the ordinary real world is grounded and believable, deep indigo night and warm sodium-orange streetlight. The single impossible element keeps its own described materials but is the brightest, most saturated thing in the frame, edged and lit from within by hot magenta and electric cyan glow with acid-yellow sparks, so the eye goes straight to it. Composition: one clear focal point in the upper two-thirds, one big bold readable silhouette against a simpler background, at most three major shapes, generous negative space; the lower third darker, calm and uncluttered. Include two or three ordinary, specific modern details of this exact place so it feels like a real local-news location. Original fictional characters only, no real people, no celebrities, no logos or brands. No text, no letters, no words, no numbers, no captions, no readable signs, all screens and labels blank, no speech bubbles, no sound-effect lettering, no comic panels or borders, no watermark, no signature. Family-friendly, no gore.",
+    "usage": {
+      "input_tokens": 21678,
+      "output_tokens": 3474,
+      "total_tokens": 25152
+    }
+  },
+  {
+    "out": "E_r3/edit_barista_in_laundromat.webp",
+    "ok": true,
+    "secs": 32.019,
+    "size": "1920x1080",
+    "strength": "high",
+    "edit": true,
+    "ref": "E_r2/portrait_barista.webp",
+    "prompt": "Keep the exact same character from the reference image: same face, same teal undercut, round black glasses, freckles, dark green apron, black headphones, same art style. Now show this character in a new wide scene: inside a fluorescent-lit laundromat at 3am, a row of front-loading dryers all spinning in perfect synchronization, the tumbling clothes forming the identical glowing swirl in every round window, the overhead tube lights pulsing like a heartbeat. The barista stands in the left third of the frame, three-quarter body, frozen mid-step holding the to-go cup, staring at the dryers, electricity crackling at the ears. Spider-Verse style animated comic art: bold confident ink outlines over painterly brushwork, Ben-Day halftone dots and screentone in the shadows, subtle CMYK misregistration and chromatic aberration on the edges, cinematic camera with a slight dutch tilt, crisp clean graphic shapes, high contrast. Color script: the ordinary real world is grounded and believable, deep indigo night and warm sodium-orange streetlight. The single impossible element keeps its own described materials but is the brightest, most saturated thing in the frame, edged and lit from within by hot magenta and electric cyan glow with acid-yellow sparks, so the eye goes straight to it. Original fictional characters only, no real people, no celebrities, no logos or brands. No text, no letters, no words, no numbers, no captions, no readable signs, all screens and labels blank, no speech bubbles, no sound-effect lettering, no comic panels or borders, no watermark, no signature. Family-friendly, no gore.",
+    "usage": {
+      "input_tokens": 23815,
+      "output_tokens": 2791,
+      "total_tokens": 26606
+    }
+  }
+]

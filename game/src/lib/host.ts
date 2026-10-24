@@ -3,43 +3,41 @@ import seedsJson from "@/data/seed_quests.json";
 import questImages from "@/data/quest_images.json";
 import { ai, image, thumbnail, withTimeout } from "./api";
 import {
+  APPEAL_MS,
   CATCH_MS,
   FINAL_ROLL_MS,
   HOPE_MAX,
   HOPE_START,
   PITCH_MS,
   PLAYER_COLORS,
-  RESCUE_PITCH_MS,
   ROLL_ANIM_MS,
   ROLL_MS,
   TIER_MOD,
-  VOTE_MS,
+  autoSucceeds,
   band,
   d20,
   ending,
   isFailure,
+  readMs,
 } from "./rules";
 import { openRoom, type Msg, type Transport } from "./transport";
 import type {
   Band,
   GameState,
   Hero,
-  Outcome,
   Pitch,
   Player,
   QuestSeed,
   RollResult,
+  RoundOutcome,
   SceneOpen,
   SceneView,
   Stat,
   Storybook,
-  Tier,
   Verdict,
 } from "./types";
 
 const SEEDS = seedsJson as QuestSeed[];
-export const COMBO = "combo";
-const TIER_RANK: Record<Tier, number> = { clever: 4, solid: 3, risky: 2, absurd: 1, miracle: 0 };
 
 export interface ShelfBook {
   party: string;
@@ -54,12 +52,18 @@ export interface ShelfBook {
   cover: string;
 }
 
-const readMs = (text: string, min = 7000, max = 16000) =>
-  Math.max(min, Math.min(max, text.split(/\s+/).length * 330));
+const READING = new Set(["quest", "narrating", "outcome", "epilogue", "reveal"]);
+const SUCCESS_BANDS: Band[] = ["YES_BUT", "SUCCESS", "LEGENDARY"];
 
 function bestStat(h?: Hero): Stat {
   if (!h) return "brave";
   return (Object.keys(h.stats) as Stat[]).sort((a, b) => h.stats[b] - h.stats[a])[0];
+}
+
+function shortGoal(text: string) {
+  const first = text.split(/(?<=[.!?])\s/)[0];
+  const words = first.split(/\s+/);
+  return words.length > 16 ? words.slice(0, 16).join(" ") + "…" : first;
 }
 
 export function loadShelf(): ShelfBook[] {
@@ -69,6 +73,14 @@ export function loadShelf(): ShelfBook[] {
     return [];
   }
 }
+
+const FALLBACK_BEAT: Record<Band, string[]> = {
+  CATASTROPHE: ["{name}, it goes wrong fast and in an order nobody predicted. You end up stuck somewhere you really shouldn't be."],
+  FAIL: ["{name}, you try it. The world declines, politely, and makes it a little worse."],
+  YES_BUT: ["{name}, it works. It also costs you something you'll miss later."],
+  SUCCESS: ["{name}, it works the way you said it would. Nobody is more surprised than you."],
+  LEGENDARY: ["{name}, it works better than it has any right to. Someone nearby starts clapping and can't stop."],
+};
 
 export class GameHost {
   state: GameState;
@@ -86,8 +98,9 @@ export class GameHost {
   private bcTimer: ReturnType<typeof setTimeout> | null = null;
   private seed?: QuestSeed;
   private verdicts = new Map<string, Promise<Verdict>>();
-  private pendingRoll: RollResult | null = null;
-  private outcomeP: Promise<Outcome> | null = null;
+  private appeals = new Map<string, Promise<Verdict>>();
+  private roundP: Promise<RoundOutcome> | null = null;
+  private caughtThisRound = false;
   private finalDice: Record<string, number> = {};
   private epilogueP: Promise<string> | null = null;
   private storybookP: Promise<Storybook> | null = null;
@@ -112,21 +125,26 @@ export class GameHost {
       sceneIndex: 0,
       hope: HOPE_START,
       hopeMax: HOPE_MAX,
+      question: "",
+      lastTime: "",
       narration: "",
       situation: "",
       banner: "",
       npcLine: { speaker: "", line: "" },
       suggestions: {},
+      clues: {},
       rescue: null,
       pitches: [],
-      votes: {},
-      deadline: 0,
-      rollerId: "",
-      winningPitchId: "",
-      roll: null,
+      boosts: {},
+      rolls: [],
+      revealed: [],
       catchers: [],
-      outcome: null,
+      round: null,
+      beatIndex: 0,
+      ready: [],
+      deadline: 0,
       final: null,
+      finalMoves: {},
       epilogue: "",
       storybook: null,
       log: [],
@@ -143,7 +161,9 @@ export class GameHost {
   // ---------- store plumbing ----------
   subscribe = (fn: () => void) => {
     this.subs.add(fn);
-    return () => this.subs.delete(fn);
+    return () => {
+      this.subs.delete(fn);
+    };
   };
   getState = () => this.state;
   onReaction(fn: (r: { pid: string; emoji: string; id: number }) => void) {
@@ -204,7 +224,7 @@ export class GameHost {
     this.deadlineAt = 0;
   }
 
-  /** TV "Continue ▸" / host hotkey: run whatever the current timer would run, right now. */
+  /** TV "Continue ▸" / spacebar: run whatever the current timer would run, right now. */
   skip() {
     const f = this.pending;
     if (!f) return;
@@ -213,11 +233,24 @@ export class GameHost {
     this.broadcastSoon();
   }
 
+  /** A reading screen: advances on Continue, when every hero taps Ready, or after a generous safety timer. */
+  private reading(text: string, next: () => void, minMs = 7000) {
+    this.set({ ready: [] });
+    this.setTimer(readMs(text, minMs), next);
+  }
+
+  private onReady(pid: string) {
+    if (!READING.has(this.state.phase) || this.state.busy || !this.pending) return;
+    if (!this.player(pid)?.hero || this.state.ready.includes(pid)) return;
+    const ready = [...this.state.ready, pid];
+    this.set({ ready });
+    if (this.heroes().every((h) => ready.includes(h.id))) this.skip();
+  }
+
   // ---------- messages from phones ----------
   private handle(m: Msg) {
     switch (m.type) {
       case "hello": {
-        // Coalesced, and portraits re-sent at most every 5s per phone, so hellos can't flood the channel.
         this.broadcastSoon();
         const now = Date.now();
         if (this.thumbs[m.pid] && now - (this.lastPortraitSend[m.pid] ?? 0) > 5000) {
@@ -232,19 +265,25 @@ export class GameHost {
         return this.buildCharacter(m.pid, m.text);
       case "pitch":
         return this.onPitch(m.pid, m.text, !!m.useAbility, !!m.embraceFlaw);
-      case "vote":
-        return this.onVote(m.pid, m.pitchId);
+      case "boost":
+        return this.onBoost(m.pid, m.pitchId);
+      case "appeal":
+        return this.onAppeal(m.pid, m.text);
+      case "accept":
+        return this.onAccept(m.pid);
       case "roll":
         return this.onRoll(m.pid);
       case "catch":
-        return this.onCatch(m.pid);
+        return this.onCatch(m.pid, m.target);
+      case "ready":
+        return this.onReady(m.pid);
       case "react":
         return this.onReact(m.pid, m.emoji);
     }
   }
 
   private onJoin(pid: string, rawName: string) {
-    const name = String(rawName ?? "").replace(/[<>]/g, "").trim().slice(0, 16) || "Hero";
+    const name = String(rawName ?? "").replace(/[<>]/g, "").trim().slice(0, 16) || "Player";
     const existing = this.player(pid);
     if (existing) return this.patchPlayer(pid, { name });
     if (this.state.phase !== "lobby" || this.state.players.length >= 6) return;
@@ -264,6 +303,11 @@ export class GameHost {
     this.reactionCounts[pid] = (this.reactionCounts[pid] ?? 0) + 1;
     const r = { pid, emoji: String(emoji).slice(0, 4), id: ++this.reactionId };
     this.reactionSubs.forEach((f) => f(r));
+    // Laughter shouldn't get cut off: a burst of reactions buys a reading screen a few more seconds.
+    if (READING.has(this.state.phase) && this.deadlineAt && this.deadlineAt - now < 3000 && this.pending) {
+      const fn = this.pending;
+      this.setTimer(this.deadlineAt - now + 2500, fn);
+    }
   }
 
   // ---------- lobby ----------
@@ -284,7 +328,7 @@ export class GameHost {
     }).catch(() => ({ data: undefined as unknown as Hero }));
     if (!hero) return this.patchPlayer(pid, { status: "joined" });
     this.patchPlayer(pid, { status: "ready", hero, abilityAvailable: true, heart: 1 });
-    const url = await image({ kind: "portrait", visual: hero.visual, flaw: hero.flaw });
+    const url = await image({ kind: "portrait", visual: hero.visual, flaw: hero.flaw, ability: hero.ability?.text });
     if (!url || this.player(pid)?.hero !== hero) return;
     this.portraits[pid] = url;
     this.thumbs[pid] = await thumbnail(url);
@@ -315,6 +359,7 @@ export class GameHost {
         premise: seed.fairytale_premise,
         threat: seed.the_threat.name,
         goal: seed.the_goal.description,
+        goalShort: shortGoal(seed.the_goal.description),
       },
       scenes,
     });
@@ -347,7 +392,6 @@ export class GameHost {
 
   begin() {
     if (!this.canBegin()) return;
-    // Players who joined but never made a hero sit this tale out.
     const players = this.state.players.filter((p) => p.hero).map((p) => ({ ...p, peril: "", abilityAvailable: true, heart: 1 as const }));
     this.canon = [];
     this.ledger = [];
@@ -361,13 +405,16 @@ export class GameHost {
       hope: HOPE_START,
       log: [],
       narration: this.seed!.fairytale_premise,
-      outcome: null,
+      question: this.state.quest?.goalShort ?? "",
+      lastTime: "",
+      round: null,
       final: null,
+      finalMoves: {},
       epilogue: "",
       storybook: null,
       rescue: null,
     });
-    this.setTimer(readMs(this.seed!.fairytale_premise, 9000, 20000), () => this.openScene(0));
+    this.reading(this.seed!.fairytale_premise, () => this.openScene(0), 9000);
   }
 
   // ---------- DM state ----------
@@ -375,10 +422,9 @@ export class GameHost {
     const s = this.state;
     const scene = s.scenes[s.sceneIndex];
     return {
-      mode: "quick",
       quest: {
         title: s.quest?.title,
-        realm: s.quest?.realm,
+        setting: s.quest?.realm,
         goal: s.quest?.goal,
         threat: { name: this.seed?.the_threat.name, look: this.seed?.the_threat.description, mood: this.threatMood },
       },
@@ -394,11 +440,12 @@ export class GameHost {
         flaw: p.hero!.flaw,
         titles: p.titles,
         peril: p.peril,
+        clue: s.clues[p.id] ?? "",
       })),
       canon: this.canon.slice(-10),
       ledger: this.ledger.slice(-3),
       recaps: this.recaps.slice(-2),
-      recent_lines: this.recentLines.slice(-3),
+      recent_lines: this.recentLines.slice(-6),
     };
   }
 
@@ -416,12 +463,16 @@ export class GameHost {
       situation: "",
       banner: "",
       npcLine: { speaker: "", line: "" },
+      clues: {},
       rescue,
       pitches: [],
-      votes: {},
-      roll: null,
-      outcome: null,
-      busy: "The Tale-Spinner turns the page…",
+      boosts: {},
+      rolls: [],
+      revealed: [],
+      round: null,
+      beatIndex: 0,
+      ready: [],
+      busy: "The DM flips to the next page of notes…",
     });
     const heroIds = this.heroes().map((p) => p.id);
     const input = {
@@ -430,18 +481,20 @@ export class GameHost {
       recap_needed: i > 0,
       rescue: victim ? { hero_id: victim.id, hero_name: victim.hero!.name, peril: victim.peril } : undefined,
       hero_ids: heroIds,
-      last_scene_outcomes: this.state.log.filter((l) => l.scene === i - 1).map((l) => `${l.hero} (${l.band}): ${l.headline}`),
+      last_scene_outcomes: this.state.log.filter((l) => l.scene === i - 1).map((l) => `${l.hero} (${l.band}): ${l.pitch}`),
     };
     const fb = (): SceneOpen => ({
-      recap_of_previous: "",
+      recap: "",
       narration: `${scene.location}. ${scene.twist}`,
-      situation: rescue ? `${victim!.hero!.name} is in peril! How do you save them?` : "What do you do?",
-      banner: rescue ? "A HERO IN PERIL" : "TROUBLE AHEAD",
+      question: isClimax ? "Can you end this tonight?" : "Can you get past this?",
+      situation: isClimax ? "This is it. What's your final move?" : rescue ? `${victim!.hero!.name} is stuck. How do you get them out?` : "What do you do?",
+      banner: rescue ? "Someone's Stuck" : "Trouble",
       npc_line: { speaker: "", line: "" },
-      suggestions: heroIds.map((id) => ({ hero_id: id, ideas: ["Charge in bravely", "Try a clever trick", "Sing at it, loudly"] })),
-      music: "tense",
+      clues: [],
+      suggestions: heroIds.map((id) => ({ hero_id: id, ideas: ["Go straight at it", "Look for another way in", "Talk to whoever's in charge"] })),
+      music: "eerie",
     });
-    const next = () => (isClimax ? this.startFinalRoll() : this.startPitch());
+    const next = () => (isClimax ? this.startPitch(true) : this.startPitch(false));
     try {
       const res = await withTimeout(
         ai<SceneOpen>("scene", input).then((r) => (r.fallback ? fb() : r.data)),
@@ -449,71 +502,83 @@ export class GameHost {
         fb,
       );
       if (this.state.phase !== "narrating" || this.state.sceneIndex !== i) return;
-      if (res.recap_of_previous) this.recaps.push(res.recap_of_previous);
+      if (res.recap) this.recaps.push(res.recap);
       const suggestions: Record<string, string[]> = {};
       res.suggestions?.forEach((s) => s?.hero_id && Array.isArray(s.ideas) && (suggestions[s.hero_id] = s.ideas));
+      const clues: Record<string, string> = {};
+      res.clues?.forEach((c) => c?.hero_id && c.clue && (clues[c.hero_id] = c.clue));
       const npcLine = res.npc_line ?? { speaker: "", line: "" };
       this.set({
         narration: res.narration || fb().narration,
         situation: res.situation || fb().situation,
+        question: res.question || fb().question,
+        lastTime: res.recap || this.state.lastTime,
         banner: res.banner ?? "",
         npcLine,
         suggestions,
+        clues,
         busy: "",
       });
-      this.setTimer(readMs(`${res.narration ?? ""} ${npcLine.line ?? ""}`), next);
+      this.reading(`${res.narration ?? ""} ${npcLine.line ?? ""}`, next);
     } catch (e) {
-      // Never leave the table stuck: show the plain beat and move on.
       console.error("[host] openScene failed", e);
       const f = fb();
-      this.set({ narration: f.narration, situation: f.situation, banner: f.banner, npcLine: f.npc_line, busy: "" });
-      this.setTimer(6000, next);
+      this.set({ narration: f.narration, situation: f.situation, question: f.question, banner: f.banner, npcLine: f.npc_line, busy: "" });
+      this.reading(f.narration, next);
     }
   }
 
-  // ---------- pitch → verdict ----------
-  private pitchers() {
-    const r = this.state.rescue;
-    const all = this.heroes();
-    if (!r) return all;
-    const others = all.filter((p) => p.id !== r.victimId);
-    return others.length ? others : all;
+  // ---------- pitch (everyone) ----------
+  private isFinal() {
+    return this.state.scenes[this.state.sceneIndex]?.kind === "climax";
   }
 
-  private startPitch() {
+  private startPitch(final: boolean) {
     this.verdicts.clear();
-    this.set({ phase: "pitch", pitches: [], votes: {}, roll: null, outcome: null });
-    this.setTimer(this.state.rescue ? RESCUE_PITCH_MS : PITCH_MS, () => this.endPitch());
+    this.appeals.clear();
+    this.caughtThisRound = false;
+    this.set({ phase: "pitch", pitches: [], boosts: {}, rolls: [], revealed: [], round: null, beatIndex: 0, ready: [] });
+    this.setTimer(final ? 30_000 : PITCH_MS, () => this.endPitch());
   }
 
   private onPitch(pid: string, text: string, useAbility: boolean, embraceFlaw: boolean) {
     if (this.state.phase !== "pitch") return;
-    if (!this.pitchers().some((p) => p.id === pid)) return;
-    if (this.state.pitches.some((p) => p.playerId === pid)) return;
+    if (!this.player(pid)?.hero || this.state.pitches.some((p) => p.playerId === pid)) return;
     const clean = String(text ?? "").replace(/[<>]/g, "").trim().slice(0, 200);
     if (!clean) return;
     const pitch: Pitch = { id: `${this.state.sceneIndex}-${pid}`, playerId: pid, text: clean, useAbility, embraceFlaw };
     this.set({ pitches: [...this.state.pitches, pitch] });
-    this.fireVerdict(pitch);
-    if (this.pitchers().every((p) => this.state.pitches.some((x) => x.playerId === p.id))) this.endPitch();
+    if (!this.isFinal()) this.fireVerdict(pitch);
+    if (this.heroes().every((h) => this.state.pitches.some((x) => x.playerId === h.id))) this.endPitch();
   }
 
-  private fireVerdict(pitch: Pitch) {
-    const p = this.player(pitch.playerId)!;
-    const others = this.state.pitches.filter((x) => x.id !== pitch.id).map((x) => `${this.player(x.playerId)?.hero?.name}: ${x.text}`);
-    const fb = (): Verdict => ({
+  private onBoost(pid: string, pitchId: string) {
+    if (this.state.phase !== "pitch" || this.isFinal()) return;
+    const target = this.state.pitches.find((p) => p.id === pitchId);
+    if (!target || target.playerId === pid || !this.player(pid)?.hero) return;
+    this.set({ boosts: { ...this.state.boosts, [pid]: pitchId } });
+  }
+
+  private verdictFallback(pitch: Pitch): Verdict {
+    const p = this.player(pitch.playerId);
+    return {
       interpretation: pitch.text.slice(0, 80),
-      stat: bestStat(p.hero),
+      stat: bestStat(p?.hero),
       tier: "solid",
       ability_fits: false,
       flaw_walk_in: false,
-      quip: "The DM squints… fine.",
+      quip: "Sure. Roll for it.",
       on_success: "It works.",
       on_failure: "It doesn't.",
       moderation: "ok",
-    });
+    };
+  }
+
+  private askVerdict(pitch: Pitch, appeal?: { text: string; previous: Verdict }) {
+    const p = this.player(pitch.playerId)!;
     const r = this.state.rescue;
-    const v = withTimeout(
+    const others = this.state.pitches.filter((x) => x.id !== pitch.id).map((x) => x.text);
+    return withTimeout(
       ai<{ verdicts: (Verdict & { pitch_id: string })[] }>("verdict", {
         state: this.dmState(),
         rescue: r ? { hero_in_peril: this.player(r.victimId)?.hero?.name, peril: r.peril } : undefined,
@@ -522,314 +587,355 @@ export class GameHost {
             pitch_id: pitch.id,
             hero_id: p.id,
             hero_name: p.hero?.name,
+            clue: this.state.clues[p.id] ?? "",
             use_ability: pitch.useAbility && p.abilityAvailable,
             embrace_flaw: pitch.embraceFlaw,
             best_stat: bestStat(p.hero),
             text: pitch.text,
+            appeal: appeal?.text ?? "",
+            previous_tier: appeal?.previous.tier ?? "",
           },
         ],
         other_pitches: others,
-      }).then((res) => res.data.verdicts[0] ?? fb()),
+      }).then((res) => res.data.verdicts[0] ?? appeal?.previous ?? this.verdictFallback(pitch)),
       9000,
-      fb,
+      () => appeal?.previous ?? this.verdictFallback(pitch),
     );
+  }
+
+  private fireVerdict(pitch: Pitch) {
+    const v = this.askVerdict(pitch);
     this.verdicts.set(pitch.id, v);
+    // Show each stamp as soon as it lands, so the phone can offer "Convince the DM" right away.
+    v.then((verdict) => {
+      if (this.state.phase !== "pitch" && this.state.phase !== "appeal") return;
+      this.set({ pitches: this.state.pitches.map((x) => (x.id === pitch.id ? { ...x, verdict } : x)) });
+    });
   }
 
   private async endPitch() {
     if (this.state.phase !== "pitch") return;
     this.clearTimer();
-    if (this.state.pitches.length === 0) {
-      // Nobody pitched in time: the DM volunteers someone with one of their own suggestions.
-      const pool = this.pitchers();
-      const p = pool[Math.floor(Math.random() * pool.length)];
-      const text = this.state.suggestions[p.id]?.[0] ?? "Charges in bravely, hoping for the best";
-      const pitch: Pitch = { id: `${this.state.sceneIndex}-${p.id}`, playerId: p.id, text, useAbility: false, embraceFlaw: false };
-      this.set({ pitches: [pitch] });
-      this.fireVerdict(pitch);
+    // Nobody is skipped: whoever ran out of time does the first thing that comes to mind.
+    const missing = this.heroes().filter((h) => !this.state.pitches.some((p) => p.playerId === h.id));
+    const autos: Pitch[] = missing.map((h) => ({
+      id: `${this.state.sceneIndex}-${h.id}`,
+      playerId: h.id,
+      text: this.state.suggestions[h.id]?.[0] ?? "does the first thing that comes to mind",
+      useAbility: false,
+      embraceFlaw: false,
+      auto: true,
+    }));
+    this.set({ pitches: [...this.state.pitches, ...autos] });
+    if (this.isFinal()) {
+      this.set({ finalMoves: Object.fromEntries(this.state.pitches.map((p) => [p.playerId, p.text])) });
+      return this.startFinalRoll();
     }
-    this.set({ phase: "vote", busy: "The Tale-Spinner weighs your plans…" });
+    autos.forEach((p) => this.fireVerdict(p));
+    this.set({ busy: "The DM is reading your plans…" });
     const judged = await Promise.all(this.state.pitches.map(async (p) => ({ ...p, verdict: await this.verdicts.get(p.id)! })));
+    if (this.state.phase !== "pitch") return;
     this.set({ pitches: judged, busy: "" });
-    if (judged.length === 1) return this.startRoll(judged[0], false);
-    if (this.voters().length === 0) return this.endVote();
-    this.setTimer(VOTE_MS, () => this.endVote());
-  }
-
-  // ---------- vote ----------
-  /** Players who have at least one pitch (not their own) to vote for. In a rescue, only the hero in peril votes. */
-  private voters() {
-    const r = this.state.rescue;
-    const base = r ? this.heroes().filter((p) => p.id === r.victimId) : this.heroes();
-    return base.filter((v) => this.state.pitches.some((p) => p.playerId !== v.id));
-  }
-
-  private onVote(pid: string, pitchId: string) {
-    if (this.state.phase !== "vote" || this.state.busy) return;
-    if (!this.voters().some((v) => v.id === pid)) return;
-    if (pitchId === COMBO) {
-      if (this.state.pitches.length < 2) return;
+    // "Convince the DM": anyone whose plan needs a roll gets one shot to argue for it.
+    if (judged.some((p) => !autoSucceeds(p.verdict!.tier) && !p.auto)) {
+      this.set({ phase: "appeal" });
+      this.setTimer(APPEAL_MS, () => this.endAppeal());
     } else {
-      const target = this.state.pitches.find((p) => p.id === pitchId);
-      if (!target || target.playerId === pid) return;
+      this.startRoll();
     }
-    this.set({ votes: { ...this.state.votes, [pid]: pitchId } });
-    if (this.voters().every((v) => this.state.votes[v.id])) this.endVote();
   }
 
-  private endVote() {
-    if (this.state.phase !== "vote") return;
+  private appealable(pid: string) {
+    const p = this.state.pitches.find((x) => x.playerId === pid);
+    return p && p.verdict && !autoSucceeds(p.verdict.tier) && !p.auto && !p.appealed && !this.appeals.has(p.id) ? p : undefined;
+  }
+
+  private onAppeal(pid: string, text: string) {
+    if (this.state.phase !== "appeal") return;
+    const pitch = this.appealable(pid);
+    const clean = String(text ?? "").replace(/[<>]/g, "").trim().slice(0, 240);
+    if (!pitch || !clean) return;
+    this.set({ pitches: this.state.pitches.map((x) => (x.id === pitch.id ? { ...x, appeal: clean } : x)) });
+    const previous = pitch.verdict!;
+    const v = this.askVerdict({ ...pitch, appeal: clean }, { text: clean, previous }).then((nv) => {
+      // An argument can only help: never lower the tier.
+      const rank = { miracle: 0, absurd: 1, risky: 2, solid: 3, clever: 4 } as const;
+      return rank[nv.tier] >= rank[previous.tier] ? nv : { ...nv, tier: previous.tier };
+    });
+    this.appeals.set(pitch.id, v);
+    v.then((verdict) => {
+      if (this.state.phase !== "appeal") return;
+      this.set({ pitches: this.state.pitches.map((x) => (x.id === pitch.id ? { ...x, verdict, appealed: true } : x)) });
+      this.maybeEndAppeal();
+    });
+  }
+
+  private onAccept(pid: string) {
+    if (this.state.phase !== "appeal") return;
+    const pitch = this.appealable(pid);
+    if (!pitch) return;
+    this.set({ pitches: this.state.pitches.map((x) => (x.id === pitch.id ? { ...x, appealed: true } : x)) });
+    this.maybeEndAppeal();
+  }
+
+  private maybeEndAppeal() {
+    const waiting = this.state.pitches.some((p) => p.verdict && !autoSucceeds(p.verdict.tier) && !p.auto && !p.appealed);
+    if (!waiting) this.endAppeal();
+  }
+
+  private async endAppeal() {
+    if (this.state.phase !== "appeal") return;
     this.clearTimer();
-    const counts: Record<string, number> = {};
-    Object.values(this.state.votes).forEach((id) => (counts[id] = (counts[id] ?? 0) + 1));
-    const picked = (pid: string) => this.state.log.filter((l) => l.heroId === pid || l.partnerId === pid).length;
-    const ranked = [...this.state.pitches].sort(
-      (a, b) =>
-        (counts[b.id] ?? 0) - (counts[a.id] ?? 0) ||
-        TIER_RANK[b.verdict!.tier] - TIER_RANK[a.verdict!.tier] ||
-        picked(a.playerId) - picked(b.playerId),
-    );
-    const totalVotes = Object.keys(this.state.votes).length;
-    const comboVotes = counts[COMBO] ?? 0;
-    // Team Up wins whenever it ties or beats the most-voted single plan.
-    if (comboVotes > 0 && comboVotes >= (counts[ranked[0].id] ?? 0) && ranked.length >= 2) {
-      return this.startRoll(this.combine(ranked[0], ranked[1]), totalVotes >= 3 && comboVotes / totalVotes >= 0.75);
+    if (this.appeals.size) {
+      this.set({ busy: "The DM is considering your arguments…" });
+      const settled = await Promise.all(
+        this.state.pitches.map(async (p) => (this.appeals.has(p.id) ? { ...p, verdict: await this.appeals.get(p.id)!, appealed: true } : p)),
+      );
+      if (this.state.phase !== "appeal") return;
+      this.set({ pitches: settled, busy: "" });
     }
-    const winner = ranked[0];
-    const believes = !this.state.rescue && totalVotes >= 3 && (counts[winner.id] ?? 0) / totalVotes >= 0.75;
-    this.startRoll(winner, believes);
+    this.startRoll();
   }
 
-  /** ⚔ Team Up: fuse the top two plans. Both heroes share the roll (best of two dice) and the credit. */
-  private combine(a: Pitch, b: Pitch): Pitch {
-    const ha = this.player(a.playerId)!.hero!;
-    const hb = this.player(b.playerId)!.hero!;
-    const [lead, other] = TIER_RANK[a.verdict!.tier] >= TIER_RANK[b.verdict!.tier] ? [a, b] : [b, a];
-    const v = lead.verdict!;
-    const combo: Pitch = {
-      id: `${this.state.sceneIndex}-combo`,
-      playerId: lead.playerId,
-      partnerId: other.playerId,
-      text: `${a.text} + ${b.text}`,
-      useAbility: a.useAbility || b.useAbility,
-      // Whoever ticked "use ability" (and still has it) is the one who spends it.
-      abilityBy: [a, b].find((x) => x.useAbility && this.player(x.playerId)?.abilityAvailable)?.playerId,
-      embraceFlaw: a.embraceFlaw || b.embraceFlaw,
-      verdict: {
-        ...v,
-        interpretation: `${(a.verdict?.interpretation || `${ha.name}: ${a.text}`).replace(/\.$/, "")}, while ${(b.verdict?.interpretation || `${hb.name}: ${b.text}`).replace(/\.$/, "")}.`,
-        quip: "Two heads, one terrible-wonderful plan.",
-      },
-    };
-    this.set({ pitches: [...this.state.pitches, combo] });
-    return combo;
+  // ---------- roll (everyone) ----------
+  private boostedPitchId() {
+    const counts: Record<string, number> = {};
+    Object.values(this.state.boosts).forEach((id) => (counts[id] = (counts[id] ?? 0) + 1));
+    const ranked = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+    if (!ranked.length || (ranked[1] && ranked[1][1] === ranked[0][1])) return "";
+    return ranked[0][0];
   }
 
-  // ---------- roll ----------
-  private makeRoll(pid: string, v: Verdict, advantage: RollResult["advantage"], rescuerId: string, partnerId = ""): RollResult {
-    const hero = this.player(pid)!.hero!;
-    const partner = partnerId ? this.player(partnerId)?.hero : undefined;
-    const baseAdvantage = advantage;
-    // A Team Up rolls two dice and keeps the best (unless a flaw drags it down to one).
-    if (partner && advantage === "none") advantage = "adv";
-    if (partner && advantage === "dis") advantage = "none";
-    const dice = advantage === "none" ? [d20()] : [d20(), d20()];
-    const kept = advantage === "adv" ? Math.max(...dice) : advantage === "dis" ? Math.min(...dice) : dice[0];
-    const statBonus = Math.max(hero.stats[v.stat], partner?.stats[v.stat] ?? -9);
-    const tierMod = TIER_MOD[v.tier];
-    const total = kept + statBonus + tierMod;
-    return { playerId: pid, dice, kept, advantage, baseAdvantage, statBonus, tierMod, total, band: band(kept, total, v.tier), rescuerId };
-  }
-
-  private startRoll(pitch: Pitch, believes: boolean) {
+  private makeRoll(pitch: Pitch, rescuerId = "", forceDice = false): RollResult {
     const p = this.player(pitch.playerId)!;
-    const v = pitch.verdict!;
-    const abilityOwner = pitch.partnerId ? pitch.abilityBy : pitch.useAbility && p.abilityAvailable ? p.id : undefined;
-    const usesAbility = !!abilityOwner;
-    const adv = usesAbility || believes;
+    const v = pitch.verdict ?? this.verdictFallback(pitch);
+    const boosted = this.boostedPitchId() === pitch.id;
+    const statBonus = p.hero!.stats[v.stat] ?? 0;
+    const tierMod = TIER_MOD[v.tier];
+    if (autoSucceeds(v.tier) && !forceDice) {
+      return { playerId: p.id, dice: [], kept: 0, advantage: "none", statBonus, tierMod, total: 15 + statBonus + tierMod, band: "SUCCESS", rescuerId, noRoll: true, boosted };
+    }
+    const usesAbility = pitch.useAbility && v.ability_fits;
+    const adv = boosted || usesAbility;
     const dis = v.flaw_walk_in && !pitch.embraceFlaw;
     const advantage = adv && !dis ? "adv" : dis && !adv ? "dis" : "none";
-    if (abilityOwner) this.patchPlayer(abilityOwner, { abilityAvailable: false });
-    this.pendingRoll = this.makeRoll(p.id, v, advantage, "", pitch.partnerId ?? "");
-    this.outcomeP = this.fetchOutcome(pitch, this.pendingRoll);
-    this.set({ phase: "roll", rollerId: p.id, winningPitchId: pitch.id, roll: null, catchers: [] });
-    this.setTimer(ROLL_MS, () => this.revealRoll());
+    const dice = advantage === "none" ? [d20()] : [d20(), d20()];
+    const kept = advantage === "adv" ? Math.max(...dice) : advantage === "dis" ? Math.min(...dice) : dice[0];
+    const total = kept + statBonus + tierMod;
+    return { playerId: p.id, dice, kept, advantage, statBonus, tierMod, total, band: band(kept, total, v.tier), rescuerId, noRoll: false, boosted };
+  }
+
+  private sortRolls(rolls: RollResult[]) {
+    // Lowest result first, so the round ends on its best moment.
+    return [...rolls].sort((a, b) => a.total - b.total);
+  }
+
+  private startRoll() {
+    const rolls = this.sortRolls(this.state.pitches.map((p) => this.makeRoll(p)));
+    // Spend abilities that were used.
+    this.state.pitches.forEach((p) => {
+      if (p.useAbility && p.verdict?.ability_fits && this.player(p.playerId)?.abilityAvailable) this.patchPlayer(p.playerId, { abilityAvailable: false });
+    });
+    const revealed = rolls.filter((r) => r.noRoll).map((r) => r.playerId);
+    this.roundP = this.fetchRound(rolls);
+    this.set({ phase: "roll", rolls, revealed, catchers: [] });
+    if (revealed.length === rolls.length) return this.afterRoll();
+    this.setTimer(ROLL_MS, () => this.revealAll());
   }
 
   private onRoll(pid: string) {
     if (this.state.phase === "roll") {
-      const partner = this.state.pitches.find((p) => p.id === this.state.winningPitchId)?.partnerId;
-      if (pid === this.state.rollerId || pid === partner) return this.revealRoll();
+      if (!this.state.rolls.some((r) => r.playerId === pid) || this.state.revealed.includes(pid)) return;
+      const revealed = [...this.state.revealed, pid];
+      this.set({ revealed });
+      if (revealed.length === this.state.rolls.length) {
+        this.clearTimer();
+        setTimeout(() => this.afterRoll(), ROLL_ANIM_MS);
+      }
       return;
     }
     if (this.state.phase === "final_roll") return this.revealFinalDie(pid);
   }
 
-  private revealRoll() {
+  private revealAll() {
     if (this.state.phase !== "roll") return;
     this.clearTimer();
-    this.set({ phase: "rolling", roll: this.pendingRoll });
+    this.set({ revealed: this.state.rolls.map((r) => r.playerId) });
     setTimeout(() => this.afterRoll(), ROLL_ANIM_MS);
   }
 
   private afterRoll() {
-    const roll = this.state.roll!;
-    if (isFailure(roll.band) && !roll.rescuerId) {
-      const partnerId = this.state.pitches.find((p) => p.id === this.state.winningPitchId)?.partnerId;
+    if (this.state.phase !== "roll") return;
+    const failed = this.state.rolls.filter((r) => isFailure(r.band) && !r.rescuerId);
+    if (failed.length && !this.caughtThisRound) {
       const catchers = this.heroes()
-        .filter((p) => p.heart === 1 && p.id !== roll.playerId && p.id !== partnerId)
+        .filter((p) => p.heart === 1 && failed.some((f) => f.playerId !== p.id))
         .map((p) => p.id);
       if (catchers.length) {
         this.set({ phase: "catch", catchers });
-        this.setTimer(CATCH_MS, () => this.resolveOutcome());
+        this.setTimer(CATCH_MS, () => this.resolveRound());
         return;
       }
     }
-    this.resolveOutcome();
+    this.resolveRound();
   }
 
-  private onCatch(pid: string) {
-    if (this.state.phase !== "catch" || !this.state.catchers.includes(pid)) return;
+  private onCatch(pid: string, targetPid?: string) {
+    if (this.state.phase !== "catch" || !this.state.catchers.includes(pid) || this.caughtThisRound) return;
+    const failed = this.state.rolls.filter((r) => isFailure(r.band) && r.playerId !== pid);
+    const target = failed.find((r) => r.playerId === targetPid) ?? [...failed].sort((a, b) => a.total - b.total)[0];
+    if (!target) return;
     this.clearTimer();
-    const pitch = this.state.pitches.find((p) => p.id === this.state.winningPitchId)!;
-    const old = this.state.roll!;
+    this.caughtThisRound = true;
     this.patchPlayer(pid, { heart: 0 });
-    this.pendingRoll = this.makeRoll(old.playerId, pitch.verdict!, old.baseAdvantage ?? old.advantage, pid, pitch.partnerId ?? "");
-    this.outcomeP = this.fetchOutcome(pitch, this.pendingRoll);
-    this.set({ phase: "rolling", roll: this.pendingRoll, catchers: [] });
-    setTimeout(() => this.resolveOutcome(), ROLL_ANIM_MS);
+    const pitch = this.state.pitches.find((p) => p.playerId === target.playerId)!;
+    const reroll = this.makeRoll(pitch, pid, true);
+    const rolls = this.sortRolls(this.state.rolls.map((r) => (r.playerId === target.playerId ? reroll : r)));
+    this.roundP = this.fetchRound(rolls);
+    this.set({ phase: "roll", rolls, catchers: [], revealed: this.state.revealed });
+    setTimeout(() => this.resolveRound(true), ROLL_ANIM_MS + 400);
   }
 
-  private fetchOutcome(pitch: Pitch, roll: RollResult): Promise<Outcome> {
-    const p = this.player(pitch.playerId)!;
-    const v = pitch.verdict!;
+  private fetchRound(rolls: RollResult[]): Promise<RoundOutcome> {
     const r = this.state.rescue;
-    const rescuer = roll.rescuerId ? this.player(roll.rescuerId)?.hero?.name ?? "" : "";
-    const partner = pitch.partnerId ? this.player(pitch.partnerId)?.hero?.name ?? "" : "";
-    // Every pitch that didn't win still gets a beat in the story.
-    const supporting = this.state.pitches
-      .filter((x) => x.id !== pitch.id && x.playerId !== pitch.playerId && x.playerId !== pitch.partnerId && !x.partnerId)
-      .map((x) => ({ hero: this.player(x.playerId)?.hero?.name, pitch: x.text }));
-    const input = {
-      state: this.dmState(),
-      hero_name: partner ? `${p.hero!.name} and ${partner}` : p.hero!.name,
-      team_up_with: partner,
-      supporting_pitches: supporting,
-      action: {
-        hero_id: p.id,
-        hero_name: partner ? `${p.hero!.name} and ${partner}` : p.hero!.name,
+    const actions = rolls.map((roll) => {
+      const pitch = this.state.pitches.find((p) => p.playerId === roll.playerId)!;
+      const hero = this.player(roll.playerId)!.hero!;
+      return {
+        hero_id: roll.playerId,
+        hero_name: hero.name,
         pitch: pitch.text,
-        interpretation: v.interpretation,
-        stat: v.stat,
-        tier: v.tier,
-        on_success: v.on_success,
-        on_failure: v.on_failure,
-      },
-      roll: {
-        dice: roll.dice,
-        kept: roll.kept,
-        advantage: roll.advantage,
-        stat_bonus: roll.statBonus,
-        tier_mod: roll.tierMod,
-        total: roll.total,
+        appeal: pitch.appeal ?? "",
+        interpretation: pitch.verdict?.interpretation ?? pitch.text,
+        stat: pitch.verdict?.stat,
+        tier: pitch.verdict?.tier,
         band: roll.band,
-      },
-      embrace_flaw: pitch.embraceFlaw,
-      rescuer,
+        no_roll_needed: roll.noRoll,
+        natural: roll.kept === 1 || roll.kept === 20 ? roll.kept : null,
+        caught_by: roll.rescuerId ? this.player(roll.rescuerId)?.hero?.name ?? "" : "",
+        boosted: roll.boosted,
+        embrace_flaw: pitch.embraceFlaw,
+        on_success: pitch.verdict?.on_success ?? "",
+        on_failure: pitch.verdict?.on_failure ?? "",
+      };
+    });
+    const p = ai<RoundOutcome>("round", {
+      state: this.dmState(),
       rescue_of: r ? this.player(r.victimId)?.hero?.name ?? "" : "",
-      ability: { ...p.hero!.ability, fits: v.ability_fits },
-    };
-    const p2 = ai<Outcome>("outcome", input).then((res) => res.data);
-    p2.catch(() => {}); // may be discarded by a Catch!; resolveOutcome has its own fallback
-    return p2;
+      actions,
+      recent_lines: this.recentLines.slice(-6),
+    }).then((res) => res.data);
+    p.catch(() => {});
+    return p;
   }
 
-  private async resolveOutcome() {
-    if (this.state.phase === "outcome") return;
-    this.clearTimer();
-    const roll = this.state.roll!;
-    const pitch = this.state.pitches.find((p) => p.id === this.state.winningPitchId)!;
-    const roller = this.player(roll.playerId)!;
-    this.set({ phase: "outcome", catchers: [], busy: "The Tale-Spinner is writing…" });
-    const fb = (): Outcome => ({
-      headline: { CATASTROPHE: "Oh No.", FAIL: "Not Quite!", YES_BUT: "Sort Of!", SUCCESS: "Nailed It!", LEGENDARY: "LEGEND!" }[roll.band],
-      narration: `${roller.hero!.name} tries. The realm reacts. History will remember it, one way or another.`,
-      yes_but_cost: roll.band === "YES_BUT" ? "hope" : "none",
+  private roundFallback(): RoundOutcome {
+    const worst = this.state.rolls.find((r) => r.band === "CATASTROPHE");
+    return {
+      headline: "Well, That Happened",
+      beats: this.state.rolls.map((r) => ({
+        hero_id: r.playerId,
+        text: FALLBACK_BEAT[r.band][0].replaceAll("{name}", this.player(r.playerId)?.hero?.name ?? "You"),
+      })),
+      now: "Everyone is still here, which counts for something.",
       complication: "",
-      shame_title: roll.band === "CATASTROPHE" ? "the Unlucky" : "",
-      glory_title: roll.band === "LEGENDARY" ? "the Legendary" : "",
-      savior_title: "",
-      peril: roll.band === "CATASTROPHE" ? "stuck somewhere very inconvenient" : "",
+      titles: [],
+      peril: worst && !this.state.rescue ? { hero_id: worst.playerId, text: "stuck somewhere very inconvenient" } : { hero_id: "", text: "" },
       new_canon: [],
       threat_mood: "",
       highlight_score: 5,
       sfx: "none",
-    });
-    let out = await withTimeout(this.outcomeP ?? Promise.resolve(fb()), 12_000, fb);
-    if (!out || typeof out.narration !== "string") out = fb();
-    try {
-      this.applyOutcome(roll, pitch, roller, { ...fb(), ...out, new_canon: Array.isArray(out.new_canon) ? out.new_canon : [] });
-    } catch (e) {
-      console.error("[host] applyOutcome failed", e);
-    }
-    this.set({ outcome: out, busy: "" });
-    this.setTimer(readMs(out.narration), () => this.afterOutcome());
+    };
   }
 
-  private applyOutcome(roll: RollResult, pitch: Pitch, roller: Player, out: Outcome) {
-    const b: Band = roll.band;
+  private async resolveRound(fromCatch = false) {
+    if (this.state.phase !== "catch" && !(fromCatch && this.state.phase === "roll") && this.state.phase !== "roll") return;
+    this.clearTimer();
+    this.set({ phase: "outcome", catchers: [], busy: "The DM is writing it all down…", beatIndex: 0, round: null });
+    let out = await withTimeout(this.roundP ?? Promise.resolve(this.roundFallback()), 14_000, () => this.roundFallback());
+    if (!out || !Array.isArray(out.beats)) out = this.roundFallback();
+    // One beat per hero, in roll order, even if the model dropped one.
+    const fb = this.roundFallback();
+    const beats = this.state.rolls.map((r) => out.beats.find((b) => b.hero_id === r.playerId) ?? fb.beats.find((b) => b.hero_id === r.playerId)!);
+    out = { ...fb, ...out, beats, new_canon: Array.isArray(out.new_canon) ? out.new_canon : [], titles: Array.isArray(out.titles) ? out.titles : [] };
+    try {
+      this.applyRound(out);
+    } catch (e) {
+      console.error("[host] applyRound failed", e);
+    }
+    this.set({ round: out, busy: "", beatIndex: 0 });
+    this.stepBeat(0);
+  }
+
+  /** Beat cards one at a time (Continue / all Ready / timer), then the wrap line, then the next scene. */
+  private stepBeat(i: number) {
+    const out = this.state.round!;
+    this.set({ beatIndex: i });
+    if (i < out.beats.length) return this.reading(out.beats[i].text, () => this.stepBeat(i + 1), 6000);
+    this.reading(out.now, () => this.afterRound(), 5000);
+  }
+
+  private applyRound(out: RoundOutcome) {
+    const rolls = this.state.rolls;
     const rescue = this.state.rescue;
-    const success = b === "YES_BUT" || b === "SUCCESS" || b === "LEGENDARY";
+    const fails = rolls.filter((r) => isFailure(r.band)).length;
+    const wins = rolls.length - fails;
+    const nat1s = rolls.filter((r) => r.kept === 1).length;
     let hope = this.state.hope;
-    if (b === "CATASTROPHE") hope -= 2;
-    if (b === "FAIL") hope -= 1;
-    if (b === "YES_BUT" && out.yes_but_cost === "hope") hope -= 1;
-    if (b === "LEGENDARY") hope += 1;
-    if (pitch.embraceFlaw && roll.total >= 10) hope += 1;
+    if (fails > wins) hope -= 1;
+    hope -= Math.min(2, nat1s);
+    if (rolls.some((r) => r.kept === 20)) hope += 1;
+    if (this.state.pitches.some((p) => p.embraceFlaw && SUCCESS_BANDS.includes(rolls.find((r) => r.playerId === p.playerId)?.band ?? "FAIL"))) hope += 1;
     hope = Math.max(0, Math.min(this.state.hopeMax, hope));
 
+    const rescued = rescue && rolls.some((r) => r.playerId !== rescue.victimId && SUCCESS_BANDS.includes(r.band));
+    const catastrophes = rolls.filter((r) => r.band === "CATASTROPHE");
+    let perilId = "";
+    let perilText = "";
+    if (!rescue && catastrophes.length) {
+      const named = catastrophes.find((r) => r.playerId === out.peril?.hero_id);
+      perilId = (named ?? catastrophes[0]).playerId;
+      perilText = named && out.peril.text ? out.peril.text : "stuck somewhere very inconvenient";
+    }
+
     const players = this.state.players.map((p) => {
-      const titles = [...p.titles];
+      const roll = rolls.find((r) => r.playerId === p.id);
+      const titles = [...p.titles, ...out.titles.filter((t) => t.hero_id === p.id && t.title).map((t) => t.title)];
       let { peril, abilityAvailable } = p;
-      if (p.id === roller.id || p.id === pitch.partnerId) {
-        if (b === "CATASTROPHE" && out.shame_title) titles.push(out.shame_title);
-        if (b === "LEGENDARY") {
-          if (out.glory_title) titles.push(out.glory_title);
-          abilityAvailable = true;
-        }
-        if (b === "CATASTROPHE" && !rescue && p.id === roller.id) peril = out.peril || "in terrible, comic peril";
-        if (rescue && success && out.savior_title) titles.push(out.savior_title);
-      }
-      if (roll.rescuerId && p.id === roll.rescuerId && success && out.savior_title && !rescue) titles.push(out.savior_title);
-      if (rescue && success && p.id === rescue.victimId) peril = "";
+      if (roll?.kept === 20) abilityAvailable = true;
+      if (p.id === perilId) peril = perilText;
+      if (rescued && p.id === rescue!.victimId) peril = "";
       return { ...p, titles: [...new Set(titles)].slice(-4), peril, abilityAvailable };
     });
 
     if (out.complication) this.ledger.push(out.complication);
     this.canon.push(...out.new_canon);
     if (out.threat_mood) this.threatMood = out.threat_mood;
-    this.recentLines.push(out.headline);
+    this.recentLines.push(...out.beats.map((b) => b.text));
     this.set({
       hope,
       players,
+      lastTime: out.now || this.state.lastTime,
       log: [
         ...this.state.log,
-        {
-          scene: this.state.sceneIndex,
-          heroId: roller.id,
-          partnerId: pitch.partnerId,
-          hero: pitch.partnerId ? `${roller.hero!.name} & ${this.player(pitch.partnerId)?.hero?.name}` : roller.hero!.name,
-          pitch: pitch.text,
-          band: b,
-          headline: out.headline,
-          narration: out.narration,
-          rescue: !!rescue,
-        },
+        ...rolls.map((r) => {
+          const pitch = this.state.pitches.find((p) => p.playerId === r.playerId);
+          return {
+            scene: this.state.sceneIndex,
+            heroId: r.playerId,
+            hero: this.player(r.playerId)?.hero?.name ?? "",
+            pitch: pitch?.text ?? "",
+            band: r.band,
+            headline: out.headline,
+            narration: out.beats.find((b) => b.hero_id === r.playerId)?.text ?? "",
+            rescue: !!rescue,
+          };
+        }),
       ],
     });
   }
 
-  private afterOutcome() {
+  private afterRound() {
     if (this.state.hope <= 0) return this.finish(true);
     this.openScene(this.state.sceneIndex + 1);
   }
@@ -871,27 +977,34 @@ export class GameHost {
       ending: grim ? ("GRIM_BUT_HILARIOUS" as const) : ending(total, this.state.hope),
     };
     const players = this.state.players.map((p) => ({ ...p, peril: "" }));
-    this.set({ phase: "final_result", final, players });
+    this.set({ phase: "final_result", final, players, ready: [] });
 
     const heroes = this.heroes().map((p) => ({ id: p.id, name: p.hero!.name }));
     const st = this.dmState();
-    const finalInfo = { dice: Object.fromEntries(Object.entries(dice).map(([k, v]) => [this.player(k)?.hero?.name, v])), best: this.player(best)?.hero?.name ?? "", hope_bonus: final.hopeBonus, total, ending: final.ending };
+    const name = (id: string) => this.player(id)?.hero?.name ?? "";
+    const finalInfo = {
+      dice: Object.fromEntries(Object.entries(dice).map(([k, v]) => [name(k), v])),
+      best: name(best),
+      hope_bonus: final.hopeBonus,
+      total,
+      ending: final.ending,
+      final_moves: Object.fromEntries(Object.entries(this.state.finalMoves).map(([k, v]) => [name(k), v])),
+    };
     this.epilogueP = withTimeout(
-      ai<string>("epilogue", { state: st, final: finalInfo, log: this.state.log.map((l) => `${l.hero}: ${l.headline}`) }).then((r) => r.data),
+      ai<string>("epilogue", { state: st, final: finalInfo, log: this.state.log.map((l) => `${l.hero}: ${l.pitch} (${l.band})`) }).then((r) => r.data),
       20_000,
-      () => "The dice land, the realm holds its breath, and somehow it all works out. And that is how it really happened... more or less.",
+      () => "The dice land and, somehow, it holds. Everyone goes home with a story nobody will believe. And that's the version they'll never print.",
     );
     const crowd = Object.entries(this.reactionCounts).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "";
     const images = this.state.scenes.map((_, i) => `scene_${i + 1}`);
-    // Runs in parallel with the epilogue (it doesn't need its text), so the ending never waits on both.
     const bookFallback = (): Storybook => ({
       title: this.state.quest?.title ?? "A Tale",
       dedication: `For ${heroes.map((h) => h.name).join(", ")}.`,
       pages: this.state.log.length
-        ? this.state.log.slice(0, 5).map((l, i) => ({ text: `${l.headline} ${l.narration}`, image_ref: images[Math.min(i, images.length - 1)] }))
-        : [{ text: "Once upon a time, a most unlikely party answered the call, and the realm was never quite the same.", image_ref: images[0] }],
-      hero_pages: heroes.map((h) => ({ hero_id: h.id, best_moment: `${h.name} was there when it mattered.`, award: "Present & Heroic" })),
-      moral: "Always roll with friends.",
+        ? this.state.log.slice(0, 5).map((l, i) => ({ text: `${l.hero}: "${l.pitch}" ${l.narration}`, image_ref: images[Math.min(i, images.length - 1)] }))
+        : [{ text: "A group of people who did not know what they were doing figured it out anyway.", image_ref: images[0] }],
+      hero_pages: heroes.map((h) => ({ hero_id: h.id, best_moment: `${h.name} was there when it mattered.`, award: "Showed Up" })),
+      moral: "Go together or don't go.",
       real_story_bridge: "",
     });
     this.storybookP = withTimeout(
@@ -900,6 +1013,7 @@ export class GameHost {
         title: this.state.quest?.title,
         heroes,
         log: this.state.log,
+        final_moves: finalInfo.final_moves,
         ending: final.ending,
         crowd_favorite: crowd,
         available_images: images,
@@ -912,20 +1026,20 @@ export class GameHost {
   }
 
   private async startEpilogue() {
-    this.set({ phase: "epilogue", busy: "The Tale-Spinner closes the book…" });
+    this.set({ phase: "epilogue", busy: "The DM wraps it up…", ready: [] });
     const text = await this.epilogueP!;
     this.set({ epilogue: text, busy: "" });
-    this.setTimer(readMs(text, 10000, 22000), () => this.startReveal());
+    this.reading(text, () => this.startReveal(), 10000);
   }
 
   private startReveal() {
     this.set({ phase: "reveal" });
-    this.setTimer(20_000, () => this.showStorybook());
+    this.reading(`${this.seed?.the_real_story.headline ?? ""} ${this.seed?.the_real_story.summary ?? ""}`, () => this.showStorybook(), 15000);
   }
 
   private async showStorybook() {
     this.clearTimer();
-    this.set({ phase: "storybook", busy: "Binding your storybook…" });
+    this.set({ phase: "storybook", busy: "Putting your story together…" });
     const book = await this.storybookP!;
     this.set({ storybook: book, busy: "" });
     this.saveToShelf(book);
@@ -937,7 +1051,7 @@ export class GameHost {
       const cover = last ? await thumbnail(last, 320, 0.7) : "";
       const rs = this.seed!.the_real_story;
       const entry: ShelfBook = {
-        party: this.state.partyName || "The Party",
+        party: this.state.partyName || "The Group",
         title: book.title,
         date: new Date().toISOString().slice(0, 10),
         heroes: this.heroes().map((p) => [p.hero!.name, ...p.titles].join(", ")),
@@ -964,7 +1078,7 @@ export class GameHost {
     return this.seed;
   }
 
-  /** "Next chapter": same heroes and titles, new quest. */
+  /** "Next chapter": same heroes and titles, new story. */
   nextTale() {
     this.clearTimer();
     this.seed = undefined;
@@ -976,13 +1090,15 @@ export class GameHost {
       scenes: [],
       sceneIndex: 0,
       narration: "",
-      outcome: null,
+      round: null,
       final: null,
+      finalMoves: {},
       epilogue: "",
       storybook: null,
       log: [],
       rescue: null,
       busy: "",
+      ready: [],
     });
   }
 

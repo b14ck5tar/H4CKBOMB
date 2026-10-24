@@ -2,20 +2,38 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <main className="min-h-full flex items-center justify-center p-5">
-      <div className="page max-w-xl w-full p-8 sm:p-10 text-center flex flex-col gap-6 fade-in">
-        <p className="font-ui uppercase tracking-[0.25em] text-sm text-ink-soft">HackTX ’26 · Once Upon a Hack</p>
-        <h1 className="font-display text-4xl sm:text-5xl leading-tight">Once Upon a Roll</h1>
+    <main className="min-h-full flex items-center justify-center px-4 py-8 sm:p-8">
+      <div className="page max-w-2xl w-full p-6 sm:p-12 flex flex-col gap-6 fade-in">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <span className="on-air">Live</span>
+          <p className="kicker">HackTX ’26 · Once Upon a Hack</p>
+        </div>
+
+        <h1 className="font-display uppercase text-[3.4rem] sm:text-[6.5rem] leading-[0.88] tracking-tight">
+          <span className="block">Once Upon</span>
+          <span className="block">
+            a <span className="glitch text-[var(--gilt-bright)]">Roll</span>
+          </span>
+        </h1>
+
         <div className="gilt-rule" />
-        <p className="text-xl italic text-ink-soft">Nobody has to be the Dungeon Master anymore.</p>
-        <p className="text-lg">
+
+        <p className="font-heading font-bold uppercase text-2xl sm:text-3xl leading-tight tracking-wide">
+          Nobody has to be the <span className="text-crimson">Dungeon Master</span> anymore.
+        </p>
+        <p className="text-lg sm:text-xl leading-relaxed text-ink-soft">
           Open the table on a laptop or TV. Everyone joins on their phone, describes a hero in one line, and the AI Dungeon Master
           spins a fairytale quest out of today’s real news.
         </p>
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Link href="/tv" className="btn btn-crimson text-lg">Open the table</Link>
-          <Link href="/play" className="btn btn-gilt text-lg">Join on my phone</Link>
+
+        <div className="flex flex-col sm:flex-row gap-4 pt-1">
+          <Link href="/tv" className="btn btn-crimson text-xl">Open the table</Link>
+          <Link href="/play" className="btn btn-gilt text-xl">Join on my phone</Link>
         </div>
+
+        <p className="font-ui text-xs uppercase tracking-[0.2em] text-ink-soft/80 border-t border-white/10 pt-4">
+          Case file 26-OUAR · Source: <span className="redacted">today’s headlines</span> · Status: open
+        </p>
       </div>
     </main>
   );

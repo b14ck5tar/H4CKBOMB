@@ -1,12 +1,15 @@
 import type { Metadata, Viewport } from "next";
-import { Alegreya_Sans, Cinzel, Cinzel_Decorative, EB_Garamond } from "next/font/google";
+import { Anton, Atkinson_Hyperlegible, Barlow_Condensed, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import "./juice.css";
 
-const display = Cinzel_Decorative({ variable: "--font-display", subsets: ["latin"], weight: ["700", "900"] });
-const heading = Cinzel({ variable: "--font-heading", subsets: ["latin"], weight: ["500", "700", "900"] });
-const body = EB_Garamond({ variable: "--font-body", subsets: ["latin"], weight: ["400", "500", "600"], style: ["normal", "italic"] });
-const ui = Alegreya_Sans({ variable: "--font-ui", subsets: ["latin"], weight: ["400", "500", "700", "800"] });
+// Urban-fantasy broadcast type stack. Variable names are the contract the components rely on.
+// display: tabloid/broadcast headline. heading: chunky condensed lower-third. body: built for legibility
+// across a room. ui: case-file mono for labels, numbers and chips.
+const display = Anton({ variable: "--font-display", subsets: ["latin"], weight: ["400"] });
+const heading = Barlow_Condensed({ variable: "--font-heading", subsets: ["latin"], weight: ["500", "600", "700", "800"] });
+const body = Atkinson_Hyperlegible({ variable: "--font-body", subsets: ["latin"], weight: ["400", "700"], style: ["normal", "italic"] });
+const ui = IBM_Plex_Mono({ variable: "--font-ui", subsets: ["latin"], weight: ["400", "500", "600", "700"] });
 
 export const metadata: Metadata = {
   title: "Once Upon a Roll",
@@ -17,7 +20,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
-  themeColor: "#161B33",
+  themeColor: "#0A0612",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

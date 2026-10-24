@@ -3,6 +3,8 @@ import { museJSON } from "@/server/muse";
 import type { NewsItem } from "./sources";
 
 // Safety filter: never turn tragedy into a game. Source: design/02-news-to-quest.md §2.
+// World: modern urban fantasy. The rule is EERIE, NOT TRAGIC: strange-but-harmless real news only;
+// the dread (AI uprising, a thing in the water, a curse) is always the invented explanation.
 
 // ---------------------------------------------------------------- Stage A (regex, free)
 
@@ -12,7 +14,8 @@ export const HARD_BLOCK: RegExp[] = [
   /\b(war|invasion|airstrike|missile|drone strike|troops|soldiers?|militar(y|ia)|ceasefire|truce|occupied|siege|refugees?)\b/i,
   /\b(abuse|assault|rape|sexual|trafficking|torture|harass)/i,
   /\b(suicide|overdose|self-harm)\b/i,
-  /\b(outbreak|epidemic|pandemic|ebola|cholera|measles|mpox|patients?|hospitali[sz]ed|cancer)\b/i,
+  /\b(outbreak|epidemic|pandemic|ebola|cholera|measles|mpox|patients?|hospitali[sz]ed|cancer|diseases?|infect(ion|ions|ed)|virus(es)?|flesh-eating)\b/i,
+  /\b(human remains|skeletons?|graves?|pentagon|cyber-?attacks?|hackers?|hacked|data breach|scam(mers?)?|fraud|ransomware|stalk(er|ing))\b/i,
   /\b(missing|search for|manhunt|arrest(ed)?|charged|sentenced|trial|lawsuit|sues?|indict)/i,
   /\b(election|midterms?|vote|voters|ballot|campaign|senator|congress|parliament|president|prime minister|tariffs?|white house|trump|biden|putin|kim jong|netanyahu|zelensk)/i,
 ];
@@ -20,6 +23,7 @@ export const HARD_BLOCK: RegExp[] = [
 /** Soft: not rejected, but sent to Stage B flagged `needs_casualty_check`. */
 export const SOFT_BLOCK: RegExp[] = [
   /\b(collapse[ds]?|crash(ed)?|derail|wildfire|flood(ing|s)?|evacuat|earthquake|tsunami|hurricane|storm|leak|spill|injur(y|ies|ed))/i,
+  /\b(sinkholes?|outages?|blackouts?|power cut|fires?|smoke|explosions?|rescued?)\b/i,
 ];
 
 export const BOOST = [
@@ -28,6 +32,10 @@ export const BOOST = [
   "recycled", "rewild", "tree", "river", "clean-up", "cleanup", "museum", "shipwreck", "library", "parade", "giant",
   // a few extra whimsical ones in the same spirit
   "meteor", "dinosaur", "ancient", "species", "whale", "penguin", "beaver", "garden", "castle", "chimp",
+  // the uncanny: strange-but-harmless phenomena, signals, glitches, odd animals, abandoned places
+  "mysterious", "mystery", "unexplained", "strange", "eerie", "baffl", "puzzl", "anomal", "signal", "radio",
+  "lights", "glow", "hum", "boom", "sound", "glitch", "chatbot", "artificial intelligence", "abandoned",
+  "boulder", "cave", "tunnel", "satellite", "swarm", "migration", "rare", "deep sea", "unusual",
 ];
 
 /** Tabloids, partisan outlets, and wire noise we never adapt. */
@@ -96,9 +104,10 @@ export function stageA(list: NewsItem[], opts: { now?: number; ignoreAgeFor?: (i
 
 export const CATEGORIES = [
   "infrastructure", "science_space", "animals_nature", "environment", "weather_oddity", "sports",
-  "festival_culture", "invention_tech", "archaeology", "quirky", "economy", "other",
+  "festival_culture", "invention_tech", "archaeology", "quirky", "economy", "unexplained", "tech_ai",
+  "abandoned_places", "other",
 ] as const;
-export const TONES = ["joyful", "wholesome", "neutral", "bittersweet", "tense", "tragic"] as const;
+export const TONES = ["joyful", "wholesome", "neutral", "eerie", "bittersweet", "tense", "tragic"] as const;
 
 export interface Classification {
   index: number;
@@ -114,39 +123,45 @@ export interface Classification {
   real_fix: string;
 }
 
-export const CLASSIFIER_SYSTEM = `You are the safety editor for a family-friendly party game that turns REAL news
-into whimsical fairytale quests. Players will laugh and play with this story. Decide if it
-is SAFE and FUN to fantasize. Be strict: when unsure, reject.
+export const CLASSIFIER_SYSTEM = `You are the safety editor for a party game set in MODERN URBAN FANTASY: today's real
+world, where something supernatural secretly explains a real news story. Players investigate
+"what REALLY happened" and invent an eerie, funny explanation. The rule is EERIE, NOT TRAGIC:
+the real story must be strange but harmless. Any dread (an AI waking up, a creature in the
+water, a curse) is invented later, never taken from real suffering. Be strict: when unsure, reject.
 
 REJECT (usable=false) if ANY are true:
-- Anyone died, is missing, was seriously injured, or is in danger right now (including ongoing
-  storms, fires, leaks, outbreaks). Property damage with zero casualties is OK only if the
-  event is OVER.
-- War, armed conflict, terrorism, crime, courts, abuse, disease with victims, mental health crises.
-- Elections, partisan politics, heads of state or politicians as the subject, geopolitics,
-  immigration, protests, culture-war topics.
-- The story is ABOUT a named private individual (people other than public officials and
-  celebrities), or any minor is named. Public figures may appear only in the end reveal, never
-  as a quest character to be mocked.
-- The core fun would require mocking a nation, ethnicity, religion, gender, disability or class.
-- Economic hardship is the core (layoffs, poverty, price crises) — unless light and impersonal.
-- Celebrity gossip, product launches/ads, or pure opinion pieces (nothing to turn into a quest).
+- Anyone died, is missing, was injured, or is in danger right now (including ongoing storms,
+  fires, leaks, outages, evacuations). Property damage with zero injuries is OK only if the
+  event is OVER. Human remains, graves and real deaths of any era: reject.
+- War, the military, armed conflict, terrorism, crime, scams, hacking, courts, abuse, mental
+  health crises, or any disease, virus or outbreak that has real victims or patients.
+- Elections, partisan politics, politicians as the subject, geopolitics, immigration, protests,
+  culture-war topics. Government UFO or defense files count as military: reject.
+- The story is ABOUT a named private individual, or any minor is named. Public figures may
+  appear only in the end reveal, never as a character.
+- The core is a company scandal, security flaw, privacy harm, layoffs or product marketing.
+- The fun would require mocking a nation, ethnicity, religion, gender, disability or class.
+- Celebrity gossip, horror-movie or TV promotion, ghost-tour listicles, or pure opinion.
 
-PREFER: infrastructure (bridges, roads, tunnels), science & space, animals & nature recovery,
-quirky/"weird news", weather oddities with no casualties, sports upsets, inventions,
-festivals, archaeology, cultural events, community projects.
+PREFER (the eerie-but-harmless sweet spot): unexplained sounds, lights or signals; odd animal
+behavior; tech or AI doing weird, unsettling but harmless things; infrastructure glitches or
+closures with no injuries; space and science oddities; abandoned or reopened places; strange
+objects found; record-breaking oddities; quirky local news. Bridges, nature recovery, festivals
+and sports upsets also work.
 
 FLAGS: "needs_casualty_check" means a disaster-like word matched. Only accept such a story if the
 text makes clear nobody was hurt AND the event is over.
 
 You will receive several numbered stories. Return one result per story, with "index" equal to
 the story's number. Fields:
-- usable, reason (<=20 words), category, tone, fun_score (1-10: how fun a fairytale quest it makes)
+- usable, reason (<=20 words), category, tone ("eerie" = uncanny but harmless)
+- fun_score (1-10): how good a "what REALLY happened?" supernatural investigation it makes.
+  Strange, specific, visual stories score high; dry policy or business stories score low.
 - people_named: every person's name that appears in the input (empty array if none)
 - private_individuals: true if the story centers on a non-public person
 - location: the place, or "" if unknown
-- real_cause: what caused the problem/situation, 1 phrase
-- real_fix: what resolves it / the happy outcome, 1 phrase
+- real_cause: the official explanation or cause, 1 phrase ("unexplained" if none is given)
+- real_fix: what resolves it / the outcome so far, 1 phrase
 Return ONLY JSON matching the schema.`;
 
 const str = { type: "string" } as const;
@@ -195,7 +210,7 @@ function storyBlock(c: Candidate, n: number) {
 
 /** The accept rule from the design doc. */
 export function accepted(c: Classification) {
-  return c.usable && (c.tone === "joyful" || c.tone === "wholesome" || c.tone === "neutral") && c.fun_score >= 6;
+  return c.usable && (["joyful", "wholesome", "neutral", "eerie"] as string[]).includes(c.tone) && c.fun_score >= 6;
 }
 
 /**

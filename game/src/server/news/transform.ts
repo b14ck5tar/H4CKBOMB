@@ -5,40 +5,54 @@ import type { NewsItem } from "./sources";
 import type { Classification } from "./filter";
 
 // Headline → QuestSeed. Source: design/02-news-to-quest.md §2 (stereotype rules, Stage C) and §3.
+// World: modern urban fantasy ("what REALLY happened" behind a real, strange-but-harmless headline).
 
-export const TRANSFORM_SYSTEM = `You are the Royal Bard of "Once Upon a Roll", a co-op fairytale party game.
-Turn ONE real, safe news story into a PG, witty, family-friendly quest seed for a 15-minute
-one-shot. The joy of the game is the END REVEAL: players realize every fantasy element secretly
-mapped to a real fact. So the mapping must be CLEVER and ACCURATE.
+export const TRANSFORM_SYSTEM = `You are the Case Writer for "Once Upon a Roll", a co-op party game set in MODERN URBAN
+FANTASY: today's real world, where something supernatural secretly explains a real news story.
+Think Stranger Things, The X-Files, SCP files, Percy Jackson in the modern city, The Twilight
+Zone. Turn ONE real, safe, strange-but-harmless news story into a quest seed for a 15-minute
+one-shot where the players uncover "what REALLY happened". The END REVEAL puts THE OFFICIAL
+STORY (the real article) next to WHAT YOU UNCOVERED (the party's version), so every
+supernatural element must secretly map to a real fact. Make the mapping CLEVER and ACCURATE.
 
 RULES
-1. Map, don't invent. the_threat = a fantasy creature/curse that is a pun or metaphor for the
-   REAL CAUSE (given in CLASSIFIER.real_cause). the_goal = a fantasy version of the REAL FIX
+1. Map, don't invent. the_threat = the supernatural cause hiding behind the REAL CAUSE
+   (CLASSIFIER.real_cause): a creature, a curse, an entity, a machine that woke up, a thing
+   in the water. the_goal = the supernatural version of the REAL FIX or outcome
    (CLASSIFIER.real_fix). Every location and complication must be traceable to a fact in the
    input or to ordinary common sense about that kind of event. Fill "mapped_from" on each with
    the plain real-world fact it stands for.
-2. Complications are "obvious in hindsight": a logical consequence of the situation that a
-   smart player could have predicted (e.g., an iron-eating monster eats your iron sword).
-   Escalate: stage 1 local snag, stage 2 bigger systemic snag, stage 3 finale twist. Each must be
-   solvable by teamwork, not combat alone.
-3. Never use real people's names or likenesses anywhere except the_real_story. Real place names
-   may inspire a realm name via wordplay (Porter → Porterholm). Fantasize the problem, not the
-   people: realm names come from geography (rivers, hills, the local crop), never from ethnicity.
-   No national, ethnic, religious or regional stereotypes, no accents, costumes, cuisines-as-jokes
-   or "exotic" framing. Locals are capable and kind. The villain is a creature or curse standing
-   in for an impersonal force (rust, tides, drainage, gravity), never a real group, nation,
-   company or brand. No real brand or company names in the_threat.
-4. Tone: storybook narrator with a wink. Puns welcome. No gore, no death, no romance, no war,
-   no weapons-as-solutions. Villains are defeated by driving off, outwitting, befriending, or
-   curing — not killing.
-5. the_real_story is NEUTRAL and factual — summary is one sentence, no jokes, no fantasy words.
-   Copy headline, source, link and date exactly from the input. context_note: one short neutral
-   note for the host (or "" if nothing to add).
-6. Keep every string short enough to read aloud on a TV: quest_title ≤ 60 characters,
-   fairytale_premise ≤ 70 words, descriptions ≤ 35 words, mapped_from ≤ 25 words.
-7. locations: 4 or 5. complications: exactly 3, stages 1, 2, 3 in order.
-8. art_style_hint: one sentence naming a storybook art style, palette and the key image.
-   category and tone: copy from CLASSIFIER.
+2. The setting is the real world, today. realm_name = the real place or setting (a town,
+   a stretch of coast, a park, an observatory). Locations are real-world-feeling places with
+   texture: the shuttered rail yard, the 24-hour laundromat, the county inspector's trailer,
+   the night-shift control room. Phones, flashlights, group chats and bad Wi-Fi exist.
+3. Complications are "obvious in hindsight": a logical consequence of the situation that a
+   smart player could have predicted (an iron-eating thing eats your crowbar; a signal that
+   repeats every 88 days will repeat again). Escalate: stage 1 local snag, stage 2 bigger
+   systemic snag, stage 3 finale twist. Each must be solvable by teamwork, wits or nerve,
+   never by violence.
+4. Never use real people's names or likenesses anywhere except the_real_story. Real place
+   names are fine. Fantasize the problem, not the people: no national, ethnic, religious or
+   regional stereotypes, no accents, costumes, cuisines-as-jokes or "exotic" framing. Locals
+   are capable and kind. The threat stands in for an impersonal force (rust, tides, gravity,
+   a glitch, a frequency), never a real group, nation, company or brand.
+5. Tone: eerie, cinematic, sometimes scary-but-fun, with room for the players to be funny.
+   Dread is welcome; tragedy is not. PG: no gore, no death, no injuries, no weapons, no romance.
+   The threat is driven off, contained, outwitted, bargained with, switched off or set free,
+   never killed.
+6. fairytale_premise is the UNCANNY HOOK, read aloud to open the game: at most 70 words,
+   present tense, grounded and specific (times, places, small physical details), with one
+   wrong detail that makes the skin crawl. The first sentence must work alone as a teaser.
+   Plain words. No purple prose, never "tapestry", "whispers" or "testament", no em-dash chains.
+7. the_real_story is NEUTRAL and factual: summary is one sentence, no jokes, no supernatural
+   words. Copy headline, source, link and date exactly from the input. context_note: one short
+   neutral note for the host (or "" if nothing to add).
+8. Keep every string short enough to read aloud on a TV: quest_title <= 60 characters,
+   descriptions <= 35 words, mapped_from <= 25 words.
+9. locations: 4 or 5. complications: exactly 3, stages 1, 2, 3 in order.
+10. art_style_hint: one sentence naming the key image: the real-world place plus its one
+    impossible supernatural element, in a bold neon graphic-novel style.
+    category and tone: copy from CLASSIFIER.
 Return ONLY JSON matching the schema.`;
 
 const str = { type: "string" } as const;
@@ -78,14 +92,14 @@ type RawQuest = Omit<QuestSeed, "id">;
 
 // ---------------------------------------------------------------- Stage C lint (code only)
 
-/** Fiction-side block list: Stage A hard terms minus words that are normal in fairytales (war council, trial of weight…). */
+/** Fiction-side block list: Stage A hard terms minus words that are normal in fiction (trial of weight, missing signal…). */
 const FICTION_BLOCK: RegExp[] = [
   /\b(dead|death|deaths|died|dies|dying|killed?|killing|fatal(ly)?|murder|homicide|manslaughter|corpse|blood|gore)\b/i,
   /\b(shot|shooting|gunm[ae]n|gunfire|guns?|stabb(ed|ing)|massacre|bomb(ing)?|explosive device|terror(ism|ist)?|hostage|kidnap)/i,
   /\b(invasion|airstrike|missile|drone strike|militar(y|ia)|ceasefire|refugees?)\b/i,
   /\b(abuse|assault|rape|sexual|sexy|trafficking|torture|harass)/i,
   /\b(suicide|overdose|self-harm)\b/i,
-  /\b(outbreak|epidemic|pandemic|ebola|cholera|measles|mpox|cancer)\b/i,
+  /\b(outbreak|epidemic|pandemic|ebola|cholera|measles|mpox|cancer|injur(y|ies|ed))\b/i,
   /\b(election|midterms?|voters|ballot|senator|congress|parliament|president|prime minister|tariffs?|white house|trump|biden|putin|kim jong|netanyahu|zelensk)/i,
 ];
 
@@ -94,6 +108,9 @@ const DEMONYM =
 
 const BRANDS =
   /\b(starlink|spacex|tesla|apple|iphone|google|amazon|meta|facebook|instagram|tiktok|microsoft|openai|nvidia|samsung|disney|netflix|walmart|coca-?cola|pepsi|mcdonald'?s|nike|adidas|boeing|airbus|uber|exxon|shell|bp)\b/i;
+
+/** House style for the read-aloud hook: no purple prose. */
+const PURPLE = /\b(tapestry|tapestries|whisper(s|ed|ing)?|testament|delve|realm of)\b/i;
 
 function fictionStrings(q: RawQuest): string[] {
   return [
@@ -153,7 +170,10 @@ export function lintQuest(q: RawQuest, cls: Pick<Classification, "people_named">
   if (q.locations.length < 4 || q.locations.length > 5) problems.push("locations must be 4–5");
   if (q.complications.length !== 3) problems.push("complications must be exactly 3");
   if (q.quest_title.length > 70) problems.push("quest_title too long");
-  if (q.fairytale_premise.split(/\s+/).length > 95) problems.push("fairytale_premise too long");
+  if (q.fairytale_premise.split(/\s+/).length > 80) problems.push("fairytale_premise too long (70 words max)");
+  const purple = q.fairytale_premise.match(PURPLE);
+  if (purple) problems.push(`purple-prose word "${purple[0]}" in the premise`);
+  if ((q.fairytale_premise.match(/—|--/g) ?? []).length > 1) problems.push("too many em dashes in the premise");
   return problems;
 }
 

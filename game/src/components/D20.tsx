@@ -1,13 +1,14 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useId, useRef, useState } from "react";
 
 type Tone = "gold" | "crimson" | "ink";
 
-const TONES: Record<Tone, { hi: string; mid: string; lo: string; line: string; text: string; engrave: string }> = {
-  gold: { hi: "#FBE7A6", mid: "#C8952E", lo: "#6B4612", line: "#4A3210", text: "#2A1E16", engrave: "rgba(255,244,200,0.75)" },
-  crimson: { hi: "#E26A70", mid: "#A3282E", lo: "#4A0D12", line: "#2B080B", text: "#F4E9D0", engrave: "rgba(0,0,0,0.55)" },
-  ink: { hi: "#6A5543", mid: "#2A1E16", lo: "#0D0806", line: "#C8952E", text: "#E6C063", engrave: "rgba(0,0,0,0.7)" },
+// Smoked-glass bodies with neon edges. "gold" (the main die) is the holographic one.
+const TONES: Record<Tone, { hi: string; mid: string; lo: string; line: string; text: string; glow: string; holo: boolean }> = {
+  gold: { hi: "#33205A", mid: "#170D2C", lo: "#06030D", line: "#3DE7FF", text: "#FFFFFF", glow: "#3DE7FF", holo: true },
+  crimson: { hi: "#6A1238", mid: "#2C0719", lo: "#0D0208", line: "#FF2E7E", text: "#FFE9F2", glow: "#FF2E7E", holo: false },
+  ink: { hi: "#2C2538", mid: "#15101C", lo: "#050407", line: "#FF9A1F", text: "#FFC56A", glow: "#FF9A1F", holo: false },
 };
 
 const FAIL = TONES.crimson;
@@ -41,6 +42,8 @@ const FACETS: { p: string; l: number }[] = [
   { p: pts(H[4], H[5], T[2]), l: 0.25 },
   { p: pts(H[5], T[0], T[2]), l: 0.5 },
 ];
+// iridescent tint per facet for the holo die
+const HOLO = ["#3DE7FF", "#FF2E7E", "#FF9A1F", "#B46BFF", "#3DE7FF", "#FF2E7E", "#2CF5C0", "#FF9A1F", "#B46BFF"];
 
 const CRACKS = [
   "M100 42 L104 66 L96 82 L106 101 L99 118 L103 130",
@@ -121,11 +124,12 @@ export function D20({
   const landed = !rolling && value != null;
   const nat20 = landed && value === 20;
   const nat1 = landed && value === 1;
-  const c = nat1 ? FAIL : TONES[tone];
+  const c = nat1 ? FAIL : TONES[tone] ?? TONES.gold;
   const shown = rolling ? String(flicker) : value == null ? "?" : String(value);
   const justLanded = landKey > 0 && landed;
   const landClass = !justLanded ? "" : nat1 ? "ouar-d20-land-fail" : nat20 ? "ouar-d20-land-crit" : "ouar-d20-land";
-  const fontSize = shown.length > 1 ? 44 : 52;
+  const fontSize = shown.length > 1 ? 50 : 60;
+  const svgClass = nat20 ? "ouar-d20-glow" : nat1 ? "ouar-d20-dim" : rolling && c.holo ? "ouar-d20-holo" : undefined;
 
   return (
     <div
@@ -140,23 +144,25 @@ export function D20({
             <svg viewBox="0 0 200 200" width="100%" height="100%" style={{ overflow: "visible" }}>
               <defs>
                 <radialGradient id={uid + "-burst"}>
-                  <stop offset="0" stopColor="#FFF6D6" stopOpacity="0.95" />
-                  <stop offset="0.45" stopColor="#F2C85B" stopOpacity="0.55" />
-                  <stop offset="1" stopColor="#C8952E" stopOpacity="0" />
+                  <stop offset="0" stopColor="#FFFFFF" stopOpacity="0.95" />
+                  <stop offset="0.3" stopColor="#3DE7FF" stopOpacity="0.6" />
+                  <stop offset="0.65" stopColor="#FF2E7E" stopOpacity="0.25" />
+                  <stop offset="1" stopColor="#FF2E7E" stopOpacity="0" />
                 </radialGradient>
               </defs>
               <g className="ouar-d20-rays">
-                {Array.from({ length: 16 }).map((_, i) => (
+                {Array.from({ length: 18 }).map((_, i) => (
                   <polygon
                     key={i}
-                    points="100,100 96,-30 104,-30"
-                    fill="#F6D57A"
-                    opacity={i % 2 ? 0.45 : 0.8}
-                    transform={`rotate(${i * 22.5} 100 100)`}
+                    points={i % 3 === 0 ? "100,100 97,-40 103,-40" : "100,100 98.6,-10 101.4,-10"}
+                    fill={i % 2 ? "#FF9A1F" : "#3DE7FF"}
+                    opacity={i % 3 === 0 ? 0.9 : 0.6}
+                    transform={`rotate(${i * 20} 100 100)`}
                   />
                 ))}
               </g>
               <circle cx="100" cy="100" r="105" fill={`url(#${uid}-burst)`} />
+              <circle className="ouar-d20-shock" cx="100" cy="100" r="80" fill="none" stroke="#3DE7FF" strokeWidth="3" />
             </svg>
           </div>
         )}
@@ -170,8 +176,12 @@ export function D20({
               viewBox="0 0 200 200"
               width={size}
               height={size}
-              className={nat20 ? "ouar-d20-glow" : nat1 ? "ouar-d20-dim" : undefined}
-              style={{ display: "block", overflow: "visible", filter: nat20 || nat1 ? undefined : "drop-shadow(0 6px 8px rgba(22,27,51,0.35))" }}
+              className={svgClass}
+              style={{
+                display: "block",
+                overflow: "visible",
+                filter: nat20 || nat1 ? undefined : `drop-shadow(0 0 ${Math.round(size * 0.05)}px ${c.glow}66) drop-shadow(0 8px 10px rgba(0,0,0,0.6))`,
+              }}
             >
               <defs>
                 <linearGradient id={uid + "-g"} x1="0.15" y1="0" x2="0.85" y2="1">
@@ -179,60 +189,65 @@ export function D20({
                   <stop offset="0.45" stopColor={c.mid} />
                   <stop offset="1" stopColor={c.lo} />
                 </linearGradient>
+                <linearGradient id={uid + "-holo"} x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stopColor="#3DE7FF" stopOpacity="0.35" />
+                  <stop offset="0.35" stopColor="#B46BFF" stopOpacity="0.18" />
+                  <stop offset="0.65" stopColor="#FF2E7E" stopOpacity="0.28" />
+                  <stop offset="1" stopColor="#FF9A1F" stopOpacity="0.3" />
+                </linearGradient>
                 <linearGradient id={uid + "-sheen"} x1="0" y1="0" x2="1" y2="1">
                   <stop offset="0.3" stopColor="#fff" stopOpacity="0" />
-                  <stop offset="0.48" stopColor="#fff" stopOpacity="0.55" />
-                  <stop offset="0.56" stopColor="#fff" stopOpacity="0" />
+                  <stop offset="0.47" stopColor="#fff" stopOpacity="0.4" />
+                  <stop offset="0.53" stopColor="#fff" stopOpacity="0" />
                 </linearGradient>
-                <filter id={uid + "-leaf"} x="-5%" y="-5%" width="110%" height="110%">
-                  <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7" result="n" />
-                  <feColorMatrix in="n" type="matrix" values="0 0 0 0 1  0 0 0 0 0.95  0 0 0 0 0.8  0 0 0 -2.2 1.25" result="speck" />
-                  <feComposite in="speck" in2="SourceGraphic" operator="in" result="specks" />
+                <filter id={uid + "-neon"} x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur in="SourceGraphic" stdDeviation="2.6" result="b" />
                   <feMerge>
+                    <feMergeNode in="b" />
                     <feMergeNode in="SourceGraphic" />
-                    <feMergeNode in="specks" />
                   </feMerge>
                 </filter>
               </defs>
-              <g filter={tone === "gold" && !nat1 ? `url(#${uid}-leaf)` : undefined}>
-                <polygon points={pts(...H)} fill={`url(#${uid}-g)`} />
-                {FACETS.map((f, i) => (
-                  <polygon
-                    key={i}
-                    points={f.p}
-                    fill={f.l > 0 ? "#FFF8E0" : "#000"}
-                    fillOpacity={Math.abs(f.l) * (f.l > 0 ? 0.32 : 0.38)}
-                  />
-                ))}
-                <polygon points={pts(...T)} fill={`url(#${uid}-g)`} />
-                <polygon points={pts(...T)} fill="#FFF8E0" fillOpacity={0.12} />
-                <polygon points={pts(...T)} fill={`url(#${uid}-sheen)`} />
+              {/* glass body */}
+              <polygon points={pts(...H)} fill={`url(#${uid}-g)`} />
+              {FACETS.map((f, i) => (
+                <polygon
+                  key={i}
+                  points={f.p}
+                  fill={c.holo ? HOLO[i] : f.l > 0 ? "#FFFFFF" : "#000"}
+                  fillOpacity={c.holo ? 0.1 + Math.max(0, f.l) * 0.22 : Math.abs(f.l) * (f.l > 0 ? 0.16 : 0.4)}
+                />
+              ))}
+              {c.holo && <polygon points={pts(...H)} fill={`url(#${uid}-holo)`} />}
+              <polygon points={pts(...T)} fill="#07040C" fillOpacity={0.55} />
+              <polygon points={pts(...T)} fill={`url(#${uid}-sheen)`} />
+              {/* neon facet edges */}
+              <g fill="none" stroke={c.line} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" filter={`url(#${uid}-neon)`}>
+                <polygon points={pts(...H)} strokeWidth={3.6} />
+                <polygon points={pts(...T)} strokeWidth={2.6} />
+                <g strokeOpacity={0.7}>
+                  <polyline points={pts(H[5], T[0], H[0])} />
+                  <polyline points={pts(T[0], H[1], T[1])} />
+                  <polyline points={pts(H[2], T[1], H[3])} />
+                  <polyline points={pts(H[3], T[2], H[4])} />
+                  <line x1={T[2][0]} y1={T[2][1]} x2={H[5][0]} y2={H[5][1]} />
+                </g>
               </g>
-              {/* facet edges */}
-              <g fill="none" stroke={c.line} strokeWidth={2.2} strokeLinejoin="round" strokeLinecap="round">
-                <polygon points={pts(...H)} strokeWidth={4} />
-                <polygon points={pts(...T)} />
-                <polyline points={pts(H[5], T[0], H[0])} />
-                <polyline points={pts(T[0], H[1], T[1])} />
-                <polyline points={pts(H[2], T[1], H[3])} />
-                <polyline points={pts(H[3], T[2], H[4])} />
-                <line x1={T[2][0]} y1={T[2][1]} x2={H[5][0]} y2={H[5][1]} />
-              </g>
-              {/* engraved number */}
+              {/* the number */}
               <g
-                style={{ fontFamily: "var(--font-heading, 'Cinzel', 'Trajan Pro', Georgia, serif)", fontWeight: 700 }}
+                style={{ fontFamily: "var(--font-display, 'Anton', Impact, sans-serif)", fontWeight: 400 }}
                 textAnchor="middle"
                 fontSize={fontSize}
               >
-                <text x="100" y="101.5" dy="0.35em" fill={c.engrave}>
+                <text x="100" y="104" dy="0.36em" fill={c.glow} fillOpacity={0.9} filter={`url(#${uid}-neon)`} className={rolling ? "ouar-d20-flick" : undefined}>
                   {shown}
                 </text>
-                <text x="100" y="100" dy="0.35em" fill={c.text} className={rolling ? "ouar-d20-flick" : undefined}>
+                <text x="100" y="104" dy="0.36em" fill={c.text} className={rolling ? "ouar-d20-flick" : undefined}>
                   {shown}
                 </text>
               </g>
               {nat1 && (
-                <g fill="none" stroke="#1A0C08" strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round">
+                <g fill="none" stroke="#FFD3E4" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" filter={`url(#${uid}-neon)`}>
                   {CRACKS.map((d, i) => (
                     <path key={i} d={d} pathLength={1} className="ouar-d20-crack" style={{ animationDelay: `${0.35 + i * 0.08}s` }} />
                   ))}
@@ -246,14 +261,15 @@ export function D20({
         <div
           className="ouar-d20-label"
           style={{
-            marginTop: Math.max(4, size * 0.04),
-            fontSize: Math.max(11, Math.round(size * 0.075)),
-            fontFamily: "var(--font-heading, 'Cinzel', Georgia, serif)",
-            fontVariant: "small-caps",
-            letterSpacing: "0.08em",
+            marginTop: Math.max(4, size * 0.05),
+            fontSize: Math.max(11, Math.round(size * 0.07)),
+            fontFamily: "var(--font-ui, 'IBM Plex Mono', ui-monospace, monospace)",
+            fontWeight: 600,
+            textTransform: "uppercase",
+            letterSpacing: "0.12em",
             color: "currentColor",
             textAlign: "center",
-            lineHeight: 1.1,
+            lineHeight: 1.15,
             maxWidth: size * 1.2,
           }}
         >
