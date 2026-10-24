@@ -64,3 +64,13 @@ Full history and train of thought: `design/00-where-we-are.md`.
 - ✅ Writing: option a. We (the devs) hand-write each story's scenes in plain English during development; the AI only reacts to plans. Grade 5-6 reading level, no invented jargon.
 - ⏳ Round: a (bare bones ⭐) / b (+ Convince the DM) / c (loop v2).
 - ⏳ Art: a (hero stickers in scenes + AI group poster at the end ⭐) / b (paint every scene live).
+
+## Sat ~6:30 PM: after the Meta rep's feedback (rep is a judge)
+- Rep's judging lens: (1) "the flow should just work really well" (not feature count); (2) AI essential, "a magical experience"; (3) how the team used AI to build it.
+- ✅ Plan "y": simple core, silky and immersive, different models per job, **no new features** beyond this list.
+  - Core round = bare bones: scene (hand-written) → everyone types a plan → back a friend's (not your own; spotlight rule) → winner rolls one d20 → outcome. Final Roll (one shared die, shake ritual) → reveal ("this really happened" + "Solved by…") → keepsake.
+  - Off for the demo (code kept, switched off): Mirror, Boost, Catch, Hope, Inspiration, Help, Convince the DM, long storybook.
+  - Join: ready-made hero by default + 2 optional questions (good at / small fear). Kids/Teens/Adults setting.
+- ✅ Art a: muse-image edits paint the party's heroes into the scene art, prefetched in the background; fall back to the pre-painted scene if not ready. Group poster at the end.
+- ✅ "Your own story" a: after the core is flawless (target ~9 PM), add a 4th "Write your own" card on the story vote; muse-wonder writes it.
+- ✅ Models: muse-wonder-1.0 for story creation (ahead of time); muse-spark-1.3 minimal for live rulings; research the best model per job (images, narration incl. voice, judging, story creation), and a non-Meta model is allowed.
