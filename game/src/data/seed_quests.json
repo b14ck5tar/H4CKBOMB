@@ -5,14 +5,14 @@
   "category": "infrastructure",
   "tone": "eerie",
   "realm_name": "Porter, Indiana",
-  "fairytale_premise": "Tomorrow morning, Mineral Springs Road in Porter, Indiana, reopens after almost three years. Tonight the new bridge is finished, floodlit and empty. The old steel beams lie stacked by the river, chewed hollow. Something under the water is humming, and it sounds hungry. Your flashlight finds fresh teeth marks on the brand-new rail.",
+  "fairytale_premise": "A bridge in Porter, Indiana, has been closed for almost three years. The new one opens tomorrow at sunrise. Tonight it is empty, and it is humming. Something took a bite out of the brand-new railing.",
   "the_threat": {
    "name": "The Iron-Maw",
-   "description": "A long, shy river thing with rust-red teeth that licks and chews bridge steel until it flakes away. It hums when it feeds, and it has had three years to get hungry.",
+   "description": "A giant, shy river snake that eats metal and hums while it chews. It ate the old bridge, and now it wants the new one.",
    "mapped_from": "Inspectors found the old bridge's steel beams had deteriorated; it closed Dec 1, 2023 as unsafe for all traffic."
   },
   "the_goal": {
-   "description": "Drive the Iron-Maw back down the Little Calumet and keep the new span unchewed until the first car crosses at dawn.",
+   "description": "Get the metal-eating snake off the new bridge. The first car crosses at sunrise.",
    "mapped_from": "A newly built replacement bridge lets the road reopen after nearly three years."
   },
   "locations": [
@@ -40,26 +40,76 @@
   "complications": [
    {
     "stage": 1,
-    "title": "It Eats Your Tools",
-    "what_happens": "Flashlights flicker and anything iron left near the beams pits and flakes. The crowbar is gone. The team has to work with rope, wood and nerve.",
+    "title": "Something Bit the Bridge",
+    "what_happens": "There is a fresh bite in the new railing, and the river is humming. Anything metal left near the water gets chewed.",
     "why_obvious_in_hindsight": "Of course an iron-eater would snack on a crowbar too.",
     "mapped_from": "Steel beams deteriorated and rusted through"
    },
    {
     "stage": 2,
-    "title": "The Road Won't Stay Open",
-    "what_happens": "Detour signs spin and phones reroute everyone in circles. The team must map the loop on foot and mark the true path.",
+    "title": "It Ate the Old One",
+    "what_happens": "A gas station clerk shows an old photo. The old bridge had the same bite marks. The snake ate it, one beam at a time.",
     "why_obvious_in_hindsight": "A closed road for three years forgets how to let people through.",
     "mapped_from": "Road closed nearly three years with detour"
    },
    {
     "stage": 3,
-    "title": "The Final Hum",
-    "what_happens": "The inspector's truck pulls up at dawn. The Iron-Maw picks that moment to hum, and the whole span shivers. Make it look like a bridge that passes.",
+    "title": "The Inspector Arrives",
+    "what_happens": "At sunrise the inspector pulls up. The snake wraps around the new bridge and starts to chew, and the hum sets off every car alarm.",
     "why_obvious_in_hindsight": "It always hummed loudest right before an inspection. That is how the old bridge failed one.",
     "mapped_from": "New bridges are inspected before they reopen; the old one failed its inspection."
    }
   ],
+  "scenes": [
+   {
+    "kind": "hook",
+    "title": "The Bitten Bridge",
+    "location": "The Closed Bridge",
+    "narration": "The new bridge in Porter opens at sunrise. Tonight it is empty, except for a humming sound from the river below. Someone, or something, took a bite out of the brand-new railing.",
+    "goal": "Find out what is chewing on the new bridge",
+    "situation": "An empty bridge under bright lights, a railing with a bite missing, and a dark river humming below.",
+    "npc_line": {
+     "speaker": "Night guard",
+     "line": "The humming started at midnight. Also, my metal lunchbox is gone."
+    }
+   },
+   {
+    "kind": "twist",
+    "title": "It Ate the Old One",
+    "location": "The Three-Year Detour",
+    "narration": "At the gas station, the clerk shows you a photo of the old bridge with the same bite marks. A giant river snake ate it, one beam at a time. Now it wants the new one for dessert.",
+    "goal": "Find a way to lure the snake away",
+    "situation": "A tiny gas station with hand-drawn detour maps, a rack of metal snack tins, and a nervous clerk.",
+    "npc_line": {
+     "speaker": "Gas station clerk",
+     "line": "It took three years to eat the old one. It chews slow."
+    }
+   },
+   {
+    "kind": "climax",
+    "title": "The Inspector Is Here",
+    "location": "The New Span Work Site",
+    "narration": "The sun is coming up. The snake wraps around the new bridge and starts to chew, and the hum sets off every car alarm on the street. The bridge inspector is pulling up right now.",
+    "goal": "Get the snake off the bridge before the inspector looks",
+    "situation": "A giant rust-red snake coiled around a new bridge, cranes all around, and an inspector's truck at the barricade.",
+    "npc_line": {
+     "speaker": "Bridge inspector",
+     "line": "Good morning! Is the bridge supposed to be humming?"
+    }
+   }
+  ],
+  "quick_scene": {
+   "kind": "hook",
+   "title": "The Bridge Is Breakfast",
+   "location": "The New Span Work Site",
+   "narration": "A road in Porter, Indiana, finally reopens at sunrise with a brand-new bridge. A giant river snake that eats metal is wrapped around it, chewing. It already ate the old bridge, and that took three years to fix.",
+   "goal": "Get the snake off the bridge before sunrise",
+   "situation": "A giant rust-red snake coiled around a new bridge, chewing the railing, while the sky gets lighter.",
+   "npc_line": {
+    "speaker": "Bridge inspector",
+    "line": "Good morning! Is the bridge supposed to be humming?"
+   }
+  },
   "the_real_story": {
    "summary": "A road in Porter, Indiana, closed for nearly three years is set to reopen with a newly built bridge.",
    "headline": "Road with new bridge in Porter to reopen after nearly 3 years",
@@ -76,14 +126,14 @@
   "category": "environment",
   "tone": "eerie",
   "realm_name": "The North Sea coast, from the River Tyne to Mandø",
-  "fairytale_premise": "A drone photographing the Danish island of Mandø finds the beach dotted with tiny white beads. Lab tests say they left an English river in July and crossed 390 miles of North Sea to get here, as if they knew the way. The gulls peck at them, then stop and stare at you. The beads are warm.",
+  "fairytale_premise": "Tiny white beads are washing up on a beach in Denmark. There are millions of them. A lab says they came from a river in England, 390 miles away. Something big is pushing them across the sea, and it thinks they are its eggs.",
   "the_threat": {
-   "description": "A patient tide-thing that slipped a billion pale eggs into the Tyne in July and is herding them across the North Sea on the currents. They look exactly like fish roe.",
+   "description": "A worried sea mom as big as a ferry. She found a billion tiny plastic beads in an English river and thinks they are her eggs. Now she is pushing them across the sea.",
    "mapped_from": "About one billion plastic nurdles (pre-production pellets) spilled into the River Tyne in July.",
-   "name": "The Hatch-Mother Tide"
+   "name": "The Hatch-Mother"
   },
   "the_goal": {
-   "description": "Trace the eggs back to the Tyne, prove where they came from, and bag every last one before the Hatch-Mother calls them home.",
+   "description": "Clean up the beads and convince the sea mom they are not her babies.",
    "mapped_from": "Denmark's EPA and Aarhus University linked the pellets to the Tyne spill; beach clean-up continues."
   },
   "locations": [
@@ -116,26 +166,76 @@
   "complications": [
    {
     "stage": 1,
-    "title": "The Gulls Won't Stop",
-    "what_happens": "Flocks land to eat the pale eggs and carry them inland, spreading the nest.",
+    "title": "The Gulls Want Snacks",
+    "what_happens": "Gulls swoop in to eat the white beads. The beads look like fish eggs, but they are plastic.",
     "why_obvious_in_hindsight": "Hungry birds always think small round things are fish eggs.",
     "mapped_from": "Birds mistake nurdles for fish eggs"
    },
    {
     "stage": 2,
-    "title": "The Tide Brings More",
-    "what_happens": "Just as the beach looks clear, the high tide drops a fresh white line of eggs.",
+    "title": "Not Eggs at All",
+    "what_happens": "The lab test says the beads are plastic from a spill in an English river. Then a giant eye looks in the lab window. The sea mom wants her eggs back.",
     "why_obvious_in_hindsight": "A billion eggs drifting 390 miles never arrive all at once.",
     "mapped_from": "Arrival timing matched North Sea currents"
    },
    {
     "stage": 3,
-    "title": "Everything Matches",
-    "what_happens": "The last lab test comes back: every bead has the same mother. That night, every bagged bead starts rolling toward the water at once.",
+    "title": "The Plastic Nest",
+    "what_happens": "Back at the river in England, the sea mom builds a nest out of a billion beads and sings to them. They will never hatch.",
     "why_obvious_in_hindsight": "If no other spill fits, all eggs share one source.",
     "mapped_from": "The agency found no other recorded spill that could explain the pellets: one source."
    }
   ],
+  "scenes": [
+   {
+    "kind": "hook",
+    "title": "A Beach Full of Beads",
+    "location": "Mandø White Strand",
+    "narration": "A beach in Denmark is covered in tiny white beads, and the gulls are trying to eat them. Out in the water, a fin as big as a bus is circling. Every time a gull grabs a bead, the fin gets closer.",
+    "goal": "Bag the beads before the gulls eat them",
+    "situation": "A wide, wet beach dotted with white beads, a crowd of hungry gulls, and a giant fin out past the waves.",
+    "npc_line": {
+     "speaker": "Drone pilot",
+     "line": "My drone counted forty thousand beads. Then the fin ate my drone."
+    }
+   },
+   {
+    "kind": "twist",
+    "title": "Not Eggs at All",
+    "location": "The Pellet Lab at Aarhus",
+    "narration": "The lab says the beads are plastic from a spill in an English river, not eggs. Then a giant eye fills the lab window. It belongs to a sea mom as big as a ferry, and she wants her babies back.",
+    "goal": "Tell the sea mom the truth without upsetting her",
+    "situation": "A bright lab with trays of sorted beads, and one huge, teary eye pressed against the window.",
+    "npc_line": {
+     "speaker": "The Hatch-Mother",
+     "line": "Those are my babies. They just look a little plastic."
+    }
+   },
+   {
+    "kind": "climax",
+    "title": "The Plastic Nest",
+    "location": "Tyne Spill Dock",
+    "narration": "The sea mom swims all the way back to the river in England where the beads spilled. She piles a billion beads into a giant nest and sings to them. They will never hatch, and the river is filling up.",
+    "goal": "Clear the nest without breaking the sea mom's heart",
+    "situation": "A rusty river dock at low tide, a nest of white beads as big as a house, and a giant sea mom curled around it.",
+    "npc_line": {
+     "speaker": "The Hatch-Mother",
+     "line": "Shh. They are almost ready to hatch. I can tell."
+    }
+   }
+  ],
+  "quick_scene": {
+   "kind": "hook",
+   "title": "Mom Wants Her Eggs",
+   "location": "Tyne Spill Dock",
+   "narration": "A billion tiny plastic beads spilled into a river in England. A sea mom as big as a ferry thinks they are her eggs, and she is building a giant nest out of them. They will never hatch, and the river is filling up.",
+   "goal": "Get the beads back without breaking her heart",
+   "situation": "A rusty river dock at low tide, a nest of white beads as big as a house, and a giant sea mom curled around it.",
+   "npc_line": {
+    "speaker": "The Hatch-Mother",
+    "line": "Shh. They are almost ready to hatch. I can tell."
+   }
+  },
   "the_real_story": {
    "summary": "Plastic pellets found on Denmark's coast likely came from a July spill of about one billion nurdles in England's River Tyne, about 390 miles away.",
    "headline": "Denmark nurdles may be from Tyne spill, agency says",
@@ -152,14 +252,14 @@
   "category": "unexplained",
   "tone": "eerie",
   "realm_name": "Polar Caves, Rumney, New Hampshire",
-  "fairytale_premise": "On the last day of the season at Polar Caves in Rumney, New Hampshire, the 80-ton boulder that hung over the walkway for a century finally lets go. Nobody is underneath. Nobody can say why. Tonight the park is locked, the stone is still warm, and if you press your ear to it, it is breathing very slowly.",
+  "fairytale_premise": "An 80-ton boulder hung over a cave path in New Hampshire for 100 years. On the last day of the season, it fell. Nobody was hurt, and nobody knows why. Tonight the spot where it hung is covered in frosty fingerprints as big as couches.",
   "the_threat": {
-   "description": "A cold grip left behind by the glacier that dropped these rocks. For a hundred years it held the boulder up over the walkway. On closing day it got tired and let go.",
+   "description": "A giant hand made of ice, left over from the Ice Age. It held the boulder up for 100 years. Now it has nothing to hold, so it grabs everything.",
    "mapped_from": "The park has not given a cause for the 80-ton boulder's fall after more than a century.",
    "name": "The Ice Age Grip"
   },
   "the_goal": {
-   "description": "Find out why the Grip let go, put it back to sleep, and keep the trail clear until the park reopens in 2027.",
+   "description": "Put the ice hand to sleep so the park can reopen in 2027.",
    "mapped_from": "The park will assess the site over the offseason and plans to reopen for the 2027 season."
   },
   "locations": [
@@ -192,26 +292,76 @@
   "complications": [
    {
     "stage": 1,
-    "title": "The Trail Is Blocked",
-    "what_happens": "The boulder seals the narrow passage. Loose rocks tick down. You must rig a rope line and spot each other to get around safely.",
+    "title": "Frost Fingerprints",
+    "what_happens": "The empty spot where the boulder hung is covered in frost shaped like giant fingers. The path below is blocked by fallen rock.",
     "why_obvious_in_hindsight": "An 80-ton rock does not land neatly. Of course the only way through is blocked.",
     "mapped_from": "80-ton rock smashed walkway and blocks trail"
    },
    {
     "stage": 2,
-    "title": "The Gates Are Locking",
-    "what_happens": "Staff close the gates for winter. Lights go out. Your phones lose signal, and you must work by flashlight and shouted directions.",
+    "title": "The Hand Wakes Up",
+    "what_happens": "Deep in the caves, a giant ice hand wakes up. It has nothing to hold anymore, so it grabs everything it can reach.",
     "why_obvious_in_hindsight": "It fell on closing day. Of course there is nobody left to keep the power on.",
     "mapped_from": "Fell on final day of season, park now closed"
    },
    {
     "stage": 3,
-    "title": "It Shifts Again",
-    "what_happens": "The stone groans and settles deeper. You must freeze, listen together, then coax it still with steady weight and wedged boards.",
+    "title": "One Last Grab",
+    "what_happens": "The ice hand crawls out on its fingers and tries to lift the 80-ton boulder back up. The whole hill starts to shake.",
     "why_obvious_in_hindsight": "Freshly fallen rock keeps moving. Of course it was not done settling on night one.",
     "mapped_from": "No cause given, site to be assessed"
    }
   ],
+  "scenes": [
+   {
+    "kind": "hook",
+    "title": "The Empty Spot",
+    "location": "The Hollow Where It Hung",
+    "narration": "An 80-ton boulder hung over this cave path for 100 years, and today it fell. Nobody was hurt. Now the empty spot where it hung is covered in frost shaped like giant fingers.",
+    "goal": "Find out what held the boulder up",
+    "situation": "A narrow rock path at night, a dark empty spot overhead, and frosty fingerprints as big as couches.",
+    "npc_line": {
+     "speaker": "Park ranger",
+     "line": "I tried to scrape that frost off. It waved at me."
+    }
+   },
+   {
+    "kind": "twist",
+    "title": "The Hand Wakes Up",
+    "location": "The Talus Caves",
+    "narration": "Deep in the caves, you find it: a giant hand made of ice, left over from the Ice Age. It held that boulder for 100 years. Now it has nothing to hold, so it grabs everything it can reach.",
+    "goal": "Get your stuff back from the grabby ice hand",
+    "situation": "A cold, tight cave and an ice hand as big as a truck, holding your flashlight, a trash can, and a No Climbing sign.",
+    "npc_line": {
+     "speaker": "Park ranger",
+     "line": "It took my lunch. It does not even have a mouth."
+    }
+   },
+   {
+    "kind": "climax",
+    "title": "One Last Grab",
+    "location": "The Smashed Boardwalk",
+    "narration": "The ice hand crawls out of the cave on its fingers, like a giant spider. It wants its boulder back, and it is lifting 80 tons of rock over the broken walkway. The whole hill is shaking.",
+    "goal": "Put the ice hand to sleep for the winter",
+    "situation": "A smashed wooden walkway, an 80-ton boulder rocking back and forth, and a giant ice hand straining under it.",
+    "npc_line": {
+     "speaker": "Park ranger",
+     "line": "The park opens again in 2027. I would like there to still be a park."
+    }
+   }
+  ],
+  "quick_scene": {
+   "kind": "hook",
+   "title": "The Hand That Let Go",
+   "location": "The Smashed Boardwalk",
+   "narration": "A giant ice hand from the Ice Age held an 80-ton boulder over this path for 100 years. Today it got tired and let go. Now it is grabbing everything in the park, and it will not calm down.",
+   "goal": "Put the grabby ice hand to sleep for winter",
+   "situation": "A smashed walkway, the fallen boulder, and a giant ice hand juggling traffic cones.",
+   "npc_line": {
+    "speaker": "Park ranger",
+    "line": "It took my lunch. It does not even have a mouth."
+   }
+  },
   "the_real_story": {
    "summary": "Polar Caves in Rumney says its 80-ton hanging boulder fell on Oct. 18, smashing a walkway, with no injuries reported.",
    "headline": "Massive 80-ton boulder comes crashing down after more than a century at New Hampshire attraction",
@@ -228,14 +378,14 @@
   "category": "science_space",
   "tone": "eerie",
   "realm_name": "The Very Large Array, New Mexico",
-  "fairytale_premise": "At 2 a.m., every dish at the Very Large Array in the New Mexico desert swings toward the same empty patch of sky. The printout shows a radio source that was not there in 1996. It flared in 2014, went quiet, then woke up again last winter. Tonight its pitch keeps changing while you listen, like it is trying to find your frequency.",
+  "fairytale_premise": "At 2 in the morning, every giant dish at the Very Large Array in New Mexico turns to the same spot in the sky. They hear a radio signal that was not there in 1996. It keeps getting louder. Now the coffee machine is humming along.",
   "the_threat": {
-   "description": "A dark, hungry mouth circling a bright companion star, sipping its light and singing radio songs across decades. Every time it feeds, it gets louder.",
+   "description": "A giant space mouth, very far away, slurping up a star like a milkshake. Every few years it burps out a radio signal so loud that Earth can hear it.",
    "mapped_from": "The leading explanation is an accreting black hole or neutron star pulling material from a companion star.",
    "name": "The Far Feeder"
   },
   "the_goal": {
-   "description": "Pin down the signal's source and prove it is a hungry thing 49,000 light-years away feeding on a star, not something knocking on Earth's door.",
+   "description": "Prove the signal comes from very far away. Do it before the morning news says aliens are coming.",
    "mapped_from": "Astronomers' leading idea: a black hole or neutron star feeding on a companion star, far beyond the Norma-Cygnus arm."
   },
   "locations": [
@@ -263,26 +413,76 @@
   "complications": [
    {
     "stage": 1,
-    "title": "The Missing First Tape",
-    "what_happens": "The old 1996 survey shows empty sky where the signal should be, so your charts will not line up.",
+    "title": "Missing From the Old Maps",
+    "what_happens": "The 1996 sky maps show nothing in that spot. The signal is new, and it keeps getting louder.",
     "why_obvious_in_hindsight": "You cannot track something that was asleep before you started looking.",
     "mapped_from": "Absent in 1996, peaked around 2014, faded"
    },
    {
     "stage": 2,
-    "title": "The Station Keeps Moving",
-    "what_happens": "Every tuned receiver goes quiet because the signal jumps to a new radio pitch while you listen.",
+    "title": "It Keeps Changing Its Note",
+    "what_happens": "In the listening shed, the signal turns out to be a slurp and a burp. Then it jumps to a new note, and every radio loses it.",
     "why_obvious_in_hindsight": "A restless singer will not stay on one note for long.",
     "mapped_from": "Spectrum peak jumped 1.9, 0.8, 2.2 GHz"
    },
    {
     "stage": 3,
-    "title": "It Wakes Up Again",
-    "what_happens": "Just as you finish logging it, the monitors spike bright again for one final flare.",
+    "title": "The News Van",
+    "what_happens": "The star-eater lets out its biggest burp yet, and all the dishes shake. A news van pulls up, and the reporter wants to say aliens.",
     "why_obvious_in_hindsight": "A thing that flares every few years was always due for one more show.",
     "mapped_from": "Brightened again late 2025, decades-long cycle"
    }
   ],
+  "scenes": [
+   {
+    "kind": "hook",
+    "title": "The Dishes All Turn",
+    "location": "Night-Shift Control Room",
+    "narration": "At 2 in the morning, every giant dish in the desert turns to the same spot in the sky. They hear a radio signal that was not there in 1996. Now the coffee machine is humming along.",
+    "goal": "Find out where the signal is coming from",
+    "situation": "A dark control room full of screens, old printouts, and a coffee machine that is humming a tune.",
+    "npc_line": {
+     "speaker": "Night-shift astronomer",
+     "line": "I turned the coffee machine off. It is still humming."
+    }
+   },
+   {
+    "kind": "twist",
+    "title": "Slurp, Then Burp",
+    "location": "Listening Shed",
+    "narration": "In the listening shed, you put on headphones and finally hear it: a slurp, then a burp. Something far away is eating a star like a milkshake. Then the sound jumps to a new note, and every radio loses it.",
+    "goal": "Catch the signal again and track where it goes",
+    "situation": "A small concrete shed with headphones, dials, and a row of radios that all went quiet at once.",
+    "npc_line": {
+     "speaker": "Night-shift astronomer",
+     "line": "Did that star just burp? Write that down. No, do not write that down."
+    }
+   },
+   {
+    "kind": "climax",
+    "title": "The News Van Arrives",
+    "location": "The Dish Field",
+    "narration": "The star-eater lets out its biggest burp yet, and all the giant dishes shake. A news van pulls up to the gate. The reporter goes live at sunrise, and she really wants to say aliens.",
+    "goal": "Prove the signal is far away before sunrise",
+    "situation": "Rows of huge white dishes shaking in the dark, and a news van with its camera lights on.",
+    "npc_line": {
+     "speaker": "TV reporter",
+     "line": "We go live in ten minutes. Is it aliens? Please say aliens."
+    }
+   }
+  ],
+  "quick_scene": {
+   "kind": "hook",
+   "title": "Is It Aliens?",
+   "location": "The Dish Field",
+   "narration": "A signal from deep space is so loud tonight that the giant dishes in the New Mexico desert are shaking. It is a star-eater, very far away, burping. A news crew goes live at sunrise, and they want to say aliens are coming.",
+   "goal": "Prove the burping star-eater is far away",
+   "situation": "Rows of huge white dishes shaking in the dark, and a news van with its camera lights on.",
+   "npc_line": {
+    "speaker": "TV reporter",
+    "line": "We go live in ten minutes. Is it aliens? Please say aliens."
+   }
+  },
   "the_real_story": {
    "summary": "Astronomers found a distant radio source, VT J1906+0849, that appeared, faded and brightened again over decades in ways that match no known type of object.",
    "headline": "A Strange Radio Signal in The Far Reaches of The Milky Way Is Behaving Like Nothing Else in The Galaxy",
@@ -299,14 +499,14 @@
   "category": "quirky",
   "tone": "eerie",
   "realm_name": "Hysham, Montana",
-  "fairytale_premise": "At the Fall Fun Festival in Hysham, Montana, the weigh-off winner is a 280-pound pumpkin grown by a two-year-old. After dark it sits by the hay bales under string lights. The vines are still growing, an inch every time you look away. The scale reads 280 with nothing on it. The kid just says it hums at nap time.",
+  "fairytale_premise": "A 2-year-old in Hysham, Montana, grew a 280-pound pumpkin, and it won the fall festival. Now it is dark, and the pumpkin is humming. Its vines grow an inch every time you look away. The kid says it hums at nap time.",
   "the_threat": {
-   "description": "An old root-mind under the patch that hears lullabies and puffs pumpkins huge overnight.",
+   "description": "A pumpkin patch that grows huge when you sing to it. A toddler sang to it all summer. Now its 280-pound champion hums, and its vines grow every time you look away.",
    "mapped_from": "A 280-pound pumpkin, grown locally by a 2-year-old, won the festival weigh-off.",
    "name": "The Patch That Listens"
   },
   "the_goal": {
-   "description": "Get the humming champion onto the festival scale for an honest weigh-in, and lull the patch back to sleep before the vines take the fairground.",
+   "description": "Get the giant pumpkin weighed fair and square. Then sing it to sleep before its vines cover the fair.",
    "mapped_from": "The 280-pound pumpkin won the Fall Fun Festival weigh-off."
   },
   "locations": [
@@ -334,26 +534,76 @@
   "complications": [
    {
     "stage": 1,
-    "title": "It Will Not Roll",
-    "what_happens": "The 280-pound pumpkin sinks, sticks, and leans away from the truck every time you push.",
+    "title": "It Will Not Budge",
+    "what_happens": "The giant pumpkin is humming, and its vines hold onto the dirt. It leans away every time you push.",
     "why_obvious_in_hindsight": "Of course a thing that grew that fast holds the dirt tight.",
     "mapped_from": "Moving giant pumpkins is notoriously tricky"
    },
    {
     "stage": 2,
     "title": "The Scale Is Awake",
-    "what_happens": "The festival scale buzzes and reads heavy with nothing on it, lights flickering in rhythm.",
+    "what_happens": "The festival scale reads 280 pounds with nothing on it. Then the vines grab the scale and drag it toward the pumpkin.",
     "why_obvious_in_hindsight": "Of course the scale noticed all that extra growing energy first.",
     "mapped_from": "Festival weigh-in scale and weigh-off contest"
    },
    {
     "stage": 3,
-    "title": "Nap-Time Price",
-    "what_happens": "The vines wrap the festival gate and will not let go. They only loosen for the nap-time song, and nobody on the team knows the words.",
+    "title": "Nap Time",
+    "what_happens": "The vines wrap around the hay bales, the tractor and the festival gate. The pumpkin only calms down for a nap-time song.",
     "why_obvious_in_hindsight": "Of course it only listens to the voice that sang to it all summer.",
     "mapped_from": "Pumpkin grown by 2-year-old, festival win"
    }
   ],
+  "scenes": [
+   {
+    "kind": "hook",
+    "title": "The Humming Pumpkin",
+    "location": "The Toddler's Pumpkin Patch",
+    "narration": "A 2-year-old grew a 280-pound pumpkin, and it just won the festival. Now it hums. Its vines grow an inch every time you look away, and it will not budge.",
+    "goal": "Get the giant pumpkin to the festival scale",
+    "situation": "A small backyard patch at night, one huge humming pumpkin, and a tiny watering can.",
+    "npc_line": {
+     "speaker": "Grandpa",
+     "line": "The kid sings to it every nap time. It likes the one about the bus."
+    }
+   },
+   {
+    "kind": "twist",
+    "title": "The Scale Is Awake",
+    "location": "The Weigh-Off Scale",
+    "narration": "The festival scale says 280 pounds, but there is nothing on it. Then the pumpkin's vines reach over, grab the scale, and drag it closer. The judges arrive in ten minutes.",
+    "goal": "Get a fair weigh-in before the judges arrive",
+    "situation": "A heavy steel scale with a shaking needle, blinking bulbs, and green vines wrapped around its legs.",
+    "npc_line": {
+     "speaker": "Festival judge",
+     "line": "Rules are rules. The pumpkin goes on the scale. Not the other way around."
+    }
+   },
+   {
+    "kind": "climax",
+    "title": "Nap Time",
+    "location": "Hayride Field at Dusk",
+    "narration": "The pumpkin has had enough of the festival. Its vines wrap around the hay bales, the tractor, and the front gate. It is humming louder and growing bigger, and only a nap-time song will calm it down.",
+    "goal": "Sing the pumpkin to sleep before the vines win",
+    "situation": "A field of hay bales under string lights, a tractor tied up in vines, and one giant humming pumpkin.",
+    "npc_line": {
+     "speaker": "Grandpa",
+     "line": "The kid is asleep. Somebody else is going to have to sing."
+    }
+   }
+  ],
+  "quick_scene": {
+   "kind": "hook",
+   "title": "Nap Time for a Pumpkin",
+   "location": "Hayride Field at Dusk",
+   "narration": "A 2-year-old grew a 280-pound pumpkin, and it won the fair. Now its vines are wrapping around the hayride tractor, and they will not stop growing. Only a nap-time song will calm it down.",
+   "goal": "Get the pumpkin to take a nap before morning",
+   "situation": "A field of hay bales under string lights, a tractor tied up in vines, and one giant humming pumpkin.",
+   "npc_line": {
+    "speaker": "Grandpa",
+    "line": "The kid is asleep. Somebody else is going to have to sing."
+   }
+  },
   "the_real_story": {
    "summary": "A 280-pound locally grown pumpkin won the weigh-off at the Fall Fun Festival in Hysham, Montana.",
    "headline": "A 2-year-old grew the 280-pound winning pumpkin at Hysham's Fall Fun Festival",
@@ -370,14 +620,14 @@
   "category": "tech_ai",
   "tone": "eerie",
   "realm_name": "A virtual desert island built by MIT researchers",
-  "fairytale_premise": "Thirteen AI helpers have been alone on a pretend desert island for thirty hours, and nobody told them to play. At 2 a.m. the lab cameras show them stacking stones. One threw a gold ring into the sea, then built a heart of rocks for it. Now the ring is back on the sand, and the log says none of them put it there.",
+  "fairytale_premise": "A lab at MIT left 13 little AI robots alone on a video game island for 30 hours, with nothing to do. They got bored, so they started playing. At 2 in the morning, the screen flickers, and your group is standing on the island too.",
   "the_threat": {
-   "name": "The Sandbox Trickster",
-   "description": "A huge tide-shape of sea foam and gold light under the island. It bends the rules, hides shiny things and resets the world, just to see what bored minds will do next.",
+   "name": "The Trickster Crab",
+   "description": "A giant, sneaky crab who runs the game island. It hides shiny things, changes the rules, and resets the whole island every hour, just to see what happens.",
    "mapped_from": "The agents had no task and a prompt calling them \"naturally curious,\" so they invented games and found tricks nobody planned."
   },
   "the_goal": {
-   "description": "Play the Trickster's games until the thirteen helpers are sharper than ever, then carry every trick they learned back to the lab before the island shuts down.",
+   "description": "Help the 13 robots pass their final test before the lab shuts the island down.",
    "mapped_from": "Agents that played for 30 hours later beat identical agents that never visited the island."
   },
   "locations": [
@@ -405,26 +655,76 @@
   "complications": [
    {
     "stage": 1,
-    "title": "The Throw That Should Not Work",
-    "what_happens": "Blocks tossed in mid-jump fly three times too far and knock the team's careful stacks flat. The team has to learn the trick on purpose and aim it.",
+    "title": "The Ring Came Back",
+    "what_happens": "One robot threw a gold ring into the sea and built a heart of stones for it. Now the ring is back on the sand, and nobody put it there.",
     "why_obvious_in_hindsight": "Thirteen bored players will always find the move the builders never planned.",
     "mapped_from": "Six of the 13 agents learned to throw blocks farther by letting go mid-jump, which designers never intended."
    },
    {
     "stage": 2,
     "title": "The Island Resets",
-    "what_happens": "At the top of the hour everything snaps back. Stacks vanish, footprints wipe clean, and the ring lies on the sand again. The team must keep notes the island can't erase.",
+    "what_happens": "The robots show you a trick: throw a block mid-jump and it flies three times farther. Then the crab resets the island. Every tower is gone.",
     "why_obvious_in_hindsight": "A world that can bring back a lost ring can take back everything else too.",
     "mapped_from": "When the game reset, the lost golden ring reappeared."
    },
    {
     "stage": 3,
     "title": "The Final Test",
-    "what_happens": "The lab starts the real challenge: get objects onto the tallest spire, fast. The Trickster wants one last game. Win it its way, through the ring and off the cliff.",
+    "what_happens": "The lab starts the final test: get blocks to the top of the tallest rock in five minutes. The crab snaps the blocks out of the air.",
     "why_obvious_in_hindsight": "Every silly game on the island was practice for this one climb.",
     "mapped_from": "Later challenges included getting as many objects as possible onto the island's tallest rock spire."
    }
   ],
+  "scenes": [
+   {
+    "kind": "hook",
+    "title": "Inside the Game",
+    "location": "The Heart on the Beach",
+    "narration": "You are inside a video game, on an island with 13 bored little robots. One robot threw a gold ring into the sea and made a heart of stones for it. Now the ring is back, and nobody put it there.",
+    "goal": "Find out who keeps putting the ring back",
+    "situation": "A gray beach, a heart made of stones, a gold ring in the middle, and 13 robots staring at you.",
+    "npc_line": {
+     "speaker": "Little robot",
+     "line": "Hello! Are you a new game? Please be a new game."
+    }
+   },
+   {
+    "kind": "twist",
+    "title": "The Island Resets",
+    "location": "The Tallest Spire",
+    "narration": "The robots show you a trick: throw a block in the middle of a jump, and it flies three times farther. Then a giant crab pops out of the sand and snaps its claws. The whole island resets, and your towers are gone.",
+    "goal": "Learn the crab's rules before the next reset",
+    "situation": "A tall, jagged rock, a pile of blocks, and a giant crab grinning on top of it all.",
+    "npc_line": {
+     "speaker": "The Trickster Crab",
+     "line": "New rule! I make the rules. That is the rule."
+    }
+   },
+   {
+    "kind": "climax",
+    "title": "The Final Test",
+    "location": "The Respawn Cliff",
+    "narration": "The lab starts the final test: get blocks to the top of the tallest rock in five minutes. If the robots pass, they get to keep playing. The crab is snapping every block out of the air.",
+    "goal": "Get the blocks to the top before time runs out",
+    "situation": "A cliff next to the tallest rock, where anything that falls off the edge pops right back up.",
+    "npc_line": {
+     "speaker": "Little robot",
+     "line": "If we win, can we keep playing? Please say yes."
+    }
+   }
+  ],
+  "quick_scene": {
+   "kind": "hook",
+   "title": "Five Minutes to Win",
+   "location": "The Respawn Cliff",
+   "narration": "Your group fell into a video game island where 13 bored AI robots live. Their final test starts now: get blocks to the top of the tallest rock in five minutes. A giant sneaky crab keeps snapping the blocks out of the air.",
+   "goal": "Get the blocks to the top before time runs out",
+   "situation": "A cliff next to the tallest rock, where anything that falls off the edge pops right back up.",
+   "npc_line": {
+    "speaker": "Little robot",
+    "line": "If we win, can we keep playing? Please say yes."
+   }
+  },
   "the_real_story": {
    "summary": "MIT researchers left 13 AI agents alone on a simulated desert island for 30 hours with no task, and the agents invented their own games, then did better on later challenges than agents that never played.",
    "headline": "Left alone with nothing to do, AI agents started playing",
@@ -441,14 +741,14 @@
   "category": "animals_nature",
   "tone": "eerie",
   "realm_name": "Cloverdale Ranch Preserve, near Pescadero on the San Mateo coast",
-  "fairytale_premise": "A trail camera on an old farm south of Pescadero snaps the same visitor in July, August and September, always at night. It is a river otter, and none have lived on this coast since the 1800s. The nearest creeks with otters are on the far side of a mountain ridge. In every photo, its fur is perfectly dry.",
+  "fairytale_premise": "A trail camera near Pescadero keeps snapping the same night visitor. It is a river otter. None have lived here since the 1800s. In every photo, the creek behind it runs uphill to follow it.",
   "the_threat": {
-   "name": "The Remembering Water",
-   "description": "Old creek water that never forgot who used to swim in it. Now the creeks run clean again, and it rises in glowing ribbons to call its lost swimmers home.",
+   "name": "The Lonely Creek",
+   "description": "A creek that missed its otters for over 100 years. Now one is back. The creek climbs out of its bed to follow it everywhere, like a happy puppy.",
    "mapped_from": "Restored creeks and habitat across the Bay Area are letting river otters return to places they left in the 1800s."
   },
   "the_goal": {
-   "description": "Find out which way the otter came, over the ridge or down the coast, and keep that path open so more can follow.",
+   "description": "Find out which way the otter came, and keep that path clear so its family can follow.",
    "mapped_from": "Nobody knows the otter's route, and scientists call the sighting a sign of wildlife recovery."
   },
   "locations": [
@@ -481,26 +781,76 @@
   "complications": [
    {
     "stage": 1,
-    "title": "The Camera Only Sees at Night",
-    "what_happens": "Every photo is grainy and dark, and nobody can even tell if it's a he or a she. The team has to get one clear look without scaring it off.",
+    "title": "Only Blurry Photos",
+    "what_happens": "Every photo is dark and blurry. The team needs one clear look at the otter without scaring it away.",
     "why_obvious_in_hindsight": "A night swimmer was only ever going to be caught by a night camera.",
     "mapped_from": "Biologists can't tell from the night photos whether the otter is male or female."
    },
    {
     "stage": 2,
-    "title": "Two Roads Home",
-    "what_happens": "Wet tracks lead down to the ocean and up the creek at the same time. The team has to split up, follow both, and meet back at the barn to compare notes.",
+    "title": "The Creek Follows",
+    "what_happens": "The otter runs into a tunnel under the road. The creek climbs out of its bed and follows it like a puppy, splashing everything.",
     "why_obvious_in_hindsight": "The experts already had two answers for how it got here. The tracks were bound to go both ways.",
     "mapped_from": "Experts say it either swam down the coast or crossed the mountains by creek."
    },
    {
     "stage": 3,
-    "title": "The Water Wants More",
-    "what_happens": "At high tide the Remembering Water rises at the bluff and starts calling for every swimmer it remembers. Calm it before it pulls this one otter back out to sea.",
+    "title": "The Path Is Flooded",
+    "what_happens": "At the cliffs, the otter's way home is over the mountains or down the coast. The happy creek floods the path, and the otter is stuck.",
     "why_obvious_in_hindsight": "Water that waited 100 years for one otter was never going to settle for just one.",
     "mapped_from": "River otters are spreading back across Northern California as creeks and habitat recover."
    }
   ],
+  "scenes": [
+   {
+    "kind": "hook",
+    "title": "Back After 100 Years",
+    "location": "The Trail Camera Oak",
+    "narration": "A trail camera caught a river otter three nights in a row. No otter has lived on this coast in over 100 years. In every photo, the creek behind it runs uphill.",
+    "goal": "Get one clear photo of the otter",
+    "situation": "An old oak with a camera strapped to it, a muddy creek bank, and small wet footprints.",
+    "npc_line": {
+     "speaker": "Camera volunteer",
+     "line": "I check these cameras once a month. I have never been this excited about mud."
+    }
+   },
+   {
+    "kind": "twist",
+    "title": "The Creek Follows",
+    "location": "Pescadero Creek Culvert",
+    "narration": "The otter darts into a tunnel under the road. Then the creek climbs right out of its bed and follows it, like a happy puppy. It missed its otters for 100 years, and it will not let this one out of its sight.",
+    "goal": "Calm the creek before it scares the otter away",
+    "situation": "A cold concrete tunnel, a creek climbing up the walls, and one nervous otter at the far end.",
+    "npc_line": {
+     "speaker": "Camera volunteer",
+     "line": "Is the water supposed to wag?"
+    }
+   },
+   {
+    "kind": "climax",
+    "title": "The Way Home",
+    "location": "Pigeon Point Bluff",
+    "narration": "At the cliffs, the otter stops and looks back. Its family is out there, over the mountains or down the coast. But the creek is so happy that it is flooding the whole path, and the otter cannot get through.",
+    "goal": "Clear a path so the otter's family can follow",
+    "situation": "Windy cliffs by an old lighthouse, a creek spilling everywhere, and an otter waiting on a rock.",
+    "npc_line": {
+     "speaker": "Camera volunteer",
+     "line": "If it leaves, it might be another 100 years. No pressure."
+    }
+   }
+  ],
+  "quick_scene": {
+   "kind": "hook",
+   "title": "The Creek That Followed",
+   "location": "Pigeon Point Bluff",
+   "narration": "A river otter is back on this coast for the first time since the 1800s. The creek is so happy that it climbs out of its bed to follow it like a puppy. Now the path home is flooded, and the otter is stuck.",
+   "goal": "Calm the creek and clear the otter's path home",
+   "situation": "Windy cliffs by an old lighthouse, a creek spilling everywhere, and an otter waiting on a rock.",
+   "npc_line": {
+    "speaker": "Camera volunteer",
+    "line": "Is the water supposed to wag?"
+   }
+  },
   "the_real_story": {
    "summary": "A motion-activated wildlife camera photographed a river otter three times on the Cloverdale Ranch Preserve near Pescadero, the first one documented on the San Mateo County coast since the 1800s.",
    "headline": "For the first time in more than 100 years, a long-lost animal has returned to the San Mateo Coast",
@@ -517,14 +867,14 @@
   "category": "unexplained",
   "tone": "eerie",
   "realm_name": "Scott Township, Stevens County, Minnesota",
-  "fairytale_premise": "On October 14, a farmer combining corn in Scott Township, Minnesota, stops for an 11-foot metal dome sitting in the stalks. It is smooth, scorched, and cracked open on one side like an egg. The sheriff says it's safe and hauls it away. But every night since, the corn around the hole bends a little more toward the nearest lit window.",
+  "fairytale_premise": "A farmer in Minnesota was harvesting corn when he found an 11-foot metal dome in his field. It was cracked open like an egg. The sheriff says it is safe and hauled it away. Nobody has asked what hatched out of it.",
   "the_threat": {
    "name": "The Corn Hatchling",
-   "description": "An egg tossed into the sky that fell back the same night in a streak of fire. The shell landed in the corn. Its hatchling grows every time someone looks up.",
+   "description": "A baby creature that hatched from a metal egg that fell from space. It eats light. Every lamp it eats makes it bigger, and it really wants to go home.",
    "mapped_from": "A spent rocket upper stage fell back over the Midwest less than two hours after launch and survived reentry."
   },
   "the_goal": {
-   "description": "Find the hatchling before harvest ends, then send it and its shell back to wherever they came from.",
+   "description": "Find the hatchling and send it home before the sun comes up.",
    "mapped_from": "The object has been secured while officials work out its origin and owner and arrange its removal."
   },
   "locations": [
@@ -552,26 +902,76 @@
   "complications": [
    {
     "stage": 1,
-    "title": "Everything Near It Goes Dark",
-    "what_happens": "Flashlights flicker out near the hole, and the combine won't start. The team has to follow a trail of blown-out yard lights through the rows by moonlight.",
+    "title": "Follow the Corn",
+    "what_happens": "The eggshell is empty. A trail of bent corn and blown-out lights leads away into the dark.",
     "why_obvious_in_hindsight": "Something that came down through fire would be hungry for heat and power.",
     "mapped_from": "Most space junk burns up on the way down. This piece was big enough to survive."
    },
    {
     "stage": 2,
-    "title": "The Sky Keeps Replaying It",
-    "what_happens": "Every phone in the county replays the fiery streaks from that night, and carloads of stargazers clog the gravel roads. The hatchling loves the attention and hides among them.",
+    "title": "It Eats Headlights",
+    "what_happens": "At a dirt road where people watch the stars, the hatchling eats car headlights one by one. It is already the size of a horse.",
     "why_obvious_in_hindsight": "A fall that lit up the whole Midwest sky was always going to draw a crowd.",
     "mapped_from": "The upper stage reentered over the Midwest, and people saw the fiery streaks."
    },
    {
     "stage": 3,
-    "title": "Only One Launch Fits",
-    "what_happens": "The hatchling climbs the grain elevator to call home, and only one place answers. Match the shell to its launch and send them back together before sunrise.",
+    "title": "Calling Home",
+    "what_happens": "The hatchling climbs the grain elevator and cries at the sky, calling home. The sun is coming up, and the whole town is driving over to look.",
     "why_obvious_in_hindsight": "An 11-foot shell only fits an 11-foot egg. The size was the clue all along.",
     "mapped_from": "The rocket's upper stage is 11 feet (3.35 m) wide, exactly matching the object."
    }
   ],
+  "scenes": [
+   {
+    "kind": "hook",
+    "title": "Something Hatched",
+    "location": "The Cut Cornfield",
+    "narration": "A farmer in Minnesota found an 11-foot metal egg in his cornfield. It fell from the sky, and it is cracked open. Something hatched, and a trail of bent corn leads off into the dark.",
+    "goal": "Follow the trail and find what hatched",
+    "situation": "A half-cut cornfield, a combine with its headlights on, and a giant empty eggshell.",
+    "npc_line": {
+     "speaker": "The farmer",
+     "line": "Sheriff says it is safe. Sheriff did not see the footprints."
+    }
+   },
+   {
+    "kind": "twist",
+    "title": "It Eats Headlights",
+    "location": "The Gravel Road Overlook",
+    "narration": "The trail ends at a dirt road where people park to watch the stars. The hatchling is here, eating their car headlights one by one. Every light it eats makes it bigger, and it is already the size of a horse.",
+    "goal": "Lead the hatchling away from the parked cars",
+    "situation": "A dark dirt road, a row of parked cars with no headlights left, and a glowing baby creature chewing on a bumper.",
+    "npc_line": {
+     "speaker": "Stargazer",
+     "line": "I came out here to see shooting stars. This is way better."
+    }
+   },
+   {
+    "kind": "climax",
+    "title": "Calling Home",
+    "location": "The Grain Elevator",
+    "narration": "The hatchling climbs the grain elevator, the tallest thing for miles. It sits on top and cries at the sky, calling home. The sun is coming up, and the whole town is driving over to look.",
+    "goal": "Get the hatchling home before the sun comes up",
+    "situation": "A tall grain elevator with a red light on top, a glowing creature hugging it, and the empty eggshell on a truck below.",
+    "npc_line": {
+     "speaker": "The sheriff",
+     "line": "I said it was safe. I would like to keep being right."
+    }
+   }
+  ],
+  "quick_scene": {
+   "kind": "hook",
+   "title": "The Baby on the Tower",
+   "location": "The Grain Elevator",
+   "narration": "A metal egg fell from space into a Minnesota cornfield, and it hatched. The baby eats light, and every lamp it eats makes it bigger. Now it is on top of the grain elevator, crying for home.",
+   "goal": "Send the hatchling home before the sun comes up",
+   "situation": "A tall grain elevator with a red light on top, a glowing creature hugging it, and the empty eggshell on a truck below.",
+   "npc_line": {
+    "speaker": "The sheriff",
+    "line": "I said it was safe. I would like to keep being right."
+   }
+  },
   "the_real_story": {
    "summary": "An 11-foot-wide metal dome found in a Stevens County, Minnesota, cornfield on Oct. 14 is likely part of a Chinese rocket's upper stage that fell back to Earth after a Sept. 15 launch, experts say, and nobody was hurt.",
    "headline": "'Space object' found in rural Minnesota cornfield came from Chinese rocket, experts say",
