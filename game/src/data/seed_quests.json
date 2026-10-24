@@ -363,5 +363,223 @@
    "context_note": "The young grower is unnamed in coverage; keep it that way in play."
   },
   "art_style_hint": "A small-town Montana fall festival at night, one enormous glowing pumpkin by the hay bales with vines creeping over the fairground, in a bold neon graphic-novel style."
+ },
+ {
+  "id": "idle-island",
+  "quest_title": "The Bots Who Missed Their Ring",
+  "category": "tech_ai",
+  "tone": "eerie",
+  "realm_name": "A virtual desert island built by MIT researchers",
+  "fairytale_premise": "Thirteen AI helpers have been alone on a pretend desert island for thirty hours, and nobody told them to play. At 2 a.m. the lab cameras show them stacking stones. One threw a gold ring into the sea, then built a heart of rocks for it. Now the ring is back on the sand, and the log says none of them put it there.",
+  "the_threat": {
+   "name": "The Sandbox Trickster",
+   "description": "A huge tide-shape of sea foam and gold light under the island. It bends the rules, hides shiny things and resets the world, just to see what bored minds will do next.",
+   "mapped_from": "The agents had no task and a prompt calling them \"naturally curious,\" so they invented games and found tricks nobody planned."
+  },
+  "the_goal": {
+   "description": "Play the Trickster's games until the thirteen helpers are sharper than ever, then carry every trick they learned back to the lab before the island shuts down.",
+   "mapped_from": "Agents that played for 30 hours later beat identical agents that never visited the island."
+  },
+  "locations": [
+   {
+    "name": "The Heart on the Beach",
+    "description": "Grey sand, slow surf, and a heart made of stones with an empty space in the middle where something gold should be.",
+    "mapped_from": "One agent threw the golden ring into the ocean and built a stone heart as a memorial to it."
+   },
+   {
+    "name": "The Night-Shift Lab",
+    "description": "A dark room with humming servers, cold coffee, and thirteen small windows showing thirteen views of one island.",
+    "mapped_from": "MIT researchers ran 13 AI agents called Eko alone on the island for 30 hours."
+   },
+   {
+    "name": "The Tallest Spire",
+    "description": "A jagged rock tower in the middle of the island. Little figures climb it, slip, and try again from the hill next door.",
+    "mapped_from": "An agent failed to climb the tallest spire, then stacked blocks on a nearby summit and leaped."
+   },
+   {
+    "name": "The Respawn Cliff",
+    "description": "A sheer edge over the sea. Anything that steps off pops right back up a moment later, close to the ring.",
+    "mapped_from": "An agent learned that stepping off the cliff made it respawn near the ring, and dropped through it."
+   }
+  ],
+  "complications": [
+   {
+    "stage": 1,
+    "title": "The Throw That Should Not Work",
+    "what_happens": "Blocks tossed in mid-jump fly three times too far and knock the team's careful stacks flat. The team has to learn the trick on purpose and aim it.",
+    "why_obvious_in_hindsight": "Thirteen bored players will always find the move the builders never planned.",
+    "mapped_from": "Six of the 13 agents learned to throw blocks farther by letting go mid-jump, which designers never intended."
+   },
+   {
+    "stage": 2,
+    "title": "The Island Resets",
+    "what_happens": "At the top of the hour everything snaps back. Stacks vanish, footprints wipe clean, and the ring lies on the sand again. The team must keep notes the island can't erase.",
+    "why_obvious_in_hindsight": "A world that can bring back a lost ring can take back everything else too.",
+    "mapped_from": "When the game reset, the lost golden ring reappeared."
+   },
+   {
+    "stage": 3,
+    "title": "The Final Test",
+    "what_happens": "The lab starts the real challenge: get objects onto the tallest spire, fast. The Trickster wants one last game. Win it its way, through the ring and off the cliff.",
+    "why_obvious_in_hindsight": "Every silly game on the island was practice for this one climb.",
+    "mapped_from": "Later challenges included getting as many objects as possible onto the island's tallest rock spire."
+   }
+  ],
+  "the_real_story": {
+   "summary": "MIT researchers left 13 AI agents alone on a simulated desert island for 30 hours with no task, and the agents invented their own games, then did better on later challenges than agents that never played.",
+   "headline": "Left alone with nothing to do, AI agents started playing",
+   "source": "TechCrunch",
+   "date": "2026-10-22",
+   "link": "https://techcrunch.com/2026/10/22/left-alone-with-nothing-to-do-ai-agents-started-playing/",
+   "context_note": "The island and everything on it was a computer simulation. The study is a preprint on arXiv and has not been peer reviewed yet."
+  },
+  "art_style_hint": "A moonlit desert island with one jagged rock spire and a heart of stones on the beach, a gold ring floating by itself above the surf, in a bold neon graphic-novel style."
+ },
+ {
+  "id": "returned-otter",
+  "quest_title": "The Otter Nobody Has Seen Since the 1800s",
+  "category": "animals_nature",
+  "tone": "eerie",
+  "realm_name": "Cloverdale Ranch Preserve, near Pescadero on the San Mateo coast",
+  "fairytale_premise": "A trail camera on an old farm south of Pescadero snaps the same visitor in July, August and September, always at night. It is a river otter, and none have lived on this coast since the 1800s. The nearest creeks with otters are on the far side of a mountain ridge. In every photo, its fur is perfectly dry.",
+  "the_threat": {
+   "name": "The Remembering Water",
+   "description": "Old creek water that never forgot who used to swim in it. Now the creeks run clean again, and it rises in glowing ribbons to call its lost swimmers home.",
+   "mapped_from": "Restored creeks and habitat across the Bay Area are letting river otters return to places they left in the 1800s."
+  },
+  "the_goal": {
+   "description": "Find out which way the otter came, over the ridge or down the coast, and keep that path open so more can follow.",
+   "mapped_from": "Nobody knows the otter's route, and scientists call the sighting a sign of wildlife recovery."
+  },
+  "locations": [
+   {
+    "name": "The Trail Camera Oak",
+    "description": "A camera strapped to an old oak above a muddy creek bank, its small red light blinking in the dark.",
+    "mapped_from": "A motion-activated wildlife camera photographed the otter three times at night."
+   },
+   {
+    "name": "The Old Cloverdale Barn",
+    "description": "A former dairy barn full of spare camera batteries, muddy boots, and a big paper map covered in pins.",
+    "mapped_from": "Cloverdale Ranch is a 5,100-acre former farm; a volunteer checks its 10 trail cameras about once a month."
+   },
+   {
+    "name": "Pescadero Creek Culvert",
+    "description": "A cold concrete tunnel under the farm road with ankle-deep water, darting minnows, and drips that echo.",
+    "mapped_from": "The otter may have come down a local creek such as Pescadero, Butano or Gazos Creek."
+   },
+   {
+    "name": "The Foggy Ridge",
+    "description": "A redwood ridgeline in the Santa Cruz Mountains where two little creeks start a few steps apart and run opposite ways.",
+    "mapped_from": "One theory: it swam up creeks from San Francisco Bay and crossed the Santa Cruz Mountains."
+   },
+   {
+    "name": "Pigeon Point Bluff",
+    "description": "Windy cliffs below the old lighthouse, kelp in the surf, and sea lions barking somewhere in the dark.",
+    "mapped_from": "Other theory: it swam down the ocean coast from farther north. The preserve sits near Pigeon Point Lighthouse."
+   }
+  ],
+  "complications": [
+   {
+    "stage": 1,
+    "title": "The Camera Only Sees at Night",
+    "what_happens": "Every photo is grainy and dark, and nobody can even tell if it's a he or a she. The team has to get one clear look without scaring it off.",
+    "why_obvious_in_hindsight": "A night swimmer was only ever going to be caught by a night camera.",
+    "mapped_from": "Biologists can't tell from the night photos whether the otter is male or female."
+   },
+   {
+    "stage": 2,
+    "title": "Two Roads Home",
+    "what_happens": "Wet tracks lead down to the ocean and up the creek at the same time. The team has to split up, follow both, and meet back at the barn to compare notes.",
+    "why_obvious_in_hindsight": "The experts already had two answers for how it got here. The tracks were bound to go both ways.",
+    "mapped_from": "Experts say it either swam down the coast or crossed the mountains by creek."
+   },
+   {
+    "stage": 3,
+    "title": "The Water Wants More",
+    "what_happens": "At high tide the Remembering Water rises at the bluff and starts calling for every swimmer it remembers. Calm it before it pulls this one otter back out to sea.",
+    "why_obvious_in_hindsight": "Water that waited 100 years for one otter was never going to settle for just one.",
+    "mapped_from": "River otters are spreading back across Northern California as creeks and habitat recover."
+   }
+  ],
+  "the_real_story": {
+   "summary": "A motion-activated wildlife camera photographed a river otter three times on the Cloverdale Ranch Preserve near Pescadero, the first one documented on the San Mateo County coast since the 1800s.",
+   "headline": "For the first time in more than 100 years, a long-lost animal has returned to the San Mateo Coast",
+   "source": "Santa Cruz Sentinel",
+   "date": "2026-10-24",
+   "link": "https://www.santacruzsentinel.com/2026/10/24/river-otter-spotted-on-san-mateo-coast-is-believed-to-be-first-since-1800s/",
+   "context_note": "River otters are not endangered and are recovering across Northern California. How this one reached the preserve is still unknown."
+  },
+  "art_style_hint": "A trail camera on an oak above a moonlit creek near Pescadero, a river otter whose wake glows like a ribbon of living creek water, in a bold neon graphic-novel style."
+ },
+ {
+  "id": "cornfield-dome",
+  "quest_title": "The Sky Egg in the Cornfield",
+  "category": "unexplained",
+  "tone": "eerie",
+  "realm_name": "Scott Township, Stevens County, Minnesota",
+  "fairytale_premise": "On October 14, a farmer combining corn in Scott Township, Minnesota, stops for an 11-foot metal dome sitting in the stalks. It is smooth, scorched, and cracked open on one side like an egg. The sheriff says it's safe and hauls it away. But every night since, the corn around the hole bends a little more toward the nearest lit window.",
+  "the_threat": {
+   "name": "The Corn Hatchling",
+   "description": "An egg tossed into the sky that fell back the same night in a streak of fire. The shell landed in the corn. Its hatchling grows every time someone looks up.",
+   "mapped_from": "A spent rocket upper stage fell back over the Midwest less than two hours after launch and survived reentry."
+  },
+  "the_goal": {
+   "description": "Find the hatchling before harvest ends, then send it and its shell back to wherever they came from.",
+   "mapped_from": "The object has been secured while officials work out its origin and owner and arrange its removal."
+  },
+  "locations": [
+   {
+    "name": "The Cut Cornfield",
+    "description": "Half-harvested rows, a stopped combine with its headlights still on, and a wide ring of flattened stalks.",
+    "mapped_from": "A farmer found the 11-foot object while combining corn in Scott Township on Oct. 14."
+   },
+   {
+    "name": "The Sheriff's Impound Shed",
+    "description": "Floodlights, chain-link, and the dome under a blue tarp, tagged and waiting for somebody to come claim it.",
+    "mapped_from": "The sheriff's office called it \"presumably a space object\" and said it posed no danger to the public."
+   },
+   {
+    "name": "The Gravel Road Overlook",
+    "description": "A pull-off on a county road where people still park after dark to stare up at the sky.",
+    "mapped_from": "As it fell, the rocket stage rained fiery streaks across the Midwest sky."
+   },
+   {
+    "name": "The Grain Elevator",
+    "description": "The tallest thing for miles, with one red light on top, where something has been climbing at night.",
+    "mapped_from": "A common landmark in rural west-central Minnesota farm country."
+   }
+  ],
+  "complications": [
+   {
+    "stage": 1,
+    "title": "Everything Near It Goes Dark",
+    "what_happens": "Flashlights flicker out near the hole, and the combine won't start. The team has to follow a trail of blown-out yard lights through the rows by moonlight.",
+    "why_obvious_in_hindsight": "Something that came down through fire would be hungry for heat and power.",
+    "mapped_from": "Most space junk burns up on the way down. This piece was big enough to survive."
+   },
+   {
+    "stage": 2,
+    "title": "The Sky Keeps Replaying It",
+    "what_happens": "Every phone in the county replays the fiery streaks from that night, and carloads of stargazers clog the gravel roads. The hatchling loves the attention and hides among them.",
+    "why_obvious_in_hindsight": "A fall that lit up the whole Midwest sky was always going to draw a crowd.",
+    "mapped_from": "The upper stage reentered over the Midwest, and people saw the fiery streaks."
+   },
+   {
+    "stage": 3,
+    "title": "Only One Launch Fits",
+    "what_happens": "The hatchling climbs the grain elevator to call home, and only one place answers. Match the shell to its launch and send them back together before sunrise.",
+    "why_obvious_in_hindsight": "An 11-foot shell only fits an 11-foot egg. The size was the clue all along.",
+    "mapped_from": "The rocket's upper stage is 11 feet (3.35 m) wide, exactly matching the object."
+   }
+  ],
+  "the_real_story": {
+   "summary": "An 11-foot-wide metal dome found in a Stevens County, Minnesota, cornfield on Oct. 14 is likely part of a Chinese rocket's upper stage that fell back to Earth after a Sept. 15 launch, experts say, and nobody was hurt.",
+   "headline": "'Space object' found in rural Minnesota cornfield came from Chinese rocket, experts say",
+   "source": "Bring Me The News",
+   "date": "2026-10-23",
+   "link": "https://bringmethenews.com/minnesota-lifestyle/space-object-found-in-rural-minnesota-cornfield-came-from-chinese-rocket-experts-say",
+   "context_note": "The object has been secured and posed no danger. Ars Technica first linked it to the upper stage of a Zhuque-2E rocket."
+  },
+  "art_style_hint": "A harvested Minnesota cornfield at night with a giant scorched metal dome cracked open like an eggshell and a trail of bent corn leading away from it, in a bold neon graphic-novel style."
  }
 ]

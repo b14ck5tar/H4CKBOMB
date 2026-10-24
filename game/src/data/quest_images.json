@@ -23,5 +23,20 @@
     "/quests/littlest-gardener/scene_1.webp",
     "/quests/littlest-gardener/scene_2.webp",
     "/quests/littlest-gardener/scene_3.webp"
+  ],
+  "idle-island": [
+    "/quests/idle-island/scene_1.webp",
+    "/quests/idle-island/scene_2.webp",
+    "/quests/idle-island/scene_3.webp"
+  ],
+  "returned-otter": [
+    "/quests/returned-otter/scene_1.webp",
+    "/quests/returned-otter/scene_2.webp",
+    "/quests/returned-otter/scene_3.webp"
+  ],
+  "cornfield-dome": [
+    "/quests/cornfield-dome/scene_1.webp",
+    "/quests/cornfield-dome/scene_2.webp",
+    "/quests/cornfield-dome/scene_3.webp"
   ]
 }

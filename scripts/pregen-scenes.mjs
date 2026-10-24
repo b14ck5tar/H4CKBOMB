@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const GAME = path.join(ROOT, "game");
-const MAX_REQUESTS = 20;
+const MAX_REQUESTS = Number(process.env.MAX_REQUESTS ?? 20);
 const CONCURRENCY = 5;
 const ENDPOINT = "https://api.meta.ai/v1/images/generations";
 
@@ -50,6 +50,15 @@ const SKY = {
   "The Toddler's Pumpkin Patch": "soft dusk sky of peach and blue behind a wooden backyard fence and a porch light",
   "The Weigh-Off Scale": "dark blue evening sky above a white festival tent hung with string lights",
   "Hayride Field at Dusk": "wide Montana dusk sky of streaky orange clouds over a flat stubble field and a far-off grain silo",
+  "The Heart on the Beach": "dusk sky fading from orange to indigo over a flat calm sea, the island's single jagged spire far behind",
+  "The Tallest Spire": "clear midnight sky with a scatter of ordinary stars and a thin crescent moon behind the rock tower",
+  "The Respawn Cliff": "wide black night sea and sky meeting at a low horizon, a few thin silver clouds",
+  "The Trail Camera Oak": "dusky blue sky through bare oak branches above rolling coastal grass hills",
+  "Pescadero Creek Culvert": "the round culvert mouth framing a strip of foggy midnight sky and black redwood silhouettes",
+  "Pigeon Point Bluff": "cold clear midnight over the Pacific with the white lighthouse tower dark against the stars",
+  "The Cut Cornfield": "wide flat Minnesota dusk sky of streaky orange and violet over half-harvested corn rows",
+  "The Gravel Road Overlook": "huge clear midnight prairie sky full of ordinary stars over flat dark fields",
+  "The Grain Elevator": "black night sky with a few low clouds lit dull orange from a distant small-town glow",
 };
 // Partial reveals for the hook scene (the impossible element only beginning to show itself).
 const HOOK_REVEAL = {
@@ -58,6 +67,9 @@ const HOOK_REVEAL = {
   "hanging-boulder": "a pale ghostly frost-hand just beginning to unfurl from the granite crack beside the empty socket, thin cold light leaking from the stone",
   "galactic-signal": "a single thin shimmering beam of light just beginning to fall from one patch of sky, a dark hungry ring only faintly visible around a bright star",
   "littlest-gardener": "one green vine tendril glowing faintly as it creeps across the ground toward a single pumpkin, soft light starting to seep from its seams",
+  "idle-island": "a single gold ring rising by itself out of the dark surf just beyond the heart of stones, a faint square grid pattern rippling through the waves as if the sea were made of tiles",
+  "returned-otter": "two small glowing eyes and a long ribbon of glowing creek water slipping along the muddy bank below the camera, a sleek otter shape only faintly visible inside it",
+  "cornfield-dome": "a giant scorched metal dome cracked open like an eggshell in the flattened stalks, a thin light leaking from the crack, a narrow path of bent corn leading away from it",
 };
 
 function scenePrompt(s) {
