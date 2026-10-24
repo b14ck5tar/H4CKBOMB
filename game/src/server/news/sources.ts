@@ -3,7 +3,7 @@ import "server-only";
 // News fetchers for the news → quest pipeline. Source: design/02-news-to-quest.md §1.
 // Every fetcher normalizes to NewsItem and never throws (failures return []).
 
-export type NewsOrigin = "serpapi" | "serpapi_fixture" | "bbc_rss" | "gnews_rss";
+export type NewsOrigin = "serpapi" | "serpapi_fixture" | "bbc_rss" | "local_rss" | "gnews_rss";
 
 export interface NewsItem {
   title: string;
@@ -22,8 +22,59 @@ const FETCH_TIMEOUT = 8_000;
 
 /** Google News "Science" topic (en-US). Verified against news.google.com/rss/topics/<token>. */
 export const SCIENCE_TOPIC_TOKEN = "CAAqJggKIiBDQkFTRWdvSUwyMHZNRFp0Y1RjU0FtVnVHZ0pWVXlnQVAB";
-/** Upbeat discovery search from the design doc (§5). */
+/** Upbeat discovery search from the design doc (§5). National; now runs on free Google News RSS only. */
 export const HAPPY_QUERY = "bridge OR festival OR discovered OR restored OR record OR rescued when:1d";
+
+// ---------------------------------------------------------------- home area (local-first news)
+
+/**
+ * The players' home area. Quests prefer stories from this city, then its state, then national, so a
+ * tale can be set in the players' real city. One area per deployment (env NEWS_CITY="City, State",
+ * default Austin, Texas: HackTX is at UT Austin). Not per request: every extra city would mean its own
+ * SerpApi searches and its own Muse run every 4 h.
+ */
+export interface HomeArea {
+  city: string;
+  state: string;
+  label: string; // "Austin, Texas"
+  cityRe: RegExp; // the city, its suburbs and landmarks
+  stateRe: RegExp;
+}
+
+const AUSTIN_NEARBY = [
+  "Austin", "Round Rock", "Cedar Park", "Pflugerville", "Georgetown", "San Marcos", "Leander", "Kyle", "Buda",
+  "Bastrop", "Lockhart", "Dripping Springs", "Lakeway", "Manor", "Hutto", "Travis County", "Williamson County",
+  "Hays County", "Central Texas", "Lady Bird Lake", "Lake Travis", "Barton Springs", "Zilker", "UT Austin",
+];
+
+const reList = (words: string[]) =>
+  new RegExp(`\\b(${words.map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})\\b`, "i");
+
+export function homeArea(spec = process.env.NEWS_CITY || "Austin, Texas"): HomeArea {
+  const [city, state] = spec.split(",").map((s) => s.trim());
+  const c = city || "Austin";
+  const s = state || (c === "Austin" ? "Texas" : "");
+  const near = c === "Austin" && s === "Texas" ? AUSTIN_NEARBY : [c];
+  return {
+    city: c,
+    state: s,
+    label: s ? `${c}, ${s}` : c,
+    cityRe: reList(near),
+    stateRe: s ? reList([s]) : /$^/,
+  };
+}
+
+export const HOME = homeArea();
+
+export type Locality = "city" | "state" | "national";
+export const LOCALITY_RANK: Record<Locality, number> = { city: 0, state: 1, national: 2 };
+
+/** Where a story happens, judged from its text (headline, snippet, article text, classifier location). */
+export function locality(text: string, home: HomeArea = HOME): Locality {
+  if (home.cityRe.test(text)) return "city";
+  if (home.stateRe.test(text)) return "state";
+  return "national";
+}
 
 // ---------------------------------------------------------------- helpers
 
@@ -89,19 +140,24 @@ function items(xml: string): string[] {
   return xml.match(/<item>[\s\S]*?<\/item>/gi) ?? [];
 }
 
-/** Parse a BBC RSS feed. BBC gives a real one-sentence description and direct links. */
-export function parseBbcRss(xml: string): NewsItem[] {
+/** Parse a publisher's own RSS feed (BBC, a local station): a real one-sentence description and direct links. */
+export function parseDirectRss(xml: string, source: string, origin: "bbc_rss" | "local_rss"): NewsItem[] {
   return items(xml)
     .map((b) => ({
       title: stripTags(tag(b, "title")),
-      source: "BBC News",
+      source,
       link: decodeEntities(tag(b, "link")).replace(/\?at_medium=RSS.*$/, ""),
       date: toIso(tag(b, "pubDate")),
-      snippet: stripTags(tag(b, "description")),
-      thumbnail: attr(b, "media:thumbnail", "url"),
-      origin: "bbc_rss" as const,
+      snippet: stripTags(tag(b, "description")).slice(0, 400),
+      thumbnail: attr(b, "media:thumbnail", "url") || attr(b, "media:content", "url"),
+      origin,
     }))
-    .filter((i) => i.title && i.link && !/\/(videos|live|sounds)\//.test(i.link));
+    .filter((i) => i.title && i.link && !/\/(videos?|live|sounds|live-updates?)\//.test(i.link) && !/^live( updates)?\b/i.test(i.title));
+}
+
+/** Parse a BBC RSS feed. */
+export function parseBbcRss(xml: string): NewsItem[] {
+  return parseDirectRss(xml, "BBC News", "bbc_rss");
 }
 
 /** Parse a Google News RSS feed. Title is "Headline - Publisher"; description is a cluster of related headlines. */
@@ -133,7 +189,22 @@ export function parseGoogleNewsRss(xml: string): NewsItem[] {
 const GN = "https://news.google.com/rss";
 const GN_PARAMS = "hl=en-US&gl=US&ceid=US:en";
 
-export const RSS_FEEDS: { name: string; url: string; kind: "bbc" | "gnews" }[] = [
+/** Local: the city (any news, the filter sorts it). State: only the quirky, upbeat kind. Both free RSS. */
+export const LOCAL_QUERY = `"${HOME.city}" ${HOME.state} when:3d`.replace(/\s+/g, " ").trim();
+export const STATE_QUERY = HOME.state
+  ? `${HOME.state} (festival OR zoo OR museum OR discovered OR record OR mystery OR strange OR rare OR reopens) when:3d`
+  : "";
+
+export type RssFeed = { name: string; url: string; kind: "bbc" | "local" | "gnews"; source?: string };
+
+/** Free feeds, no SerpApi credits. Local ones first in spirit; dedupe priority is set in pipeline.ts. */
+export const RSS_FEEDS: RssFeed[] = [
+  // Austin's own station feed: direct links and real snippets (checked Oct 2026). Only for the default home.
+  ...(HOME.city === "Austin" && HOME.state === "Texas"
+    ? [{ name: "kxan", url: "https://www.kxan.com/feed/", kind: "local" as const, source: "KXAN Austin" }]
+    : []),
+  { name: "gnews-local", url: `${GN}/search?q=${encodeURIComponent(LOCAL_QUERY)}&${GN_PARAMS}`, kind: "gnews" },
+  ...(STATE_QUERY ? [{ name: "gnews-state", url: `${GN}/search?q=${encodeURIComponent(STATE_QUERY)}&${GN_PARAMS}`, kind: "gnews" as const }] : []),
   { name: "bbc-science", url: "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml", kind: "bbc" },
   { name: "bbc-world", url: "https://feeds.bbci.co.uk/news/world/rss.xml", kind: "bbc" },
   { name: "gnews-science", url: `${GN}/topics/${SCIENCE_TOPIC_TOKEN}?${GN_PARAMS}`, kind: "gnews" },
@@ -141,10 +212,12 @@ export const RSS_FEEDS: { name: string; url: string; kind: "bbc" | "gnews" }[] =
   { name: "gnews-top", url: `${GN}?${GN_PARAMS}`, kind: "gnews" },
 ];
 
-export async function fetchRss(feed: (typeof RSS_FEEDS)[number]): Promise<NewsItem[]> {
+export async function fetchRss(feed: RssFeed): Promise<NewsItem[]> {
   try {
     const xml = await getText(feed.url);
-    return feed.kind === "bbc" ? parseBbcRss(xml) : parseGoogleNewsRss(xml);
+    if (feed.kind === "bbc") return parseBbcRss(xml);
+    if (feed.kind === "local") return parseDirectRss(xml, feed.source ?? feed.name, "local_rss");
+    return parseGoogleNewsRss(xml);
   } catch (e) {
     console.warn(`[news] rss ${feed.name} failed: ${(e as Error).message}`);
     return [];
@@ -196,9 +269,13 @@ export function parseSerpApiGoogleNews(json: Any): NewsItem[] {
   return out;
 }
 
+/**
+ * Exactly 2 SerpApi searches per pipeline run (unchanged budget): national science (topic page) and the
+ * home city (search). The city search replaced the national "happy" search, which now runs on free RSS.
+ */
 export const SERPAPI_QUERIES: Record<string, Record<string, string>> = {
   science: { engine: "google_news", topic_token: SCIENCE_TOPIC_TOKEN, gl: "us", hl: "en" },
-  search: { engine: "google_news", q: HAPPY_QUERY, gl: "us", hl: "en" },
+  local: { engine: "google_news", q: LOCAL_QUERY, gl: "us", hl: "en" },
 };
 
 /**
@@ -225,7 +302,8 @@ export async function fetchSerpApi(name: keyof typeof SERPAPI_QUERIES): Promise<
   }
 }
 
-/** Replay the saved SerpApi responses (dev/testing; zero credits). */
+/** Replay the saved SerpApi responses (dev/testing; zero credits). The fixture predates the local search: its
+ * "search" capture is the old national happy search, so offline runs have no Austin stories. */
 export async function fetchSerpApiFixture(): Promise<NewsItem[]> {
   try {
     const fx: Any = (await import("./fixtures/serpapi_google_news.json")).default;

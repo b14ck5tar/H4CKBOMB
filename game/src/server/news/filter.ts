@@ -1,5 +1,7 @@
 import "server-only";
 import { museJSON } from "@/server/muse";
+import type { Rating } from "@/lib/types";
+import { isRating } from "@/lib/rating";
 import type { NewsItem } from "./sources";
 
 // Safety filter: never turn tragedy into a game. Source: design/02-news-to-quest.md §2.
@@ -17,7 +19,7 @@ export const HARD_BLOCK: RegExp[] = [
   /\b(outbreak|epidemic|pandemic|ebola|cholera|measles|mpox|patients?|hospitali[sz]ed|cancer|diseases?|infect(ion|ions|ed)|virus(es)?|flesh-eating)\b/i,
   /\b(human remains|skeletons?|graves?|pentagon|cyber-?attacks?|hackers?|hacked|data breach|scam(mers?)?|fraud|ransomware|stalk(er|ing))\b/i,
   /\b(missing|search for|manhunt|arrest(ed)?|charged|sentenced|trial|lawsuit|sues?|indict)/i,
-  /\b(election|midterms?|vote|voters|ballot|campaign|senator|congress|parliament|president|prime minister|tariffs?|white house|trump|biden|putin|kim jong|netanyahu|zelensk)/i,
+  /\b(election|midterms?|vot(e|es|ers?|ing)|ballot|campaign|senator|congress|parliament|president|prime minister|tariffs?|white house|trump|biden|putin|kim jong|netanyahu|zelensk)/i,
 ];
 
 /** Soft: not rejected, but sent to Stage B flagged `needs_casualty_check`. */
@@ -92,7 +94,7 @@ export function stageA(list: NewsItem[], opts: { now?: number; ignoreAgeFor?: (i
     const soft = softMatch(text);
     if (soft) flags.push(`needs_casualty_check (${soft})`);
     let score = boostScore(item.title) * 2 + boostScore(item.snippet);
-    if (item.origin.startsWith("serpapi") || item.origin === "bbc_rss") score += 1; // direct links
+    if (item.origin.startsWith("serpapi") || item.origin === "bbc_rss" || item.origin === "local_rss") score += 1; // direct links
     if (item.snippet.length > 40) score += 1;
     if (soft) score -= 2;
     out.push({ item, score, flags });
@@ -108,6 +110,7 @@ export const CATEGORIES = [
   "abandoned_places", "other",
 ] as const;
 export const TONES = ["joyful", "wholesome", "neutral", "eerie", "bittersweet", "tense", "tragic"] as const;
+export const QUEST_RATINGS = ["kids", "teens", "adults"] as const satisfies readonly Rating[];
 
 export interface Classification {
   index: number;
@@ -121,6 +124,8 @@ export interface Classification {
   location: string; // "" when none
   real_cause: string;
   real_fix: string;
+  /** The youngest group this story suits (see lib/rating.ts). Only meaningful when usable. */
+  rating: Rating;
 }
 
 export const CLASSIFIER_SYSTEM = `You are the safety editor for a party game set in MODERN URBAN FANTASY: today's real
@@ -147,7 +152,9 @@ PREFER (the eerie-but-harmless sweet spot): unexplained sounds, lights or signal
 behavior; tech or AI doing weird, unsettling but harmless things; infrastructure glitches or
 closures with no injuries; space and science oddities; abandoned or reopened places; strange
 objects found; record-breaking oddities; quirky local news. Bridges, nature recovery, festivals
-and sports upsets also work.
+and sports upsets also work. Quirky grown-up everyday stories (an odd city rule, a strange
+rent listing, an office gadget gone weird) can work too: rate them "adults". The REJECT list
+above still wins at every rating.
 
 FLAGS: "needs_casualty_check" means a disaster-like word matched. Only accept such a story if the
 text makes clear nobody was hurt AND the event is over.
@@ -162,6 +169,15 @@ the story's number. Fields:
 - location: the place, or "" if unknown
 - real_cause: the official explanation or cause, 1 phrase ("unexplained" if none is given)
 - real_fix: what resolves it / the outcome so far, 1 phrase
+- rating: the YOUNGEST audience the story suits as a game. A rating never makes a rejected
+  story usable: tragedy, victims, violence and divisive politics are rejected at EVERY rating.
+  "kids" = cheerful and gentle, fine for a 6-year-old: animals, pumpkins, festivals, records,
+    friendly science. Nothing scary, gross, sad or grown-up. An eerie story is never "kids".
+  "teens" = harmless but odd, eerie or a little spooky: strange sounds, lights or signals,
+    abandoned places, tech acting weird, near-misses where nobody was hurt.
+  "adults" = built on everyday grown-up topics: money, prices, work and offices, rent and
+    housing, taxes, banks, city bureaucracy and permits, alcohol, workplace tech.
+  When torn between two ratings, pick the older one.
 Return ONLY JSON matching the schema.`;
 
 const str = { type: "string" } as const;
@@ -178,7 +194,7 @@ export const CLASSIFIER_SCHEMA = {
         additionalProperties: false,
         required: [
           "index", "usable", "reason", "category", "tone", "fun_score", "people_named",
-          "private_individuals", "location", "real_cause", "real_fix",
+          "private_individuals", "location", "real_cause", "real_fix", "rating",
         ],
         properties: {
           index: { type: "integer" },
@@ -192,6 +208,7 @@ export const CLASSIFIER_SCHEMA = {
           location: str,
           real_cause: str,
           real_fix: str,
+          rating: { type: "string", enum: [...QUEST_RATINGS] },
         },
       },
     },
@@ -211,6 +228,37 @@ function storyBlock(c: Candidate, n: number) {
 /** The accept rule from the design doc. */
 export function accepted(c: Classification) {
   return c.usable && (["joyful", "wholesome", "neutral", "eerie"] as string[]).includes(c.tone) && c.fun_score >= 6;
+}
+
+// ---------------------------------------------------------------- rating (code-side floors)
+
+/**
+ * Grown-up everyday topics. A hit makes the story "adults" whatever the classifier said. Kept
+ * specific on purpose ("river bank" or "weather permitting" must not hide a story from teens).
+ */
+export const ADULT_HINTS =
+  /\b(rents|renters?|rent (prices?|hikes?|control|increases?)|landlords?|tenants?|mortgages?|housing (market|crisis|costs?)|home prices|evict(ed|ions?)?|tax(es)?|irs|salar(y|ies)|wages?|paychecks?|payroll|job market|unemploy(ed|ment)|workplace|coworkers?|inflation|interest rates?|recession|banking|bank accounts?|stock market|crypto(currency)?|bitcoin|debts?|loans?|insurance|bureaucra(cy|tic|ts?)|zoning|building permits?|parking (tickets?|fines?)|city council|dmv|alcohol|beers?|wines?|whiske?y|vodka|brewer(y|ies)|distiller(y|ies)|cocktails?|pubs?|casinos?|gambl(e|ing)|lottery|cannabis|marijuana|vap(e|es|ing)|tobacco|cigarettes?|dating apps?)\b/i;
+
+const RANK: Record<Rating, number> = { kids: 0, teens: 1, adults: 2 };
+const older = (a: Rating, b: Rating): Rating => (RANK[a] >= RANK[b] ? a : b);
+
+/** Default when no classifier rating is available: never "kids"; "adults" on grown-up keywords. */
+export function keywordRating(text: string): Rating {
+  return ADULT_HINTS.test(text) ? "adults" : "teens";
+}
+
+/**
+ * A candidate's final rating: the classifier's call, only ever raised by code checks.
+ * - missing/invalid classifier rating → keyword default
+ * - grown-up keywords anywhere in the headline, snippet or article text → "adults"
+ * - "kids" also needs a cheerful/neutral tone and no disaster-word flags, else "teens"
+ */
+export function storyRating(cls: Partial<Pick<Classification, "rating" | "tone">>, c: Pick<Candidate, "item" | "facts" | "flags">): Rating {
+  const kw = keywordRating(`${c.item.title} ${c.item.snippet} ${c.facts}`);
+  let r: Rating = isRating(cls.rating) ? cls.rating : kw;
+  if (kw === "adults") r = older(r, kw); // keywords only ever raise to "adults"
+  if (r === "kids" && (!(["joyful", "wholesome", "neutral"] as string[]).includes(cls.tone ?? "") || c.flags.length)) r = "teens";
+  return r;
 }
 
 /**

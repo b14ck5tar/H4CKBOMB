@@ -4,6 +4,7 @@
   "quest_title": "The Bridge That Hums at Night",
   "category": "infrastructure",
   "tone": "eerie",
+  "rating": "teens",
   "realm_name": "Porter, Indiana",
   "fairytale_premise": "Tomorrow morning, Mineral Springs Road in Porter, Indiana, reopens after almost three years. Tonight the new bridge is finished, floodlit and empty. The old steel beams lie stacked by the river, chewed hollow. Something under the water is humming, and it sounds hungry. Your flashlight finds fresh teeth marks on the brand-new rail.",
   "the_threat": {
@@ -75,6 +76,7 @@
   "quest_title": "The Billion Eggs That Crossed the Sea",
   "category": "environment",
   "tone": "eerie",
+  "rating": "teens",
   "realm_name": "The North Sea coast, from the River Tyne to Mandø",
   "fairytale_premise": "A drone photographing the Danish island of Mandø finds the beach dotted with tiny white beads. Lab tests say they left an English river in July and crossed 390 miles of North Sea to get here, as if they knew the way. The gulls peck at them, then stop and stare at you. The beads are warm.",
   "the_threat": {
@@ -151,6 +153,7 @@
   "quest_title": "The Boulder That Let Go",
   "category": "unexplained",
   "tone": "eerie",
+  "rating": "teens",
   "realm_name": "Polar Caves, Rumney, New Hampshire",
   "fairytale_premise": "On the last day of the season at Polar Caves in Rumney, New Hampshire, the 80-ton boulder that hung over the walkway for a century finally lets go. Nobody is underneath. Nobody can say why. Tonight the park is locked, the stone is still warm, and if you press your ear to it, it is breathing very slowly.",
   "the_threat": {
@@ -227,6 +230,7 @@
   "quest_title": "The Signal That Wakes Up Hungry",
   "category": "science_space",
   "tone": "eerie",
+  "rating": "teens",
   "realm_name": "The Very Large Array, New Mexico",
   "fairytale_premise": "At 2 a.m., every dish at the Very Large Array in the New Mexico desert swings toward the same empty patch of sky. The printout shows a radio source that was not there in 1996. It flared in 2014, went quiet, then woke up again last winter. Tonight its pitch keeps changing while you listen, like it is trying to find your frequency.",
   "the_threat": {
@@ -298,6 +302,7 @@
   "quest_title": "The Pumpkin That Hums at Nap Time",
   "category": "quirky",
   "tone": "eerie",
+  "rating": "kids",
   "realm_name": "Hysham, Montana",
   "fairytale_premise": "At the Fall Fun Festival in Hysham, Montana, the weigh-off winner is a 280-pound pumpkin grown by a two-year-old. After dark it sits by the hay bales under string lights. The vines are still growing, an inch every time you look away. The scale reads 280 with nothing on it. The kid just says it hums at nap time.",
   "the_threat": {

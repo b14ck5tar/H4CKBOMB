@@ -1,7 +1,8 @@
 import "server-only";
 import { museJSON } from "@/server/muse";
-import type { QuestSeed } from "@/lib/types";
-import type { NewsItem } from "./sources";
+import type { QuestSeed, Rating } from "@/lib/types";
+import { isRating } from "@/lib/rating";
+import { HOME, type NewsItem } from "./sources";
 import type { Classification } from "./filter";
 
 // Headline → QuestSeed. Source: design/02-news-to-quest.md §2 (stereotype rules, Stage C) and §3.
@@ -53,6 +54,14 @@ RULES
 10. art_style_hint: one sentence naming the key image: the real-world place plus its one
     impossible supernatural element, in a bold neon graphic-novel style.
     category and tone: copy from CLASSIFIER.
+11. CLASSIFIER.rating is the youngest audience this quest must suit. "kids": the uncanny is
+    delightful, never menacing: a mischievous, silly or shy threat, no teeth, hunger, blood,
+    nightmares or being stalked, nobody is ever really scared (rule 6's "wrong detail" is a
+    funny or wondrous one). "teens": spooky-funny with light
+    peril. "adults": drier humor and a spookier mood are fine. Rules 1-10 apply at every rating.
+12. PLAYERS' HOME is where the players live. If the story happens there, lean into real,
+    well-known local texture they will recognize (streets, landmarks, weather, local habits),
+    kindly, never mocking locals. Never move a story from somewhere else to their home.
 Return ONLY JSON matching the schema.`;
 
 const str = { type: "string" } as const;
@@ -108,6 +117,16 @@ const DEMONYM =
 
 const BRANDS =
   /\b(starlink|spacex|tesla|apple|iphone|google|amazon|meta|facebook|instagram|tiktok|microsoft|openai|nvidia|samsung|disney|netflix|walmart|coca-?cola|pepsi|mcdonald'?s|nike|adidas|boeing|airbus|uber|exxon|shell|bp)\b/i;
+
+/** Too scary for a kids-rated quest. A hit doesn't reject the quest, it just raises its rating to "teens". */
+const KIDS_SCARY =
+  /\b(teeth|fangs?|hungr(y|ier|ily)|devour(s|ed|ing)?|claws?|blood|skulls?|scream(s|ed|ing)?|nightmares?|terrif(y|ied|ying)|horror|dread|stalk(s|ed|ing)?|prey|curse[sd]?|haunt(s|ed|ing)?|demons?|evil|skin crawl)\b/i;
+
+/** Final rating for a finished quest: the story's rating, raised to "teens" if a kids quest came out scary. */
+export function questRating(q: RawQuest, storyRating: Rating): Rating {
+  if (storyRating !== "kids") return storyRating;
+  return KIDS_SCARY.test(fictionStrings(q).join(" \n ")) ? "teens" : "kids";
+}
 
 /** House style for the read-aloud hook: no purple prose. */
 const PURPLE = /\b(tapestry|tapestries|whisper(s|ed|ing)?|testament|delve|realm of)\b/i;
@@ -182,7 +201,7 @@ export function lintQuest(q: RawQuest, cls: Pick<Classification, "people_named">
 function userPrompt(item: NewsItem, facts: string, cls: Classification, feedback?: string[]) {
   const date = item.date ? item.date.slice(0, 10) : new Date().toISOString().slice(0, 10);
   const { index: _i, ...stageB } = cls; // eslint-disable-line @typescript-eslint/no-unused-vars
-  let u = `HEADLINE: ${item.title}\nSOURCE: ${item.source}\nLINK: ${item.link}\nDATE: ${date}\nSNIPPET: ${item.snippet || "(none)"}\nEXTRA FACTS: ${facts || "(none)"}\nCLASSIFIER: ${JSON.stringify(stageB)}`;
+  let u = `PLAYERS' HOME: ${HOME.label}\nHEADLINE: ${item.title}\nSOURCE: ${item.source}\nLINK: ${item.link}\nDATE: ${date}\nSNIPPET: ${item.snippet || "(none)"}\nEXTRA FACTS: ${facts || "(none)"}\nCLASSIFIER: ${JSON.stringify(stageB)}`;
   if (feedback?.length) u += `\n\nYOUR PREVIOUS DRAFT WAS REJECTED. Fix these problems: ${feedback.join("; ")}.`;
   return u;
 }
@@ -211,6 +230,8 @@ function finalize(raw: RawQuest, item: NewsItem, cls: Classification, id: string
     art_style_hint: raw.art_style_hint,
     category: cls.category,
     tone: cls.tone,
+    // The pipeline has already floored cls.rating (filter.ts storyRating); default conservatively if absent.
+    rating: questRating(raw, isRating(cls.rating) ? cls.rating : "teens"),
   };
 }
 
