@@ -118,6 +118,8 @@ export class GameHost {
   portraits: Record<string, string> = {};
   thumbs: Record<string, string> = {};
   sceneImages: Record<number, string> = {};
+  /** Phone-sized copies of the scene art (static paths pass through), sent when there's no TV. */
+  sceneThumbs: Record<number, string> = {};
   reactionCounts: Record<string, number> = {};
 
   private t: Transport;
@@ -144,10 +146,13 @@ export class GameHost {
   private lastPortraitSend: Record<string, number> = {};
   private mirrorP = new Map<string, Promise<string>>(); // guardian id -> their finished, kind sentence
   private lastThanks: Record<string, number> = {};
+  private lastChat: Record<string, number> = {};
+  private chatId = 0;
 
-  constructor(code: string) {
+  constructor(code: string, opts: { screen?: GameState["screen"] } = {}) {
     this.state = {
       code,
+      screen: opts.screen ?? "tv",
       phase: "lobby",
       partyName: "",
       players: [],
@@ -185,6 +190,8 @@ export class GameHost {
       mirrorIndex: 0,
       thanks: {},
       log: [],
+      chat: [],
+      reveal: null,
       busy: "",
     };
     this.t = openRoom(code);
@@ -290,12 +297,19 @@ export class GameHost {
       case "hello": {
         this.broadcastSoon();
         const now = Date.now();
-        if (this.thumbs[m.pid] && now - (this.lastPortraitSend[m.pid] ?? 0) > 5000) {
-          this.lastPortraitSend[m.pid] = now;
+        if (now - (this.lastPortraitSend[m.pid] ?? 0) < 5000) break;
+        this.lastPortraitSend[m.pid] = now;
+        if (this.state.screen === "phones") {
+          // No TV: every phone shows the story, so a (re)joining phone needs everyone's art.
+          Object.entries(this.thumbs).forEach(([pid, url]) => this.t.send({ type: "portrait", pid, url }));
+          Object.entries(this.sceneThumbs).forEach(([i, url]) => this.t.send({ type: "scene", questId: this.state.questId, i: Number(i), url }));
+        } else if (this.thumbs[m.pid]) {
           this.t.send({ type: "portrait", pid: m.pid, url: this.thumbs[m.pid] });
         }
         break;
       }
+      case "chat":
+        return this.onChat(m.pid, m.text);
       case "join":
         return this.onJoin(m.pid, m.name);
       case "concept":
@@ -353,6 +367,30 @@ export class GameHost {
     }
   }
 
+  private onChat(pid: string, raw: string) {
+    if (!this.player(pid)) return;
+    const now = Date.now();
+    if (now - (this.lastChat[pid] ?? 0) < 700) return;
+    const text = String(raw ?? "")
+      .replace(/[<>]/g, "")
+      .replace(/\b(fuck\w*|shit\w*|bitch\w*|asshole\w*|cunt\w*)\b/gi, (w) => w[0] + "*".repeat(w.length - 1))
+      .trim()
+      .slice(0, 200);
+    if (!text) return;
+    this.lastChat[pid] = now;
+    this.set({ chat: [...this.state.chat.slice(-39), { id: ++this.chatId, pid, text }] });
+  }
+
+  /** No-TV mode: shrink a scene to phone size (pre-painted paths pass through) and send it to every phone. */
+  private async shareScene(i: number, url: string) {
+    if (this.state.screen !== "phones") return;
+    const questId = this.state.questId;
+    const small = url.startsWith("data:") ? await thumbnail(url, 560, 0.7) : url;
+    if (!small || this.state.questId !== questId) return;
+    this.sceneThumbs[i] = small;
+    this.t.send({ type: "scene", questId, i, url: small });
+  }
+
   // ---------- lobby ----------
   setPartyName(name: string) {
     this.set({ partyName: name.slice(0, 40) });
@@ -384,6 +422,7 @@ export class GameHost {
     if (!seed) return;
     this.seed = seed;
     this.sceneImages = {};
+    this.sceneThumbs = {};
     const locs = seed.locations;
     const idx = [0, Math.floor(locs.length / 2), locs.length - 1];
     const kinds = ["hook", "twist", "climax"] as const;
@@ -412,6 +451,7 @@ export class GameHost {
         // Pre-painted for the demo quests: instant and free.
         this.sceneImages[i] = pre[i];
         this.set({ scenes: this.state.scenes.map((sc, j) => (j === i ? { ...sc, hasImage: true } : sc)) });
+        this.shareScene(i, pre[i]);
         return;
       }
       image({
@@ -425,6 +465,7 @@ export class GameHost {
         if (!url || this.state.questId !== id) return;
         this.sceneImages[i] = url;
         this.set({ scenes: this.state.scenes.map((sc, j) => (j === i ? { ...sc, hasImage: true } : sc)) });
+        this.shareScene(i, url);
       });
     });
   }
@@ -462,6 +503,7 @@ export class GameHost {
       epilogue: "",
       storybook: null,
       rescue: null,
+      reveal: null,
     });
     this.reading(this.seed!.fairytale_premise, () => this.openScene(0), 9000);
   }
@@ -1232,7 +1274,24 @@ export class GameHost {
   }
 
   private startReveal() {
-    this.set({ phase: "reveal" });
+    const seed = this.seed;
+    const rs = seed?.the_real_story;
+    this.set({
+      phase: "reveal",
+      reveal:
+        seed && rs
+          ? {
+              headline: rs.headline,
+              source: rs.source,
+              date: rs.date,
+              summary: rs.summary,
+              link: rs.link,
+              threat: seed.the_threat.name,
+              threatFrom: seed.the_threat.mapped_from,
+              goalFrom: seed.the_goal.mapped_from,
+            }
+          : null,
+    });
     this.reading(`${this.seed?.the_real_story.headline ?? ""} ${this.seed?.the_real_story.summary ?? ""}`, () => this.showStorybook(), 15000);
   }
 
@@ -1282,8 +1341,10 @@ export class GameHost {
     this.clearTimer();
     this.seed = undefined;
     this.sceneImages = {};
+    this.sceneThumbs = {};
     this.set({
       phase: "lobby",
+      reveal: null,
       questId: "",
       quest: undefined,
       scenes: [],

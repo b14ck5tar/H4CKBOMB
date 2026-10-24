@@ -30,6 +30,9 @@ export default function Home() {
           <Link href="/tv" className="btn btn-crimson text-xl">Open the table</Link>
           <Link href="/play" className="btn btn-gilt text-xl">Join on my phone</Link>
         </div>
+        <p className="text-base text-ink-soft -mt-2">
+          No TV, or not in the same place? <Link href="/play" className="underline">Start a game on your own device</Link> and invite friends from anywhere.
+        </p>
 
         <p className="font-ui text-xs uppercase tracking-[0.2em] text-ink-soft/80 border-t border-white/10 pt-4">
           Case file 26-OUAR · Source: <span className="redacted">today’s headlines</span> · Status: open

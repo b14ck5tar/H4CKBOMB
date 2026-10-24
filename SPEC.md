@@ -7,6 +7,7 @@
 ## World and setup
 - Modern urban fantasy built from filtered real news: each quest is a real, harmless headline plus one uncanny explanation. Tone is spooky-funny. No tragedies, victims or politics.
 - The laptop/TV (`/tv`) is the table and runs the game. Phones (`/play`) are character sheets and controllers. 2-6 players join by QR or 4-letter code.
+- **No-TV / remote mode** (branch `remote-play`): "Start a new game" on `/play` makes that device the host (it runs `GameHost` with `screen: "phones"` and is also a player). Every phone then shows the story itself (`components/Remote.tsx`), the host's phone gets the lobby controls, and a crew chat lets players who aren't in the same room talk. The host's tab must stay open. The TV mode is unchanged.
 - Hero: a one-line concept, then Muse Spark builds a card and Muse Image paints a cartoon portrait (never a realistic person).
 - Quests: 5 seeds in `game/src/data/seed_quests.json` plus cached news quests (SerpApi Google News, RSS backup). A quest can be preselected by link: `/tv?party=<name>&quest=<id>`.
 

@@ -7,6 +7,8 @@ import { HeroCard } from "./HeroCard";
 import { MicButton } from "./MicButton";
 import { Hourglass } from "./Effects";
 import { Stamp } from "./Stamp";
+import { ChatDock, HostBar, PhoneReactions, RoomLobby, StoryView } from "./Remote";
+import type { GameHost } from "@/lib/host";
 import type { GameState, Hero, Player } from "@/lib/types";
 
 const EXAMPLES = [
@@ -491,8 +493,8 @@ function BigButton({ label, sub, onClick, tone = "crimson" }: { label: string; s
   );
 }
 
-export function Phone({ code }: { code: string }) {
-  const { state, me, portrait, deadlineAt, send } = usePhone(code);
+export function Phone({ code, host }: { code: string; host?: GameHost }) {
+  const { state, me, portrait, portraits, sceneArt, reactions, deadlineAt, send } = usePhone(code);
   const [rolledFinal, setRolledFinal] = useState(false);
   useEffect(() => {
     if (state?.phase !== "final_roll") setRolledFinal(false);
@@ -512,7 +514,9 @@ export function Phone({ code }: { code: string }) {
     return (
       <Shell>
         <Watch text={`Finding table ${code}…`} />
-        <p className="text-center font-ui text-sm opacity-80">Make sure the game is open on the laptop or TV.</p>
+        <p className="text-center font-ui text-sm opacity-80">
+          {host ? "Setting up your room…" : "Make sure the game is still open on the host’s device (or the laptop/TV)."}
+        </p>
       </Shell>
     );
   }
@@ -521,6 +525,10 @@ export function Phone({ code }: { code: string }) {
     return <Shell><JoinForm onJoin={(name) => send("join", { name })} /></Shell>;
   }
 
+  // No TV: this phone shows the story itself, so "eyes on the TV" prompts go away.
+  const onPhones = state.screen === "phones";
+  const eyes = (text = "Eyes on the TV") => (onPhones ? null : <Watch text={text} />);
+  const busyOrEyes = (text?: string) => (state.busy ? (onPhones ? null : <Watch text={state.busy} />) : eyes(text));
   const name = (id: string) => state.players.find((p) => p.id === id)?.hero?.name ?? "Someone";
   const myClue = state.clues[me.id];
   const saidAboutMe = state.mirror?.find((c) => c.wardId === me.id)?.sentence ?? "";
@@ -532,7 +540,7 @@ export function Phone({ code }: { code: string }) {
       body = me.hero && me.status === "ready" ? (
         <div className="flex flex-col gap-3">
           <HeroCard player={me} portrait={portrait} />
-          <Watch text="Waiting for the story to start…" />
+          {!host && <Watch text="Waiting for the story to start…" />}
           <button className="font-ui text-sm underline opacity-80" onClick={() => send("concept", { text: me.concept ?? "" })}>
             Redraw my character
           </button>
@@ -540,6 +548,13 @@ export function Phone({ code }: { code: string }) {
       ) : (
         <ConceptForm send={send} building={me.status === "building"} />
       );
+      if (onPhones)
+        body = (
+          <div className="flex flex-col gap-3">
+            {body}
+            <RoomLobby state={state} me={me} portraits={portraits} host={host} />
+          </div>
+        );
       break;
     case "quest":
     case "narrating":
@@ -549,7 +564,7 @@ export function Phone({ code }: { code: string }) {
         <div className="flex flex-col gap-3">
           {state.phase === "quest" && <MissionCard state={state} me={me} />}
           {state.phase === "narrating" && <Clue text={myClue} />}
-          {state.busy ? <Watch text={state.busy} /> : <Watch text={state.phase === "reveal" ? "Look at the TV. This really happened." : "Eyes on the TV"} />}
+          {busyOrEyes(state.phase === "reveal" ? "Look at the TV. This really happened." : undefined)}
           <ReadyButton state={state} me={me} send={send} />
         </div>
       );
@@ -632,7 +647,7 @@ export function Phone({ code }: { code: string }) {
               <p className="text-lg leading-snug">{myBeat.text}</p>
             </div>
           )}
-          {state.busy ? <Watch text={state.busy} /> : <Watch text="Eyes on the TV" />}
+          {busyOrEyes()}
           <ReadyButton state={state} me={me} send={send} />
         </div>
       );
@@ -665,11 +680,11 @@ export function Phone({ code }: { code: string }) {
       body = (
         <div className="flex flex-col gap-3">
           {state.busy ? (
-            <Watch text={state.busy} />
+            busyOrEyes()
           ) : (
             <>
               {idx >= 0 && idx <= state.mirrorIndex && <MirrorMine key={idx} state={state} me={me} send={send} delay={mineNow} />}
-              {!mineNow && <Watch text={`Eyes on the TV: this one's about ${name(state.mirror[state.mirrorIndex]?.wardId ?? "")}`} />}
+              {!mineNow && eyes(`Eyes on the TV: this one's about ${name(state.mirror[state.mirrorIndex]?.wardId ?? "")}`)}
             </>
           )}
           <ReadyButton state={state} me={me} send={send} />
@@ -689,17 +704,21 @@ export function Phone({ code }: { code: string }) {
           )}
           <div className="page p-5 text-center">
             <p className="font-heading text-2xl uppercase">Thanks for playing</p>
-            <p className="text-ink-soft">Your story's on the TV. Next chapter, same crew, whenever you're ready.</p>
+            <p className="text-ink-soft">
+              {onPhones ? "Flip through your story above." : "Your story's on the TV."} Next chapter, same crew, whenever you're ready.
+            </p>
           </div>
         </div>
       );
       break;
     default:
-      body = <Watch text={state.busy || "Eyes on the TV"} />;
+      body = onPhones ? null : <Watch text={state.busy || "Eyes on the TV"} />;
   }
 
   return (
     <Shell me={me} portrait={portrait}>
+      {host && <HostBar host={host} />}
+      {onPhones && state.phase !== "lobby" && <StoryView state={state} me={me} portraits={portraits} sceneArt={sceneArt} host={host} />}
       {me.peril && state.phase !== "pitch" && <p className="font-ui font-bold text-center text-[var(--gilt-bright)]">You're stuck: {me.peril}</p>}
       {wardHero && PLAY_PHASES.includes(state.phase) && (
         <p className="font-ui text-xs text-center text-parchment/70">🪞 Secretly watching {wardHero.name}. Look for one great moment.</p>
@@ -709,6 +728,8 @@ export function Phone({ code }: { code: string }) {
       )}
       {body}
       {me.hero && <ReactionBar send={send} />}
+      {onPhones && <PhoneReactions items={reactions} state={state} />}
+      {onPhones && <ChatDock state={state} me={me} send={send} />}
     </Shell>
   );
 }

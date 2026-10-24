@@ -19,13 +19,21 @@ function getPid() {
   }
 }
 
-/** Phone side of a room: receives the TV's state, sends intents. */
+export type Floating = { id: number; emoji: string; pid: string };
+
+/** Phone side of a room: receives the host's state, sends intents. */
 export function usePhone(code: string | null) {
   const [state, setState] = useState<GameState | null>(null);
-  const [portrait, setPortrait] = useState<string>("");
+  const [portraits, setPortraits] = useState<Record<string, string>>({});
+  const [scenes, setScenes] = useState<Record<string, string>>({}); // "questId:index" -> url
+  const [reactions, setReactions] = useState<Floating[]>([]);
   const [deadlineAt, setDeadlineAt] = useState(0);
   const [pid, setPid] = useState("");
   const tRef = useRef<Transport | null>(null);
+  const reactId = useRef(0);
+  const addReaction = useCallback((emoji: string, from: string) => {
+    setReactions((rs) => [...rs.slice(-40), { id: ++reactId.current, emoji: String(emoji).slice(0, 4), pid: from }]);
+  }, []);
 
   useEffect(() => setPid(getPid()), []);
 
@@ -39,8 +47,12 @@ export function usePhone(code: string | null) {
         lastHeard = Date.now(); // only the table's state counts; other phones chatting doesn't mean we're in sync
         setState(m.state as GameState);
         setDeadlineAt(m.state.deadline ? Date.now() + m.state.deadline : 0);
-      } else if (m.type === "portrait" && m.pid === pid) {
-        setPortrait(m.url);
+      } else if (m.type === "portrait" && typeof m.url === "string") {
+        setPortraits((p) => (p[m.pid] === m.url ? p : { ...p, [m.pid]: m.url }));
+      } else if (m.type === "scene" && typeof m.url === "string") {
+        setScenes((s) => ({ ...s, [`${m.questId}:${m.i}`]: m.url }));
+      } else if (m.type === "react" && typeof m.emoji === "string") {
+        addReaction(m.emoji, m.pid);
       }
     });
     // Say hello until the table answers, and again whenever it's been quiet for a while,
@@ -58,15 +70,18 @@ export function usePhone(code: string | null) {
       t.close();
       tRef.current = null;
     };
-  }, [code, pid]);
+  }, [code, pid, addReaction]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const send = useCallback((type: string, data: Record<string, any> = {}) => {
     tRef.current?.send({ type, pid, ...data });
-  }, [pid]);
+    if (type === "react") addReaction(data.emoji, pid); // broadcasts don't echo back to the sender
+  }, [pid, addReaction]);
 
   const me = state?.players.find((p) => p.id === pid);
-  return { state, me, pid, portrait, deadlineAt, send };
+  const portrait = portraits[pid] ?? "";
+  const sceneArt = (i: number) => (state ? scenes[`${state.questId}:${i}`] ?? "" : "");
+  return { state, me, pid, portrait, portraits, sceneArt, reactions, deadlineAt, send };
 }
 
 /** Re-renders every 250ms while a deadline is active; returns ms remaining. */

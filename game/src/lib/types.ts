@@ -155,6 +155,25 @@ export interface MirrorCard {
   sentence: string; // "" until the reveal starts
 }
 
+/** In-game chat, so remote players can talk. Relayed and capped by the host. */
+export interface ChatMsg {
+  id: number;
+  pid: string;
+  text: string;
+}
+
+/** The "official story" for the reveal, sent to phones when nobody has a TV. */
+export interface RevealInfo {
+  headline: string;
+  source: string;
+  date: string;
+  summary: string;
+  link: string;
+  threat: string;
+  threatFrom: string;
+  goalFrom: string;
+}
+
 export type Phase =
   | "lobby"
   | "quest"
@@ -175,6 +194,8 @@ export type Phase =
 
 export interface GameState {
   code: string;
+  /** "tv": a big screen runs the table. "phones": a player's device hosts and every phone shows the story. */
+  screen: "tv" | "phones";
   phase: Phase;
   partyName: string;
   players: Player[];
@@ -219,5 +240,7 @@ export interface GameState {
   mirrorIndex: number; // which mirror card is showing
   thanks: Record<string, number>; // ward id -> times they tapped "Thank them"
   log: LogEntry[];
+  chat: ChatMsg[]; // last few messages, oldest first
+  reveal: RevealInfo | null; // set when the reveal starts
   busy: string;
 }
