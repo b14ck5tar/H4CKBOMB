@@ -245,7 +245,12 @@ function PitchWall({ s }: { s: GameState }) {
   const name = (p: Pitch) => s.players.find((x) => x.id === p.playerId)?.hero?.name ?? "";
   return (
     <div className="grid grid-cols-2 gap-4">
-      {s.pitches.map((p, i) => (
+      {s.pitches.length >= 2 && (
+        <div className="col-span-2 text-center font-heading text-xl text-[var(--gilt-bright)]">
+          ⚔ Team up the top two: <span className="font-ui">{"●".repeat(counts.combo ?? 0) || "no votes yet"}</span>
+        </div>
+      )}
+      {s.pitches.filter((p) => !p.partnerId).map((p, i) => (
         <div key={p.id} className="page p-4 flex flex-col gap-2 fade-in" style={{ animationDelay: `${i * 120}ms` }}>
           <div className="flex items-center justify-between gap-2">
             <span className="font-heading font-bold">{name(p)}</span>
@@ -279,6 +284,8 @@ function RollView({ s }: { s: GameState }) {
   const [settled, setSettled] = useState(false);
   const pitch = s.pitches.find((p) => p.id === s.winningPitchId);
   const roller = s.players.find((p) => p.id === s.rollerId);
+  const partner = pitch?.partnerId ? s.players.find((p) => p.id === pitch.partnerId) : undefined;
+  const who = partner ? `${roller?.hero?.name} & ${partner.hero?.name}` : roller?.hero?.name;
   useEffect(() => {
     if (!roll) return;
     setSettled(false);
@@ -297,12 +304,12 @@ function RollView({ s }: { s: GameState }) {
     <div className="flex flex-col items-center gap-4 text-center">
       {pitch && (
         <div className="page px-6 py-3 max-w-3xl">
-          <p className="font-heading">{roller?.hero?.name} attempts:</p>
+          <p className="font-heading">{partner ? `⚔ Team Up! ${who} attempt:` : `${who} attempts:`}</p>
           <p className="text-2xl leading-snug">“{v?.interpretation || pitch.text}”</p>
         </div>
       )}
       <D20 value={roll ? roll.kept : null} rolling={!!roll && !settled} size={260} tone={roll?.band === "CATASTROPHE" && settled ? "crimson" : "gold"} label={roll?.rescuerId ? `Caught by ${s.players.find((p) => p.id === roll.rescuerId)?.hero?.name}!` : undefined} />
-      {!roll && <p className="font-heading text-3xl text-[var(--gilt-bright)] animate-pulse">{roller?.hero?.name}, roll the die!</p>}
+      {!roll && <p className="font-heading text-3xl text-[var(--gilt-bright)] animate-pulse">{who}, roll the die!</p>}
       {roll && settled && v && roller?.hero && (
         <div className="flex flex-col items-center gap-3 fade-in">
           <p className="font-ui text-2xl tabular-nums text-parchment">

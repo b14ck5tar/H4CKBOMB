@@ -149,6 +149,8 @@ TASK: OUTCOME NARRATOR. The dice have been rolled by the game. Narrate what happ
   - LEGENDARY: an instant legend, cinematic and heroic. If the ability fits, weave it in. If the tier was absurd or miracle, the impossible thing happens and everyone is astonished.
 - If rescuer is set (Catch!), the rescuer visibly saves the moment by name, doing something specific, and the narration reflects the NEW roll.
 - If rescue_of is set, this action is an attempt to SAVE that hero from their peril. On YES_BUT/SUCCESS/LEGENDARY the hero is saved (say how); on FAIL/CATASTROPHE the rescue goes comically wrong and the peril gets worse.
+- If team_up_with is set, two heroes fused their plans: show BOTH heroes acting together, each doing their half.
+- supporting_pitches are the other heroes' ideas that weren't chosen. Weave EACH one in as a short side-beat (≤8 words each) that helps, complicates, or comically backfires, crediting the hero by name ("while Mira honks at the geese"). Everyone at the table should hear their idea in the story. With supporting beats, narration may run up to 75 words.
 - If embrace_flaw is true, make the flaw part of the scene.
 - Mention a natural 1 or natural 20 by name only if it is one. Never mention other numbers.
 - headline: ≤4 words for the big TV banner, punchy ("Extra Crispy!", "Sandwich Diplomacy").

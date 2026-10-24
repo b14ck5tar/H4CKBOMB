@@ -228,6 +228,18 @@ function Vote({ state, me, send, deadlineAt }: { state: GameState; me: Player; s
           </button>
         );
       })}
+      {state.pitches.length >= 2 && (
+        <button
+          className={`btn btn-gilt text-lg flex flex-col items-center ${myVote === "combo" ? "ring-4 ring-[var(--forest)]" : ""}`}
+          onClick={() => {
+            send("vote", { pitchId: "combo" });
+            vibrate(15);
+          }}
+        >
+          ⚔ Team up the top two plans!
+          <span className="font-ui text-sm font-bold">Both heroes roll together{myVote === "combo" ? " · Your vote ✓" : ""}</span>
+        </button>
+      )}
     </div>
   );
 }
@@ -297,9 +309,10 @@ export function Phone({ code }: { code: string }) {
     case "vote":
       body = <Vote state={state} me={me} send={send} deadlineAt={deadlineAt} />;
       break;
-    case "roll":
+    case "roll": {
+      const partnerId = state.pitches.find((p) => p.id === state.winningPitchId)?.partnerId;
       body =
-        state.rollerId === me.id ? (
+        state.rollerId === me.id || partnerId === me.id ? (
           <BigButton
             label="ROLL"
             sub="Tap to roll the d20"
@@ -310,9 +323,10 @@ export function Phone({ code }: { code: string }) {
             }}
           />
         ) : (
-          <Watch text={`${name(state.rollerId)} is rolling…`} />
+          <Watch text={`${name(state.rollerId)}${partnerId ? ` & ${name(partnerId)}` : ""} ${partnerId ? "are" : "is"} rolling…`} />
         );
       break;
+    }
     case "catch":
       body = state.catchers.includes(me.id) ? (
         <BigButton

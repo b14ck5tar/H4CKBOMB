@@ -4,6 +4,9 @@ import { openRoom, type Msg, type Transport } from "./transport";
 import type { GameState } from "./types";
 
 function getPid() {
+  // Testing aid: /play?code=ABCD&as=2 lets several tabs in one browser be different players.
+  const as = new URLSearchParams(location.search).get("as");
+  if (as) return `ptest${as.replace(/\W/g, "").slice(0, 8)}`;
   try {
     let id = localStorage.getItem("ouar-pid");
     if (!id) {

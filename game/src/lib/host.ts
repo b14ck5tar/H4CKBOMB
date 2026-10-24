@@ -38,6 +38,7 @@ import type {
 } from "./types";
 
 const SEEDS = seedsJson as QuestSeed[];
+export const COMBO = "combo";
 const TIER_RANK: Record<Tier, number> = { clever: 4, solid: 3, risky: 2, absurd: 1, miracle: 0 };
 
 export interface ShelfBook {
@@ -549,8 +550,12 @@ export class GameHost {
   private onVote(pid: string, pitchId: string) {
     if (this.state.phase !== "vote" || this.state.busy) return;
     if (!this.voters().some((v) => v.id === pid)) return;
-    const target = this.state.pitches.find((p) => p.id === pitchId);
-    if (!target || target.playerId === pid) return;
+    if (pitchId === COMBO) {
+      if (this.state.pitches.length < 2) return;
+    } else {
+      const target = this.state.pitches.find((p) => p.id === pitchId);
+      if (!target || target.playerId === pid) return;
+    }
     this.set({ votes: { ...this.state.votes, [pid]: pitchId } });
     if (this.voters().every((v) => this.state.votes[v.id])) this.endVote();
   }
@@ -560,25 +565,57 @@ export class GameHost {
     this.clearTimer();
     const counts: Record<string, number> = {};
     Object.values(this.state.votes).forEach((id) => (counts[id] = (counts[id] ?? 0) + 1));
-    const picked = (pid: string) => this.state.log.filter((l) => l.heroId === pid).length;
+    const picked = (pid: string) => this.state.log.filter((l) => l.heroId === pid || l.partnerId === pid).length;
     const ranked = [...this.state.pitches].sort(
       (a, b) =>
         (counts[b.id] ?? 0) - (counts[a.id] ?? 0) ||
         TIER_RANK[b.verdict!.tier] - TIER_RANK[a.verdict!.tier] ||
         picked(a.playerId) - picked(b.playerId),
     );
-    const winner = ranked[0];
     const totalVotes = Object.keys(this.state.votes).length;
+    const comboVotes = counts[COMBO] ?? 0;
+    // Team Up wins whenever it ties or beats the most-voted single plan.
+    if (comboVotes > 0 && comboVotes >= (counts[ranked[0].id] ?? 0) && ranked.length >= 2) {
+      return this.startRoll(this.combine(ranked[0], ranked[1]), totalVotes >= 3 && comboVotes / totalVotes >= 0.75);
+    }
+    const winner = ranked[0];
     const believes = !this.state.rescue && totalVotes >= 3 && (counts[winner.id] ?? 0) / totalVotes >= 0.75;
     this.startRoll(winner, believes);
   }
 
+  /** ⚔ Team Up: fuse the top two plans. Both heroes share the roll (best of two dice) and the credit. */
+  private combine(a: Pitch, b: Pitch): Pitch {
+    const ha = this.player(a.playerId)!.hero!;
+    const hb = this.player(b.playerId)!.hero!;
+    const [lead, other] = TIER_RANK[a.verdict!.tier] >= TIER_RANK[b.verdict!.tier] ? [a, b] : [b, a];
+    const v = lead.verdict!;
+    const combo: Pitch = {
+      id: `${this.state.sceneIndex}-combo`,
+      playerId: lead.playerId,
+      partnerId: other.playerId,
+      text: `${a.text} + ${b.text}`,
+      useAbility: a.useAbility || b.useAbility,
+      embraceFlaw: a.embraceFlaw || b.embraceFlaw,
+      verdict: {
+        ...v,
+        interpretation: `${(a.verdict?.interpretation || `${ha.name}: ${a.text}`).replace(/\.$/, "")}, while ${(b.verdict?.interpretation || `${hb.name}: ${b.text}`).replace(/\.$/, "")}.`,
+        quip: "Two heads, one terrible-wonderful plan.",
+      },
+    };
+    this.set({ pitches: [...this.state.pitches, combo] });
+    return combo;
+  }
+
   // ---------- roll ----------
-  private makeRoll(pid: string, v: Verdict, advantage: RollResult["advantage"], rescuerId: string): RollResult {
+  private makeRoll(pid: string, v: Verdict, advantage: RollResult["advantage"], rescuerId: string, partnerId = ""): RollResult {
     const hero = this.player(pid)!.hero!;
+    const partner = partnerId ? this.player(partnerId)?.hero : undefined;
+    // A Team Up rolls two dice and keeps the best (unless a flaw drags it down to one).
+    if (partner && advantage === "none") advantage = "adv";
+    if (partner && advantage === "dis") advantage = "none";
     const dice = advantage === "none" ? [d20()] : [d20(), d20()];
     const kept = advantage === "adv" ? Math.max(...dice) : advantage === "dis" ? Math.min(...dice) : dice[0];
-    const statBonus = hero.stats[v.stat];
+    const statBonus = Math.max(hero.stats[v.stat], partner?.stats[v.stat] ?? -9);
     const tierMod = TIER_MOD[v.tier];
     const total = kept + statBonus + tierMod;
     return { playerId: pid, dice, kept, advantage, statBonus, tierMod, total, band: band(kept, total, v.tier), rescuerId };
@@ -592,14 +629,18 @@ export class GameHost {
     const dis = v.flaw_walk_in && !pitch.embraceFlaw;
     const advantage = adv && !dis ? "adv" : dis && !adv ? "dis" : "none";
     if (usesAbility) this.patchPlayer(p.id, { abilityAvailable: false });
-    this.pendingRoll = this.makeRoll(p.id, v, advantage, "");
+    this.pendingRoll = this.makeRoll(p.id, v, advantage, "", pitch.partnerId ?? "");
     this.outcomeP = this.fetchOutcome(pitch, this.pendingRoll);
     this.set({ phase: "roll", rollerId: p.id, winningPitchId: pitch.id, roll: null, catchers: [] });
     this.setTimer(ROLL_MS, () => this.revealRoll());
   }
 
   private onRoll(pid: string) {
-    if (this.state.phase === "roll" && pid === this.state.rollerId) return this.revealRoll();
+    if (this.state.phase === "roll") {
+      const partner = this.state.pitches.find((p) => p.id === this.state.winningPitchId)?.partnerId;
+      if (pid === this.state.rollerId || pid === partner) return this.revealRoll();
+      return;
+    }
     if (this.state.phase === "final_roll") return this.revealFinalDie(pid);
   }
 
@@ -629,7 +670,7 @@ export class GameHost {
     const pitch = this.state.pitches.find((p) => p.id === this.state.winningPitchId)!;
     const old = this.state.roll!;
     this.patchPlayer(pid, { heart: 0 });
-    this.pendingRoll = this.makeRoll(old.playerId, pitch.verdict!, old.advantage, pid);
+    this.pendingRoll = this.makeRoll(old.playerId, pitch.verdict!, old.advantage, pid, pitch.partnerId ?? "");
     this.outcomeP = this.fetchOutcome(pitch, this.pendingRoll);
     this.set({ phase: "rolling", roll: this.pendingRoll, catchers: [] });
     setTimeout(() => this.resolveOutcome(), ROLL_ANIM_MS);
@@ -640,12 +681,19 @@ export class GameHost {
     const v = pitch.verdict!;
     const r = this.state.rescue;
     const rescuer = roll.rescuerId ? this.player(roll.rescuerId)?.hero?.name ?? "" : "";
+    const partner = pitch.partnerId ? this.player(pitch.partnerId)?.hero?.name ?? "" : "";
+    // Every pitch that didn't win still gets a beat in the story.
+    const supporting = this.state.pitches
+      .filter((x) => x.id !== pitch.id && x.playerId !== pitch.playerId && x.playerId !== pitch.partnerId && !x.partnerId)
+      .map((x) => ({ hero: this.player(x.playerId)?.hero?.name, pitch: x.text }));
     const input = {
       state: this.dmState(),
-      hero_name: p.hero!.name,
+      hero_name: partner ? `${p.hero!.name} and ${partner}` : p.hero!.name,
+      team_up_with: partner,
+      supporting_pitches: supporting,
       action: {
         hero_id: p.id,
-        hero_name: p.hero!.name,
+        hero_name: partner ? `${p.hero!.name} and ${partner}` : p.hero!.name,
         pitch: pitch.text,
         interpretation: v.interpretation,
         stat: v.stat,
@@ -712,7 +760,7 @@ export class GameHost {
     const players = this.state.players.map((p) => {
       const titles = [...p.titles];
       let { peril, abilityAvailable } = p;
-      if (p.id === roller.id) {
+      if (p.id === roller.id || p.id === pitch.partnerId) {
         if (b === "CATASTROPHE" && out.shame_title) titles.push(out.shame_title);
         if (b === "LEGENDARY") {
           if (out.glory_title) titles.push(out.glory_title);
@@ -738,7 +786,8 @@ export class GameHost {
         {
           scene: this.state.sceneIndex,
           heroId: roller.id,
-          hero: roller.hero!.name,
+          partnerId: pitch.partnerId,
+          hero: pitch.partnerId ? `${roller.hero!.name} & ${this.player(pitch.partnerId)?.hero?.name}` : roller.hero!.name,
           pitch: pitch.text,
           band: b,
           headline: out.headline,

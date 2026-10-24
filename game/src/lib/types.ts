@@ -50,6 +50,7 @@ export interface Pitch {
   useAbility: boolean;
   embraceFlaw: boolean;
   verdict?: Verdict;
+  partnerId?: string; // set on a ⚔ Team Up combo
 }
 
 export interface RollResult {
@@ -115,6 +116,7 @@ export interface QuestSeed {
 export interface LogEntry {
   scene: number;
   heroId: string;
+  partnerId?: string;
   hero: string;
   pitch: string;
   band: Band;
