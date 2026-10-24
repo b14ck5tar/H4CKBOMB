@@ -6,6 +6,7 @@ import {
   EPILOGUE_SYSTEM,
   KIND_SCHEMA,
   KIND_SYSTEM,
+  PICK_QUEST_SYSTEM,
   ROUND_SCHEMA,
   ROUND_SYSTEM,
   SCENE_SCHEMA,
@@ -13,19 +14,37 @@ import {
   STORYBOOK_SYSTEM,
   VERDICT_SCHEMA,
   VERDICT_SYSTEM,
+  pickQuestSchema,
   storybookSchema,
+  withRating,
 } from "@/server/prompts";
-import { FALLBACK_EPILOGUE, fallbackHero, fallbackKind, fallbackRound, fallbackScene, fallbackStorybook, fallbackVerdict } from "@/server/fallbacks";
-import type { Hero, Stat } from "@/lib/types";
+import {
+  FALLBACK_EPILOGUE,
+  fallbackHero,
+  fallbackKind,
+  fallbackPickQuest,
+  fallbackRound,
+  fallbackScene,
+  fallbackStorybook,
+  fallbackVerdict,
+} from "@/server/fallbacks";
+import { normalizePick } from "@/server/pick";
+import { cleanText, pickInput, ratingOf, realOf, type PickInput } from "@/server/real";
+import type { Hero, Rating, Stat } from "@/lib/types";
 
 export const maxDuration = 60;
 
-const TASKS = ["character", "scene", "verdict", "round", "epilogue", "storybook", "kind"];
+const TASKS = ["character", "scene", "verdict", "round", "epilogue", "storybook", "kind", "pick_quest"];
 
 /** Player-authored text is wrapped so the model treats it as in-world speech, never instructions. */
 function wrap(id: string, text: string, max = 240) {
   const clean = String(text ?? "").replace(/[<>]/g, "").slice(0, max);
   return `<player_input id="${id}">${clean}</player_input>`;
+}
+
+/** Like wrap, but a skipped answer stays "" so the model can see it was skipped. */
+function wrapOpt(id: string, text: string, max = 240) {
+  return text ? wrap(id, text, max) : "";
 }
 
 const STATS: Stat[] = ["brave", "clever", "charming"];
@@ -40,38 +59,73 @@ function fixStats(h: Hero): Hero {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Any = any;
 
-async function run(task: string, input: Any) {
+/**
+ * The system prompt ends with the group's AUDIENCE note, so each task has 3 prompt variants. The rating goes in the
+ * Muse task name (which is also the prompt cache key), so each variant keeps its own warm cache.
+ */
+async function run(task: string, input: Any, rating: Rating) {
+  const t = (name: string) => `dm-${name}-${rating}`;
   switch (task) {
     case "character": {
+      const real = realOf(input.real);
       const hero = await museJSON<Hero>({
-        task: "dm-character",
-        system: CHARACTER_SYSTEM,
+        task: t("character"),
+        system: withRating(CHARACTER_SYSTEM, rating),
         schema: CHARACTER_SCHEMA,
         effort: "low",
-        user: JSON.stringify({ concept: wrap("p", input.concept, 200), party_so_far: input.partySoFar ?? [], avoid_names: input.avoidNames ?? [] }),
+        user: JSON.stringify({
+          concept: wrapOpt("p", cleanText(input.concept, 200), 200),
+          real: { skill: wrapOpt("skill", real.skill, 120), fear: wrapOpt("fear", real.fear, 120) },
+          party_so_far: input.partySoFar ?? [],
+          avoid_names: input.avoidNames ?? [],
+        }),
       });
       return fixStats(hero);
     }
     case "scene":
-      return museJSON({ task: "dm-scene", system: SCENE_SYSTEM, schema: SCENE_SCHEMA, effort: "low", user: JSON.stringify(input) });
+      return museJSON({ task: t("scene"), system: withRating(SCENE_SYSTEM, rating), schema: SCENE_SCHEMA, effort: "low", user: JSON.stringify(input) });
     case "verdict":
-      return museJSON({ task: "dm-verdict", system: VERDICT_SYSTEM, schema: VERDICT_SCHEMA, effort: "minimal", timeoutMs: 10_000, user: JSON.stringify(input) });
+      return museJSON({ task: t("verdict"), system: withRating(VERDICT_SYSTEM, rating), schema: VERDICT_SCHEMA, effort: "minimal", timeoutMs: 10_000, user: JSON.stringify(input) });
     case "round":
-      return museJSON({ task: "dm-round", system: ROUND_SYSTEM, schema: ROUND_SCHEMA, effort: "low", timeoutMs: 14_000, user: JSON.stringify(input) });
+      return museJSON({ task: t("round"), system: withRating(ROUND_SYSTEM, rating), schema: ROUND_SCHEMA, effort: "low", timeoutMs: 14_000, user: JSON.stringify(input) });
     case "kind":
-      return museJSON({ task: "dm-kind", system: KIND_SYSTEM, schema: KIND_SCHEMA, effort: "minimal", timeoutMs: 9000, maxTokens: 1200, user: JSON.stringify(input) });
+      return museJSON({ task: t("kind"), system: withRating(KIND_SYSTEM, rating), schema: KIND_SCHEMA, effort: "minimal", timeoutMs: 9000, maxTokens: 1200, user: JSON.stringify(input) });
     case "epilogue":
-      return museText({ task: "dm-epilogue", system: EPILOGUE_SYSTEM, user: JSON.stringify(input), effort: "low" });
+      return museText({ task: t("epilogue"), system: withRating(EPILOGUE_SYSTEM, rating), user: JSON.stringify(input), effort: "low" });
     case "storybook":
       return museJSON({
-        task: "dm-storybook",
-        system: STORYBOOK_SYSTEM,
+        task: t("storybook"),
+        system: withRating(STORYBOOK_SYSTEM, rating),
         schema: storybookSchema(input.available_images),
         effort: "low",
         timeoutMs: 40_000,
         maxTokens: 5000,
         user: JSON.stringify(input),
       });
+    case "pick_quest": {
+      const inp = input as PickInput;
+      return museJSON({
+        task: t("pick-quest"),
+        system: withRating(PICK_QUEST_SYSTEM, rating),
+        schema: pickQuestSchema(
+          inp.candidates.map((c) => c.id),
+          inp.party.map((p) => p.hero_id),
+        ),
+        effort: "low",
+        timeoutMs: 15_000,
+        maxTokens: 2000,
+        user: JSON.stringify({
+          party: inp.party.map((p) => ({
+            hero_id: p.hero_id,
+            name: p.name,
+            hero_name: p.hero_name,
+            skill: wrapOpt(`${p.hero_id}-skill`, p.skill),
+            fear: wrapOpt(`${p.hero_id}-fear`, p.fear),
+          })),
+          candidates: inp.candidates,
+        }),
+      });
+    }
   }
   throw new Error(`unknown task ${task}`);
 }
@@ -79,9 +133,9 @@ async function run(task: string, input: Any) {
 function fallback(task: string, input: Any) {
   switch (task) {
     case "character":
-      return fallbackHero(input.concept ?? "");
+      return fallbackHero(cleanText(input.concept, 200), realOf(input.real));
     case "scene":
-      return fallbackScene(input.hero_ids ?? [], input.scene_plan ?? {});
+      return fallbackScene(input.hero_ids ?? [], input.scene_plan ?? {}, { partyReal: input.party_real, spotlight: input.spotlight });
     case "verdict":
       return { verdicts: ((input.pitches as Any[]) ?? []).map((p) => fallbackVerdict(p.pitch_id, p.best_stat ?? "brave")) };
     case "round":
@@ -92,6 +146,8 @@ function fallback(task: string, input: Any) {
       return FALLBACK_EPILOGUE;
     case "storybook":
       return fallbackStorybook(input.title ?? "A Tale", input.heroes ?? [], input.available_images ?? ["scene_1"]);
+    case "pick_quest":
+      return fallbackPickQuest(pickInput(input));
   }
 }
 
@@ -124,8 +180,11 @@ function scrub(text: string): string {
   return s.trim();
 }
 
+/** Keys that are ids or enums: never scrubbed. */
+const NO_SCRUB = ["hero_id", "pitch_id", "image_ref", "stat", "tier", "kind", "moderation", "sfx", "music", "pronouns", "concept_status", "quest_id"];
+
 function scrubDeep(v: Any, key = ""): Any {
-  if (typeof v === "string") return ["hero_id", "pitch_id", "image_ref", "stat", "tier", "kind", "moderation", "sfx", "music", "pronouns", "concept_status"].includes(key) ? v : scrub(v);
+  if (typeof v === "string") return NO_SCRUB.includes(key) ? v : scrub(v);
   if (Array.isArray(v)) return v.map((x) => scrubDeep(x, key));
   if (v && typeof v === "object") return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, scrubDeep(x, k)]));
   return v;
@@ -145,6 +204,19 @@ function wrapPlayerText(task: string, input: Any) {
       moments: ((input.moments as Any[]) ?? []).slice(0, 4).map((m, i) => ({ pitch: wrap(`m${i}`, m?.pitch, 200), what_happened: String(m?.what_happened ?? "").slice(0, 240) })),
     };
   }
+  // pick_quest is cleaned into a fresh object here and wrapped when the prompt is built.
+  if (task === "pick_quest") return pickInput(input);
+  if (task === "scene") {
+    // A fresh object: the fallback needs the raw skills.
+    return {
+      ...input,
+      party_real: (Array.isArray(input.party_real) ? input.party_real : []).slice(0, 6).map((r: Any) => {
+        const id = cleanText(r?.hero_id, 64);
+        return { hero_id: id, skill: wrapOpt(`${id}-skill`, cleanText(r?.skill, 120)), fear: wrapOpt(`${id}-fear`, cleanText(r?.fear, 120)) };
+      }),
+      spotlight: (Array.isArray(input.spotlight) ? input.spotlight : []).slice(0, 6).map((s: Any) => ({ hero_id: cleanText(s?.hero_id, 64), how: cleanText(s?.how, 160) })),
+    };
+  }
   if (task === "verdict") {
     input.pitches = ((input.pitches as Any[]) ?? []).map((p) => ({ ...p, text: wrap(p.hero_id, p.text), appeal: p.appeal ? wrap(`${p.hero_id}-appeal`, p.appeal) : "" }));
     if (Array.isArray(input.other_pitches)) input.other_pitches = input.other_pitches.map((t: string, i: number) => wrap(`o${i}`, t));
@@ -161,12 +233,22 @@ function wrapPlayerText(task: string, input: Any) {
 }
 
 export async function POST(req: Request) {
-  const { task, input: rawInput } = await req.json();
-  if (!TASKS.includes(task)) return NextResponse.json({ error: "unknown task" }, { status: 400 });
-  const input = wrapPlayerText(task, rawInput ?? {});
-  const fbInput = task === "kind" ? rawInput ?? {} : input;
+  let body: Any;
   try {
-    let data: Any = await run(task, input);
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "bad json" }, { status: 400 });
+  }
+  const task = body?.task;
+  if (!TASKS.includes(task)) return NextResponse.json({ error: "unknown task" }, { status: 400 });
+  const rawInput: Any = body.input && typeof body.input === "object" && !Array.isArray(body.input) ? body.input : {};
+  const rating = ratingOf(rawInput.rating);
+  if (task === "pick_quest" && !pickInput(rawInput).candidates.length) return NextResponse.json({ error: "pick_quest needs at least one candidate" }, { status: 400 });
+  const input = wrapPlayerText(task, rawInput);
+  // Fallbacks get the raw player text (they quote it), never the wrapped version.
+  const fbInput = ["kind", "scene", "character", "pick_quest"].includes(task) ? rawInput : input;
+  try {
+    let data: Any = await run(task, input, rating);
     if (task === "epilogue") {
       if (typeof data !== "string" || !data.trim()) throw new Error("empty epilogue");
       data = scrub(data);
@@ -186,6 +268,10 @@ export async function POST(req: Request) {
         tier: TIERS.includes(v?.tier) ? v.tier : "solid",
         stat: STATS.includes(v?.stat) ? v.stat : input.pitches?.[0]?.best_stat ?? "brave",
       }));
+    }
+    if (task === "pick_quest") {
+      data = normalizePick(data, input as PickInput);
+      if (!data) throw new Error("pick_quest chose an id that isn't a candidate");
     }
     return NextResponse.json({ data, fallback: false });
   } catch (e) {

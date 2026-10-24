@@ -1,19 +1,37 @@
 import "server-only";
-import type { Band, Hero, RoundOutcome, SceneOpen, Storybook, Verdict } from "@/lib/types";
+import type { Band, Hero, QuestPick, Rating, RealAnswers, RoundOutcome, SceneOpen, Storybook, Verdict } from "@/lib/types";
+import { HEAVY, cleanText, skillPhrase, type PickInput } from "@/server/real";
 
 const pick = <T,>(a: T[]) => a[Math.floor(Math.random() * a.length)];
 
-export function fallbackHero(concept: string): Hero {
+/** "I'm scared of the dark." becomes "the dark". "" when it's too long or too heavy for a canned joke. */
+function fearPhrase(fear: string) {
+  const s = cleanText(fear, 80)
+    .replace(/^(i'?m|i am|im)\s+/i, "")
+    .replace(/^(really|very|kind of|kinda|a little|low[- ]?key)\s+/i, "")
+    .replace(/^(scared|afraid|terrified|frightened)\s+(of|by)\s+/i, "")
+    .replace(/[\s.!?,;:]+$/, "");
+  return s && !HEAVY.test(s) && s.split(" ").length <= 6 ? (/^[A-Z][a-z]/.test(s) ? s[0].toLowerCase() + s.slice(1) : s) : "";
+}
+
+export function fallbackHero(concept: string, real: RealAnswers = { skill: "", fear: "", talk: "" }): Hero {
+  const skill = HEAVY.test(real.skill) ? "" : skillPhrase(real.skill);
+  const fear = fearPhrase(real.fear);
+  const heavy = HEAVY.test(real.skill) || HEAVY.test(real.fear);
+  const note = String(concept || skill || "a hero who showed up").slice(0, 40);
   return {
     name: pick(["Doug", "Marigold", "Wendell", "Priya", "Sal"]),
     epithet: "the Unexpected",
     pronouns: "they/them",
-    concept_status: "ok",
-    concept_note: "",
+    concept_status: heavy ? "redirected" : "ok",
+    concept_note: heavy ? "The notes got a little smudged, so the DM filled in the gaps." : "",
     stats: { brave: 1, clever: 3, charming: -1 },
-    ability: { name: "Pocket Full of Stuff", text: "Pull exactly the right odd object from a pocket." },
-    flaw: "Narrates their own actions out loud, badly.",
-    roast: `The notes just say "${concept.slice(0, 40)}" and a coffee stain.`,
+    ability: skill
+      ? { name: "Weirdly Good At It", text: `Bring your ${skill} to any problem, once, and it helps.` }
+      : { name: "Pocket Full of Stuff", text: "Pull exactly the right odd object from a pocket." },
+    // Comedy in the fiction only: the hero has bad luck with it. Nobody is asked to do anything for real.
+    flaw: fear ? `Has the worst luck with ${fear}, at the worst moments.` : "Narrates their own actions out loud, badly.",
+    roast: `The notes just say "${note}" and a coffee stain.`,
     visual: {
       anchor: "a small round cartoon character with a giant hoodie and wild hair",
       outfit: "oversized hoodie, mismatched sneakers",
@@ -24,8 +42,18 @@ export function fallbackHero(concept: string): Hero {
   };
 }
 
-export function fallbackScene(heroIds: string[], plan: { location?: string; seeded_twist?: string; kind?: string }): SceneOpen {
+export function fallbackScene(
+  heroIds: string[],
+  plan: { location?: string; seeded_twist?: string; kind?: string },
+  real: { partyReal?: { hero_id?: string; skill?: string }[]; spotlight?: { hero_id?: string }[] } = {},
+): SceneOpen {
   const where = plan.location ?? "The next stop";
+  // A spotlighted hero who shared a skill gets a clue and one idea that invite it (never require it).
+  const lit = new Set((Array.isArray(real.spotlight) ? real.spotlight : []).map((s) => String(s?.hero_id ?? "")));
+  const skillOf = (id: string) => {
+    const r = (Array.isArray(real.partyReal) ? real.partyReal : []).find((p) => p?.hero_id === id);
+    return r && !HEAVY.test(String(r.skill ?? "")) ? skillPhrase(String(r.skill ?? ""), 5) : "";
+  };
   return {
     recap: "",
     narration: `${where}. ${plan.seeded_twist ?? "Something here is wrong, and it's getting worse."}`,
@@ -33,9 +61,45 @@ export function fallbackScene(heroIds: string[], plan: { location?: string; seed
     situation: plan.kind === "climax" ? "This is it. What's your final move?" : "What do you do?",
     banner: "Trouble",
     npc_line: { speaker: "", line: "" },
-    clues: [],
-    suggestions: heroIds.map((id) => ({ hero_id: id, ideas: ["Go straight at it", "Look for another way in", "Ask whoever's in charge"] })),
+    clues: heroIds.filter((id) => lit.has(id) && skillOf(id)).map((id) => ({ hero_id: id, clue: `Your knack for ${skillOf(id)} might be the way in here.` })),
+    suggestions: heroIds.map((id) => {
+      const skill = lit.has(id) ? skillOf(id) : "";
+      return { hero_id: id, ideas: ["Go straight at it", skill ? `Use my knack for ${skill}` : "Look for another way in", "Ask whoever's in charge"] };
+    }),
     music: "eerie",
+  };
+}
+
+/** Possessive for a name: "Ava's", "James's". */
+const poss = (name: string) => `${name}'s`;
+
+/** One line for the DM's notes: when a hero's real skill could matter. Used by the fallback and to patch bad picks. */
+export function spotlightHow(heroName: string, skill: string, scene: 0 | 1 | 2, rating: Rating) {
+  const name = heroName || "This hero";
+  const s = HEAVY.test(skill) ? "" : skillPhrase(skill);
+  if (!s)
+    return rating === "kids" ? `${name} gets a turn to spot something nobody else saw.` : `${name} gets a moment to spot what everyone else missed.`;
+  if (rating === "kids")
+    return [`${poss(name)} ${s} could help get things started.`, `${poss(name)} ${s} might help when things get tricky.`, `${poss(name)} ${s} could save the day at the end.`][scene];
+  return [`${poss(name)} ${s} could be the way in here.`, `When the twist hits, ${poss(name)} ${s} might be the way around it.`, `At the very end, ${poss(name)} ${s} could tip it.`][scene];
+}
+
+/** "Pick the best story for us" without Muse: the first candidate, spotlights round-robin over the 3 scenes. */
+export function fallbackPickQuest(inp: PickInput): QuestPick {
+  const first = inp.candidates[0];
+  const title = first?.title || "this one";
+  const why = {
+    kids: `Let's start with ${title}. Everyone gets a turn to shine.`,
+    teens: `The quick pick is ${title}, with a moment for each of you.`,
+    adults: `The DM's backup pick is ${title}, with a moment for each of you.`,
+  }[inp.rating];
+  return {
+    quest_id: first?.id ?? "",
+    why,
+    spotlights: inp.party.map((p, i) => {
+      const scene = (i % 3) as 0 | 1 | 2;
+      return { hero_id: p.hero_id, scene, how: spotlightHow(p.hero_name || p.name, p.skill, scene, inp.rating) };
+    }),
   };
 }
 
