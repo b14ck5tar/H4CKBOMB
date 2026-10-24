@@ -1328,7 +1328,7 @@ export class GameHost {
       .map((x) => {
         const by = x.byIds.map(name).filter(Boolean);
         const list = by.length > 1 ? `${by.slice(0, -1).join(", ")} and ${by[by.length - 1]}` : by[0] ?? "a friend";
-        return `${name(x.savedId)} thanked ${list} for ${x.kind === "catch" ? "the save" : "getting them out"}`;
+        return `${name(x.savedId)} thanked ${list} for ${x.kind === "catch" ? "the save" : "the rescue"}`;
       });
   }
 
