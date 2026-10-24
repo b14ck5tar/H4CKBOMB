@@ -1713,7 +1713,7 @@ export class GameHost {
       this.bump("rolls");
       if (die === 1) this.bump("nat1");
       if (die === 20) this.bump("nat20");
-      const how = !auto.has(pid) ? "Shook their phone" : this.player(pid)?.away ? "On autopilot, so the game rolled for them" : "Didn't shake in time, so the game rolled for them";
+      const how = !auto.has(pid) ? "Shook (or tapped) their phone" : this.player(pid)?.away ? "On autopilot, so the game rolled for them" : "Didn't shake in time, so the game rolled for them";
       this.note("roll", this.heroName(pid), `Final roll: ${how}. d20 rolled ${die}.${die === 20 ? " Natural 20." : die === 1 ? " Natural 1." : ""}`);
     });
     this.setTimer(FINAL_LAND_MS, () => this.finish(false));
