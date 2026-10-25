@@ -39,7 +39,7 @@ export const BOOST = [
 ];
 
 /** Tabloids, partisan outlets, and wire noise we never adapt. */
-const SOURCE_DENYLIST =
+export const SOURCE_DENYLIST =
   /\b(daily mail|the sun|new york post|ny post|fox news|breitbart|daily wire|gateway pundit|newsmax|oann|one america|tmz|daily star|daily express|the mirror|occupy democrats|infowars|rt\.com|sputnik)\b|\(\.mil\)/i;
 
 const MAX_AGE_MS = 72 * 3600 * 1000;

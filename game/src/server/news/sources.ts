@@ -206,21 +206,30 @@ export const SERPAPI_QUERIES: Record<string, Record<string, string>> = {
  * own 1-hour cache absorbs it. Callers must gate this (see pipeline.ts). Never sends no_cache.
  */
 export async function fetchSerpApi(name: keyof typeof SERPAPI_QUERIES): Promise<NewsItem[]> {
+  return fetchSerpApiParams(String(name), SERPAPI_QUERIES[name]);
+}
+
+/** Live SerpApi calls made by this server instance (for debug stats). */
+export const serpApiCalls = { count: 0 };
+
+/** Any google_news query. Same credit rules as fetchSerpApi. Never throws. */
+export async function fetchSerpApiParams(label: string, params: Record<string, string>): Promise<NewsItem[]> {
   const key = process.env.SERPAPI_KEY;
   if (!key) return [];
   try {
     const u = new URL("https://serpapi.com/search.json");
-    for (const [k, v] of Object.entries(SERPAPI_QUERIES[name])) u.searchParams.set(k, v);
+    for (const [k, v] of Object.entries(params)) u.searchParams.set(k, v);
     u.searchParams.set("api_key", key);
-    // GET fetch → Next's Data Cache keeps it for 4h on Vercel, a second layer on top of the route cache.
+    serpApiCalls.count++;
+    // GET fetch → Next's Data Cache keeps it for 4h, a second layer on top of the route cache.
     const res = await fetch(u, { signal: AbortSignal.timeout(15_000), next: { revalidate: 14400 } });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const json = await res.json();
     if (json.error) throw new Error(String(json.error).slice(0, 120));
-    console.log(`[news] serpapi ${name} ok (${json.news_results?.length ?? 0} results)`);
+    console.log(`[news] serpapi ${label} ok (${json.news_results?.length ?? 0} results)`);
     return parseSerpApiGoogleNews(json);
   } catch (e) {
-    console.warn(`[news] serpapi ${name} failed: ${(e as Error).message}`);
+    console.warn(`[news] serpapi ${label} failed: ${(e as Error).message}`);
     return [];
   }
 }
@@ -282,10 +291,10 @@ export function dedupe(list: NewsItem[]): NewsItem[] {
 }
 
 /** Fetch the publisher page and read og:description plus the first 3 paragraphs. "" on failure. */
-export async function fetchArticleFacts(link: string): Promise<string> {
+export async function fetchArticleFacts(link: string, timeoutMs = 5_000, maxChars = 900): Promise<string> {
   if (!/^https?:\/\//.test(link) || /news\.google\.com/.test(link)) return "";
   try {
-    const html = (await getText(link, 5_000)).slice(0, 400_000);
+    const html = (await getText(link, timeoutMs)).slice(0, 400_000);
     const og =
       html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']*)["']/i)?.[1] ??
       html.match(/<meta[^>]+content=["']([^"']*)["'][^>]+property=["']og:description["']/i)?.[1] ??
@@ -294,8 +303,8 @@ export async function fetchArticleFacts(link: string): Promise<string> {
     const paras = [...html.matchAll(/<p(?:\s[^>]*)?>([\s\S]*?)<\/p>/gi)]
       .map((m) => stripTags(m[1]))
       .filter((p) => p.length > 60 && !/cookie|subscribe|newsletter|javascript|advertis/i.test(p))
-      .slice(0, 3);
-    return [decodeEntities(og), ...paras].filter(Boolean).join(" ").replace(/\s+/g, " ").slice(0, 900);
+      .slice(0, maxChars > 900 ? 6 : 3);
+    return [decodeEntities(og), ...paras].filter(Boolean).join(" ").replace(/\s+/g, " ").slice(0, maxChars);
   } catch {
     return "";
   }

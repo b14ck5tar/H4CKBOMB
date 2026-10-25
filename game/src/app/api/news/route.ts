@@ -1,52 +1,61 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { unstable_cache } from "next/cache";
-import { getTodaysQuestsDetailed } from "@/server/news/pipeline";
-import type { QuestSeed } from "@/lib/types";
+import { getNewsCandidates, lastStats, type NewsCandidate } from "@/server/news/candidates";
+import { DEFAULT_RATING, isRating, questAllowed } from "@/lib/rating";
 
-// GET /api/news → { quests: QuestSeed[], generatedAt }
-// "Tales from Today": 0–3 quests made from today's real news. Never errors; [] on failure.
+// GET /api/news?rating=kids|teens|adults → { quests: [{id, headline, snippet, source, url, date, place, rating}], generatedAt }
+// Up to 10 odd, harmless real stories for the "Odd news" story vote. Never errors; [] on failure (the client
+// falls back to the curated seeds).
 //
-// Caching (so SerpApi is hit at most ~6x/day):
-//  1. unstable_cache keeps a non-empty result in Next's Data Cache for 4h (empty results throw
-//     inside the cached fn, so a bad run is never cached and the stale good one is kept).
-//  2. Cache-Control s-maxage lets the Vercel CDN serve it without invoking the function.
-//  3. The pipeline also memoizes per server instance, and SerpApi GETs use fetch revalidate.
-// The handler reads the request, so it is NOT prerendered at build time (no API calls during build).
+// Credits: one refresh = 2 SerpApi calls. The full list (all ratings) is cached for 4 h in Next's Data Cache
+// (survives dev restarts) and in memory; the rating filter runs AFTER the cache, so ratings never multiply calls.
+// Empty results throw inside the cached fn, so a bad run is never cached.
 
-export const revalidate = 14400; // 4h
+export const revalidate = 14400;
 export const maxDuration = 120;
 
-type Payload = { quests: QuestSeed[]; generatedAt: string };
+type Payload = { list: NewsCandidate[]; generatedAt: string };
 
-const cachedQuests = unstable_cache(
+const cached = unstable_cache(
   async (): Promise<Payload> => {
-    const { quests } = await getTodaysQuestsDetailed();
-    if (!quests.length) throw new Error("no quests (not caching)");
-    return { quests, generatedAt: new Date().toISOString() };
+    const { list } = await getNewsCandidates();
+    if (!list.length) throw new Error("no candidates (not caching)");
+    return { list, generatedAt: new Date().toISOString() };
   },
-  ["news-quests-v1"],
-  { revalidate: 14400, tags: ["news-quests"] },
+  ["odd-news-candidates-v2"],
+  { revalidate: 14400, tags: ["news-candidates"] },
 );
 
+const view = (c: NewsCandidate) => ({
+  id: c.id,
+  headline: c.headline,
+  snippet: c.snippet,
+  source: c.source,
+  url: c.url,
+  date: c.date,
+  place: c.place,
+  rating: c.rating,
+});
+
 export async function GET(req: NextRequest) {
-  const sp = req.nextUrl.searchParams; // always read: keeps the route dynamic (no build-time run)
+  const sp = req.nextUrl.searchParams;
+  const r = sp.get("rating");
+  const rating = isRating(r) ? r : DEFAULT_RATING;
   const dev = process.env.NODE_ENV !== "production";
   const debug = dev && sp.get("debug") === "1";
-  const fresh = dev && sp.get("fresh") === "1"; // dev only: bypass caches (costs Muse calls)
 
   try {
-    if (debug || fresh) {
-      const { quests, stats } = await getTodaysQuestsDetailed({ fresh });
-      return NextResponse.json({ quests, generatedAt: new Date().toISOString(), ...(debug ? { stats } : {}) });
+    const { list, generatedAt } = await cached();
+    const quests = list.filter((c) => questAllowed(c.rating, rating)).map(view);
+    const body: Record<string, unknown> = { quests, generatedAt };
+    if (debug) {
+      body.stats = lastStats(); // in-memory only: never triggers a run
+      body.all = list;
     }
-    const payload = await cachedQuests();
-    return NextResponse.json(payload, {
-      headers: { "Cache-Control": "public, s-maxage=14400, stale-while-revalidate=86400" },
-    });
+    return NextResponse.json(body, { headers: { "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=14400" } });
   } catch (e) {
     console.warn(`[api/news] ${(e as Error).message}`);
-    return NextResponse.json({ quests: [], generatedAt: new Date().toISOString() } satisfies Payload, {
-      headers: { "Cache-Control": "no-store" },
-    });
+    // Never re-run the pipeline here: an empty run isn't cached, so a retry would spend SerpApi credits again.
+    return NextResponse.json({ quests: [], generatedAt: new Date().toISOString(), ...(debug ? { error: (e as Error).message } : {}) }, { headers: { "Cache-Control": "no-store" } });
   }
 }
