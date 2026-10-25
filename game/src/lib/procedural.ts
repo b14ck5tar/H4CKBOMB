@@ -69,6 +69,8 @@ export type TurnProposal = {
   step_solved: boolean;
   /** 1-3 sound cues for this slide (lib/storySfx.ts): { id, word }, in order. */
   sfx?: { id: string; word: number }[];
+  /** Lines said out loud in the outcome (FEATURES.castVoices): who says them, and the words inside the quote marks. */
+  quotes?: { speaker: string; text: string }[];
 };
 
 /** What the TV shows for one turn, plus the next state. */
@@ -87,11 +89,43 @@ export type TurnResult = {
   fallback: boolean;
   /** The slide's sound cues (valid ids, in word order). */
   sfx?: { id: string; word: number }[];
+  /** The outcome as narration and cast dialogue (FEATURES.castVoices), in reading order. */
+  lines?: VoiceLine[];
 };
 
 const clip = (s: unknown, n: number) => String(s ?? "").replace(/[<>{}]/g, "").replace(/\s+/g, " ").trim().slice(0, n);
 const words = (s: string) => (s.trim() ? s.trim().split(/\s+/).length : 0);
 const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9 ]+/g, "").replace(/\s+/g, " ").trim();
+
+/** One piece of a line read aloud (FEATURES.castVoices): speaker "" = the narrator, else a cast member or a hero. */
+export type VoiceLine = { speaker: string; text: string };
+
+/**
+ * Split a line into narration and quoted dialogue, for character voices. `quotes` is the model's own list
+ * ([{speaker, text}]); a quote counts only if its speaker is known and its words sit inside quote marks in `text`,
+ * so the pieces always add back up to the line. Anything else is the narrator's.
+ */
+export function voiceLines(text: string, quotes: unknown, speakers: string[]): VoiceLine[] {
+  const known = new Map(speakers.filter(Boolean).map((n) => [norm(n), n]));
+  const out: VoiceLine[] = [];
+  let rest = text;
+  for (const q of Array.isArray(quotes) ? quotes.slice(0, 3) : []) {
+    const who = known.get(norm(String(q?.speaker ?? "")));
+    const said = String(q?.text ?? "").replace(/^["“”\s]+|["“”\s]+$/g, "").trim();
+    const at = who && said.length > 1 ? rest.indexOf(said) : -1;
+    if (at < 1 || !/["“]/.test(rest[at - 1])) continue;
+    // The closing mark may come after the quote's own punctuation: "Not again," says the warden.
+    let end = at + said.length;
+    while (end < rest.length && /[.!?,…]/.test(rest[end])) end++;
+    if (!/["”]/.test(rest[end] ?? "")) continue;
+    const before = rest.slice(0, at - 1).trim();
+    if (before) out.push({ speaker: "", text: before });
+    out.push({ speaker: who!, text: rest.slice(at - 1, end + 1).trim() });
+    rest = rest.slice(end + 1);
+  }
+  if (rest.trim()) out.push({ speaker: "", text: rest.trim() });
+  return out.length ? out : [{ speaker: "", text }];
+}
 
 // ---------------------------------------------------------------- progress (CD refinement: the AI judges, code clamps)
 

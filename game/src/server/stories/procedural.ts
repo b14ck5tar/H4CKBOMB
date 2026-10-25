@@ -16,6 +16,7 @@ import {
   sentences,
   trimPile,
   usesPlan,
+  voiceLines,
   type Grade,
   type StoryState,
   type TurnProposal,
@@ -102,11 +103,18 @@ ${badExamplesPrompt()}`;
 
 function turnSystem(avoid: string) {
   // The examples block is stable unless an example game overlaps the live story (then it is left out).
-  return TURN_BASE.replace(outcomeExamplesPrompt({ games: 1 }), outcomeExamplesPrompt({ games: 1, avoid }));
+  const base = TURN_BASE.replace(outcomeExamplesPrompt({ games: 1 }), outcomeExamplesPrompt({ games: 1, avoid }));
+  return FEATURES.castVoices ? `${base}
+
+${DIALOGUE_RULE}` : base;
 }
+
+/** Character voices (CD, FEATURES.castVoices): quoted lines are listed so the TV can read them in the speaker's voice. */
+const DIALOGUE_RULE = `DIALOGUE: when it is funnier said out loud, ONE person here (a cast member, or the acting hero) may say ONE short line, 8 words max, inside double quotes, in the outcome, and it still fits the outcome's word limit. Most turns have none. quotes lists every line said inside quote marks: speaker = their name exactly as in state.cast (or the hero's name), text = the exact words inside the quote marks. No quoted line: quotes [].`;
 
 const str = { type: "string" } as const;
 const obj = (properties: Record<string, unknown>) => ({ type: "object", additionalProperties: false, required: Object.keys(properties), properties });
+const QUOTES_FIELD = { type: "array", items: obj({ speaker: str, text: str }) };
 export const TURN_SCHEMA = obj({
   outcome: str,
   scene: str,
@@ -120,6 +128,7 @@ export const TURN_SCHEMA = obj({
   memorable: str,
   step_solved: { type: "boolean" },
   sfx: { type: "array", items: obj({ id: str, word: { type: "integer" } }) },
+  ...(FEATURES.castVoices ? { quotes: QUOTES_FIELD } : {}),
 });
 
 const GRADES: Grade[] = ["DISASTER", "SETBACK", "PARTIAL", "PROGRESS", "GREAT", "LEGENDARY"];
@@ -257,7 +266,9 @@ export async function runTurn(i: TurnInput, rating: Rating): Promise<TurnResult>
   p.right_now = trimPile(p.right_now);
   const applied = applyTurn(state, p, { hero, attempt: i.attempt, grade, depth: i.depth });
   console.log(`[turn] ${grade} ${hero} ${Date.now() - t0}ms progress ${state.progress}->${applied.state.progress}${fallback ? " FALLBACK" : ""}${edited ? " EDITED" : ""}${probs.length ? ` problems: ${probs.join(" | ")}` : ""}`);
-  return { sfx: pickStorySfxCues(p.sfx), outcome: p.outcome, scene: p.scene, right_now: applied.state.right_now, progress: applied.state.progress, progress_delta: applied.delta, progress_why: String(p.progress_why ?? "").slice(0, 140), finale: applied.finale, act: applied.state.act, act_changed: applied.act_changed, state: applied.state, problems: probs, fallback };
+  const lines = FEATURES.castVoices ? voiceLines(p.outcome, p.quotes, [...applied.state.cast.map((c) => c.name), hero]) : undefined;
+  if (lines && lines.length > 1) console.log(`[turn] voices: ${lines.map((l) => `${l.speaker || "narrator"}: ${l.text}`).join(" | ")}`);
+  return { lines, sfx: pickStorySfxCues(p.sfx), outcome: p.outcome, scene: p.scene, right_now: applied.state.right_now, progress: applied.state.progress, progress_delta: applied.delta, progress_why: String(p.progress_why ?? "").slice(0, 140), finale: applied.finale, act: applied.state.act, act_changed: applied.act_changed, state: applied.state, problems: probs, fallback };
 }
 
 // The editor pass: only if the draft is in by EDIT_BY_MS (the die lands ~8-12 s after the ruling), capped at
@@ -335,7 +346,8 @@ Input: state (where, problem, finish_line, progress, cast, facts, memorable = th
 
 ${callbackExamplesPrompt()}`;
 
-export const STORY_END_SCHEMA = obj({ ending: str, line: str, recap: str, skills: { type: "array", items: obj({ id: str, phrase: str }) }, sfx: { type: "array", items: obj({ id: str, word: { type: "integer" } }) }, sfx_buildup: str, sfx_payoff: str, bridge: str });
+export const STORY_END_SCHEMA = obj({ ending: str, line: str, recap: str, skills: { type: "array", items: obj({ id: str, phrase: str }) }, sfx: { type: "array", items: obj({ id: str, word: { type: "integer" } }) }, sfx_buildup: str, sfx_payoff: str, bridge: str, ...(FEATURES.castVoices ? { quotes: QUOTES_FIELD } : {}) });
+const END_DIALOGUE = DIALOGUE_RULE.replace("in the outcome, and it still fits the outcome's word limit", "in the ending, and it still fits the ending's word limit");
 
 export async function runEnding(input: Any, rating: Rating) {
   const s: StoryState = input.state;
@@ -350,7 +362,7 @@ export async function runEnding(input: Any, rating: Rating) {
     players: Array.isArray(input.players) ? input.players.slice(0, 8) : [],
     ...(FEATURES.storySfx && STORY_SFX_IDS.length ? { sfx_ids: STORY_SFX_IDS } : {}),
   };
-  const call = (extra = "", timeoutMs = 12_000) => museJSON<Any>({ task: `story-end-${rating}`, model: TURN_MODEL, effort: TURN_EFFORT, system: withRating(STORY_END_SYSTEM, rating), schema: STORY_END_SCHEMA, user: JSON.stringify(user) + extra, timeoutMs, maxTokens: 2500 });
+  const call = (extra = "", timeoutMs = 12_000) => museJSON<Any>({ task: `story-end-${rating}`, model: TURN_MODEL, effort: TURN_EFFORT, system: withRating(FEATURES.castVoices ? `${STORY_END_SYSTEM}\n\n${END_DIALOGUE}` : STORY_END_SYSTEM, rating), schema: STORY_END_SCHEMA, user: JSON.stringify(user) + extra, timeoutMs, maxTokens: 2500 });
   // The final plan is the cause, and the ending stays 2 plain sentences: one retry with the problems if not.
   const planRaw = String(input.plan_raw ?? input.plan ?? "").replace(/<[^>]*>/g, " ");
   const check = (d: Any) => {
@@ -360,16 +372,19 @@ export async function runEnding(input: Any, rating: Rating) {
     if (sentences(e).length > 2 || e.split(/\s+/).length > 37) out.push("exactly 2 sentences, 35 words max");
     return out;
   };
+  // Character voices: the ending's quoted lines, split for the TV (speaker "" = the narrator).
+  const speakers = [...(s?.cast ?? []).map((c) => c.name), ...Object.keys(s?.pronouns ?? {}), user.winner.name];
+  const voiced = (x: Any) => (FEATURES.castVoices && x?.ending ? { ...x, lines: voiceLines(String(x.ending), x.quotes, speakers) } : x);
   const t0 = Date.now();
   const d = await call();
   // The host waits 15 s in all: retry only a hard miss (the plan, the length) and only inside ~13.5 s.
   const probs = check(d);
   const left = 13_500 - (Date.now() - t0);
-  if (!probs.length || left < 4_000) return d;
+  if (!probs.length || left < 4_000) return voiced(d);
   try {
     const again = await call(`\n\nYour last answer had problems. Fix them.\nLAST ANSWER: ${JSON.stringify(d)}\nPROBLEMS:\n${probs.map((x) => `- ${x}`).join("\n")}`, left);
-    return check(again).length < probs.length ? again : d;
+    return voiced(check(again).length < probs.length ? again : d);
   } catch {
-    return d;
+    return voiced(d);
   }
 }

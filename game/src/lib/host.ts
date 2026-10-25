@@ -38,7 +38,7 @@ import { FEATURES } from "./features";
 import { pickStorySfx, pickStorySfxCues, type StorySfxCue } from "./storySfx";
 import { Bots } from "./bots";
 import { TIER_SHIFT, gradeRoll } from "./grade";
-import { applyTurn, fallbackProposal, quipOk, stateFromOpener, type StoryState, type TurnResult } from "./procedural";
+import { applyTurn, fallbackProposal, quipOk, stateFromOpener, type StoryState, type TurnResult, type VoiceLine } from "./procedural";
 import { speakableName } from "./now";
 import { DEFAULT_CAST, VOICES, isVoice } from "./voices";
 import { ART_STYLES, isArtStyle } from "./artStyles";
@@ -143,6 +143,12 @@ function speakerRef(s: string) {
  * What the narrator reads for the opener: a storyteller's lead-in, the narration, then the character's line (CD: a
  * storyteller talking to the table). The judge openers are pre-voiced from exactly this text (game/voice-cache).
  */
+/** A line as the narrator reads it (and its audio cache key): one line, no doubled words. */
+function voiceText(text: string) {
+  // "door door", "through through": a doubled word reads badly aloud.
+  return text.replace(/\s+/g, " ").trim().replace(/\b(\w+)(\s+\1\b)+/gi, "$1");
+}
+
 function openerText(sc: SeedScene) {
   const npc = sc.npc_line?.speaker && sc.npc_line?.line ? ` And ${speakerRef(sc.npc_line.speaker)}? Very calmly: "${sc.npc_line.line}"` : "";
   return `Okay, everyone… gather in. ${sc.narration}${npc}`;
@@ -414,6 +420,84 @@ function questOptionsFor(rating: Rating) {
   }));
 }
 
+/** A room's state before any story: the constructor's, and Play again's (which keeps the room, players and heroes). */
+function freshState(code: string, rating: Rating = DEFAULT_RATING): GameState {
+  return {
+    code,
+    rating,
+    phase: "lobby",
+    mode: "full",
+    partyName: "",
+    players: [],
+    questId: "",
+    questOptions: questOptionsFor(rating),
+    scenes: [],
+    sceneIndex: 0,
+    hope: HOPE_START,
+    hopeMax: HOPE_MAX,
+    question: "",
+    lastTime: "",
+    sceneTitle: "",
+    goal: "",
+    nowGoal: "",
+    ladder: [],
+    step: 0,
+    fling: null,
+    progress: 0,
+    sceneArt: "",
+    narration: "",
+    situation: "",
+    banner: "",
+    npcLine: { speaker: "", line: "" },
+    suggestions: {},
+    clues: {},
+    clueBecause: {},
+    rescue: null,
+    pitches: [],
+    votes: {},
+    winnerId: "",
+    wins: {},
+    outcome: "",
+    endingLine: "",
+    recap: "",
+    storyOptions: [],
+    source: "news",
+    written: [],
+    turnOrder: [],
+    turnIndex: 0,
+    ideas: {},
+    finale: false,
+    cast: null,
+    voice: null,
+    narrated: false,
+    typing: [],
+    paused: false,
+    artKey: -1,
+    boosts: {},
+    rolls: [],
+    revealed: [],
+    catchers: [],
+    saves: [],
+    round: null,
+    beatIndex: 0,
+    ready: [],
+    deadline: 0,
+    final: null,
+    finalMoves: {},
+    epilogue: "",
+    storybook: null,
+    wards: {},
+    mirrorMoments: {},
+    mirror: [],
+    mirrorIndex: 0,
+    thanks: {},
+    log: [],
+    solvedBy: "",
+    notes: emptyNotes(),
+    busy: "",
+  };
+}
+
 export class GameHost {
   state: GameState;
   deadlineAt = 0;
@@ -439,7 +523,7 @@ export class GameHost {
   private finalPitch: Pitch | null = null;
   private artP = new Map<string, Promise<void>>(); // `${questId}:${scene}` -> hero-painted scene art in flight
   private artSeq = 10; // keys for per-decision paintings in sceneImages (0-2 are the plates)
-  private epilogueP: Promise<{ ending: string; line: string; recap: string; skills: Record<string, string> | null; sfx?: StorySfxCue[]; buildup?: string; payoff?: string; bridge?: string }> | null = null;
+  private epilogueP: Promise<{ ending: string; line: string; recap: string; skills: Record<string, string> | null; sfx?: StorySfxCue[]; buildup?: string; payoff?: string; bridge?: string; lines?: VoiceLine[] }> | null = null;
   private endingAt = 0;
   private storybookP: Promise<Storybook> | null = null;
   private reactionId = 0;
@@ -476,80 +560,7 @@ export class GameHost {
   endedAt = 0;
 
   constructor(code: string) {
-    this.state = {
-      code,
-      rating: DEFAULT_RATING,
-      phase: "lobby",
-      mode: "full",
-      partyName: "",
-      players: [],
-      questId: "",
-      questOptions: questOptionsFor(DEFAULT_RATING),
-      scenes: [],
-      sceneIndex: 0,
-      hope: HOPE_START,
-      hopeMax: HOPE_MAX,
-      question: "",
-      lastTime: "",
-      sceneTitle: "",
-      goal: "",
-      nowGoal: "",
-      ladder: [],
-      step: 0,
-      fling: null,
-      progress: 0,
-      sceneArt: "",
-      narration: "",
-      situation: "",
-      banner: "",
-      npcLine: { speaker: "", line: "" },
-      suggestions: {},
-      clues: {},
-      clueBecause: {},
-      rescue: null,
-      pitches: [],
-      votes: {},
-      winnerId: "",
-      wins: {},
-      outcome: "",
-      endingLine: "",
-      recap: "",
-      storyOptions: [],
-      source: "news",
-      written: [],
-      turnOrder: [],
-      turnIndex: 0,
-      ideas: {},
-      finale: false,
-      cast: null,
-      voice: null,
-      narrated: false,
-      typing: [],
-      paused: false,
-      artKey: -1,
-      boosts: {},
-      rolls: [],
-      revealed: [],
-      catchers: [],
-      saves: [],
-      round: null,
-      beatIndex: 0,
-      ready: [],
-      deadline: 0,
-      final: null,
-      finalMoves: {},
-      epilogue: "",
-      storybook: null,
-      wards: {},
-      mirrorMoments: {},
-      mirror: [],
-      mirrorIndex: 0,
-      thanks: {},
-      log: [],
-      solvedBy: "",
-      notes: emptyNotes(),
-      busy: "",
-    };
+    this.state = freshState(code);
     this.t = openRoom(code);
     this.t.on((m) => this.handle(m));
     if (typeof window !== "undefined") this.loadNews();
@@ -962,6 +973,8 @@ export class GameHost {
         return this.pickHero(m.pid, m.heroId, m.name);
       case "redraw":
         return this.redraw(m.pid);
+      case "newhero":
+        return this.onNewHero(m.pid);
       case "truth":
         return this.onTruth(m.pid, m.text);
       case "real":
@@ -1001,8 +1014,11 @@ export class GameHost {
     const existing = this.player(pid);
     if (existing) return this.patchPlayer(pid, { name });
     if (this.state.phase !== "lobby" || this.state.players.length >= 6) return;
-    const color = PLAYER_COLORS[this.state.players.length % PLAYER_COLORS.length];
+    // A free color (a kick can leave a gap), else the usual rotation.
+    const used = new Set(this.state.players.map((p) => p.color));
+    const color = PLAYER_COLORS.find((c) => !used.has(c)) ?? PLAYER_COLORS[this.state.players.length % PLAYER_COLORS.length];
     this.set({
+      kicked: (this.state.kicked ?? []).filter((x) => x !== pid), // Rejoin after a kick
       players: [
         ...this.state.players,
         { id: pid, name, color, status: "joined", hasPortrait: false, abilityAvailable: true, heart: 1, titles: [], peril: "" },
@@ -1300,6 +1316,34 @@ export class GameHost {
     this.patchPlayer(pid, { status: "joined", hero: undefined, pick: undefined, hasPortrait: false });
   }
 
+  /** Play again (FEATURES.playAgain): back in the lobby, "Make a new hero" drops the kept one. Their join answers stay. */
+  private onNewHero(pid: string) {
+    const p = this.player(pid);
+    if (!FEATURES.playAgain || !p?.hero || p.status === "building" || this.state.phase !== "lobby") return;
+    delete this.portraits[pid];
+    delete this.thumbs[pid];
+    delete this.basePowers[pid];
+    this.patchPlayer(pid, { status: "joined", hero: undefined, pick: undefined, concept: undefined, hasPortrait: false, titles: [] });
+  }
+
+  /**
+   * The TV host removes a player or a test player (FEATURES.kick, lobby only). Their phone sees its id in
+   * state.kicked and offers Rejoin (a normal join, which takes it off the list).
+   */
+  kick(pid: string) {
+    const p = this.player(pid);
+    if (!FEATURES.kick || !p || this.state.phase !== "lobby") return;
+    this.bots.remove(pid);
+    for (const m of [this.portraits, this.thumbs, this.reals, this.truths, this.basePowers, this.lastSeen, this.timeouts, this.awayWhy]) delete m[pid];
+    this.set({
+      players: this.state.players.filter((x) => x.id !== pid),
+      kicked: [...(this.state.kicked ?? []).filter((x) => x !== pid), pid],
+      ready: this.state.ready.filter((x) => x !== pid),
+      typing: this.state.typing.filter((x) => x !== pid),
+    });
+    this.note("hero", p.hero?.name ?? p.name, "Removed from the lobby by the host.");
+  }
+
   /** "One true thing about the real you" (optional, "" = skipped). Private; only for one gentle nod and the storybook. */
   private onTruth(pid: string, text: string) {
     const p = this.player(pid);
@@ -1519,6 +1563,7 @@ export class GameHost {
     this.endedAt = 0;
     this.set({
       players,
+      kicked: [], // a removed phone that never rejoined sees the game in progress, like any late phone
       sceneIndex: 0,
       wards: !this.quick && FEATURES.mirror ? this.assignWards(players.map((p) => p.id)) : {},
       mirrorMoments: {},
@@ -1731,7 +1776,7 @@ export class GameHost {
     this.getSceneArt(0);
     this.askCast(seed);
     this.openerAsked = Date.now();
-    this.voiceFor(openerText(opener));
+    this.voiceFor(this.openerLine(opener));
     const ms = TITLE_CARD_MS; // a title card for every story: the real headline waits for the reveal
     this.setTimer(ms, () => this.openStory());
   }
@@ -1787,7 +1832,7 @@ export class GameHost {
     const sc = this.sceneList[0];
     if (!sc) return;
     // The opener's audio was asked for at the title card; wait at most 5 s from then, else text only.
-    const clip = await this.voiceBy(openerText(sc), this.openerAsked + 8500);
+    const clip = await this.voiceBy(this.openerLine(sc), this.openerAsked + 8500);
     if (this.state.phase !== "quest") return;
     this.set({
       phase: "narrating",
@@ -2197,6 +2242,7 @@ export class GameHost {
     this.turnP = this.turnFor(judged, roll);
     this.turnP.then((d) => {
       this.outcomeAt = Date.now();
+      this.castLine(d.outcome, d.lines);
       this.voiceFor(d.outcome);
       // A new painting every turn (CD, Sun): what just happened, in the place the story has moved to. A new act or
       // the finale frames the whole party; any other turn frames the hero and the friend whose idea it was.
@@ -2528,7 +2574,7 @@ export class GameHost {
     if (!seed || !FEATURES.voice) return;
     const cp = this.castRaw(seed).then((r) => r.cast);
     const sc = this.seedScenes(seed, this.quick)[0];
-    if (sc) void this.voiceFor(openerText(sc), cp);
+    if (sc) void this.voiceFor(this.openerLine(sc), cp);
   }
 
   /** At game start: the story's narrator, plus what its threat wants (for the story spine). */
@@ -2551,7 +2597,7 @@ export class GameHost {
    */
   private voiceFor(text: string, castP = this.castP) {
     // "door door", "through through": a doubled word reads badly aloud.
-    const clean = text.replace(/\s+/g, " ").trim().replace(/\b(\w+)(\s+\1\b)+/gi, "$1");
+    const clean = voiceText(text);
     if (!clean || !FEATURES.voice) return Promise.resolve(null);
     const hit = this.voiceClips.get(clean);
     if (hit) return hit;
@@ -2559,10 +2605,12 @@ export class GameHost {
       const cast = await (castP ?? Promise.resolve(null));
       if (!cast) return null;
       try {
+        // Character voices (FEATURES.castVoices): the line's narration and quotes, plus who is who; /api/tts may ignore them.
+        const lines = this.castLines.get(clean);
         const res = await fetch("/api/tts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: clean, voice: cast.voice, style: cast.style }),
+          body: JSON.stringify({ text: clean, voice: cast.voice, style: cast.style, ...(lines ? { lines, cast: this.speakers() } : {}) }),
         });
         if (!res.ok) return null;
         // Gemini's calm reads slowly, so the TV plays it at 1.25x; OpenAI's pace is already natural (1x).
@@ -2581,6 +2629,34 @@ export class GameHost {
     })();
     this.voiceClips.set(clean, p);
     return p;
+  }
+
+  /** The opener as read aloud; with castVoices on, its character line is marked for that character's voice. */
+  private openerLine(sc: SeedScene) {
+    const text = openerText(sc);
+    const npc = sc.npc_line;
+    if (npc?.speaker && npc?.line) {
+      const quote = `"${npc.line}"`;
+      this.castLine(text, [{ speaker: "", text: text.slice(0, text.lastIndexOf(quote)).trim() }, { speaker: npc.speaker, text: quote }]);
+    }
+    return text;
+  }
+
+  /** Lines that have a cast member's quote in them (FEATURES.castVoices), by the text voiceFor reads. */
+  private castLines = new Map<string, VoiceLine[]>();
+
+  /** Remember a line's narration/quote split for its audio (only when some piece isn't the narrator's). */
+  private castLine(text: string, lines?: VoiceLine[]) {
+    if (!FEATURES.castVoices || !Array.isArray(lines) || !lines.some((l) => l?.speaker)) return;
+    this.castLines.set(voiceText(text), lines);
+  }
+
+  /** Who can speak in a line: the story's side characters and the heroes (for /api/tts to pick voices). */
+  private speakers() {
+    return [
+      ...(this.story?.cast ?? []).map((c) => ({ name: c.name, role: c.role })),
+      ...this.heroes().map((p) => ({ name: p.hero!.name, role: `a hero at the table: ${(p.concept ?? "").slice(0, 80)}`, pronouns: p.hero!.pronouns || "they/them" })),
+    ];
   }
 
   /** Wait for a clip at most until `deadline` (ms since epoch). null = read it as text. */
@@ -2876,7 +2952,7 @@ export class GameHost {
     const fb = () => ({ ending: fallbackEnding(ending, winner, pitch.verdict && !pitch.verdict.fallback ? pitch.verdict.interpretation : "", this.story?.finish_line ?? ""), line: FALLBACK_LINE[ending], recap: "", skills: null as Record<string, string> | null, sfx: [] as StorySfxCue[], buildup: "", payoff: "", bridge: "" });
     this.epilogueP = this.viaAI(
       "The ending",
-      this.ask<{ ending: string; line: string; recap: string; skills?: { id: string; phrase: string }[]; sfx?: unknown; sfx_buildup?: string; sfx_payoff?: string; bridge?: string }>("story_end", {
+      this.ask<{ ending: string; line: string; recap: string; skills?: { id: string; phrase: string }[]; sfx?: unknown; sfx_buildup?: string; sfx_payoff?: string; bridge?: string; lines?: unknown }>("story_end", {
         state: this.story,
         winner_hero: { name: winner, pronouns: this.player(pitch.playerId)?.hero?.pronouns || "they/them" },
         real_story: this.seed?.the_real_story ? { headline: this.seed.the_real_story.headline, summary: this.seed.the_real_story.summary, now: this.seed.the_real_story.now ?? "" } : undefined,
@@ -2912,6 +2988,7 @@ export class GameHost {
               buildup: pickStorySfx(d.sfx_buildup),
               bridge: String(d.bridge ?? "").trim().slice(0, 200),
               payoff: pickStorySfx(d.sfx_payoff),
+              lines: Array.isArray(d.lines) ? (d.lines as VoiceLine[]) : undefined,
             }
           : null,
       fb,
@@ -2920,6 +2997,7 @@ export class GameHost {
     this.epilogueP.then((e) => {
       this.endingAt = Date.now();
       // The final scene reads the ending; the montage closes on the sign-off alone (never the ending twice).
+      this.castLine(e.ending, e.lines);
       this.voiceFor(e.ending);
       this.voiceFor(SIGN_OFF);
       if (pitch.verdict) this.paintDecision(pitch, pitch.verdict, e.ending, e.line || this.state.situation);
@@ -3316,7 +3394,9 @@ export class GameHost {
     const players = this.state.players.map((p) => (this.truths[p.id] ? { ...p, truth: this.truths[p.id] } : p));
     this.set({ phase: "storybook", busy: "Putting your story together…", players });
     if (this.startedAt && !this.endedAt) this.endedAt = Date.now();
+    const game = this.state.game;
     const book = await this.storybookP!;
+    if (this.state.game !== game || this.state.phase !== "storybook") return; // Play again came first
     this.set({ storybook: book, busy: "" });
     this.saveToShelf(book);
   }
@@ -3354,8 +3434,85 @@ export class GameHost {
     return this.seed;
   }
 
-  /** "Next chapter": same heroes and titles, new story. */
+  /** "Play another": the full Play again when it's on, else the old reset (same heroes and titles, new story). */
   nextTale() {
+    if (FEATURES.playAgain) return this.playAgain();
+    this.backToLobby();
+  }
+
+  /**
+   * Play again (CD, FEATURES.playAgain): after the ending, back to the lobby with the same room code. Everyone stays
+   * joined and ready with their hero, so the host can press Start at once (a phone can still send "newhero"). All of
+   * the last story is cleared, the state and the host's own bookkeeping, and `game` goes up so screens can reset.
+   */
+  playAgain() {
+    if (!FEATURES.playAgain || this.state.phase === "lobby") return;
+    const keep = this.state;
+    // The old reset (timers, the seed, art, mirror, the next Quick Tale) first, then everything it didn't cover.
+    this.backToLobby();
+    if (this.nudgeTimer) clearTimeout(this.nudgeTimer);
+    this.nudgeTimer = null;
+    Object.values(this.preRuleTimers).forEach((t) => clearTimeout(t));
+    this.preRuleTimers = {};
+    this.bots.reset();
+    this.story = null;
+    this.finaleNext = false;
+    this.sceneList = [];
+    this.turnP = null;
+    this.pendingRoll = null;
+    this.finalRoll = null;
+    this.finalPitch = null;
+    this.epilogueP = null;
+    this.storybookP = null;
+    this.endingFor = null;
+    this.endingQueue = [];
+    this.endingAt = 0;
+    this.outcomeAt = 0;
+    this.verdicts.clear();
+    this.preRuled.clear();
+    this.quipsSaid = [];
+    this.castLines.clear();
+    this.turnArt.clear();
+    this.seenArt.clear();
+    this.cleanSkills = null;
+    this.typingAt = {};
+    this.lastArtAsked = 0;
+    this.castP = null;
+    this.ourStories = {};
+    this.artSeq = 10;
+    this.deadlineAt = 0;
+    this.endedAt = 0;
+    this.reactionCounts = {};
+    const players = keep.players.map((p) => ({
+      ...p,
+      status: p.hero ? ("ready" as const) : p.status,
+      peril: "",
+      heart: 1 as const,
+      abilityAvailable: true,
+      away: false,
+      catchUp: undefined,
+      truth: p.truth === undefined ? undefined : "", // the storybook put the text on the wire; back to "answered"
+    }));
+    this.set({
+      ...freshState(keep.code, keep.rating),
+      mode: keep.mode,
+      partyName: keep.partyName,
+      source: keep.source,
+      questOptions: keep.questOptions,
+      players,
+      act: undefined,
+      sfx: undefined,
+      revealData: undefined,
+      nudge: undefined,
+      timeWarn: undefined,
+      kicked: [],
+      game: (keep.game ?? 0) + 1,
+    });
+    this.note("hero", "Play again", "Back to the lobby: same room, same heroes, a fresh story.");
+  }
+
+  /** The reset to the lobby (before Play again existed): same heroes and titles, new story. */
+  private backToLobby() {
     this.clearTimer();
     this.lobbyAt = Date.now();
     if (this.finalSafety) clearTimeout(this.finalSafety);

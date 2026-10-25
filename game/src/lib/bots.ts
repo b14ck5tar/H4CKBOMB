@@ -110,7 +110,8 @@ export class Bots {
   add() {
     const s = this.host.state();
     if (s.phase !== "lobby" || this.list.length >= BOT_PEOPLE.length || s.players.length >= 6) return "";
-    const who = BOT_PEOPLE[this.list.length];
+    // The first persona not at the table (a kick can free one).
+    const who = BOT_PEOPLE.find((x) => !this.list.some((b) => b.who.name === x.name)) ?? BOT_PEOPLE[this.list.length];
     const pid = `bot-${who.name.toLowerCase()}-${Math.random().toString(36).slice(2, 6)}`;
     this.list.push({ pid, who, done: new Set(), lastPing: 0 });
     this.host.inject({ type: "join", pid, name: who.name });
@@ -121,6 +122,18 @@ export class Bots {
     });
     if (!this.iv) this.iv = setInterval(() => this.tick(), 1000);
     return who.name;
+  }
+
+  /** The host kicked this test player: it stops acting. */
+  remove(pid: string) {
+    this.list = this.list.filter((b) => b.pid !== pid);
+  }
+
+  /** Play again: every bot acts afresh (their "done once" keys repeat in a new game). */
+  reset() {
+    this.timers.forEach((t) => clearTimeout(t));
+    this.timers.clear();
+    this.list.forEach((b) => b.done.clear());
   }
 
   stop() {

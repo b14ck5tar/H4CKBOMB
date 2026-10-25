@@ -393,6 +393,10 @@ export interface GameState {
   solvedBy: string; // reveal line: "Solved by Ava's parallel parking and Ben's coffee." ("" until the reveal, or if nobody shared a skill)
   notes: DMNotes;
   busy: string;
+  /** Players the host removed from the lobby (FEATURES.kick): their phone shows Rejoin. */
+  kicked?: string[];
+  /** Which game this is in the room (0 = the first). Play again (FEATURES.playAgain) adds 1. */
+  game?: number;
 }
 
 /**
