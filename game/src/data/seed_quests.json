@@ -103,13 +103,15 @@
    "kind": "hook",
    "title": "The Bridge Is Breakfast",
    "location": "The New Span Work Site",
-   "narration": "A road in a small river town finally reopens at sunrise with a brand-new bridge. A giant river snake that eats metal is wrapped around it, chewing. It already ate the old bridge, and that took three years to fix.",
+   "narration": "A road in a small river town finally reopens at sunrise with a brand-new bridge. A giant river snake that eats metal is wrapped around it, chewing. It hums while it chews. It ate the old bridge three years ago.",
    "goal": "Get the snake off the bridge before sunrise",
    "situation": "A giant rust-red snake coiled around a new bridge, chewing the railing, while the sky gets lighter.",
    "npc_line": {
     "speaker": "Bridge inspector",
     "line": "Good morning! Is the bridge supposed to be humming?"
-   }
+   },
+   "first_step": "Pull the snake off the railing",
+   "problem_name": "the metal-eating snake"
   },
   "the_real_story": {
    "summary": "A road in Porter, Indiana, closed for nearly three years is set to reopen with a newly built bridge.",
@@ -364,7 +366,9 @@
    "npc_line": {
     "speaker": "Park ranger",
     "line": "It took my lunch. It does not even have a mouth."
-   }
+   },
+   "first_step": "Get the traffic cones back from the hand",
+   "problem_name": "the ice hand"
   },
   "the_real_story": {
    "summary": "Polar Caves in Rumney says its 80-ton hanging boulder fell on Oct. 18, smashing a walkway, with no injuries reported.",
@@ -977,13 +981,15 @@
    "kind": "hook",
    "title": "The Baby on the Tower",
    "location": "The Grain Elevator",
-   "narration": "A metal egg fell from space into a Minnesota cornfield, and it hatched. The baby eats light, and every lamp it eats makes it bigger. Now it is on top of the grain elevator, crying for home.",
+   "narration": "A metal egg fell from space into a Minnesota cornfield, and it hatched. The sheriff says it is safe. The baby eats light, and every lamp it eats makes it bigger. Now it is on top of the tall grain tower, crying for home.",
    "goal": "Send the hatchling home before the sun comes up",
    "situation": "A tall grain elevator with a red light on top, a glowing creature hugging it, and the empty eggshell on a truck below.",
    "npc_line": {
     "speaker": "The sheriff",
     "line": "I said it was safe. I would like to keep being right."
-   }
+   },
+   "first_step": "Coax the baby down from the tower",
+   "problem_name": "the baby from space"
   },
   "the_real_story": {
    "summary": "An 11-foot-wide metal dome found in a Stevens County, Minnesota, cornfield on Oct. 14 is likely part of a Chinese rocket's upper stage that fell back to Earth after a Sept. 15 launch, experts say, and nobody was hurt.",
