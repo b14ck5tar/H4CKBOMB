@@ -77,7 +77,7 @@ See PITCH_KIT.md section 3 for the second-by-second lines. Shape, with 3 judges:
 | 1:15 | Turn 1 (45 s to suggest and pick; ends early once everyone has sent). Coach the friend's idea. Swipe to throw. |
 | 2:15-3:45 | Turns 2 and 3. Only say whose turn it is. |
 | 3:50 | Finale: everyone writes, backs one plan (not their own), everyone shakes. |
-| 5:15 | "Because of you", then the reveal: the real headline, "Solved by" with their secret talents, the keepsake QR. |
+| 5:15 | "Because of you", then the reveal in two beats: "What you did" ("Solved by" their secret talents), then "What really happened"; the keepsake QR. |
 | 5:40 | The close, then questions. |
 
 With 2 judges (or 1 judge + the HOST), the reveal lands about 45 s earlier. Say the length up front: "It's a whole
