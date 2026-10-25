@@ -27,6 +27,9 @@ Never on screen or in the words: danger meter, Needs 12+, Catch, Boost, Mirror, 
 "fairytale", "Once Upon a Roll", "inspired by real events", "weirdly good at", hotkeys, the "?" help, "Local mode",
 the address bar, any key or DM.
 
+**No camera filming (CD):** the whole video is screen recordings (the TV and the phones) plus the B-roll stills in
+`devpost-media/broll/`.
+
 ---
 
 ## The voiceover: one clean read (record in one take)
@@ -91,8 +94,7 @@ ideas, never own a turn; never call one "my friend". A test player's idea can st
 | Time | VO beat | Shot | Source |
 |---|---|---|---|
 | **Part 1** | | | |
-| 0:00-0:09 | "everyone on their own phone" | Two friends on a couch, each scrolling, nobody talking. 2 s of silence first. | §2 couch shot (LIVE) |
-| 0:09-0:19 | "Tabletop games fix that…" | Hands rolling real dice, people leaning in. No dice? Use `deck-slide-3.png` with a slow push. | §2 dice shot / §4 B-roll |
+| 0:00-0:19 | "everyone on their own phone… so most groups never play." | `deck-slide-2.png` (TOGETHER. ON OUR PHONES.) with a slow push in; the two boxes "Game nights fix that" / "Someone has to run them" land on the matching words. | §4 B-roll |
 | 0:19-0:30 | "So we built Group Project…" | The TV lobby: neon title, big QR and the lobby filling with heroes. Title: **Group Project**, subtitle *the one group project where everyone actually shows up.* | §2 take: TV |
 | **Part 2** | | | |
 | 0:30-0:40 | "Scan the code…" | Phone A: type the hero, answer "What's your secret talent?" TV: the hero card pops in, the portrait paints in. | §2 take: phone A + TV |

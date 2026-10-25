@@ -52,9 +52,7 @@ Play these moves (plan the moves, not the words):
 Keep the take that has: a friend's idea picked, one low roll and one high roll, an outcome that uses the player's
 own word, a readable headline at the reveal. **One good take is enough.**
 
-Also record:
-- [ ] **The opening shot** (Part 1, 9 s): the three of you on a couch, each scrolling your own phone, nobody talking.
-- [ ] Optional: 5 s of hands rolling real dice.
+No camera filming: the video is screen recordings plus the B-roll stills in §4.
 
 ## 3. Screen captures after the take (5 min)
 
@@ -67,7 +65,8 @@ Also record:
 In `devpost-media/broll/` (made by script, 1920x1080):
 | File | Use it for |
 |---|---|
-| `deck-slide-3.png` | Part 1 end: "So we built Group Project" |
+| `deck-slide-2.png` | Part 1: "everyone on their own phone… someone has to run the game" |
+| `deck-slide-3.png` | Spare for Part 1's end: "So we built Group Project" (the lobby screen recording is the first pick) |
 | `how-it-works.png` | Part 3: the one-turn diagram (real news → Muse → plan → dice → Muse → painting) |
 | `deck-slide-7.png` | Part 3/4: "Muse writes and judges. Code rolls the dice. Players steer." + the build numbers |
 | `deck-slide-6.png` | Part 2 backup for the reveal if your take's headline is hard to read |
@@ -83,7 +82,7 @@ natural, like telling a friend; no trailer voice. Fluff a line? Pause, then rere
 
 ## 6. Edit (30-40 min) in Clipchamp (built into Windows) or CapCut
 
-1. Drop in, in this order: couch shot → dice shot → `deck-slide-3.png` → the live take (TV capture as the base) →
+1. Drop in, in this order: `deck-slide-2.png` → the live take (TV capture as the base) →
    `how-it-works.png` → DM's Notes clip → `deck-slide-7.png` → Claude Code clip → `deck-slide-8.png`.
 2. Cut the voiceover at its [pause] gaps and lay the parts on top: Part 1 at 0:00, Part 2 at 0:30, Part 3 at 2:00,
    Part 4 at 2:30. Add the small criterion chips (VIDEO_SCRIPT.md) top-left.
