@@ -3156,3 +3156,8 @@
   20%, 85% { opacity: 1; transform: rotate(-2deg) skewX(-6deg) scale(1); }
   100% { opacity: 0; transform: rotate(-2deg) skewX(-6deg) scale(1.05); }
 }
+
+/* Finale talk: plans BIG (the same cards as the vote); a plan glows lime once its owner is ready to vote. */
+.tvx-fin-talk .tvx-vcard-txt { font-size: calc(var(--u) * 2.5); }
+.tvx-fin-talk .tvx-vcard-txt.is-long { font-size: calc(var(--u) * 2); }
+.tvx-fin-talk .tvx-vcard.is-ready .tvx-vcard-in { box-shadow: 0 0 0 calc(var(--u) * 0.3) #c6ff2e, 0 0 calc(var(--u) * 2) rgba(198, 255, 46, 0.4); }

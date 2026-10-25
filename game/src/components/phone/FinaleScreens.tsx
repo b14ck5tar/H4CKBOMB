@@ -173,6 +173,36 @@ function PhoneShakeIcon() {
   );
 }
 
+/** Finale talk: the plans are on the TV; argue out loud, then tap ready (everyone ready = the vote starts early). */
+export function TalkScreen({ ready, onReady, goal, timer }: { ready: boolean; onReady: () => void; goal?: string; timer?: TimerSpec }) {
+  return (
+    <>
+      {timer && <Fuse {...timer} />}
+      <div className="pk-choices pk-center" style={{ gap: 14 }}>
+        <TvGlyph />
+        <Kicker tone="pink">The final move</Kicker>
+        <Say text="*Talk it out!* Convince the table out loud" />
+        <p className="pk-hint">Every plan is on the TV. Which one saves the day?</p>
+        {ready ? (
+          <p className="pk-hint">Ready. Waiting for the others…</p>
+        ) : (
+          <GameButton
+            tone="lime"
+            xl
+            onClick={() => {
+              vibrate(20);
+              onReady();
+            }}
+          >
+            I&apos;m ready to vote
+          </GameButton>
+        )}
+      </div>
+      <Goal goal={goal} />
+    </>
+  );
+}
+
 export function ShakeScreen({
   final,
   phase,
