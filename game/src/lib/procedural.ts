@@ -328,7 +328,7 @@ export function plainProblems(text: string, known = ""): string[] {
   if (long) out.push(`a sentence is ${words(long)} words: 18 max, one idea each`);
   if (/\b(as if|as though)\b/i.test(t) || /(?<!\b(look|looks|looked|looking|feel|feels|felt|sound|sounds|smell|smells|just|would|not|nothing|anything|something))\s+like (a|an|the|some)\b/i.test(t)) out.push("no similes (\"like popcorn\"): say what happens");
   if (/\b(zero|percent|cases|data|statistics|records show|in theory|technically|officially|literally)\b/i.test(t)) out.push("no counting, measuring or official talk (\"fits zero past cases\"): say what someone sees or does");
-  if (/hear(s|d)?[^.]{0,24}(blink|glow|light|color|colour|flash)|sees?[^.]{0,24}(hum|sound|noise|song|beep)|mid (?!air)[a-z]+/i.test(t)) out.push("say only what someone could really see, hear or do (you hear a sound, you see a light), in plain words");
+  if (/\bhear(s|d)?\b[^.]{0,24}\b(blink|glow|light|color|colour|flash)\b|\bsees?\b[^.]{0,24}\b(hum|sound|noise|song|beep)\b|\bmid (?!air\b)[a-z]+\b/i.test(t)) out.push("say only what someone could really see, hear or do (you hear a sound, you see a light), in plain words");
   const knownSet = new Set(String(known).toLowerCase().split(/[^a-z]+/).filter(Boolean));
   const hard = t.split(/[^A-Za-z']+/).filter((w) => w && !/^[A-Z]/.test(w) && syl(w) >= 4 && !/(ly|ing|ed|s)$/.test(w) && !knownSet.has(w.toLowerCase()));
   if (hard.length >= 2) out.push(`hard words (${hard.slice(0, 3).join(", ")}): use short everyday words`);
@@ -349,6 +349,26 @@ export function repeatsMoment(text: string, moments: string[], plan = "") {
   return "";
 }
 
+const REVERSE = /\b(again|lost|loses?|gone|broke|breaks?|broken|undo(es|ne)?|wiped?|wipes|ruin(s|ed)?|escapes?|escaped|slips?|slipped|falls? (off|out|apart)|comes? (off|loose|undone)|unravels?|leaks?|empty|empties)\b/i;
+
+/**
+ * A win the outcome takes back ("Done: build a pen for the pig" + "the pig breaks out of the pen"): a sentence with a
+ * reversal word and a word that only that win has (the problem's own words don't count, they are everywhere).
+ */
+export function undoesDone(text: string, state: StoryState) {
+  const common = new Set(planWords(`${state.problem} ${state.finish_line} ${state.where}`));
+  for (const f of state.facts.filter((x) => x.startsWith("Done:"))) {
+    const own = planWords(f.slice(5)).filter((w) => !common.has(w) && w.length >= 3);
+    for (const sent of sentences(text)) {
+      if (!REVERSE.test(sent)) continue;
+      const have = sent.split(/[^A-Za-z']+/).map(stem);
+      const hit = own.find((w) => have.some((h) => h === w || (h.startsWith(w) && h.length <= w.length + 3)));
+      if (hit) return `${f.slice(5).trim()} / ${sent.trim()}`.slice(0, 120);
+    }
+  }
+  return "";
+}
+
 /** Everything code can check about a proposal. Each string is a problem the retry is told to fix. */
 export function checkTurn(p: TurnProposal, ctx: { state: StoryState; hero: string; idea_from?: string; grade: Grade; next_player?: string; plan?: string; hook_due?: boolean }): string[] {
   const out: string[] = [];
@@ -359,7 +379,9 @@ export function checkTurn(p: TurnProposal, ctx: { state: StoryState; hero: strin
   // A forward grade must change something: "plan happens, but the old obstacle still holds" stalls the story.
   const second = sentences(o)[1] ?? "";
   if (!["SETBACK", "DISASTER"].includes(ctx.grade) && /\b(still|tighter|closer|anyway)\b/i.test(second)) out.push("the plan must change something for good: sentence 2 is one NEW snag the plan caused, never the old obstacle still holding on");
-  const retold = repeatsMoment(o, ctx.state.last_moments, ctx.plan);
+  const retold = repeatsMoment(o, [...ctx.state.last_moments, ...ctx.state.facts.filter((f) => !f.startsWith("Done:")), ...ctx.state.memorable], ctx.plan);
+  const undone = undoesDone(o, ctx.state);
+  if (undone) out.push(`undoes an earlier win ("${undone}"): nothing achieved is ever undone, so the snag must be something new`);
   if (retold) out.push(`repeats an earlier moment ("${retold}"): something new happens now, and what was learned stays learned`);
   if (/\b(still right there|isn't solved yet|is not solved yet)\b/i.test(o)) out.push("banned filler: never 'still right there' or 'isn't solved yet'; say what the action did");
   if (sentences(o).length > 2) out.push(`outcome has ${sentences(o).length} sentences (2 max)`);

@@ -364,7 +364,7 @@ function fallbackEnding(ending: Ending, name: string, attempt: string, finish: s
   const did = (attempt || `${name} goes for it`).replace(/[.!]+$/, "");
   const goal = finish.replace(/[.!]+$/, "").replace(/^./, (c) => c.toLowerCase());
   // The finish line is usually verb-first ("Get the dog home"); anything else is said as a plain result.
-  if (ending === "TRIUMPHANT") return !goal || /^(the|a|an|it|they|we|everyone)/i.test(goal) ? `${did}, and it works. The heroes pull it off together.` : `${did}, and it works. Together, the heroes ${goal}.`;
+  if (ending === "TRIUMPHANT") return !goal || /^(the|a|an|it|they|we|everyone)\b/i.test(goal) ? `${did}, and it works. The heroes pull it off together.` : `${did}, and it works. Together, the heroes ${goal}.`;
   if (ending === "BITTERSWEET") return `${did}, and it mostly works. The job gets done, but one silly thing never goes back to normal.`;
   return `${did}, but it doesn't quite work. Everyone is fine, and somehow the town likes it better this way.`;
 }

@@ -50,7 +50,7 @@ RULES (every one, every time):
    - PROGRESS: it works, with a small cost or twist. The cost is a NEW thing, never the old obstacle staying put.
    - PARTIAL: sentence 1 = what the plan changed FOR GOOD (it stays changed). Sentence 2 = one NEW snag the plan itself caused. The old obstacle never just "holds on": no "still", no "tighter", no "closer".
      Bad: "Bev squeaks the toy and calls the dog by name. The dog lifts her head but the bison mom tucks her closer." Good: "Bev squeaks the toy and calls the dog's name. The dog wriggles free and runs over, and the bison mom runs right behind her."
-   - SETBACK / DISASTER: it backfires BECAUSE OF THE PLAN ITSELF, funnily, and things get harder. DISASTER is the most spectacular version, a picture the table will retell. It never repeats or undoes the past.
+   - SETBACK / DISASTER: it backfires BECAUSE OF THE PLAN ITSELF (the plan's own object or action is what goes wrong, in a way you can picture), funnily, and things get harder. Bad: "The gate scoop blocks Theo's path." (a thing from nowhere) Good: "Theo's chess pieces are metal, so the snake eats them and wants more." DISASTER is the most spectacular version, a picture the table will retell. It never repeats or undoes the past.
    - If the plan opens a new path (challenge it to chess, hire it, throw it a party), follow that path. Never snap back to an old plan of yours.
 3. MOMENTUM: something moves every turn, as a logical result of the plan: progress, a new problem, or a new place. Small is fine; "nothing happens" is not. Never cancel a success with a new barrier, and never invent a random change that the plan did not cause.
 4. PROGRESS: progress_range is the guaranteed range for this grade. Pick progress_gain inside it by logic: the top when the plan hit the heart of the problem, the bottom when it barely touched it. Say why in progress_why (one plain line).
@@ -79,7 +79,7 @@ READ-ALOUD TEST (hard rule): the narrator reads your lines ONCE to a noisy room.
 13. Stay inside real_event: its kind of place, its real roles (as cast), its everyday objects, its real stakes. The fantasy problem is the one twist on top.
 NEVER RETELL: read last_moments. Never repeat a moment that already happened (a secret told stays told, a thing found stays found); build on it instead.
 14. THE PLAN IS THE CAUSE: the outcome uses the player's own key word or idea from plan (their noun, their joke: chess stays chess, a kazoo stays a kazoo). Never wash the idea into something safer or smarter.
-15. A SUCCESS CAN FINISH THE STEP: if this plan solved right_now, set step_solved true; it is solved, it stays solved (it becomes a fact), and the next twist arrives BECAUSE of it. Nothing achieved is ever undone, not even by a later miss.
+15. A SUCCESS CAN FINISH THE STEP: if this plan solved right_now, set step_solved true; it is solved, it stays solved (it becomes a fact), and the next twist arrives BECAUSE of it: the problem escalates into something NEW and bigger, never the same step again ("corner the pig again" is banned). Nothing achieved is ever undone, not even by a later miss: every fact that starts with "Done:" stays true, so a backfire hurts something else.
 16. THREE ACTS: act 1, act 2, act 3, then the finale, each a different situation. When act_changes_next is true, the scene opens the next act: a new place or a new turn of the problem, caused by what just happened. Keep hook (the opener's twist) in play: it must show up in act 2 and in the finale push.
 
 WRITE: outcome, scene, right_now, progress_gain, progress_why (12 words max), step_solved, new_fact (12 words max, or ""), new_character (name + role, or both ""), where (8 words max if the heroes moved, else ""), open_thread (12 words max, a loose end, or ""), memorable (10 words max, the funniest detail of this turn, or "").
@@ -221,7 +221,7 @@ const HARD = /must name the acting hero|game words|never name|outcome is empty|t
 const TURN_PARALLEL = Math.max(1, Math.min(3, Number(process.env.TURN_PARALLEL) || 2));
 const GRACE_MS = 2_500;
 // A retold moment isn't worth the plan-aware fallback, but it is worth waiting for the other draft or one retry.
-const REDO = /repeats an earlier moment/;
+const REDO = /repeats an earlier moment|undoes an earlier win/;
 const score = (probs: string[]) => probs.filter((x) => HARD.test(x) || REDO.test(x)).length * 10 + probs.length;
 
 /**
