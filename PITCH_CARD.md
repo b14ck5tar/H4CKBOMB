@@ -94,7 +94,8 @@ working demo (the live swipe and the QR on 8).
 
 ### Privacy
 **"What happens to what we type?"** It goes to Meta's Muse API to run tonight's game; the phone says so on the
-join screen ("Your words go to Meta's Muse AI to run tonight's game."). No accounts, no
+join screen ("No accounts. Your words go to Meta's Muse AI to run the game; the TV keeps the finished tale, and
+our server caches the art and audio."). No accounts, no
 names beyond a nickname, no database of players. Rooms are a 4-letter code over Supabase broadcast; the TV holds the
 game in memory. The keepsake lives in the link itself. We never use Meta's `-contributor` models (code refuses to
 start if one is configured), because those are the ones Meta trains on.

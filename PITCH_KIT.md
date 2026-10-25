@@ -57,7 +57,7 @@ normal one (2 each at 2-4 players). **Check the cap on the deployed site before 
 - **3 judges (3 turns): about 5 min from Start, about 6 min from hello.**
 - **2 judges, or 1 judge + you (2 turns): about 4:30 from Start, about 5:15 from hello.**
 - The finale can come early: when the finish line is in reach, the game goes straight to it (`finaleNext`).
-- Judges are said to stay about 4 minutes. So **set the length up front**: "It's a whole game in five minutes. The
+- Judges are said to stay about 4 minutes. So **set the length up front**: "It's a whole game in about five minutes. The
   best part is the last 30 seconds." Two stopwatch runs in rehearsal decide whether we keep max 3 (see the flag in
   section 10).
 
@@ -209,14 +209,14 @@ Never mention cut features (danger meter, Mirror, Catch, Boost, clues, Convince 
 
 The 10-minute plan and the 15-question drill are in `pitch/REHEARSAL.md`.
 
-## 10. Open calls (need the CD or the lead)
+## 10. Calls made (lead, Sun ~4:45 AM)
 
-- **Judge mode length.** Max 3 turns is ~6 min from hello; judges may stay ~4. Options: (a) ⭐ keep max 3, say "five
-  minutes" up front, and drop to max 2 if both rehearsal runs go past 6:00; (b) max 2 turns always (~5 min, but the
-  3rd judge only plays the finale); (c) keep 3 and skip timers with S.
-- **The phone footer** says "Nothing is saved after." Narration audio and paintings are cached on the server's temp
-  folder, so it isn't strictly true. Options: ⭐ change it to "No accounts. Nothing about you is kept." (look session,
-  `phone/kit.tsx:136`); or keep it and never repeat it aloud.
+- **Partner runs judging solo 2:00-4:45** (DECISIONS Sun ~12:30 AM stands).
+- **Judge mode stays max 3 turns.** Say "about five minutes" up front; drop to max 2 if rehearsal runs go past 6:00
+  from hello.
+- **Quick Tale length:** asked to the CD; DEVPOST says "5 to 10 minutes" until they answer.
+- **Phone footer** reworded by the look session (4b8cfa2): "No accounts. Your words go to Meta's Muse AI to run the
+  game; the TV keeps the finished tale, and our server caches the art and audio."
 
 ## Don't say yet (not built, not tested, or not true on the live site)
 
@@ -226,7 +226,7 @@ The 10-minute plan and the 15-question drill are in `pitch/REHEARSAL.md`.
 - **"4 minutes"**: a judge-mode game is ~5 min from Start (section 3).
 - **The narrator's vendor** (OpenAI / ElevenLabs / Gemini) until the voice session confirms the final pick. Say "the
   narrator's voice is the one non-Meta piece".
-- **"Nothing is saved after"** (phone footer). Say "no accounts, no player database".
+- **"Nothing is saved"**: the server caches art and audio. Say "no accounts, no player database".
 - **"About 20 cents a game"** as a measured fact: it's an estimate.
 - **Danger meter, Needs 12+, Mirror, Catch, Boost, clues, Convince the DM, Hope:** cut.
 - **"Hybrid progress feels 9/10"**: tuned in a script, no CD sign-off recorded.
