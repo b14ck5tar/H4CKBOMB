@@ -288,12 +288,13 @@ Input: state (where, problem, finish_line, progress, cast, facts, memorable = th
 - line: 12 words max, the last card, said flatly ("The snake works at the scrapyard now."). This is where ONE callback from memorable may go, in plain words.
 - recap: 2 sentences, 40 words max, that credits EVERY hero by name with what they actually did (from credits), in order, and ends with how it ended (won = they reached the finish line, else kindly that they didn't). Only things that happened. Use exactly the pronouns given.
 - skills: one entry per player: id, and phrase = a clean 1 to 4 word skill in lowercase ("parallel parking"), or "" if what they said is a joke, crude, mean, or not a real skill. Never invent one.
+- sfx_buildup and sfx_payoff (only if sfx_ids is given, else ""): the finale's two sounds, picked from THIS story. sfx_buildup = the tension while everyone shakes for the last roll (the CD's example for the gold story: mining sounds); sfx_payoff = the one loud hit the moment the result lands (a loud clink of gold). Each is one id from sfx_ids.
 - sfx: if sfx_ids is given, 1 to 3 cues for the ending, one per audible action in order: { id: one of sfx_ids, word: the 0-based index of the word in ending where it happens }; [] if sfx_ids is missing.
 - Only mention things that appear in state (facts, memorable, credits, cast, where): no new objects. No game words (roll, dice, needs, natural, luck).
 
 ${callbackExamplesPrompt()}`;
 
-export const STORY_END_SCHEMA = obj({ ending: str, line: str, recap: str, skills: { type: "array", items: obj({ id: str, phrase: str }) }, sfx: { type: "array", items: obj({ id: str, word: { type: "integer" } }) } });
+export const STORY_END_SCHEMA = obj({ ending: str, line: str, recap: str, skills: { type: "array", items: obj({ id: str, phrase: str }) }, sfx: { type: "array", items: obj({ id: str, word: { type: "integer" } }) }, sfx_buildup: str, sfx_payoff: str });
 
 export async function runEnding(input: Any, rating: Rating) {
   const s: StoryState = input.state;

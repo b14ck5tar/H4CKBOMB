@@ -35,7 +35,7 @@ import { openRoom, type Msg, type Transport } from "./transport";
 import { mask } from "./mask";
 import { QUICK, coldOpenTimeline } from "./quick";
 import { FEATURES } from "./features";
-import { pickStorySfxCues, type StorySfxCue } from "./storySfx";
+import { pickStorySfx, pickStorySfxCues, type StorySfxCue } from "./storySfx";
 import { Bots } from "./bots";
 import { TIER_SHIFT, gradeRoll } from "./grade";
 import { applyTurn, fallbackProposal, quipOk, stateFromOpener, type StoryState, type TurnResult } from "./procedural";
@@ -438,7 +438,7 @@ export class GameHost {
   private finalPitch: Pitch | null = null;
   private artP = new Map<string, Promise<void>>(); // `${questId}:${scene}` -> hero-painted scene art in flight
   private artSeq = 10; // keys for per-decision paintings in sceneImages (0-2 are the plates)
-  private epilogueP: Promise<{ ending: string; line: string; recap: string; skills: Record<string, string> | null; sfx?: StorySfxCue[] }> | null = null;
+  private epilogueP: Promise<{ ending: string; line: string; recap: string; skills: Record<string, string> | null; sfx?: StorySfxCue[]; buildup?: string; payoff?: string }> | null = null;
   private endingAt = 0;
   private storybookP: Promise<Storybook> | null = null;
   private reactionId = 0;
@@ -1757,11 +1757,19 @@ export class GameHost {
   }
 
   /** The hand-written opener: read aloud (if the voice is ready) while it reveals line by line. Space skips. */
+  /** The finale's build-up or payoff sound (one id from the ending call). Off unless FEATURES.storySfx. */
+  private cueFinale(kind: "buildup" | "payoff", id?: string) {
+    const ok = pickStorySfx(id);
+    if (!FEATURES.storySfx || !ok) return;
+    this.set({ sfx: { id: ok, cues: [{ id: ok, word: 0 }], at: Date.now(), kind } });
+    this.note("scene", "Sound", `Muse picked the finale ${kind === "buildup" ? "build-up" : "payoff"}: ${ok}`);
+  }
+
   /** The slide's sound cues (CD): Muse picked 1-3 in the turn or ending call; the TV plays them in order. Off unless FEATURES.storySfx. */
   private playStorySfx(x?: unknown) {
     const cues = pickStorySfxCues(x);
     if (!FEATURES.storySfx || !cues.length) return;
-    this.set({ sfx: { id: cues[0].id, cues, at: Date.now() } });
+    this.set({ sfx: { id: cues[0].id, cues, at: Date.now(), kind: "line" } });
     this.note("scene", "Sound", `Muse picked: ${cues.map((c) => c.id).join(", then ")}`);
   }
 
@@ -2754,6 +2762,8 @@ export class GameHost {
   private startShake() {
     if (this.state.phase !== "final_roll" || this.state.final?.stage !== "count") return;
     this.patchFinal({ stage: "shake" });
+    // The finale's build-up sound under everyone shaking (CD), picked by Muse with the ending.
+    this.epilogueP?.then((e) => ["final_roll"].includes(this.state.phase) && this.cueFinale("buildup", e.buildup));
     this.setTimer(this.judge ? 3500 : FINAL_SHAKE_MS, () => this.startTumble(true));
     this.broadcastNow();
   }
@@ -2799,10 +2809,10 @@ export class GameHost {
     const sc = this.sceneList[this.state.sceneIndex];
     const heroes = this.heroes().map((p) => ({ id: p.id, name: p.hero!.name }));
     const winner = this.heroName(pitch.playerId);
-    const fb = () => ({ ending: fallbackEnding(ending, winner, pitch.verdict && !pitch.verdict.fallback ? pitch.verdict.interpretation : "", this.story?.finish_line ?? ""), line: FALLBACK_LINE[ending], recap: "", skills: null as Record<string, string> | null, sfx: [] as StorySfxCue[] });
+    const fb = () => ({ ending: fallbackEnding(ending, winner, pitch.verdict && !pitch.verdict.fallback ? pitch.verdict.interpretation : "", this.story?.finish_line ?? ""), line: FALLBACK_LINE[ending], recap: "", skills: null as Record<string, string> | null, sfx: [] as StorySfxCue[], buildup: "", payoff: "" });
     this.epilogueP = this.viaAI(
       "The ending",
-      this.ask<{ ending: string; line: string; recap: string; skills?: { id: string; phrase: string }[]; sfx?: unknown }>("story_end", {
+      this.ask<{ ending: string; line: string; recap: string; skills?: { id: string; phrase: string }[]; sfx?: unknown; sfx_buildup?: string; sfx_payoff?: string }>("story_end", {
         state: this.story,
         winner_hero: { name: winner, pronouns: this.player(pitch.playerId)?.hero?.pronouns || "they/them" },
         plan: pitch.text,
@@ -2834,6 +2844,8 @@ export class GameHost {
               recap: (d.recap ?? "").trim(),
               skills: Array.isArray(d.skills) ? Object.fromEntries(d.skills.filter((x) => x && typeof x.id === "string").map((x) => [x.id, String(x.phrase ?? "").trim()])) : null,
               sfx: pickStorySfxCues(d.sfx),
+              buildup: pickStorySfx(d.sfx_buildup),
+              payoff: pickStorySfx(d.sfx_payoff),
             }
           : null,
       fb,
@@ -2893,6 +2905,8 @@ export class GameHost {
     this.patchFinal({ stage: "landed", dice: { [r.playerId]: r.kept }, rolled: [r.playerId], total: r.total, ending });
     this.set({ phase: "final_result", rolls: [r], revealed: [r.playerId], players: this.state.players.map((p) => ({ ...p, peril: "" })), ready: [] });
     this.recordWin(pitch, r, `The finale: ${ENDING_LABEL[ending].toLowerCase()}.`);
+    // The payoff sound hits the moment the result lands (CD: "a LOUD clink when we strike gold"); look adds a visual punch on kind "payoff".
+    this.epilogueP?.then((e) => this.state.phase === "final_result" && this.cueFinale("payoff", e.payoff));
     this.note("roll", "The ending", `${r.kept} ${fmtMod(r.statBonus)}${r.bonus ? ` +${r.bonus}` : ""} = ${r.total} → ${BAND_LABEL[r.band]} → ${ENDING_LABEL[ending]}. Below the target fails; reaching it works with a cost; 3 over works cleanly.`);
     this.setTimer(this.judge ? 2000 : FINAL_RESULT_MS, () => this.startFinalScene());
   }
