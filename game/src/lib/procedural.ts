@@ -686,11 +686,12 @@ function applyTurnV3(state: StoryState, p: TurnProposal, ctx: { hero: string; at
     problem = pr.stage;
     rn = pr.fix;
   } else if (stale && !rn) rn = state.right_now;
-  // The finale (coordinator): the original problem plus the biggest pressure, never the latest mess.
-  if (turn >= T && state.finish_line) {
+  // The finale: the CURRENT situation plus the biggest pressure. Never a snap back to the suggested goal (sim: "the
+  // shark exits at turn 5 yet the goal stays 'get the shark out'"), which may already be met or left behind.
+  if (turn >= T) {
     const big = [...(state.pressures ?? [])].sort((a, b) => b.level - a.level)[0];
-    rn = state.finish_line;
-    problem = [state.original_problem || problem, big ? big.stages[Math.min(big.level + (pr?.name === big.name ? 1 : 0), big.stages.length - 1)] : ""].filter(Boolean).join(" ");
+    const bigNow = big ? big.stages[Math.min(big.level + (pr?.name === big.name ? 1 : 0), big.stages.length - 1)] : "";
+    if (bigNow && !problem.includes(bigNow)) problem = [problem, bigNow].filter(Boolean).join(" ");
   }
   const pressures = (state.pressures ?? []).map((x, i) => (pr && i === pr.i ? { ...x, level: Math.min(x.level + 1, x.stages.length - 1) } : x));
   const cast = [...state.cast];
