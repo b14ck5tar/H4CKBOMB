@@ -2272,7 +2272,7 @@ export class GameHost {
         const res = await fetch("/api/tts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: clean, voice: cast.voice, style: `${cast.style}, at a brisk, flowing storytelling pace with only short pauses` }),
+          body: JSON.stringify({ text: clean, voice: cast.voice, style: cast.style }),
         });
         if (!res.ok) return null;
         // Gemini's calm reads slowly, so the TV plays it at 1.25x; OpenAI's pace is already natural (1x).

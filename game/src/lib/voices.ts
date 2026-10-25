@@ -19,7 +19,7 @@ export const VOICE_IDS = Object.keys(VOICES) as VoiceId[];
  * appended to the story's own style line.
  */
 export const VOICE_DIRECTION =
-  "Voice: low, velvety and intimate, like a late-night radio host telling a secret to a few people leaning in close. Tone: mysterious and alluring, quietly knowing, a hint of danger and a slow half-smile; never cheerful, never bubbly, never announcer-like. Delivery: a real human storyteller, not someone reading; vary pitch and rhythm naturally; lean softly on key words and let tension tighten on the last line. Pacing: BRISK, quick conversational speed, only tiny pauses, never slow.";
+  "Expressive, emotionally alive storyteller: real wonder, suspense and comic timing; leans in on surprises, lets a smile show on funny lines, drops low and tense on danger; mysterious and alluring, never flat, never announcer-like; natural pauses.";
 
 /** The house style when the casting call fails: the CD's original brief for the narrator. */
 export const DEFAULT_CAST = {

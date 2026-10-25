@@ -1154,7 +1154,7 @@ function useNarrator(host: Stage, s: GameState) {
     const url = host.voiceUrl(id);
     if (!url) return;
     const audio = new Audio(url);
-    audio.playbackRate = s.voice.rate || 1;
+    audio.playbackRate = 1; // natural speed only: browser time-stretching adds static
     (audio as HTMLAudioElement & { preservesPitch?: boolean }).preservesPitch = true;
     const unduck = music.duckWhile(audio); // the music dips under the narrator
     const t = setTimeout(() => {
