@@ -1,6 +1,6 @@
 # Devpost submit (the CD by ~10:15; the partner is the backup, by 11:30)
 
-The CD plans to press Submit before leaving at ~10:20. Use this page if they couldn't, or to add the video link
+**The project is already submitted (7:17); `DEVPOST_SUBMIT.md` is the field-by-field update, and it's the source of truth.** The CD plans to finish it before leaving at ~10:20. Use this page if they couldn't, or to add the video link
 after. One page, in order. Everything you paste is already written. Never paste a key, and close Discord, DMs and key files
 before sharing your screen with anyone.
 
@@ -24,7 +24,7 @@ If you can't see the project, the CD has to add you as a teammate first (message
 | Elevator pitch | `The one group project where everyone actually shows up.` |
 | Thumbnail | `devpost-media/thumbnail-final.jpg` |
 | About the project (the big text box) | Everything from **## Inspiration** down to the end of **## What's next for Group Project** (stop at the `---` line). Keep the `##` headings; Devpost reads Markdown. |
-| Built with | Type each tag and press Enter: next.js, react, typescript, tailwindcss, vercel, supabase, meta-muse-spark, meta-muse-image, meta-muse-voice-transcribe, mcp, elevenlabs, openai, web-audio-api, serpapi, google-news, claude-code |
+| Built with | The 19 tags in `DEVPOST_SUBMIT.md` §3 |
 | "Try it out" links | `https://groupproject-game.vercel.app/tv` and `https://groupproject-game.vercel.app/tv?judge=1` |
 | Image gallery | Upload `devpost-media/gallery-final/` **in number order, 1 to 6** (1 is the cover). |
 | Video demo link | The YouTube link from step 1 |

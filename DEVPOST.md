@@ -102,6 +102,7 @@ ElevenLabs ahead of time; Muse picks which ones play. Everything else is Meta.
 - **SerpApi Google News** supplies the odd news, cached for 4 hours, then a keyword block list and the storyability
   gate. Stories that pass are saved to a story library, so a quiet news week still has good stories.
 - **An MCP connector** (`/api/mcp`) lets Muse, the agent, list tonight's stories, open a table and draft the invite.
+- **Judge mode** (`/tv?judge=1`): a tested true story, one turn each, then the finale, about 5 minutes.
 
 ### How AI tools and test harnesses helped us build it
 
@@ -133,7 +134,8 @@ reviewers and recording analysts. What actually changed the game:
   problem is still right there." We replaced the script with rules: take the plan literally, follow the logic, keep
   the player's own words, never undo a win, move through 3 acts, and hand off to the next player by name.
 - **The AI's writing was hard to follow.** In our first playtest it invented jargon, and a player asked "What the
-  hell is foam?" Now every line is short and plain, cause then effect, with the goal always on screen.
+  hell is foam?" Now every line has to pass one bar: a tired adult at a party gets it on first hearing. Short and
+  plain, cause then effect, with the goal always on screen.
 - **Our stories felt lame all night, and we kept treating symptoms.** "Nobody cares about bridges." We added a
   storytelling score, word filters, spoiler checks. The real cause was one rule: our safety filter was so broad it
   blocked every story with an edge (heists, cons, weird court cases, scandals), which is exactly what makes real news
@@ -147,8 +149,8 @@ reviewers and recording analysts. What actually changed the game:
 - A turn system where listening to your friends is the best move, and a finale where you have to convince each other.
 - A story that follows the players' own logic instead of a script, with AI that runs the whole game but never decides a
   number or rates a person.
-- Our creative director's first hackathon: they made every creative call and directed AI to build it.
-- We almost weren't here: our application got denied, and one of us never applied. We walked in anyway.
+- Our creative director's first hackathon. Our application got denied and one of us never applied, so we walked in
+  anyway, and shipped a game where the AI runs the night and the humans just get to play.
 
 ## What we learned
 
@@ -176,9 +178,9 @@ reviewers and recording analysts. What actually changed the game:
 
 ## Built with
 
-`next.js` · `react` · `typescript` · `tailwindcss` · `vercel` · `supabase-realtime` · `meta-muse-spark` ·
-`meta-muse-image` · `meta-muse-voice-transcribe` · `mcp` · `elevenlabs` · `openai-tts` · `web-audio-api` · `serpapi` ·
-`google-news` · `claude-code`
+`next.js` · `react` · `typescript` · `tailwindcss` · `vercel` · `supabase` · `meta-muse` · `muse-spark` ·
+`muse-image` · `muse-voice-transcribe` · `mcp` · `elevenlabs` · `openai` · `gemini` · `web-audio-api` · `serpapi` ·
+`google-news` · `claude` · `claude-code`
 
 ## Try it
 
