@@ -165,3 +165,8 @@ Full history and train of thought: `design/00-where-we-are.md`.
 - ✅ CD standing rule (relayed by the coordinator): when a session thinks something should be done a certain way, do it, and tell the CD explicitly WHY in plain words. Check old-iteration ideas against GAME.md and the latest DECISIONS before reusing them.
 - ⏳ Narrator voice per persona (Vesper, Wren, Juniper, Hollis) from the bake-off page: the CD picks; voice session applies it.
 - Clock note: the laptop says ~4:30 AM CDT. Some earlier entry times ("5:45 AM", "8:40 AM") ran ahead of it; trust the laptop clock.
+
+## Sun ~4:35 AM: narrator voices (CD picks, ElevenLabs v3)
+- ✅ Vesper = Sarah, Hollis = George, Wren = Charlie (all Eleven v3, the expressive model). Juniper had no pick: dropped, the AI casts from 3 voices (lead's call: every voice in the game is one the CD approved by ear).
+- ⚠️ Vesper: the CD ticked Lily once and Sarah twice; lead went with Sarah.
+- ⏳ ElevenLabs $5 Starter plan (otherwise the credits run out in ~1-2 games). ⏳ Gemini track on Devpost (⭐ off). ⏳ Quick Tale = 1 turn each (⭐) vs "5-10 min". ⏳ Art: one painting per turn (⭐) vs big moments only.
