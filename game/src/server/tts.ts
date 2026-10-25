@@ -85,8 +85,10 @@ export function trimPauses(pcm: Buffer): Buffer {
     }
     b = e;
   }
-  keep.push([start, n]);
-  if (keep.length === 1 && keep[0][0] === 0) return pcm;
+  const last = loud.lastIndexOf(true);
+  const end = Math.min(n, (last + 1) * win + Math.floor(RATE * 0.25)); // 0.25 s of tail after the last sound
+  keep.push([start, end]);
+  if (keep.length === 1 && keep[0][0] === 0 && end === n) return pcm;
   const out: number[] = [];
   for (const [a, z] of keep) {
     for (let i = a; i < z; i++) {
@@ -116,11 +118,12 @@ function cleanPcm(raw: Buffer): Buffer {
   // scaled down if it would clip.
   const ceiling = 32_000;
   const gain = peak > ceiling ? ceiling / peak : 1;
-  const fade = Math.min(Math.floor(RATE * 0.005), Math.floor(n / 2)); // 5 ms edge fades, nothing else
+  const fade = Math.min(Math.floor(RATE * 0.005), Math.floor(n / 2)); // 5 ms fade in
+  const fadeOut = Math.min(Math.floor(RATE * 0.02), Math.floor(n / 2)); // 20 ms fade out: an end never clicks
   for (let i = 0; i < n; i++) {
     let g = gain;
     if (i < fade) g *= i / fade;
-    else if (i >= n - fade) g *= (n - 1 - i) / fade;
+    else if (i >= n - fadeOut) g *= (n - 1 - i) / fadeOut;
     if (g !== 1) pcm.writeInt16LE(Math.max(-32768, Math.min(32767, Math.round(pcm.readInt16LE(i * 2) * g))), i * 2);
   }
   return pcm;
@@ -162,17 +165,18 @@ async function openai(voice: VoiceId, style: string, text: string, timeoutMs: nu
 // ElevenLabs (TTS_PROVIDER=elevenlabs). The CD found OpenAI "robotic" with harsh S sounds; bake-off in
 // devpost-media/voice-bakeoff. Flash v2.5 reads live lines (~180 ms to first byte); v3 is more expressive but had a
 // 10.7 s cold start, so it only reads text made ahead of time (`ahead`, e.g. openers during the vote).
-// Voice per persona = the CD's picks from the bake-off (Sun AM): Sarah, George, Charlie. Juniper is no longer cast;
-// it reads with George if an old cast still names it.
 type ElevenModel = "eleven_flash_v2_5" | "eleven_v3";
 type ElevenSettings = { stability: number; similarity_boost: number; style: number; use_speaker_boost: boolean; speed?: number };
 const FLASH: ElevenSettings = { stability: 0.35, similarity_boost: 0.8, style: 0, use_speaker_boost: true, speed: 1.1 };
 const V3: ElevenSettings = { stability: 0, similarity_boost: 0.8, style: 0.45, use_speaker_boost: true }; // v3 takes stability 0 / 0.5 / 1
+// ONE narrator for every story (CD, Sun AM): Sarah, at the bake-off clip's settings the CD picked (v3 funny: stability 0,
+// similarity 0.8, style 0.45, speaker boost). Every persona id maps to her, so casting and host.ts stay as they are.
+const SARAH = { voiceId: "EXAVITQu4vr4xnSDxMaL", voice: "Sarah", live: "eleven_flash_v2_5", ahead: "eleven_v3", settings: { eleven_flash_v2_5: FLASH, eleven_v3: V3 } } as const;
 export const ELEVEN: Record<VoiceId, { voiceId: string; voice: string; live: ElevenModel; ahead: ElevenModel; settings: Partial<Record<ElevenModel, ElevenSettings>> }> = {
-  vesper: { voiceId: "EXAVITQu4vr4xnSDxMaL", voice: "Sarah", live: "eleven_flash_v2_5", ahead: "eleven_v3", settings: { eleven_flash_v2_5: FLASH, eleven_v3: V3 } },
-  hollis: { voiceId: "JBFqnCBsd6RMkjVDRZzb", voice: "George", live: "eleven_flash_v2_5", ahead: "eleven_v3", settings: { eleven_flash_v2_5: FLASH, eleven_v3: V3 } },
-  wren: { voiceId: "IKne3meq5aSn9XLyUdCD", voice: "Charlie", live: "eleven_flash_v2_5", ahead: "eleven_v3", settings: { eleven_flash_v2_5: FLASH, eleven_v3: V3 } },
-  juniper: { voiceId: "JBFqnCBsd6RMkjVDRZzb", voice: "George", live: "eleven_flash_v2_5", ahead: "eleven_v3", settings: { eleven_flash_v2_5: FLASH, eleven_v3: V3 } }, // not cast
+  vesper: SARAH,
+  hollis: SARAH,
+  wren: SARAH,
+  juniper: SARAH,
 };
 const ELEVEN_FIRST_BYTE_MS = 4_000; // slower than this to start = fall back to OpenAI
 let elevenOffUntil = 0; // out of characters / bad key: skip ElevenLabs for a while instead of paying the wait every line
@@ -237,7 +241,10 @@ export function gameProvider(start = false): Promise<Decision> {
 
 /** v3 reads [audio tags]; Flash would say them out loud, so they're dropped for it. */
 function elevenText(model: ElevenModel, text: string) {
-  return model === "eleven_v3" ? text : text.replace(/\[[^\]]{1,30}\]\s*/g, "").trim();
+  if (model !== "eleven_v3") return text.replace(/\[[^\]]{1,30}\]\s*/g, "").trim();
+  // v3 stops on its last sound (the bake-off's "cut-off last word"); a closing pause tag lets it finish cleanly
+  // (measured on Sarah: the last 20 ms went from -32 dB, cut, to a clean decay at -91 dB).
+  return /\]\s*$/.test(text) ? text : `${text} [short pause]`;
 }
 
 // Starter allows 3 requests at once (a 4th gets HTTP 429). The host asks for the outcome, the scene and the next turn
@@ -319,6 +326,9 @@ async function call(model: string, voice: VoiceId, style: string, text: string, 
 }
 
 export type SpeakOpts = { ahead?: boolean; timeoutMs?: number };
+/** Without an explicit `ahead`, lines this long (openers ~250-290 chars, endings ~260-375) read with v3: the TV asks
+ * for them early. Live outcome and turn lines are shorter and read with Flash (no wait). */
+const AHEAD_CHARS = 220;
 
 /** Reads a clip from memory, then disk, else makes it once (concurrent asks share one call) and caches it. */
 async function cached(id: string, provider: Clip["provider"], make: () => Promise<Clip | null>): Promise<Clip | null> {
@@ -361,7 +371,7 @@ function toClip(pcm: Buffer, provider: Clip["provider"]): Clip {
 async function elevenClip(voice: VoiceId, text: string, model: ElevenModel, timeoutMs: number) {
   const cfg = ELEVEN[voice];
   const body = elevenText(model, text);
-  const id = crypto.createHash("sha1").update(`el2|${cfg.voiceId}|${model}|${JSON.stringify(cfg.settings[model] ?? FLASH)}|${body}`).digest("hex");
+  const id = crypto.createHash("sha1").update(`el3|${cfg.voiceId}|${model}|${JSON.stringify(cfg.settings[model] ?? FLASH)}|${body}`).digest("hex");
   return cached(id, "elevenlabs", async () => {
     const t0 = Date.now();
     const pcm = await eleven(voice, model, text, timeoutMs);
@@ -406,7 +416,7 @@ export async function speak(voice: VoiceId, style: string, text: string, opts: S
   const timeoutMs = opts.timeoutMs ?? 20_000;
   if ((await gameProvider()).provider === "elevenlabs") {
     const cfg = ELEVEN[voice];
-    const model = opts.ahead ? cfg.ahead : cfg.live;
+    const model = (opts.ahead ?? text.length >= AHEAD_CHARS) ? cfg.ahead : cfg.live;
     let clip = await elevenClip(voice, text, model, timeoutMs);
     if (!clip && model !== cfg.live) clip = await elevenClip(voice, text, cfg.live, timeoutMs);
     if (!clip && Date.now() >= elevenOffUntil) {

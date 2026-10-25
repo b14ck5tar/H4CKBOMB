@@ -27,7 +27,7 @@ export async function POST(req: Request) {
   const style = String(body.style ?? "").replace(/[\r\n]+/g, " ").trim().slice(0, 240);
   if (!text || !isVoice(body.voice)) return new Response("need text and a cast voice", { status: 400 });
   try {
-    const clip = await speak(body.voice, style, text, { ahead: body.ahead === true });
+    const clip = await speak(body.voice, style, text, { ahead: typeof body.ahead === "boolean" ? body.ahead : undefined });
     return new Response(new Uint8Array(clip.wav), {
       headers: { "Content-Type": "audio/wav", "X-Audio-Ms": String(clip.ms), "X-Voice-Rate": String(clip.rate), "X-Voice-Provider": clip.provider, "Cache-Control": "private, max-age=86400" },
     });
