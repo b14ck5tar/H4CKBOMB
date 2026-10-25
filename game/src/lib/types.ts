@@ -308,7 +308,8 @@ export interface GameState {
   lastTime: string; // recap / wrap of the last round
   // Scene (hand-written: seed_quests.json)
   sceneTitle: string;
-  goal: string; // what the heroes are trying to do this scene: on the TV and every phone the whole scene
+  goal: string; // the story's final goal (small in the corner; reached in the finale)
+  nowGoal: string; // "Right now:" the objective the players' own choices set (written after each outcome)
   narration: string;
   situation: string;
   banner: string;

@@ -245,14 +245,22 @@ function Fuse({ host, phase }: { host: Stage; phase: string }) {
 /** The scene's goal: on screen the whole scene, so nobody ever wonders what they're trying to do. */
 function GoalBar({ s }: { s: GameState }) {
   if (!s.goal) return null;
-  const label = s.finale ? "Grand finale · the goal" : s.phase === "narrating" || !s.turnOrder.length ? "The goal" : `Turn ${s.turnIndex + 1} of ${s.turnOrder.length} · the goal`;
+  const now = s.nowGoal && s.nowGoal !== s.goal ? s.nowGoal : "";
+  const turn = s.finale ? "Grand finale" : s.phase === "narrating" || !s.turnOrder.length ? "" : `Turn ${s.turnIndex + 1} of ${s.turnOrder.length}`;
   return (
-    <div className="gp-goal-row">
-      <div className="gp-goal" key={s.goal}>
-        <span className="gp-goal-k">{label}</span>
-        <span className="gp-goal-t">{s.goal}</span>
+    <>
+      <div className="gp-goal-row">
+        <div className="gp-goal" key={now || s.goal}>
+          <span className="gp-goal-k">{[turn, now ? "Right now" : "The goal"].filter(Boolean).join(" · ")}</span>
+          <span className="gp-goal-t">{now || s.goal}</span>
+        </div>
       </div>
-    </div>
+      {now && (
+        <div className="gp-goal-corner" title="The story's goal">
+          <span>The goal</span> {s.goal}
+        </div>
+      )}
+    </>
   );
 }
 

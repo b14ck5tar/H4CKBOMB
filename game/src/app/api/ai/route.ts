@@ -209,7 +209,7 @@ export async function POST(req: Request) {
       const clean = (x: unknown) => String(x ?? "").replace(/<\/?player_input[^>]*>/g, "").trim();
       const text = clean(data.text);
       if (!text) throw new Error("empty outcome");
-      data = { text, situation: clean(data.situation).slice(0, 220), why: clean(data.why).slice(0, 180) };
+      data = { text, situation: clean(data.situation).slice(0, 220), why: clean(data.why).slice(0, 180), now_goal: clean(data.now_goal).replace(/[.!]+$/, "").slice(0, 60) };
     }
     if (task === "kind") {
       // The sentence must finish the frame and stay a sentence; otherwise use the safe local version.

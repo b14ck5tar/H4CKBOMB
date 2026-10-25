@@ -95,13 +95,13 @@ function Timer({ deadlineAt, total }: { deadlineAt: number; total: number }) {
 }
 
 /** The one instruction, big. The goal sits above it during a scene, because people forget. */
-function Say({ text, goal }: { text: string; goal?: string }) {
+function Say({ text, goal, now }: { text: string; goal?: string; now?: string }) {
   return (
     <div className="flex flex-col gap-3">
       {goal && (
         <p className="ph-goal">
-          <span>The goal</span>
-          {goal}
+          <span>{now ? "Right now" : "The goal"}</span>
+          {now || goal}
         </p>
       )}
       <p key={text} className="ph-say">
@@ -358,11 +358,11 @@ function BackPlan({ state, me, send, deadlineAt }: { state: GameState; me: Playe
   const el = eligibleIds(state);
   const others = state.pitches.filter((p) => p.playerId !== me.id && !p.auto);
   const mine = state.votes[me.id];
-  if (!others.some((p) => el.has(p.id))) return <Say text="Your plan is up. Eyes on the TV" goal={state.goal} />;
+  if (!others.some((p) => el.has(p.id))) return <Say text="Your plan is up. Eyes on the TV" goal={state.goal} now={state.nowGoal && state.nowGoal !== state.goal ? state.nowGoal : ""} />;
   return (
     <div className="flex flex-col gap-3">
       <Timer deadlineAt={deadlineAt} total={15000} />
-      <Say text={nowText(state, me.id)} goal={state.goal} />
+      <Say text={nowText(state, me.id)} goal={state.goal} now={state.nowGoal && state.nowGoal !== state.goal ? state.nowGoal : ""} />
       {others.map((p) => {
         const ok = el.has(p.id);
         const pl = state.players.find((x) => x.id === p.playerId);
@@ -436,7 +436,7 @@ function OwnerTurn({ state, send, deadlineAt }: { state: GameState; send: Send; 
       }}
     >
       <Timer deadlineAt={deadlineAt} total={state.mode === "quick" ? QUICK_TURN_MS : TURN_MS} />
-      <Say text="Your turn! What do you do?" goal={state.goal} />
+      <Say text="Your turn! What do you do?" goal={state.goal} now={state.nowGoal && state.nowGoal !== state.goal ? state.nowGoal : ""} />
       <PlanBox
         text={text}
         setText={(t) => {
@@ -491,7 +491,7 @@ function IdeaForm({ state, me, send, deadlineAt }: { state: GameState; me: Playe
     return (
       <div className="flex flex-col gap-3">
         <Timer deadlineAt={deadlineAt} total={state.mode === "quick" ? QUICK_TURN_MS : TURN_MS} />
-        <Say text={`Idea sent. ${first} picks`} goal={state.goal} />
+        <Say text={`Idea sent. ${first} picks`} goal={state.goal} now={state.nowGoal && state.nowGoal !== state.goal ? state.nowGoal : ""} />
         <p className="page p-4 text-lg leading-snug">“{sent}”</p>
         <button
           className="btn btn-ghost"
@@ -516,7 +516,7 @@ function IdeaForm({ state, me, send, deadlineAt }: { state: GameState; me: Playe
       }}
     >
       <Timer deadlineAt={deadlineAt} total={state.mode === "quick" ? QUICK_TURN_MS : TURN_MS} />
-      <Say text={`Suggest a move for ${first}`} goal={state.goal} />
+      <Say text={`Suggest a move for ${first}`} goal={state.goal} now={state.nowGoal && state.nowGoal !== state.goal ? state.nowGoal : ""} />
       <PlanBox text={text} setText={setText} placeholder={`What should ${first} do?`} send={send} />
       <button className="btn btn-crimson text-xl" type="submit" disabled={!text.trim()}>
         Send my idea
@@ -539,7 +539,7 @@ function PitchForm({ state, send, deadlineAt }: { state: GameState; send: Send; 
       }}
     >
       <Timer deadlineAt={deadlineAt} total={state.mode === "quick" ? QUICK_TURN_MS : TURN_MS} />
-      <Say text={state.finale ? "What's the final move?" : "What does your hero do?"} goal={state.goal} />
+      <Say text={state.finale ? "What's the final move?" : "What does your hero do?"} goal={state.goal} now={state.nowGoal && state.nowGoal !== state.goal ? state.nowGoal : ""} />
       <PlanBox text={text} setText={setText} placeholder={`e.g. ${ex}`} send={send} />
       <MicButton onTranscript={(t) => setText(t)} />
       <button className="btn btn-crimson text-xl" type="submit" disabled={!text.trim()}>
@@ -717,7 +717,7 @@ export function Phone({ code }: { code: string }) {
   const goal = SCENE_PHASES.includes(state.phase) ? state.goal : "";
   const passive = (text = nowText(state, me.id)) => (
     <>
-      <Say text={text} goal={goal} />
+      <Say text={text} goal={goal} now={goal && state.nowGoal && state.nowGoal !== state.goal ? state.nowGoal : ""} />
       <ReactionBar send={send} />
     </>
   );

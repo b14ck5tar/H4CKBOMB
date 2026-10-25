@@ -546,6 +546,8 @@
   box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.8);
   animation: qt-rise 0.8s cubic-bezier(0.2, 0.8, 0.25, 1) both;
 }
+.gp-goal-corner { position: absolute; top: 4.6rem; left: 1.6rem; z-index: 15; max-width: 22rem; font-family: var(--font-heading), sans-serif; font-size: 0.95rem; line-height: 1.2; text-transform: uppercase; color: rgba(245, 241, 255, 0.7); padding: 0.4rem 0.7rem; border-radius: 6px; background: rgba(5, 3, 9, 0.55); }
+.gp-goal-corner span { display: block; font-family: var(--font-ui), monospace; font-size: 0.65rem; letter-spacing: 0.25em; color: var(--gilt-bright); }
 .gp-goal-k { font-family: var(--font-ui), monospace; text-transform: uppercase; letter-spacing: 0.25em; font-size: 0.85rem; color: var(--gilt-bright); white-space: nowrap; }
 .gp-goal-t { font-family: var(--font-heading), sans-serif; font-size: 1.6rem; line-height: 1.15; text-transform: uppercase; color: var(--parchment); }
 

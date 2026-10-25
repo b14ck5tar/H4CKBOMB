@@ -122,7 +122,7 @@ export function fallbackOutcome(name: string, band: Band) {
     SUCCESS: `${n}'s plan works, and the heroes get one step closer. The problem isn't solved yet.`,
     LEGENDARY: `${n}'s plan works better than anyone hoped, and the heroes get a big step closer.`,
   };
-  return { text: lines[band] ?? lines.YES_BUT, situation: "", why: "" };
+  return { text: lines[band] ?? lines.YES_BUT, situation: "", why: "", now_goal: "" };
 }
 
 export interface KindInput {

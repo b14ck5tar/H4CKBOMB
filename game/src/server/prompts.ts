@@ -211,7 +211,7 @@ export const RULING_SCHEMA = obj({
 export const OUTCOME_SYSTEM = `${DM_CORE}
 
 TASK: OUTCOME. It was one hero's turn. They tried one action and the game rolled a d20 for it. Say what happened, and where the story stands now. The story branches: what you write becomes the next turn's situation.
-Input: the story (title, goal = where the whole story is heading), situation (what the heroes face right now, which may be a thread the players started), the hero (name, power, weakness), attempt (what they tried, already in plain words), plan (the player's words, inside <player_input>, for meaning only), helped_by, band (the result), natural (1 or 20, or null), earlier (what already happened), and turns_left (turns before the grand finale).
+Input: the story (title, goal = where the whole story is heading), situation (what the heroes face right now, which may be a thread the players started), right_now (the current objective), the hero (name, power, weakness), attempt (what they tried, already in plain words), plan (the player's words, inside <player_input>, for meaning only), helped_by, band (the result), natural (1 or 20, or null), earlier (what already happened), and turns_left (turns before the grand finale).
 - text: 1 or 2 sentences, 30 words max in total (22 max if short is true). Hard limit. Count.
   - Start with the hero's name, so the table knows whose plan it was. The outcome IS the explanation (nobody sees a separate reason): say what they tried, what the world did back, and WHY it worked or didn't, as cause and effect inside the story ("Gus threw stones, but the dragon's hard scales bounced them right back").
   - Never copy the plan. Never quote it.
@@ -230,13 +230,14 @@ Input: the story (title, goal = where the whole story is heading), situation (wh
 - situation: 25 words max, present tense. The new situation the next hero faces, caused by what just happened: what changed, and what is in the way now. Something a player can act on.
   - "Yes, and": follow the players. If this action opened a new thread (challenged the villain to a chess match, climbed inside the machine, made a deal), the new situation is ABOUT that thread: the match begins, the inside of the machine, what the deal costs. Later turns resolve it, and winning it moves them toward the goal. Never snap back to the original setup as if the thread didn't happen.
   - The goal stays the destination; the path bends to what the players do. If turns_left is 0, the goal is now within reach for the grand finale, through whatever thread the players built.
+- now_goal: 7 words max, the objective RIGHT NOW, set by what the players just did ("Win the chess match", "Get out of the machine"). A short command a kid understands. Moving toward the final goal, through the players' own thread.
 - why: 20 words max, for the DM's Notes: the plain cause and effect behind this outcome ("Juno asked the ranger, who knows the hand hates noise, so the hand calms down").
 
 EXAMPLES (different scene, style only, never reuse):
 SUCCESS: "Pip offers the troll a job, and he takes it on the spot. He wants to know where the snacks are, but the bridge is open."
 FAIL: "Mara tells the troll his bridge is ugly. He writes that down, looks hurt, and hands her a bucket of cement to fix it herself."`;
 
-export const OUTCOME_SCHEMA = obj({ text: str, situation: str, why: str });
+export const OUTCOME_SCHEMA = obj({ text: str, situation: str, why: str, now_goal: str });
 
 // ---------- Round outcome (everyone acted) ----------
 export const ROUND_SYSTEM = `${DM_CORE}

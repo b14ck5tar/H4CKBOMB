@@ -360,7 +360,7 @@ export class GameHost {
   private sceneList: SeedScene[] = []; // the hand-written scenes being played
   private pinned = false; // a story was picked by link, so Full Story skips the vote
   private pendingRoll: RollResult | null = null;
-  private outcomeP: Promise<{ text: string; situation: string; why: string }> | null = null;
+  private outcomeP: Promise<{ text: string; situation: string; why: string; nowGoal: string }> | null = null;
   private outcomeAt = 0; // when the outcome text arrived (its audio was asked for then)
   private finalRoll: RollResult | null = null;
   private finalPitch: Pitch | null = null;
@@ -420,6 +420,7 @@ export class GameHost {
       lastTime: "",
       sceneTitle: "",
       goal: "",
+      nowGoal: "",
       narration: "",
       situation: "",
       banner: "",
@@ -1550,6 +1551,7 @@ export class GameHost {
       sceneIndex: 0,
       sceneTitle: sc.title,
       goal: sc.goal,
+      nowGoal: "",
       narration: sc.narration,
       situation: sc.situation,
       npcLine: sc.npc_line ?? { speaker: "", line: "" },
@@ -1695,7 +1697,7 @@ export class GameHost {
   private startFinale() {
     this.clearTimer();
     this.verdicts.clear();
-    this.set({ phase: "pitch", finale: true, pitches: [], votes: {}, winnerId: "", outcome: "", rolls: [], revealed: [], ready: [], busy: "", typing: [] });
+    this.set({ phase: "pitch", finale: true, nowGoal: this.state.goal, pitches: [], votes: {}, winnerId: "", outcome: "", rolls: [], revealed: [], ready: [], busy: "", typing: [] });
     this.note("turn", "Grand finale", "Everyone proposes the final move, everyone backs a friend's plan (never their own), and the winning plan gets one shared die.");
     const line = `The grand finale. ${this.state.situation} Everyone, what's the final move?`;
     this.voiceBy(line, Date.now() + 1200).then((clip) => this.state.phase === "pitch" && this.play(clip));
@@ -1775,7 +1777,7 @@ export class GameHost {
     return this.viaAI(
       `Ruling on ${h.name}'s plan`,
       this.ask<Partial<Verdict>>("verdict", {
-        scene: { title: this.state.sceneTitle, goal: this.state.goal, situation: this.state.situation, who_is_there: this.sceneList[0]?.npc_line?.speaker ?? "" },
+        scene: { title: this.state.sceneTitle, goal: this.state.nowGoal || this.state.goal, final_goal: this.state.goal, situation: this.state.situation, who_is_there: this.sceneList[0]?.npc_line?.speaker ?? "" },
         finale: this.state.finale,
         hero: { name: h.name, best_stat: bestStat(h), stats: h.stats, power: h.ability?.text ?? "", weakness: h.flaw },
         plan: firstAction(pitch.text).action,
@@ -2158,12 +2160,13 @@ export class GameHost {
    */
   private askOutcome(pitch: Pitch, roll: RollResult) {
     const h = this.player(pitch.playerId)!.hero!;
-    const fb = () => ({ text: FALLBACK_OUTCOME[roll.band].replaceAll("{name}", h.name), situation: "", why: "" });
+    const fb = () => ({ text: FALLBACK_OUTCOME[roll.band].replaceAll("{name}", h.name), situation: "", why: "", nowGoal: "" });
     return this.viaAI(
       "What happened",
-      this.ask<{ text: string; situation: string; why: string }>("outcome", {
+      this.ask<{ text: string; situation: string; why: string; now_goal: string }>("outcome", {
         story: { title: this.state.quest?.title ?? this.state.sceneTitle, goal: this.state.goal },
         situation: this.state.situation,
+        right_now: this.state.nowGoal || this.state.goal,
         hero: { name: h.name, power: h.ability?.text ?? "", weakness: h.flaw },
         attempt: pitch.verdict?.interpretation ?? "",
         plan: firstAction(pitch.text).action,
@@ -2175,7 +2178,7 @@ export class GameHost {
         short: this.quick || undefined,
       }),
       12_000,
-      (d, f) => (f ? fb() : d?.text?.trim() ? { text: d.text.trim(), situation: (d.situation ?? "").trim(), why: (d.why ?? "").trim() } : null),
+      (d, f) => (f ? fb() : d?.text?.trim() ? { text: d.text.trim(), situation: (d.situation ?? "").trim(), why: (d.why ?? "").trim(), nowGoal: (d.now_goal ?? "").trim() } : null),
       fb,
     );
   }
@@ -2187,10 +2190,10 @@ export class GameHost {
     const pitch = this.state.pitches.find((p) => p.playerId === roll.playerId)!;
     this.set({ phase: "outcome", outcome: "", ready: [], voice: null });
     let settled = false;
-    const op = this.outcomeP ?? Promise.resolve({ text: FALLBACK_OUTCOME[roll.band].replaceAll("{name}", this.heroName(roll.playerId)), situation: "", why: "" });
+    const op = this.outcomeP ?? Promise.resolve({ text: FALLBACK_OUTCOME[roll.band].replaceAll("{name}", this.heroName(roll.playerId)), situation: "", why: "", nowGoal: "" });
     op.then(() => (settled = true));
     setTimeout(() => !settled && this.state.phase === "outcome" && this.set({ busy: "The DM is writing it down…" }), 600);
-    const { text, situation, why } = await op;
+    const { text, situation, why, nowGoal } = await op;
     if ((this.state.phase as string) !== "outcome") return;
     // The outcome's audio was asked for the moment its text arrived; give it until 5 s after that, else text only.
     const clip = await this.voiceBy(text, (this.outcomeAt || Date.now()) + 5000);
@@ -2199,7 +2202,8 @@ export class GameHost {
     if (why) this.note("ruling", "Why it went that way", `Written by Muse Spark: ${why}`);
     if (situation) this.note("scene", "Now", situation);
     // The story branches: the next turn starts from what just happened.
-    this.set({ outcome: text, busy: "", situation: situation || this.state.situation });
+    if (nowGoal && nowGoal !== this.state.nowGoal) this.note("scene", "Right now", nowGoal);
+    this.set({ outcome: text, busy: "", situation: situation || this.state.situation, nowGoal: nowGoal || this.state.nowGoal });
     const spoken = this.play(clip);
     this.setTimer(spoken ? Math.max(spoken + 1000, 4500) : outcomeMs(text), () => this.startTurn(this.state.turnIndex + 1));
   }
