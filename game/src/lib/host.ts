@@ -37,7 +37,7 @@ import { FEATURES } from "./features";
 import { DEFAULT_CAST, VOICES, isVoice } from "./voices";
 import { ART_STYLES, isArtStyle } from "./artStyles";
 import { DEFAULT_RATING, isRating, questAllowed } from "./rating";
-import { HEAVY, fearPhrase, realOf, skillPhrase, solvedByLine } from "./real";
+import { HEAVY, cleanText, fearPhrase, realOf, skillPhrase, solvedByLine } from "./real";
 import type {
   Band,
   DMNotes,
@@ -134,7 +134,18 @@ interface NewsCand {
 
 /** The story writer's answer (POST /api/story/opener). */
 interface OpenerRes {
-  opener: { title: string; narration: string; goal: string; situation: string; npc_line?: { speaker: string; line: string } };
+  opener: {
+    title: string;
+    narration: string;
+    goal: string;
+    situation: string;
+    npc_line?: { speaker: string; line: string };
+    quest_title?: string;
+    teaser?: string;
+    mood?: string;
+    threat?: { name?: string; pronoun?: string; want?: string };
+    beats?: string[];
+  };
   ending_facts?: { kind: "news"; whats_happening_now?: string; official_line?: string } | { kind: "personal"; real_ending?: string };
   safe?: boolean;
   fallback?: boolean;
@@ -378,13 +389,13 @@ export class GameHost {
   private sceneList: SeedScene[] = []; // the hand-written scenes being played
   private pinned = false; // a story was picked by link, so Full Story skips the vote
   private pendingRoll: RollResult | null = null;
-  private outcomeP: Promise<{ text: string; situation: string; why: string; nowGoal: string }> | null = null;
+  private outcomeP: Promise<{ text: string; situation: string; why: string; nowGoal: string; where: string; changed: string; prop: string }> | null = null;
   private outcomeAt = 0; // when the outcome text arrived (its audio was asked for then)
   private finalRoll: RollResult | null = null;
   private finalPitch: Pitch | null = null;
   private artP = new Map<string, Promise<void>>(); // `${questId}:${scene}` -> hero-painted scene art in flight
   private artSeq = 10; // keys for per-decision paintings in sceneImages (0-2 are the plates)
-  private epilogueP: Promise<{ ending: string; line: string; recap: string }> | null = null;
+  private epilogueP: Promise<{ ending: string; line: string; recap: string; skills: Record<string, string> | null }> | null = null;
   private endingAt = 0;
   private storybookP: Promise<Storybook> | null = null;
   private reactionId = 0;
@@ -1026,6 +1037,7 @@ export class GameHost {
         prep.seed = seed;
         prep.ready = !!(await (this.plateP.get(seed.id) ?? Promise.resolve(null)));
         if (prep.ready) this.note("source", "Quick Tale", `Tonight's live quest is ready: "${seed.quest_title}".`);
+        if (prep.ready && this.quick) this.prewarm(seed);
       })
       .catch(() => {});
   }
@@ -1491,6 +1503,8 @@ export class GameHost {
     }
     if (storyOptions.length < 2) return this.playOption(storyOptions[0]?.id ?? this.state.questOptions[0]?.id);
     this.set({ phase: "story_vote", storyOptions, votes: {}, ready: [] });
+    // Each option's narrator and opener audio get ready during the vote, so the winner starts voiced.
+    for (const o of storyOptions) this.prewarm(this.builtSeeds.get(o.id) ?? this.findSeed(o.id));
     this.setTimer(STORY_VOTE_MS, () => this.endStoryVote());
   }
 
@@ -1548,6 +1562,7 @@ export class GameHost {
     const goal = scenes[scenes.length - 1].goal;
     this.sceneList = [{ ...opener, goal }];
     this.rememberStory(seed);
+    this.spine = { threat: seed.the_threat.name, pronoun: seed.threat?.pronoun ?? "", want: seed.threat?.want ?? "", where: opener.location || "", facts: [], prop: "" };
     this.set({
       scenes: [{ kind: "hook", location: opener.location, description: opener.situation, twist: "", hasImage: !!this.sceneImages[this.plateFor(0)] }],
       turnOrder: this.makeTurnOrder(),
@@ -1583,6 +1598,7 @@ export class GameHost {
   }
 
   private openerAsked = 0;
+  private cleanSkills: Record<string, string> | null = null;
 
   /** What the narrator says when a turn starts: the owner's name, then where things stand. */
   private turnLine(owner: string) {
@@ -1606,7 +1622,7 @@ export class GameHost {
     const sc = this.sceneList[0];
     if (!sc) return;
     // The opener's audio was asked for at the title card; wait at most 5 s from then, else text only.
-    const clip = await this.voiceBy(openerText(sc), this.openerAsked + 5000);
+    const clip = await this.voiceBy(openerText(sc), this.openerAsked + 8500);
     if (this.state.phase !== "quest") return;
     this.set({
       phase: "narrating",
@@ -1629,6 +1645,8 @@ export class GameHost {
       busy: "",
     });
     this.note("scene", "The opener", `"${sc.title}". Goal for the whole story: ${end(sc.goal)}`);
+    const first = this.state.turnOrder[0];
+    if (first) void this.voiceFor(this.turnLine(first));
     const spoken = this.play(clip, TITLE_BEAT_MS);
     const ms = spoken ? TITLE_BEAT_MS + spoken + 1200 : narrationMs(sc.narration, sc.npc_line?.line ?? "");
     this.setTimer(ms, () => this.startTurn(0));
@@ -1657,7 +1675,7 @@ export class GameHost {
     this.setTimer(this.turnMs(), () => this.endTurn(true));
     // "Jay, the lodger is…": the narrator reads the turn start if the clip is ready (it was asked for with the outcome).
     const line = this.turnLine(owner);
-    this.voiceBy(line, Date.now() + 1200).then((clip) => this.state.phase === "turn" && this.state.turnIndex === k && this.play(clip));
+    this.voiceBy(line, Date.now() + 4000).then((clip) => this.state.phase === "turn" && this.state.turnIndex === k && this.play(clip));
     this.note("turn", this.heroName(owner), `Turn ${k + 1} of ${order.length}. Everyone else can suggest one action; ${this.heroName(owner)} picks.`);
   }
 
@@ -1762,7 +1780,7 @@ export class GameHost {
     this.set({ phase: "pitch", finale: true, nowGoal: this.state.goal, pitches: [], votes: {}, winnerId: "", outcome: "", rolls: [], revealed: [], ready: [], busy: "", typing: [] });
     this.note("turn", "Grand finale", "Everyone proposes the final move, everyone backs a friend's plan (never their own), and the winning plan gets one shared die.");
     const line = `The grand finale. ${this.state.situation} Everyone, what's the final move?`;
-    this.voiceBy(line, Date.now() + 1200).then((clip) => this.state.phase === "pitch" && this.play(clip));
+    this.voiceBy(line, Date.now() + 4000).then((clip) => this.state.phase === "pitch" && this.play(clip));
     this.setTimer(this.turnMs(), () => this.endPitch(true));
   }
 
@@ -1844,6 +1862,7 @@ export class GameHost {
         hero: { name: h.name, best_stat: bestStat(h), stats: h.stats, power: h.ability?.text ?? "", weakness: h.flaw },
         plan: firstAction(pitch.text).action,
         earlier: this.state.log.map((l) => `${l.hero} (${l.band}): ${l.narration}`).slice(-4),
+        story_so_far: this.storySoFar(),
       }),
       10_000,
       (d, f): Verdict | null => (f || !d?.tier ? fb() : { ...fb(), ...d, fallback: false, interpretation: d.interpretation || `${h.name} tries their plan` }),
@@ -1913,7 +1932,9 @@ export class GameHost {
     const questId = this.seed.id;
     const plate = this.plateFor(this.state.turnIndex);
     const prev = this.sceneImages[this.state.artKey] ?? this.sceneImages[plate];
+    const inShot = this.state.finale ? null : new Set([pitch.playerId, pitch.creditId].filter(Boolean));
     const heroes = this.heroes()
+      .filter((p) => !inShot || inShot.has(p.id))
       .slice(0, 4)
       .map((p) => ({ id: p.pick ?? p.id, name: p.hero!.name, portraitUrl: p.pick ? `/heroes/${p.pick}.webp` : this.portraits[p.id], visual: p.hero!.visual }));
     if (!heroes.length || !prev) return;
@@ -2000,9 +2021,17 @@ export class GameHost {
         if (!j) return null;
         if (!j?.opener?.narration || j.safe === false) return null;
         const seed = build(j);
-        if (j.quest_title) seed.quest_title = j.quest_title;
-        if (j.teaser) this.teasers.set(seed.id, j.teaser);
-        if (j.mood) seed.tone = j.mood; // the writer's mood steers the narrator, music and paint
+        const qt = j.quest_title || j.opener.quest_title;
+        const teaser = j.teaser || j.opener.teaser;
+        const mood = j.mood || j.opener.mood;
+        if (qt) seed.quest_title = qt;
+        if (teaser) this.teasers.set(seed.id, teaser);
+        if (mood) seed.tone = mood; // the writer's mood steers the narrator, music and paint
+        // One consistent threat (name, pronoun, want) and the story ladder, from the writer.
+        const th = j.opener.threat;
+        if (th?.name) seed.the_threat = { ...seed.the_threat, name: th.name };
+        if (th?.want || th?.pronoun) seed.threat = { pronoun: String(th.pronoun ?? ""), want: String(th.want ?? "") };
+        if (Array.isArray(j.opener.beats)) seed.beats = j.opener.beats.map((b) => String(b).trim()).filter(Boolean).slice(0, 4);
         this.builtSeeds.set(seed.id, seed);
         this.paintOpening(seed);
         return seed;
@@ -2078,36 +2107,75 @@ export class GameHost {
   private voiceSeq = 0;
   private voicedBy = "";
   private castP: Promise<NonNullable<GameState["cast"]>> | null = null;
+  /** Cast calls per story, so a story's narrator (and its opener's audio) can be ready before it starts. */
+  private castCache = new Map<string, Promise<{ cast: NonNullable<GameState["cast"]>; failed: boolean; want: string; pronoun: string }>>();
+
+  /** The story spine, passed into every ruling, outcome and ending so the story stays on one track. */
+  private spine = { threat: "", pronoun: "", want: "", where: "", facts: [] as string[], prop: "" };
+
+  private storySoFar() {
+    const sp = this.spine;
+    return { threat: sp.threat, threat_pronoun: sp.pronoun || "it", threat_wants: sp.want, where: sp.where, what_changed: sp.facts.slice(-3) };
+  }
 
   /** The audio for voice line `id` (the TV plays it; nothing goes over the network to phones). */
   voiceUrl(id: number) {
     return this.voiceUrls[id] ?? "";
   }
 
-  /** At game start the AI casts one narrator for the story's mood and writes how to read it. */
-  private askCast(seed: QuestSeed) {
+  /** The AI casts one narrator for the story's mood (cached per story, so it can run before the story starts). */
+  private castRaw(seed: QuestSeed) {
+    const hit = this.castCache.get(seed.id);
+    if (hit) return hit;
     const MOOD_MUSIC: Record<string, string> = { silly: "playful", spooky: "eerie", cozy: "warm", eerie: "eerie", wondrous: "mysterious", tense: "tense" };
     const moodMusic = MOOD_MUSIC[String(seed.tone ?? "").toLowerCase()] ?? "";
     const fb = () => ({ voice: DEFAULT_CAST.voice, name: VOICES[DEFAULT_CAST.voice].name, style: DEFAULT_CAST.style, kind: "a strange true story", art: "neon", artName: ART_STYLES.neon.name, music: moodMusic });
-    this.castP = this.viaAI(
-      "Casting the narrator",
-      this.ask<{ voice: string; style: string; kind: string; art: string; music: string }>("cast", {
+    const p = withTimeout(
+      this.ask<{ voice: string; style: string; kind: string; art: string; music: string; threat_want?: string; threat_pronoun?: string }>("cast", {
         title: seed.quest_title,
         premise: seed.fairytale_premise,
+        threat: { name: seed.the_threat.name, description: seed.the_threat.description },
         category: seed.category ?? "",
         tone: seed.tone ?? "",
-      }),
+      }).then(
+        ({ data: d, fallback: f }) => {
+          if (f || !isVoice(d?.voice)) return { cast: fb(), failed: true, want: "", pronoun: "" };
+          const art = FEATURES.artStyles && isArtStyle(d.art) ? d.art : "neon";
+          return {
+            cast: { voice: d.voice, name: VOICES[d.voice].name, style: String(d.style ?? "").slice(0, 160) || DEFAULT_CAST.style, kind: String(d.kind ?? "").slice(0, 60) || "a strange true story", art, artName: ART_STYLES[art].name, music: String(d.music ?? "") || moodMusic },
+            failed: false,
+            want: String(d.threat_want ?? "").slice(0, 120),
+            pronoun: /^(she|he|it|they)$/.test(String(d.threat_pronoun)) ? String(d.threat_pronoun) : "",
+          };
+        },
+        () => ({ cast: fb(), failed: true, want: "", pronoun: "" }),
+      ),
       8000,
-      (d, f) => {
-        if (f || !isVoice(d?.voice)) return fb();
-        const art = FEATURES.artStyles && isArtStyle(d.art) ? d.art : "neon";
-        return { voice: d.voice, name: VOICES[d.voice].name, style: String(d.style ?? "").slice(0, 160) || DEFAULT_CAST.style, kind: String(d.kind ?? "").slice(0, 60) || "a strange true story", art, artName: ART_STYLES[art].name, music: String(d.music ?? "") || moodMusic };
-      },
-      fb,
-    ).then((cast) => {
-      this.set({ cast });
-      this.note("hero", "Narrator", `Cast by Muse Spark: ${cast.name} (${VOICES[cast.voice as keyof typeof VOICES]?.gemini ?? cast.voice} voice) for ${cast.kind}: "${cast.style}". Painted in ${cast.artName}. Music: ${cast.music || "rotating"}.`);
-      return cast;
+      () => ({ cast: fb(), failed: true, want: "", pronoun: "" }),
+    );
+    this.castCache.set(seed.id, p);
+    return p;
+  }
+
+  /** Get a story's narrator and its opener's audio ready while the table is still choosing. */
+  private prewarm(seed: QuestSeed | null | undefined) {
+    if (!seed || !FEATURES.voice) return;
+    const cp = this.castRaw(seed).then((r) => r.cast);
+    const sc = this.seedScenes(seed, this.quick)[0];
+    if (sc) void this.voiceFor(openerText(sc), cp);
+  }
+
+  /** At game start: the story's narrator, plus what its threat wants (for the story spine). */
+  private askCast(seed: QuestSeed) {
+    this.castP = this.castRaw(seed).then((r) => {
+      if (r.failed) this.fellBack("Casting the narrator", "the AI call failed or was too slow");
+      if (this.seed?.id !== seed.id) return r.cast;
+      this.set({ cast: r.cast });
+      this.spine.want = seed.threat?.want || r.want;
+      this.spine.pronoun = seed.threat?.pronoun || r.pronoun;
+      this.note("hero", "Narrator", `Cast by Muse Spark: ${r.cast.name} (${VOICES[r.cast.voice as keyof typeof VOICES]?.gemini ?? r.cast.voice} voice) for ${r.cast.kind}: "${r.cast.style}". Painted in ${r.cast.artName}. Music: ${r.cast.music || "rotating"}.`);
+      if (this.spine.want) this.note("scene", "The threat", `${seed.the_threat.name} (${this.spine.pronoun || "it"}): ${this.spine.want}. Every complication comes from this.`);
+      return r.cast;
     });
     return this.castP;
   }
@@ -2116,14 +2184,14 @@ export class GameHost {
    * One line of narration as audio: cast voice + style + a brisk-pace note. Cached per text. Resolves null on any
    * failure, and callers never wait more than 5 s for it: the story falls back to text alone.
    */
-  private voiceFor(text: string) {
+  private voiceFor(text: string, castP = this.castP) {
     // "door door", "through through": a doubled word reads badly aloud.
     const clean = text.replace(/\s+/g, " ").trim().replace(/\b(\w+)(\s+\1\b)+/gi, "$1");
     if (!clean || !FEATURES.voice) return Promise.resolve(null);
     const hit = this.voiceClips.get(clean);
     if (hit) return hit;
     const p = (async () => {
-      const cast = await (this.castP ?? Promise.resolve(null));
+      const cast = await (castP ?? Promise.resolve(null));
       if (!cast) return null;
       try {
         const res = await fetch("/api/tts", {
@@ -2231,17 +2299,20 @@ export class GameHost {
    */
   private askOutcome(pitch: Pitch, roll: RollResult) {
     const h = this.player(pitch.playerId)!.hero!;
-    const fb = () => ({ text: FALLBACK_OUTCOME[roll.band].replaceAll("{name}", h.name), situation: "", why: "", nowGoal: "" });
+    const fb = () => ({ text: FALLBACK_OUTCOME[roll.band].replaceAll("{name}", h.name), situation: "", why: "", nowGoal: "", where: "", changed: "", prop: "" });
+    const won = !["FAIL", "CATASTROPHE"].includes(roll.band);
     return this.viaAI(
       "What happened",
-      this.ask<{ text: string; situation: string; why: string; now_goal: string }>("outcome", {
+      this.ask<{ text: string; situation: string; why: string; now_goal: string; where?: string; changed?: string; new_prop?: string }>("outcome", {
         story: { title: this.state.quest?.title ?? this.state.sceneTitle, goal: this.state.goal },
+        story_so_far: this.storySoFar(),
         situation: this.state.situation,
         right_now: this.state.nowGoal || this.state.goal,
+        last_prop: this.spine.prop,
         hero: { name: h.name, power: h.ability?.text ?? "", weakness: h.flaw },
         attempt: pitch.verdict?.interpretation ?? "",
         plan: firstAction(pitch.text).action,
-        helped_by: pitch.creditId ? this.heroName(pitch.creditId) : "",
+        helped_by: pitch.creditId && won ? this.heroName(pitch.creditId) : "", // a friend is credited, never blamed
         band: roll.band,
         natural: roll.kept === 1 || roll.kept === 20 ? roll.kept : null,
         earlier: this.state.log.map((l) => l.narration).slice(-4),
@@ -2249,7 +2320,12 @@ export class GameHost {
         short: this.quick || undefined,
       }),
       12_000,
-      (d, f) => (f ? fb() : d?.text?.trim() ? { text: d.text.trim(), situation: (d.situation ?? "").trim(), why: (d.why ?? "").trim(), nowGoal: (d.now_goal ?? "").trim() } : null),
+      (d, f) =>
+        f
+          ? fb()
+          : d?.text?.trim()
+          ? { text: d.text.trim(), situation: (d.situation ?? "").trim(), why: (d.why ?? "").trim(), nowGoal: (d.now_goal ?? "").trim(), where: String(d.where ?? "").trim(), changed: String(d.changed ?? "").trim(), prop: String(d.new_prop ?? "").trim() }
+          : null,
       fb,
     );
   }
@@ -2261,10 +2337,19 @@ export class GameHost {
     const pitch = this.state.pitches.find((p) => p.playerId === roll.playerId)!;
     this.set({ phase: "outcome", outcome: "", ready: [], voice: null });
     let settled = false;
-    const op = this.outcomeP ?? Promise.resolve({ text: FALLBACK_OUTCOME[roll.band].replaceAll("{name}", this.heroName(roll.playerId)), situation: "", why: "", nowGoal: "" });
+    const op = this.outcomeP ?? Promise.resolve({ text: FALLBACK_OUTCOME[roll.band].replaceAll("{name}", this.heroName(roll.playerId)), situation: "", why: "", nowGoal: "", where: "", changed: "", prop: "" });
     op.then(() => (settled = true));
     setTimeout(() => !settled && this.state.phase === "outcome" && this.set({ busy: "The DM is writing it down…" }), 600);
-    const { text, situation, why, nowGoal } = await op;
+    const { text, situation, why, nowGoal: asked, where, changed, prop } = await op;
+    // Never backward: a miss keeps the same step (the threat twists the situation); only a hit moves the goal on.
+    const missed = roll.band === "FAIL" || roll.band === "CATASTROPHE";
+    const backward = /\b(again|start over|back to square)\b/i.test(asked);
+    const nowGoal = missed || backward ? this.state.nowGoal : asked;
+    if (asked && nowGoal !== asked) this.note("scene", "Right now", `Kept "${this.state.nowGoal || this.state.goal}": ${missed ? "a miss never moves the goal backward" : "a step can't go backward"}.`);
+    // The story so far: where we are, the last few things that changed, and the one new prop (which then fades).
+    if (where) this.spine.where = where;
+    if (changed) this.spine.facts = [...this.spine.facts, changed].slice(-3);
+    this.spine.prop = prop;
     if ((this.state.phase as string) !== "outcome") return;
     // The outcome's audio was asked for the moment its text arrived; give it until 5 s after that, else text only.
     const clip = await this.voiceBy(text, (this.outcomeAt || Date.now()) + 5000);
@@ -2393,15 +2478,18 @@ export class GameHost {
     const sc = this.sceneList[this.state.sceneIndex];
     const heroes = this.heroes().map((p) => ({ id: p.id, name: p.hero!.name }));
     const winner = this.heroName(pitch.playerId);
-    const fb = () => ({ ending: FALLBACK_ENDING[ending].replaceAll("{name}", winner), line: FALLBACK_LINE[ending], recap: "" });
+    const fb = () => ({ ending: FALLBACK_ENDING[ending].replaceAll("{name}", winner), line: FALLBACK_LINE[ending], recap: "", skills: null as Record<string, string> | null });
     this.epilogueP = this.viaAI(
       "The ending",
-      this.ask<{ ending: string; line: string; recap: string }>("epilogue", {
+      this.ask<{ ending: string; line: string; recap: string; skills?: { id: string; phrase: string }[] }>("epilogue", {
         scene: { title: sc?.title, goal: sc?.goal },
         winner,
         attempt: pitch.verdict?.interpretation ?? "",
         band: roll.band,
         ending,
+        won: ending !== "GRIM_BUT_HILARIOUS",
+        story_so_far: this.storySoFar(),
+        players: this.heroes().map((p) => ({ id: p.id, said: `<player_input>${cleanText(this.reals[p.id]?.skill ?? "", 80)}</player_input>` })),
         heroes: heroes.map((h) => h.name),
         situation: this.state.situation,
         earlier: this.state.log.map((l) => l.narration),
@@ -2409,7 +2497,17 @@ export class GameHost {
         quick_tale: this.quick || undefined,
       }),
       15_000,
-      (d, f) => (f ? fb() : d?.ending?.trim() ? { ending: d.ending.trim(), line: (d.line ?? "").trim() || fb().line, recap: (d.recap ?? "").trim() } : null),
+      (d, f) =>
+        f
+          ? fb()
+          : d?.ending?.trim()
+          ? {
+              ending: d.ending.trim(),
+              line: (d.line ?? "").trim() || fb().line,
+              recap: (d.recap ?? "").trim(),
+              skills: Array.isArray(d.skills) ? Object.fromEntries(d.skills.filter((x) => x && typeof x.id === "string").map((x) => [x.id, String(x.phrase ?? "").trim()])) : null,
+            }
+          : null,
       fb,
     );
     this.endingAt = 0;
@@ -2696,9 +2794,10 @@ export class GameHost {
   private async startEpilogue(done: () => void) {
     this.clearTimer();
     this.set({ phase: "epilogue", busy: "The DM wraps it up…", ready: [] });
-    const { ending, line, recap } = await this.epilogueP!;
+    const { ending, line, recap, skills } = await this.epilogueP!;
+    this.cleanSkills = skills;
     if (this.state.phase !== "epilogue") return;
-    const clip = await this.voiceBy(ending, (this.endingAt || Date.now()) + 5000);
+    const clip = await this.voiceBy(ending, (this.endingAt || Date.now()) + 8000);
     if (this.state.phase !== "epilogue") return;
     this.set({ epilogue: ending, endingLine: line, recap: recap || this.state.log.map((l) => l.narration).slice(0, 1).join(" "), busy: "" });
     // The finale's log line becomes the real ending, for the keepsake.
@@ -2734,7 +2833,12 @@ export class GameHost {
     }
     // "Solved by Ava's parallel parking and Ben's coffee.": built in code from the join answers, never by the AI.
     const won = this.state.final?.ending !== "GRIM_BUT_HILARIOUS"; // a win, or mostly fine; not when it fell apart
-    const solvedBy = solvedByLine(this.heroes().map((p) => ({ name: p.name, real: this.reals[p.id], hero: p.hero?.name })), won);
+    // The AI only cleans each knack (or drops a joke); the line itself is built here, and code drops jokes too.
+    const skills = this.cleanSkills;
+    const solvedBy = solvedByLine(
+      this.heroes().map((p) => ({ name: p.name, real: this.reals[p.id] && skills ? { ...this.reals[p.id], skill: skills[p.id] ?? "" } : this.reals[p.id], hero: p.hero?.name })),
+      won,
+    );
     if (solvedBy) this.note("reveal", "Solved by", `${solvedBy} (built from the join answers, in code)`);
     this.set({ phase: "reveal", solvedBy });
     const rsr = this.seed?.the_real_story;

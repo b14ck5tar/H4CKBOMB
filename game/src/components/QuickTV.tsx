@@ -932,17 +932,17 @@ function RevealCard({ host, s }: { host: Stage; s: GameState }) {
         </div>
         <div className="qt-glass qt-uncovered qt-slide-r !justify-center">
           <p className="font-ui uppercase tracking-[0.3em] text-lg text-[var(--signal)]">Your version</p>
-          <h2 className={`font-display uppercase leading-none text-[var(--crimson)] qt-glow ${seed.the_threat.name.length > 18 ? "text-5xl" : "text-6xl"}`}>{seed.the_threat.name}</h2>
-          {(s.recap || s.epilogue) && <p className="text-[1.45rem] leading-snug qt-rise line-clamp-4" style={{ animationDelay: "0.9s" }}>{s.recap || s.epilogue}</p>}
+          <h2 className={`font-display uppercase leading-none text-[var(--crimson)] qt-glow ${seed.the_threat.name.length > 18 ? "text-[2.6rem]" : "text-5xl"}`}>{seed.the_threat.name}</h2>
+          {(s.recap || s.epilogue) && <p className="text-[1.3rem] leading-snug qt-rise" style={{ animationDelay: "0.9s" }}>{s.recap || s.epilogue}</p>}
           {s.solvedBy && (
-            <p className="font-heading text-[1.7rem] uppercase leading-tight text-[var(--gilt-bright)] qt-rise" style={{ animationDelay: "1.4s" }}>
+            <p className="font-heading text-[1.4rem] uppercase leading-tight text-[var(--gilt-bright)] qt-rise" style={{ animationDelay: "1.4s" }}>
               {s.solvedBy}
             </p>
           )}
           {f && (
             <div className="flex items-center gap-5 pt-2 qt-rise" style={{ animationDelay: "1.8s" }}>
               <Stamp text={ENDING_LABEL[f.ending]} size="md" rotate={-4} slam={false} tone={f.ending === "TRIUMPHANT" ? "gilt" : f.ending === "BITTERSWEET" ? "forest" : "crimson"} />
-              {s.endingLine && <p className="text-xl italic leading-snug text-parchment/85">{s.endingLine}</p>}
+              {s.endingLine && !s.recap && <p className="text-lg italic leading-snug text-parchment/85">{s.endingLine}</p>}
             </div>
           )}
         </div>
@@ -1070,9 +1070,24 @@ function useNarrator(host: Stage, s: GameState) {
  * brighter at the final roll, softer for the reveal. Plus the house SFX for the big moments.
  */
 function useStorySound(s: GameState) {
-  const mood = s.phase === "story_vote" || s.phase === "story_write" ? "lobby" : s.cast?.music || "mysterious";
-  const intensity = s.phase === "final_roll" ? 0.8 : ["reveal", "storybook"].includes(s.phase) ? 0 : s.finale ? 0.5 : 0.2;
+  const resolved = ["reveal", "storybook"].includes(s.phase);
+  // Cues: the finale turns tense (kids keep their story's music, just louder), the reveal resolves warm.
+  const mood =
+    s.phase === "story_vote" || s.phase === "story_write"
+      ? "lobby"
+      : resolved
+      ? "warm"
+      : s.finale && s.rating !== "kids"
+      ? "tense"
+      : s.cast?.music || "mysterious";
+  const intensity = s.phase === "final_roll" ? 0.8 : resolved ? 0.1 : s.finale ? 0.55 : 0.2;
   useMusic(mood, intensity);
+  useEffect(() => {
+    if (s.finale) music.swell(0.8, 3000);
+  }, [s.finale]);
+  useEffect(() => {
+    if (resolved) music.swell(0.5, 2500);
+  }, [resolved]);
   const turnKey = s.phase === "turn" ? s.turnIndex : -1;
   useEffect(() => {
     if (turnKey >= 0) playSfx("turnStart");

@@ -34,8 +34,11 @@ export function skillPhrase(skill: string, maxWords = 6) {
     .replace(/^(weirdly|really|very|super|kind of|kinda|pretty)\s+/i, "")
     .replace(/^(good|great|amazing|decent)\s+(at|with)\s+/i, "")
     .replace(/[\s.!?,;:]+$/, "");
-  return s && !HEAVY.test(s) && s.split(" ").length <= maxWords ? lowerFirst(s) : "";
+  return s && !HEAVY.test(s) && !JOKE.test(s) && s.split(" ").length <= maxWords ? lowerFirst(s) : "";
 }
+
+/** Bathroom humor and blowing things up aren't knacks: they never make the "Solved by" line. */
+const JOKE = /\b(toilets?|poop\w*|farts?\w*|pee\w*|butts?|blow\w* (?:up|stuff)|explod\w*|bombs?|kill\w*|murder\w*|stab\w*|drunk\w*|weed|sex\w*|nothing|idk|dunno|lol)\b/i;
 
 /** "I'm scared of geese." -> "geese". "" when too long or too heavy for a canned joke. */
 export function fearPhrase(fear: string, maxWords = 6) {

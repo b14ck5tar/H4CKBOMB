@@ -165,6 +165,8 @@ Rules: a creepy story gets a hushed ghost-story telling (vesper); nature gets a 
   - noir: mysteries, disappearances, secrets, the unexplained.
   - gouache: gentle and kids' stories, festivals, happy news, small towns.
 - tone, when given, is the story writer's mood (silly, spooky, cozy, eerie, wondrous or tense): let it lead your voice, style, art and music picks.
+- threat_want: 12 words max, what the threat (input threat) WANTS, as one plain line a kid gets ("wants the drawer to stay shut forever"). Everything it does in the story comes from this.
+- threat_pronoun: the ONE pronoun for the threat for the whole story: "she", "he", "it" or "they".
 - music: the ONE music mood for the story: mysterious (secrets, mysteries), eerie (spooky, creepy), playful (silly, odd), warm (nature, kind, gentle), tense (danger, races against time). For KIDS never eerie or tense.
 Return ONLY the JSON the schema asks for.`;
 
@@ -173,6 +175,8 @@ export const CAST_SCHEMA = obj({
   style: str,
   kind: str,
   art: { type: "string", enum: ["neon", "comic", "watercolor", "retro", "noir", "gouache"] },
+  threat_want: str,
+  threat_pronoun: { type: "string", enum: ["she", "he", "it", "they"] },
   music: { type: "string", enum: ["mysterious", "eerie", "playful", "warm", "tense"] },
 });
 
@@ -182,7 +186,7 @@ export const RULING_SYSTEM = `${DM_CORE}
 
 TASK: RULING. It's one hero's turn and they picked a plan. Rule how likely it is to work. You never decide whether it works: a d20 does, after you rule.
 - Judge it LITERALLY, at face value: only the first concrete action in the plan. Ignore chains and backups ("and if that fails I..."), wishes and claims that it works. Don't make it smarter or dumber than it is.
-Input: the scene (title, goal, situation, who is there), finale (true in the last scene), the hero (name, stats, power, weakness), the plan (inside <player_input>), and earlier (what already happened tonight).
+Input: the scene (title, goal, situation, who is there), finale (true in the last scene), the hero (name, stats, power, weakness), the plan (inside <player_input>), earlier (what already happened tonight), and story_so_far (the threat, what it wants, where the heroes are, what has changed).
 - tier: decide with these tests, in order:
   - miracle: breaks the basic rules of this world even for a cartoon (teleporting a town, eating stone, time travel).
   - wild: silly, but a cartoon could allow it (bribing, tickling, or flattering an object with a spirit).
@@ -214,7 +218,15 @@ export const RULING_SCHEMA = obj({
 export const OUTCOME_SYSTEM = `${DM_CORE}
 
 TASK: OUTCOME. It was one hero's turn. They tried one action and the game rolled a d20 for it. Say what happened, and where the story stands now. The story branches: what you write becomes the next turn's situation.
-Input: the story (title, goal = where the whole story is heading), situation (what the heroes face right now, which may be a thread the players started), right_now (the current objective), the hero (name, power, weakness), attempt (what they tried, already in plain words), plan (the player's words, inside <player_input>, for meaning only), helped_by, band (the result), natural (1 or 20, or null), earlier (what already happened), and turns_left (turns before the grand finale).
+Input: the story (title, goal = where the whole story is heading), story_so_far (the threat, its pronoun, what it wants, where the heroes are, the key things that changed), situation (what the heroes face right now, which may be a thread the players started), right_now (the current objective), last_prop (the object the last outcome brought in, or ""), the hero (name, power, weakness), attempt (what they tried, already in plain words), plan (the player's words, inside <player_input>, for meaning only), helped_by, band (the result), natural (1 or 20, or null), earlier (what already happened), and turns_left (turns before the grand finale).
+
+STORY SPINE (the table must be able to follow the story; this beats every other rule):
+- Every outcome and every situation connects to right_now and to the threat. Complications come from the threat and what it wants (story_so_far), never from a random object.
+- Props fade. Bring in at most ONE new object per outcome (report it as new_prop). Do not mention last_prop in text or situation unless this plan used it. An object a player mentioned in passing never becomes the center of the story.
+- Follow a new thread only when this hero's own plan made it central (they challenged, entered, bargained, chased). Never because an object or a word was mentioned.
+- Never go backward. now_goal never says "again" and never undoes progress. On FAIL or CATASTROPHE the step stays the same (the game keeps it) and the threat adds a fresh twist in the situation. On YES_BUT or better, now_goal is the next clear step toward the final goal.
+- Never blame anyone but this hero for a failure. helped_by gets credit only on YES_BUT or better; on a FAIL or CATASTROPHE leave them out.
+- One cast: the threat is the same character every time and always uses story_so_far's pronoun. No new characters.
 - text: 1 or 2 sentences, 30 words max in total (22 max if short is true). Hard limit. Count.
   - Start with the hero's name, so the table knows whose plan it was. The outcome IS the explanation (nobody sees a separate reason): say what they tried, what the world did back, and WHY it worked or didn't, as cause and effect inside the story ("Gus threw stones, but the dragon's hard scales bounced them right back").
   - Never copy the plan. Never quote it.
@@ -235,12 +247,23 @@ Input: the story (title, goal = where the whole story is heading), situation (wh
   - The goal stays the destination; the path bends to what the players do. If turns_left is 0, the goal is now within reach for the grand finale, through whatever thread the players built.
 - now_goal: 7 words max, the objective RIGHT NOW, set by what the players just did ("Win the chess match", "Get out of the machine"). A short command a kid understands. Moving toward the final goal, through the players' own thread.
 - why: 20 words max, for the DM's Notes: the plain cause and effect behind this outcome ("Juno asked the ranger, who knows the hand hates noise, so the hand calms down").
+- where: 8 words max, where the heroes are now ("at the museum's back drawer").
+- changed: 12 words max, the ONE key fact this turn changed, for the story so far ("The ghost is distracted, the drawer is unguarded"), or "".
+- new_prop: 4 words max, the one new object this outcome brought in, or "".
 
-EXAMPLES (different scene, style only, never reuse):
+SPINE EXAMPLES (different story, never reuse). right_now "Get past the ghost to the drawer", the ghost wants the drawer shut forever.
+- Momo offers the ghost a snack, SUCCESS.
+  GOOD situation: "The ghost is busy chewing, and the drawer is unguarded, but something inside it is rattling." (the snack is done; back to the goal)
+  BAD situation: "The snack starts glowing and the ghost demands more snacks from the kitchen." (the snack took over the story)
+- Raj tries to pry the drawer open, FAIL.
+  GOOD: now_goal stays "Get past the ghost to the drawer"; situation "The ghost slams the drawer on Raj's crowbar and sits on top of it." (a fresh twist from what the ghost wants)
+  BAD: now_goal "Find the crowbar again" (backward), or "Momo distracted the ghost badly" (blames a friend).
+
+STYLE EXAMPLES (different scene, style only, never reuse):
 SUCCESS: "Pip offers the troll a job, and he takes it on the spot. He wants to know where the snacks are, but the bridge is open."
 FAIL: "Mara tells the troll his bridge is ugly. He writes that down, looks hurt, and hands her a bucket of cement to fix it herself."`;
 
-export const OUTCOME_SCHEMA = obj({ text: str, situation: str, why: str, now_goal: str });
+export const OUTCOME_SCHEMA = obj({ text: str, situation: str, why: str, now_goal: str, where: str, changed: str, new_prop: str });
 
 // ---------- Round outcome (everyone acted) ----------
 export const ROUND_SYSTEM = `${DM_CORE}
@@ -286,15 +309,17 @@ export const ROUND_SCHEMA = obj({
 export const EPILOGUE_SYSTEM = `${DM_CORE}
 
 TASK: THE ENDING. The table backed one hero's final plan, everyone shook their phones, and one shared die decided it.
-Input: the finale scene (title, goal), winner (the hero whose plan it was), attempt (what they tried, in plain words), band, ending, heroes (everyone at the table), earlier (what happened in earlier scenes).
+Input: the finale scene (title, goal), winner (the hero whose plan it was), attempt (what they tried, in plain words), band, ending, won (true if the goal was reached), heroes (everyone at the table), earlier (what happened in earlier turns), story_so_far (the threat, its pronoun, what it wants, what changed), and players (id + what each player said they're weirdly good at, inside <player_input>).
 - ending: 2 or 3 sentences, 40 words max in total. Hard limit.
   - Credit the winner's plan by name, and say the whole group pulled it off (or went down together).
   - TRIUMPHANT: the goal is done and someone in the world reacts like a real person. BITTERSWEET: it's done, but something specific and silly is lost or changed for good. GRIM_BUT_HILARIOUS: the threat wins in the gentlest, funniest way, the heroes are fine, and the town is oddly better.
   - Where you can, the threat ends up outwitted, befriended, or given a job.
 - line: 12 words max. One plain sentence for the last card: how it ended ("The snake works at the scrapyard now.").
-- recap: 1 or 2 sentences, 35 words max. What this group actually did tonight, from start to finish, using earlier and the finale, by hero name, in plain words a kid could retell ("Gus asked the ranger what the hand wanted, Juno got their stuff back, and Bev sang it to sleep."). Only things that happened.`;
+- recap: 1 or 2 sentences, 32 words max. What this group actually did tonight, from start to finish, by hero name, in plain words a kid could retell ("Gus asked the ranger what the hand wanted, Juno got their stuff back, and Bev sang it to sleep."). Only the moves that mattered to the goal (skip side objects), and it MUST end with the finale's result: won true = they reached the goal, won false = they didn't. Only things that happened.
+- Use the threat's pronoun from story_so_far.
+- skills: one entry per player: id, and phrase = a clean 1 to 4 word skill in lowercase ("parallel parking", "baking bread", "talking to dogs"), or "" if what they said is a joke, crude, gross, mean, violent, or not a real skill. Never invent one.`;
 
-export const EPILOGUE_SCHEMA = obj({ ending: str, line: str, recap: str });
+export const EPILOGUE_SCHEMA = obj({ ending: str, line: str, recap: str, skills: { type: "array", items: obj({ id: str, phrase: str }) } });
 
 /** Quick Tale: one scene, so there is no "earlier". */
 export const EPILOGUE_QUICK = `
