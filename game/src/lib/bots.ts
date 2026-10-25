@@ -267,6 +267,8 @@ export class Bots {
     text = String(text ?? "").replace(/["“”]/g, "").replace(/\s+/g, " ").trim().split(" ").slice(0, 12).join(" ");
     // Never the same idea twice (or one somebody already tried): fall back to an unused canned move.
     const seen = [...this.said, ...Object.values(s.ideas), ...s.log.map((l) => l.pitch)];
+    // A real suggestion is a little sentence: under 3 words ("Idk", "Meow") never goes out.
+    if (text.split(/\s+/).filter(Boolean).length < 3) text = "";
     if (!text || seen.some((x) => similar(x, text))) {
       const fresh = b.who.canned.filter((c) => !seen.some((x) => similar(x, c)));
       text = pick(fresh.length ? fresh : b.who.canned);
