@@ -107,4 +107,60 @@ Transcripts, ratings and the audit are in the shared notes folder (`sim-baseline
    "too much text".
 
 ## Story v3 (`02470f8`, prod build on :3108): 3 judge games, quick check
-_Pending: written when the v3 run and its ratings finish._
+The same 3 judge stories, the same seats and the same personas as baseline games 1-3: 15 turns each, 36 v3 ratings
+vs 30 baseline ratings, 54 Muse calls. A small sample, so read it as a direction, not a verdict.
+
+| Same 3 stories, 15 turns each | Baseline | Story v3 |
+|---|---|---|
+| Turns whose Right now repeats an earlier objective (auditor) | 47% (7) | **13% (2)** |
+| A success undone later | 1 | **0** |
+| Turns that did not progress (auditor)* | 33% (5) | 40% (6) |
+| Off-script plans that became a fact | 7/11 (all 10 games) | 4/4 |
+| Off-script plans that missed the roll | 10/11 | 3/4 |
+| `wild` rulings | 38% (all 10 games) | **60% (9/15)** |
+| Scene line length (words) | 12.9 | **17.4 (+35%)** |
+| Fun, 1-10 | 5.10 | 5.19 (shark 5.7, gold 5.6, Batman 4.3) |
+| Followable | 97% | **81%** |
+
+\* The v3 auditor used a stricter rule: when a miss makes the next Right now "clean up your own mess", it counts as not
+progressed. The baseline auditor mostly applied the same reading, but this row is not perfectly like for like.
+
+**About my first v3 rating pass:** it gave 56% followable, but my transcript printed a "Problem now:" line that the
+TV never shows. I removed it and re-rated (81%). Both rating sets are in `sim-v3/`.
+
+### What v3 fixed
+- **The "same objective again" loop is mostly gone** (47% → 13%), and no success was undone. The shark game moved
+  through new situations: buns → low bridge → mayor → sea gate.
+- **Off-script plans become facts** ("design apartments downtown" became a deep-water lane under the bridge).
+
+### What v3 did not fix
+1. **Miss → "clean up your own mess" chains are now the main way the story gets stuck.**
+   - Batman, v3: "Free Mr. Okafor from the bus" → "Chase the dough steps to the cathedral" → "Free the wedged bus
+     from the drainpipe" → "Chip the ice off the bumper". The bag is off screen for 4 turns, and the ending is
+     "Batman scrapes the ice off the bumper".
+   - Shark, v3: "Free the mayor from dough" → "Move the dough shark aside".
+   - Gold, v3: "Count the stacked gold bars" → "Recount the dusty gold bars" → "Get the count list from pigeon".
+   - Raters: "Stuck bus, stuck bus, stuck bus. No progress, five turns of nothing."
+2. **Followability dropped (97% → 81%) because there's more text.** The v3 hand-off is 2 sentences (the pressure, then
+   the hand-off), so scenes run 35% longer. 5 of the 7 "n" votes name the wall of text: "Too many lines on the TV each
+   turn. Scene, outcome, right now. I stopped reading halfway through."
+3. **The dice still punish the invited chaos.** 60% of plans were ruled `wild` (−5), and 3 of 4 off-script plans
+   missed. The text follows you, then the die knocks you down.
+4. **Batman is the worst game in both engines** (4.3 in v3). The climbing-bag premise plus the bus hero produce
+   vehicle-stuck chains.
+5. **Endings settle the latest mess, not the story** (the ice on a bumper). The new rule "the moment of truth for the
+   situation as it is NOW" means the finale inherits whatever clean-up chain was running.
+
+### Top 5 fixes after v3, ranked
+1. **Ban self-made-mess objectives (a code check, plus one retry).** After a miss, the next Right now must not be
+   about an object the acting hero's own plan created (its dough, its bus, its ice). It must be a PRESSURE getting
+   worse ("The reporters are at the door"). Check: if the new right_now shares a key noun with this turn's plan text,
+   and that noun isn't in the opener, retry. This is the #1 remaining source of "stuck".
+2. **Put the text back to one scene sentence.** Show the pressure as a tiny TV chip (e.g. "Tide: dropping"), not as a
+   spoken sentence. Followable was 97% with the shorter scene.
+3. **DISASTER only on a natural 1, and cap `wild` at −3.** The rulings are much more `wild` under v3 (60%). An
+   off-script plan should land about half the time, or "players can go anywhere" is a promise the dice break.
+4. **Swap norwich-batman out of the judge top 3** (worst game in both engines). Keep shark (best in v3, 5.7) and gold
+   (5.6, but give the talking gold a voice: raters miss it in both engines).
+5. **The finale's moment of truth = the original problem plus the biggest pressure, never the latest mess.** Then
+   reveal "What you did → What really happened".

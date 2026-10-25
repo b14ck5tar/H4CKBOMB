@@ -339,7 +339,7 @@ function storySoFar(st) {
 function transcript(g) {
   const L = [`# Game ${g.game}: ${g.title} (${g.seats.length} players, ${g.turns.length} turns + finale)`, ``, `Players: ${g.seats.map((s) => `${s.hero.name} (played by ${s.persona.name} ${s.persona.id}; power: ${s.hero.ability.text})`).join("; ")}`, ``, `OPENING: ${g.openerText}`, `Finish line on screen: ${g.start.finish_line}`, `Right now: ${g.start.right_now}`, ``];
   for (const t of g.turns) {
-    L.push(`## Turn ${t.k}: ${t.hero} (${t.persona})`, `Plan typed: "${t.plan}"`, `DM ruling: ${t.tier}${t.interpretation ? ` ("${t.interpretation}")` : ""}. d20 = ${t.die} (+${t.statBonus} stat, ${t.shift >= 0 ? "+" : ""}${t.shift} difficulty) = ${t.total}: ${t.gradeLabel}`, `Outcome: ${t.outcome}`, t.scene ? `Scene: ${t.scene}` : "", t.problemNow && t.problemNow !== g.turns[t.k - 2]?.problemNow ? `Problem now: ${t.problemNow}` : "", `Right now: ${t.rightNow}`, ``);
+    L.push(`## Turn ${t.k}: ${t.hero} (${t.persona})`, `Plan typed: "${t.plan}"`, `DM ruling: ${t.tier}${t.interpretation ? ` ("${t.interpretation}")` : ""}. d20 = ${t.die} (+${t.statBonus} stat, ${t.shift >= 0 ? "+" : ""}${t.shift} difficulty) = ${t.total}: ${t.gradeLabel}`, `Outcome: ${t.outcome}`, t.scene ? `Scene: ${t.scene}` : "", `Right now: ${t.rightNow}`, ``);
   }
   const f = g.finale;
   L.push(`## GRAND FINALE`, ...f.plans.map((p) => `- ${p.hero}: "${p.plan}" (${p.backs} backed it)`), `Winning plan: ${f.winner}'s. Ruling ${f.tier}. One shared die: ${f.die} (+${f.backed} backing) = ${f.total}: ${f.gradeLabel}`, `Ending: ${f.ending}`, f.line ? `Last line: "${f.line}"` : "", f.recap ? `Recap: ${f.recap}` : "", ``);
