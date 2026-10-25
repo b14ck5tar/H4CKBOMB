@@ -32,8 +32,8 @@ Open `https://groupproject-game.vercel.app/tv?bots=1` and play to the first turn
 
 ## 2. The live take (about 15 min for 2 takes)
 
-Setup (VIDEO_SCRIPT.md, "The take to record"): `/tv?bots=1`, **Quick · Odd news · Teens**, 2 humans on real phones +
-2 test players (press **B** twice). A Quick Tale with 2 humans is 2 turns (1 each), about 4-5 minutes.
+Setup (VIDEO_SCRIPT.md, "Shot list"): `/tv?judge=1&bots=1` (a saved, tested true story), **Quick · Odd news · Teens**,
+2 humans on real phones + 2 test players (press **B** twice). That's 2 turns (1 each) + the finale, about 5 minutes.
 
 Start every recording first, then **clap once on camera** (it syncs the tracks):
 1. **TV:** OBS (1920x1080, 60 fps, desktop audio on, mic off), or Snipping Tool (Win+Shift+R, system audio on).
@@ -76,15 +76,16 @@ two "TV + phones" composites: good backups for any shot that came out blurry.
 
 ## 5. Voiceover (10 min)
 
-A quiet small room (a closet is ideal). Phone voice memo, mic ~6 inches away, a little to the side. Read each part
-of "Spoken script only" in VIDEO_SCRIPT.md twice, slower than feels natural, 2 s pause between takes. Like telling a
-friend; no trailer voice.
+A quiet small room (a closet is ideal). Phone voice memo, mic ~6 inches away, a little to the side. Read the
+one-take block in VIDEO_SCRIPT.md ("The voiceover") straight through, stopping 2 s at each [pause]. Slower than feels
+natural, like telling a friend; no trailer voice. Fluff a line? Pause, then reread that sentence; the edit cuts it.
 
 ## 6. Edit (30-40 min) in Clipchamp (built into Windows) or CapCut
 
 1. Drop in, in this order: couch shot → dice shot → `deck-slide-3.png` → the live take (TV capture as the base) →
    `how-it-works.png` → DM's Notes clip → `deck-slide-7.png` → Claude Code clip → `deck-slide-8.png`.
-2. Lay the 4 VO parts on top: Part 1 at 0:00, Part 2 at 0:30, Part 3 at 2:00, Part 4 at 2:30.
+2. Cut the voiceover at its [pause] gaps and lay the parts on top: Part 1 at 0:00, Part 2 at 0:30, Part 3 at 2:00,
+   Part 4 at 2:30. Add the small criterion chips (VIDEO_SCRIPT.md) top-left.
 3. In Part 2, cut the live take down to the moments in VIDEO_SCRIPT.md (join, opener, the friend's-idea pick, the
    swipe, the outcome, the shake, the reveal). Cut away to a phone capture or the room camera at least 3 times.
 4. Game sound low under the VO; louder for the narrator and the reveal.
