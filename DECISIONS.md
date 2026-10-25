@@ -178,3 +178,8 @@ Full history and train of thought: `design/00-where-we-are.md`.
 - ✅ CD: focus on the game working and feeling smooth before more narrator work. The laughing clip and 4th phone are dropped from the video (screen recording only).
 - ✅ CD voice pivot: ONE ElevenLabs narrator for everything, the "main girl" voice (v3, stability 0, similarity 0.8, style 0.45, speaker boost). No per-story casting for now. Flash in the same voice for live turn lines if v3 would make people wait.
 - ✅ CD: the demo video can use test bots (fine as is). The look session publishes production when the lead says go; the CD approves the prompt. The CD is buying the ElevenLabs $5 plan.
+
+## Sun ~5 AM: freeze schedule (lead, on the coordinator's advice; the CD can change it)
+- No new features from now on. Fixes until 8:00 · final deploy by 8:30 · 3 timed judge runs 8:30-9:15 · video + submit 9:15-10:45.
+- The one polish allowed: a loud friend's-idea moment ("SAM'S IDEA +1" on the TV + the friend's name in the narration). Connection is 30% of the score.
+- Narrator live on the laptop: ElevenLabs Sarah for every line; every fallback voice is female.
