@@ -25,7 +25,7 @@ export type Stage = Pick<
   GameHost,
   | "subscribe" | "getState" | "deadlineAt" | "portraits" | "thumbs" | "sceneImages" | "realStory" | "questSeed"
   | "transportKind" | "onReaction" | "skip" | "setPartyName" | "chooseQuest" | "canBegin" | "begin" | "nextTale"
-  | "setMode" | "startedAt" | "endedAt" | "setRating" | "voiceUrl"
+  | "setMode" | "startedAt" | "endedAt" | "setRating" | "voiceUrl" | "setSource"
 > & { readOnly?: boolean; onToast?: GameHost["onToast"] };
 
 export function useHost(host: Stage) {
@@ -172,9 +172,11 @@ function Lobby({ host, s }: { host: Stage; s: GameState }) {
       ? "Scan the code with your phone camera to join."
       : s.players.some((p) => !p.hero && p.status !== "building")
         ? "Someone's still picking a hero. Start whenever you're ready."
-        : s.mode === "quick"
-          ? "Everyone's in. One scene, about three minutes."
-          : "Everyone's in. You'll vote on the story first.";
+        : s.source === "ours"
+          ? "Everyone's in. First, everyone writes a small true story."
+          : s.mode === "quick"
+            ? "Everyone's in. One scene, about four minutes."
+            : "Everyone's in. You'll vote on the story first.";
   return (
     <div className="grid grid-cols-[minmax(0,26rem)_minmax(0,1fr)] gap-10 px-10 pb-8 pt-2 flex-1 min-h-0">
       <div className="page p-7 flex flex-col gap-4 items-center text-center self-start">
@@ -216,6 +218,19 @@ function Lobby({ host, s }: { host: Stage; s: GameState }) {
                 <button aria-pressed={s.mode === "full"} onClick={() => { sfx.unlock(); sfx.pageTurn(); host.setMode("full"); }}>
                   <span className="font-heading text-2xl font-bold uppercase block">Full Story · ~7 min</span>
                   <span className="text-sm text-ink-soft">Three scenes. You pick the story.</span>
+                </button>
+              </div>
+            </section>
+            <section className="flex flex-col gap-3">
+              <h2 className="font-heading text-2xl uppercase text-[var(--gilt-bright)]">Tonight’s story</h2>
+              <div className="qt-mode">
+                <button aria-pressed={s.source === "news"} onClick={() => { sfx.unlock(); sfx.pageTurn(); host.setSource("news"); }}>
+                  <span className="font-heading text-2xl font-bold uppercase block">Odd news</span>
+                  <span className="text-sm text-ink-soft">A strange, harmless story from this week’s real news.</span>
+                </button>
+                <button aria-pressed={s.source === "ours"} onClick={() => { sfx.unlock(); sfx.pageTurn(); host.setSource("ours"); }}>
+                  <span className="font-heading text-2xl font-bold uppercase block">Our stories</span>
+                  <span className="text-sm text-ink-soft">Each of you writes a small true story. Play one, then hear how it really ended.</span>
                 </button>
               </div>
             </section>

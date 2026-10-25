@@ -255,13 +255,29 @@ function CrewRow({ host, s, done, label }: { host: Stage; s: GameState; done: (p
   );
 }
 
+// ---------- Our stories: everyone writes a small true story ----------
+function StoryWrite({ host, s }: { host: Stage; s: GameState }) {
+  return (
+    <div className="qt-stage qt-center">
+      <div className="text-center flex flex-col gap-3 qt-rise max-w-[70rem]">
+        <p className="qt-pill !text-[var(--signal)]">Our stories</p>
+        <h2 className="qt-question">Write a small true story</h2>
+        <p className="text-[1.6rem] leading-snug text-parchment/85">
+          Something that really happened to you: how it started, what happened, and how it really ended. The ending stays secret until the very end.
+        </p>
+      </div>
+      <CrewRow host={host} s={s} done={(p) => s.written.includes(p.id)} label="stories in" />
+    </div>
+  );
+}
+
 // ---------- story vote (Full Story) ----------
 function StoryVote({ host, s }: { host: Stage; s: GameState }) {
   return (
     <div className="qt-stage qt-center">
       <div className="text-center flex flex-col gap-2 qt-rise">
-        <p className="qt-pill !text-[var(--signal)]">Every story starts from a real headline</p>
-        <h2 className="qt-question">Which one tonight?</h2>
+        <p className="qt-pill !text-[var(--signal)]">{s.source === "ours" ? "One of these really happened to someone here" : "Every story starts from a real headline"}</p>
+        <h2 className="qt-question">{s.busy || "Which one tonight?"}</h2>
       </div>
       <div className="grid grid-cols-3 gap-6 w-full max-w-[96rem]">
         {s.storyOptions.map((o, i) => {
@@ -921,7 +937,7 @@ function moodFor(s: GameState, title: boolean): Mood {
   if (s.phase === "narrating" && title) return "title";
   if (s.phase === "final_roll" || s.phase === "final_result") return "final";
   if (["turn", "pitch", "vote", "ruling", "roll"].includes(s.phase)) return "action";
-  if (["epilogue", "reveal", "storybook", "story_vote"].includes(s.phase)) return "end";
+  if (["epilogue", "reveal", "storybook", "story_vote", "story_write"].includes(s.phase)) return "end";
   return "scene";
 }
 
@@ -968,12 +984,15 @@ export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameS
   const mood = moodFor(s, title && s.phase === "narrating");
   // The latest painting of what the heroes did, once there is one; before that, the (hero-painted) plate.
   const painted = s.artKey >= 0 ? host.sceneImages[s.artKey] : undefined;
-  const art = s.phase === "story_vote" ? undefined : painted ?? host.sceneImages[plateFor(s)] ?? host.sceneImages[0];
+  const art = s.phase === "story_vote" || s.phase === "story_write" ? undefined : painted ?? host.sceneImages[plateFor(s)] ?? host.sceneImages[0];
   // One key per "shot": a new key plays the dip-to-dark transition and the enter animation.
   const shot = s.phase === "final_result" ? "final_roll" : ["turn", "ruling", "roll", "outcome"].includes(s.phase) ? `${s.phase}-${s.turnIndex}-${s.finale}` : s.phase;
 
   let main: React.ReactNode;
   switch (s.phase) {
+    case "story_write":
+      main = <StoryWrite host={host} s={s} />;
+      break;
     case "story_vote":
       main = <StoryVote host={host} s={s} />;
       break;
@@ -1040,7 +1059,7 @@ export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameS
           Skip ▸
         </button>
       )}
-      {["story_vote", "turn", "pitch", "vote", "roll"].includes(s.phase) && <Fuse host={host} phase={shot} />}
+      {["story_write", "story_vote", "turn", "pitch", "vote", "roll"].includes(s.phase) && <Fuse host={host} phase={shot} />}
       <div key={shot + "-c"} className="qt-shot">
         {main}
       </div>

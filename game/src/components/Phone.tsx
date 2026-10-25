@@ -273,6 +273,56 @@ function RealForm({ send }: { send: Send }) {
   );
 }
 
+/** Our stories: a small true story from your life. The real ending stays secret until the reveal. */
+function StoryWriteForm({ state, me, send, deadlineAt }: { state: GameState; me: Player; send: Send; deadlineAt: number }) {
+  const [title, setTitle] = useState("");
+  const [setup, setSetup] = useState("");
+  const [steps, setSteps] = useState("");
+  const [ending, setEnding] = useState("");
+  const total = state.mode === "quick" ? 90_000 : 120_000;
+  if (state.written.includes(me.id))
+    return (
+      <div className="flex flex-col gap-3">
+        <Timer deadlineAt={deadlineAt} total={total} />
+        <Say text="Sent. It stays secret until the end" />
+      </div>
+    );
+  return (
+    <form
+      className="flex flex-col gap-3"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (!setup.trim() || !ending.trim()) return;
+        send("story", { title: title.trim(), setup: setup.trim(), steps: steps.trim(), ending: ending.trim() });
+        vibrate(20);
+      }}
+    >
+      <Timer deadlineAt={deadlineAt} total={total} />
+      <Say text="Write a small true story from your life" />
+      <label className="flex flex-col gap-1">
+        <span className="font-ui text-sm">A title</span>
+        <input className="input" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={60} placeholder="The night the dog ate my keys" autoComplete="off" />
+      </label>
+      <label className="flex flex-col gap-1">
+        <span className="font-ui text-sm">How it started</span>
+        <textarea className="input min-h-20" value={setup} onChange={(e) => setSetup(e.target.value)} maxLength={400} placeholder="I was locked out at midnight and…" />
+      </label>
+      <label className="flex flex-col gap-1">
+        <span className="font-ui text-sm">What happened next (optional)</span>
+        <textarea className="input min-h-16" value={steps} onChange={(e) => setSteps(e.target.value)} maxLength={400} placeholder="Then I tried…" />
+      </label>
+      <label className="flex flex-col gap-1">
+        <span className="font-ui text-sm">How it really ended (secret until the end)</span>
+        <textarea className="input min-h-16" value={ending} onChange={(e) => setEnding(e.target.value)} maxLength={300} placeholder="A neighbor had a ladder…" />
+      </label>
+      <p className="text-xs text-parchment/70">Keep it light and kind. Nobody sees who wrote it until the end.</p>
+      <button className="btn btn-crimson text-xl" type="submit" disabled={!setup.trim() || !ending.trim()}>
+        Send my story
+      </button>
+    </form>
+  );
+}
+
 /** Full Story: three real headlines, tap one. */
 function StoryVote({ state, me, send, deadlineAt }: { state: GameState; me: Player; send: Send; deadlineAt: number }) {
   const mine = state.votes[me.id];
@@ -672,6 +722,9 @@ export function Phone({ code }: { code: string }) {
       } else {
         body = <CharacterPicker state={state} me={me} send={send} />;
       }
+      break;
+    case "story_write":
+      body = <StoryWriteForm state={state} me={me} send={send} deadlineAt={deadlineAt} />;
       break;
     case "story_vote":
       body = <StoryVote state={state} me={me} send={send} deadlineAt={deadlineAt} />;

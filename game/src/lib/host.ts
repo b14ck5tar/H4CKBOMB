@@ -118,6 +118,106 @@ function openerText(sc: SeedScene) {
   return `${sc.narration}${npc}`;
 }
 
+/** A live odd-news candidate (GET /api/news). */
+interface NewsCand {
+  id: string;
+  headline: string;
+  snippet: string;
+  source: string;
+  url: string;
+  date: string;
+  place: string;
+}
+
+/** The story writer's answer (POST /api/story/opener). */
+interface OpenerRes {
+  opener: { title: string; narration: string; goal: string; situation: string; npc_line?: { speaker: string; line: string } };
+  ending_facts?: { kind: "news"; whats_happening_now?: string; official_line?: string } | { kind: "personal"; real_ending?: string };
+  safe?: boolean;
+  fallback?: boolean;
+}
+
+/** /api/news may send candidates, or (older shape) whole quest seeds: either becomes a candidate. */
+function toCandidate(x: unknown): NewsCand | null {
+  const o = x as Record<string, unknown> & { the_real_story?: Record<string, string>; realm_name?: string };
+  if (!o) return null;
+  if (typeof o.headline === "string") {
+    return { id: String(o.id ?? o.headline).slice(0, 80), headline: o.headline, snippet: String(o.snippet ?? ""), source: String(o.source ?? ""), url: String(o.url ?? ""), date: String(o.date ?? ""), place: String(o.place ?? "") };
+  }
+  const rs = o.the_real_story;
+  if (rs?.headline) return { id: String(o.id ?? rs.headline).slice(0, 80), headline: rs.headline, snippet: rs.summary ?? "", source: rs.source ?? "", url: rs.link ?? "", date: rs.date ?? "", place: String(o.realm_name ?? "") };
+  return null;
+}
+
+function shuffle<T>(xs: T[]): T[] {
+  const a = [...xs];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = randInt(i + 1);
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function openerScene(o: OpenerRes["opener"], where: string): SeedScene {
+  return {
+    kind: "hook",
+    title: o.title,
+    location: where,
+    narration: o.narration,
+    goal: String(o.goal ?? "").replace(/[.!]+$/, ""),
+    situation: o.situation,
+    npc_line: o.npc_line ?? { speaker: "", line: "" },
+  };
+}
+
+/** Our stories without the writer: the player's own setup is the opener (never the ending). */
+function localOpener(st: { title: string; setup: string; steps: string }): OpenerRes {
+  return {
+    opener: { title: st.title, narration: st.setup, goal: "Help this story end well", situation: st.steps || st.setup, npc_line: { speaker: "", line: "" } },
+    safe: true,
+    fallback: true,
+  };
+}
+
+/** A live headline as a story: the opener from the writer, the article for the reveal. */
+function newsSeed(id: string, c: NewsCand, o: OpenerRes): QuestSeed {
+  const facts = o.ending_facts?.kind === "news" ? o.ending_facts : undefined;
+  return {
+    id,
+    quest_title: o.opener.title,
+    realm_name: c.place || "Somewhere real",
+    fairytale_premise: o.opener.narration,
+    the_threat: { name: o.opener.title, description: o.opener.situation, mapped_from: facts?.official_line || c.snippet },
+    the_goal: { description: o.opener.goal, mapped_from: "" },
+    locations: [],
+    complications: [],
+    the_real_story: { summary: c.snippet, headline: c.headline, source: c.source, link: c.url, date: c.date, now: facts?.whats_happening_now || "" },
+    art_style_hint: o.opener.situation,
+    rating: "teens",
+    opener: openerScene(o.opener, c.place),
+  };
+}
+
+/** A player's true story: the opener from their setup; their real ending is kept for the reveal. */
+function personalSeed(id: string, pid: string, author: string, st: { title: string; setup: string; steps: string; ending: string }, o: OpenerRes): QuestSeed {
+  const ending = o.ending_facts?.kind === "personal" && o.ending_facts.real_ending ? o.ending_facts.real_ending : st.ending;
+  return {
+    id,
+    quest_title: o.opener.title || st.title,
+    realm_name: "",
+    fairytale_premise: o.opener.narration,
+    the_threat: { name: o.opener.title || st.title, description: o.opener.situation, mapped_from: st.setup },
+    the_goal: { description: o.opener.goal, mapped_from: "" },
+    locations: [],
+    complications: [],
+    the_real_story: { summary: ending, headline: st.title, source: author, link: "", date: new Date().toISOString().slice(0, 10) },
+    art_style_hint: o.opener.situation,
+    rating: "teens",
+    opener: openerScene(o.opener, ""),
+    author: { pid, name: author },
+  };
+}
+
 /** One action, ~140 characters, one line. */
 function cleanPlan(text: unknown) {
   return String(text ?? "").replace(/[<>]/g, "").replace(/\s+/g, " ").trim().slice(0, PLAN_MAX);
@@ -325,6 +425,8 @@ export class GameHost {
       endingLine: "",
       recap: "",
       storyOptions: [],
+      source: "news",
+      written: [],
       turnOrder: [],
       turnIndex: 0,
       ideas: {},
@@ -357,6 +459,7 @@ export class GameHost {
     };
     this.t = openRoom(code);
     this.t.on((m) => this.handle(m));
+    if (typeof window !== "undefined") this.loadNews();
     this.presenceIv = setInterval(() => this.checkPresence(), 2000);
   }
 
@@ -721,6 +824,8 @@ export class GameHost {
         return this.onPitch(m.pid, m.text, String(m.creditId ?? ""));
       case "idea":
         return this.onIdea(m.pid, m.text);
+      case "story":
+        return this.onStory(m.pid, m.title, m.setup, m.steps, m.ending);
       case "vote":
         return this.onVote(m.pid, String(m.id ?? ""));
       case "roll":
@@ -923,11 +1028,33 @@ export class GameHost {
     if (truth) this.note("hero", p.hero?.name ?? p.name, "Shared one true thing about themselves. It stays private: the DM may nod to it once, gently, in one scene.");
   }
 
+  /** Lobby: Odd news (live headlines, curated stories as the fallback) or Our stories (players write true stories). */
+  setSource(source: "news" | "ours") {
+    if (this.state.phase !== "lobby") return;
+    this.set({ source });
+  }
+
+  /** Live odd-news candidates for this rating (GET /api/news, cached server-side for 4 h). Never throws. */
+  loadNews() {
+    const rating = this.state.rating;
+    fetch(`/api/news?rating=${rating}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => {
+        if (this.state.rating !== rating) return;
+        const raw: unknown[] = Array.isArray(j?.candidates) ? j.candidates : Array.isArray(j?.quests) ? j.quests : [];
+        this.newsCands = raw.map(toCandidate).filter((c): c is NewsCand => !!c);
+        if (this.newsCands.length) this.note("source", "Odd news", `${this.newsCands.length} live headlines ready for the story vote.`);
+      })
+      .catch(() => {});
+  }
+
   /** "Who's playing?" Kids / Teens / Adults. Filters the stories and sets the DM's tone. Lobby only. */
   setRating(r: Rating) {
     if (this.state.phase !== "lobby" || !isRating(r)) return;
     const questOptions = questOptionsFor(r);
     this.set({ rating: r, questOptions });
+    this.newsCands = [];
+    this.loadNews();
     if (this.seed && !questAllowed(this.seed.rating, r)) {
       this.seed = undefined;
       this.set({ questId: "", quest: undefined, scenes: [] });
@@ -971,8 +1098,12 @@ export class GameHost {
     if (this.useQuest(id)) this.pinned = true;
   }
 
+  private findSeed(id: string) {
+    return SEEDS.find((s) => s.id === id) ?? this.builtSeeds.get(id);
+  }
+
   private useQuest(id: string) {
-    const seed = SEEDS.find((s) => s.id === id);
+    const seed = this.findSeed(id);
     if (!seed || !questAllowed(seed.rating, this.state.rating)) return false;
     this.seed = seed;
     this.sceneImages = {};
@@ -982,6 +1113,12 @@ export class GameHost {
     // Pre-painted plates, keyed by plate: 0 = scene 1, 1 = scene 2, 2 = the climax (also Quick Tale's scene).
     const pre = (questImages as Record<string, string[]>)[id] ?? [];
     pre.forEach((url, i) => url && (this.sceneImages[i] = url));
+    // A live or personal story has no pre-painted plates: its scene is painted while the table votes.
+    this.plateP.get(id)?.then((url) => {
+      if (!url || this.state.questId !== id) return;
+      [0, 1, 2].forEach((i) => (this.sceneImages[i] ??= url));
+      this.set({});
+    });
     this.set({
       questId: id,
       quest: {
@@ -999,6 +1136,7 @@ export class GameHost {
 
   /** The hand-written scenes this story plays (seed_quests.json), with a plain fallback for stories without them. */
   private seedScenes(seed: QuestSeed, quick: boolean): SeedScene[] {
+    if (seed.opener) return [{ ...seed.opener, kind: quick ? "climax" : "hook" }];
     if (quick && seed.quick_scene) return [{ ...seed.quick_scene, kind: "climax" }];
     if (!quick && seed.scenes?.length === 3) return seed.scenes;
     const locs = seed.locations;
@@ -1039,14 +1177,23 @@ export class GameHost {
       .map((p) => ({ id: p.pick ?? p.id, name: p.hero!.name, portraitUrl: p.pick ? `/heroes/${p.pick}.webp` : this.portraits[p.id], visual: p.hero!.visual }));
     if (!heroes.length) return;
     const t0 = Date.now();
-    const p = (this.castP ?? Promise.resolve(null))
-      .then((cast) =>
-        fetch("/api/scene-art", {
+    const built = this.builtSeeds.has(questId);
+    const p = Promise.all([this.castP ?? Promise.resolve(null), built ? this.plateP.get(questId) ?? Promise.resolve(null) : Promise.resolve(null)])
+      .then(([cast, base]) => {
+        if (built && !base) throw new Error("no scene to paint into");
+        return fetch("/api/scene-art", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ questId, sceneIndex: this.quick ? "quick" : plate, heroes, rating: this.state.rating, style: cast?.art ?? "neon" }),
-        }),
-      )
+          body: JSON.stringify({
+            questId,
+            sceneIndex: this.quick ? "quick" : plate,
+            heroes,
+            rating: this.state.rating,
+            style: cast?.art ?? "neon",
+            ...(built ? { sceneUrl: base, sceneText: this.seed?.opener?.situation ?? "" } : {}),
+          }),
+        });
+      })
       .then((r) => (r.ok ? r.json() : null))
       .then((res: { url?: string; fallback?: boolean; cached?: boolean } | null) => {
         if (!res?.url || res.fallback || this.state.questId !== questId) return;
@@ -1118,6 +1265,7 @@ export class GameHost {
       const allowed = this.state.questOptions;
       this.useQuest(allowed.find((q) => q.id === QUICK.defaultQuest)?.id ?? allowed[randInt(allowed.length)].id);
     }
+    if (this.state.source === "ours") return this.startStoryWrite();
     if (!this.quick && !this.pinned) return this.startStoryVote();
     this.startStory();
   }
@@ -1137,20 +1285,49 @@ export class GameHost {
   }
 
   // ---------- story vote (Full Story) ----------
-  /** Three random stories allowed for this group. Every phone taps one (15 s). Ties are broken at random. */
-  private startStoryVote() {
-    const pool = [...this.state.questOptions];
-    for (let i = pool.length - 1; i > 0; i--) {
-      const j = randInt(i + 1);
-      [pool[i], pool[j]] = [pool[j], pool[i]];
+  /**
+   * Three stories, every phone taps one (15 s), ties broken at random. Odd news: three live headlines (each one's
+   * opener is written and its scene painted while people vote); curated stories when live news is missing.
+   */
+  private startStoryVote(given?: { id: string; title: string; teaser: string }[]) {
+    let storyOptions = given ?? [];
+    if (!given) {
+      const live = shuffle(this.newsCands).slice(0, 3);
+      if (FEATURES.liveNews && live.length >= 3) {
+        storyOptions = live.map((c) => {
+          const optionId = `news-${c.id}`;
+          this.prepareStory(optionId, { mode: "news", source: { headline: c.headline, snippet: c.snippet, source: c.source, url: c.url, date: c.date } }, (o) => newsSeed(optionId, c, o));
+          return { id: optionId, title: c.headline, teaser: [c.place, c.source].filter(Boolean).join(" · ") };
+        });
+        this.note("source", "Odd news", "Three live headlines. Each one's opening is being written from the article's facts while you vote.");
+      } else storyOptions = shuffle(this.state.questOptions).slice(0, 3);
     }
-    const storyOptions = pool.slice(0, 3);
-    if (storyOptions.length < 2) {
-      this.useQuest(storyOptions[0].id);
-      return this.startStory();
-    }
+    if (storyOptions.length < 2) return this.playOption(storyOptions[0]?.id ?? this.state.questOptions[0]?.id);
     this.set({ phase: "story_vote", storyOptions, votes: {}, ready: [] });
     this.setTimer(STORY_VOTE_MS, () => this.endStoryVote());
+  }
+
+  /** Play the chosen option: a curated story right away, or a live/personal one once its opener is written. */
+  private async playOption(optionId: string) {
+    if (this.findSeed(optionId) && !this.openerP.has(optionId)) {
+      this.useQuest(optionId);
+      return this.startStory();
+    }
+    const p = this.openerP.get(optionId);
+    if (p) {
+      this.set({ busy: "Writing tonight's story…" });
+      const seed = await withTimeout(p, 15_000, () => null);
+      this.set({ busy: "" });
+      if (seed) {
+        this.note("source", "Story writer", seed.author ? "Opener written from their true story; the real ending is kept for the reveal." : "Opener written from the article's facts only.");
+        this.useQuest(seed.id);
+        return this.startStory();
+      }
+      this.note("fallback", "Backup used", "That story couldn't be written in time, so a curated story stands in.");
+    }
+    const allowed = this.state.questOptions;
+    this.useQuest(allowed[randInt(allowed.length)].id);
+    this.startStory();
   }
 
   /** Everyone in the game votes on the story, even someone whose custom hero is still being drawn. */
@@ -1168,8 +1345,7 @@ export class GameHost {
     const pick = best[randInt(best.length)];
     const tally = opts.map((o) => `"${o.title}" ${count(o.id)}`).join(", ");
     this.note("source", "Story vote", `${tally}. ${best.length > 1 ? "Tie, broken at random (no AI pick, no unfair advantage)." : "Most votes wins."}`);
-    this.useQuest(pick.id);
-    this.startStory();
+    this.playOption(pick.id);
   }
 
   // ---------- the story ----------
@@ -1198,18 +1374,20 @@ export class GameHost {
     this.note(
       "source",
       "The story",
-      quick
+      seed.author
+        ? `A true story from someone at this table. Who wrote it, and how it really ended, stays hidden until the reveal.`
+        : quick
         ? `Quick Tale built from a real news story. The cold open shows the real headline; how each part maps to it is revealed at the end.`
         : `Built from a real news story${seed.category ? ` (${seed.category.replace(/_/g, " ")})` : ""}. The headline stays hidden until the end so it can't spoil the twist.`,
     );
     const n = this.state.turnOrder.length;
     this.note("turn", "Turns", `${n} turns (${this.heroes().length} players × ${this.heroes().length ? n / this.heroes().length : 0}), then the grand finale. The opener and the goal were written by the team; the AI writes what each action does.`);
-    this.set({ phase: "quest", sceneIndex: 0, narration: "", sceneTitle: "", goal: "", ready: [], cast: null, voice: null });
+    this.set({ phase: "quest", sceneIndex: 0, narration: "", sceneTitle: "", goal: "", ready: [], cast: null, voice: null, busy: "" });
     this.getSceneArt(0);
     this.askCast(seed);
     this.openerAsked = Date.now();
     this.voiceFor(openerText(opener));
-    const ms = quick ? coldOpenTimeline(seed.the_real_story.headline).total : TITLE_CARD_MS;
+    const ms = quick && !seed.author ? coldOpenTimeline(seed.the_real_story.headline).total : TITLE_CARD_MS;
     this.setTimer(ms, () => this.openStory());
   }
 
@@ -1549,6 +1727,100 @@ export class GameHost {
   }
 
   private lastArtAsked = 0;
+
+  // ---------- story sources (design/24 P6) ----------
+  private newsCands: NewsCand[] = [];
+  private builtSeeds = new Map<string, QuestSeed>(); // live and personal stories, built during the vote
+  private openerP = new Map<string, Promise<QuestSeed | null>>(); // option id -> its story, being written
+  private plateP = new Map<string, Promise<string | null>>(); // story id -> its painted opening scene
+  private ourStories: Record<string, { title: string; setup: string; steps: string; ending: string }> = {};
+
+  private party() {
+    return this.heroes().map((p) => ({ hero_id: p.id, name: p.hero!.name, power: p.hero!.ability?.text ?? "" }));
+  }
+
+  /**
+   * Ask the story writer (POST /api/story/opener) for one option's opener + ending facts, the moment the vote starts,
+   * then paint its opening scene. Resolves null if it can't be written or isn't safe: that option falls back.
+   */
+  private prepareStory(optionId: string, req: Record<string, unknown>, build: (o: OpenerRes) => QuestSeed, local?: () => OpenerRes) {
+    const p = (async () => {
+      try {
+        const res = await fetch("/api/story/opener", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...req, rating: this.state.rating, party: this.party() }),
+        }).catch(() => null);
+        // No writer (yet), or it failed: a personal story still plays from its own words.
+        const j = (res?.ok ? await res.json() : local ? local() : null) as OpenerRes | null;
+        if (!j) return null;
+        if (!j?.opener?.narration || j.safe === false) return null;
+        const seed = build(j);
+        this.builtSeeds.set(seed.id, seed);
+        this.paintOpening(seed);
+        return seed;
+      } catch {
+        return null;
+      }
+    })();
+    this.openerP.set(optionId, p);
+    return p;
+  }
+
+  /** A story without pre-painted plates gets its opening scene painted (muse-image, Neon Uncanny) during the vote. */
+  private paintOpening(seed: QuestSeed) {
+    if (this.plateP.has(seed.id)) return;
+    const o = seed.opener!;
+    this.plateP.set(
+      seed.id,
+      image({ kind: "scene", location: o.location || seed.realm_name, description: o.situation, realm: seed.realm_name, threat: o.narration, quality: "fast" }),
+    );
+  }
+
+  // ---------- Our stories: everyone privately writes a small true story ----------
+  private startStoryWrite() {
+    this.ourStories = {};
+    this.set({ phase: "story_write", written: [], votes: {}, ready: [] });
+    this.setTimer(this.quick ? 90_000 : 120_000, () => this.endStoryWrite());
+  }
+
+  private onStory(pid: string, title: unknown, setup: unknown, steps: unknown, ending: unknown) {
+    if (this.state.phase !== "story_write" || !this.player(pid)) return;
+    const clean = (x: unknown, n: number) => String(x ?? "").replace(/[<>]/g, "").replace(/\s+/g, " ").trim().slice(0, n);
+    const story = { title: clean(title, 60), setup: clean(setup, 400), steps: clean(steps, 400), ending: clean(ending, 300) };
+    if (!story.setup || !story.ending) return;
+    if (!story.title) story.title = story.setup.split(/[.!?]/)[0].slice(0, 50);
+    // The story stays on the TV: the wire only says who has written one. The real ending is hidden until the reveal.
+    this.ourStories[pid] = story;
+    const written = [...new Set([...this.state.written, pid])];
+    this.set({ written });
+    this.note("source", this.player(pid)?.name ?? "A player", "Wrote a true story. Its real ending stays hidden until the reveal.");
+    if (this.state.players.filter((p) => !p.away).every((p) => written.includes(p.id))) this.endStoryWrite();
+  }
+
+  private endStoryWrite() {
+    if (this.state.phase !== "story_write") return;
+    this.clearTimer();
+    const ids = Object.keys(this.ourStories);
+    if (!ids.length) {
+      this.note("source", "Our stories", "Nobody wrote one in time, so tonight is an odd news story instead.");
+      this.set({ source: "news" });
+      return this.startStoryVote();
+    }
+    const options = ids.map((pid) => {
+      const st = this.ourStories[pid];
+      const optionId = `ours-${pid}`;
+      const author = this.player(pid)?.name ?? "Someone";
+      this.prepareStory(
+        optionId,
+        { mode: "personal", source: { author_id: pid, title: st.title, setup: st.setup, steps: st.steps, real_ending: st.ending } },
+        (o) => personalSeed(optionId, pid, author, st, o),
+        () => localOpener(st),
+      );
+      return { id: optionId, title: st.title, teaser: "A true story from someone at this table." };
+    });
+    this.startStoryVote(options);
+  }
 
   // ---------- the narrator's voice (design/24 P5) ----------
   /** Narration plays a little faster than Gemini reads it: the house style is calm, and a party can't wait. */

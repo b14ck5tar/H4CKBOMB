@@ -79,6 +79,7 @@ export class WatchSource {
   nextTale() {}
   setMode() {}
   setRating() {}
+  setSource() {}
   voiceUrl() {
     return "";
   }

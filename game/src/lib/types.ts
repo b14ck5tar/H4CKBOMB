@@ -142,7 +142,12 @@ export interface QuestSeed {
   the_goal: { description: string; mapped_from: string };
   locations: { name: string; description: string; mapped_from: string }[];
   complications: { stage: number; title: string; what_happens: string; why_obvious_in_hindsight: string; mapped_from: string }[];
-  the_real_story: { summary: string; headline: string; source: string; link: string; date: string; context_note?: string };
+  /** now: "where it stands now" in the real world, from the source's facts only (the ending shows it). */
+  the_real_story: { summary: string; headline: string; source: string; link: string; date: string; context_note?: string; now?: string };
+  /** A live-news or player-written story's opener (fixed start + fixed goal; the middle branches). */
+  opener?: SeedScene;
+  /** "Our stories": who wrote it (their real ending is the_real_story.summary, hidden until the reveal). */
+  author?: { pid: string; name: string };
   art_style_hint: string;
   scenes?: SeedScene[]; // Full Story: hook, twist, climax
   quick_scene?: SeedScene; // Quick Tale: the one scene
@@ -260,6 +265,7 @@ export interface DMNotes {
 
 export type Phase =
   | "lobby"
+  | "story_write"
   | "story_vote"
   | "quest"
   | "narrating"
@@ -319,6 +325,8 @@ export interface GameState {
   endingLine: string; // one line for the reveal: how it ended
   recap: string; // the reveal's "your version": 1-2 sentences on what this group actually did
   storyOptions: { id: string; title: string; teaser: string }[]; // the story vote's 3 headlines
+  source: "news" | "ours"; // lobby: Odd news (live headlines) or Our stories (players write true stories)
+  written: string[]; // Our stories: who has sent theirs (the stories themselves stay on the TV)
   // Turns (design/24): one owner per turn, everyone else suggests, then a grand finale everyone votes on
   turnOrder: string[]; // player ids, in turn order (cycles by lobby size)
   turnIndex: number; // whose turn it is in turnOrder

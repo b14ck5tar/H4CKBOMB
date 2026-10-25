@@ -20,6 +20,8 @@ export const FEATURES = {
   longStorybook: false,
   /** "Only you noticed…" secret clue box on phones. */
   clueBox: false,
+  /** Odd news: the story vote offers live headlines (GET /api/news). Off = curated stories only. */
+  liveNews: true,
   /** AI-written scene openers. Off = the hand-written scenes in seed_quests.json. */
   aiScenes: false,
   /** The narrator reads the story aloud (Gemini TTS, /api/tts). Off or failing = text only. */

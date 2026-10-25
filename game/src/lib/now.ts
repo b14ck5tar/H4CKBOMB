@@ -16,6 +16,9 @@ export function nowText(s: GameState, me?: string): string {
   const w = winnerPid(s);
   const mine = !!me && w === me;
   switch (s.phase) {
+    case "story_write":
+      if (me) return s.written.includes(me) ? "Sent. It stays secret until the end" : "Write a small true story from your life";
+      return "Everyone: write a small true story on your phone";
     case "story_vote":
       return me && s.votes[me] ? "Story picked. Waiting for the others" : "Pick tonight's story on your phone";
     case "quest":
