@@ -228,6 +228,7 @@ export async function runTurn(i: TurnInput, rating: Rating): Promise<TurnResult>
   // EDITOR PASS (CD, Sun): one minimal-effort Muse call fixes the draft's clarity, ONLY inside the hidden window (the
   // die is still being thrown), never as a visible wait. Code checks decide whether the edit is kept.
   let edited = false;
+  if (p && !fallback && Date.now() - t0 >= EDIT_BY_MS) console.log(`[turn] editor skipped: draft took ${Date.now() - t0}ms`);
   if (p && !fallback && Date.now() - t0 < EDIT_BY_MS) {
     const known = { where: state.where, cast: state.cast, facts: state.facts, last_moments: state.last_moments, finish_line: state.finish_line };
     const e = await museJSON<{ outcome: string; scene: string; changed: boolean }>({
@@ -239,7 +240,7 @@ export async function runTurn(i: TurnInput, rating: Rating): Promise<TurnResult>
       user: JSON.stringify({ outcome: p.outcome, scene: p.scene, plan: i.plan, concept: clip(i.hero?.concept, 140), hero, grade, idea_from: idea, next_player: nextPlayer, known }),
       timeoutMs: EDIT_TIMEOUT_MS,
       maxTokens: 700,
-    }).catch(() => null);
+    }).catch((err) => (console.warn(`[turn] editor skipped: ${(err as Error).message}`), null));
     if (e?.changed && e.outcome?.trim()) {
       const cand = { ...p, outcome: e.outcome.trim(), scene: e.scene?.trim() || p.scene };
       const after = checkTurn(cand, ctx);
