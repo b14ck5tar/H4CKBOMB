@@ -2100,7 +2100,8 @@ export class GameHost {
     const written = [...new Set([...this.state.written, pid])];
     this.set({ written });
     this.note("source", this.player(pid)?.name ?? "A player", "Wrote a true story. Its real ending stays hidden until the reveal.");
-    if (this.state.players.filter((p) => !p.away).every((p) => written.includes(p.id))) this.endStoryWrite();
+    // Everyone who can write has written (test players never do): the vote starts now, not when the timer ends.
+    if (this.state.players.filter((p) => !p.away && !this.bots.isBot(p.id)).every((p) => written.includes(p.id))) this.endStoryWrite();
   }
 
   private endStoryWrite() {

@@ -676,3 +676,25 @@
 
 /* The thrown die's shadow on the table. */
 .qt-die-shadow { position: absolute; left: 15%; right: 15%; bottom: -14px; height: 28px; border-radius: 50%; background: radial-gradient(closest-side, rgba(0, 0, 0, 0.7), transparent); opacity: 0; pointer-events: none; }
+
+/* Layout guard for 1366-1920 wide TVs (and narrower windows): one header line, nothing overlapping. */
+.qt-top { flex-wrap: nowrap; white-space: nowrap; min-width: 0; }
+.qt-top > * { flex-shrink: 0; }
+.qt-top .qt-top-title { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 1500px) { .qt-top .qt-top-opt { display: none; } }
+.gp-goal-row { flex-direction: column; align-items: center; gap: 0.35rem; padding: 0 1.5rem; }
+.gp-goal { flex-wrap: wrap; justify-content: center; max-width: min(calc(100vw - 3rem), 90rem); }
+.gp-goal-k { flex-shrink: 0; }
+.gp-goal-t { min-width: 0; overflow-wrap: anywhere; }
+.gp-goal-final { max-width: min(calc(100vw - 3rem), 70rem); font-family: var(--font-heading), sans-serif; font-size: 0.95rem; line-height: 1.2; text-transform: uppercase; color: rgba(245, 241, 255, 0.72); padding: 0.2rem 0.8rem; border-radius: 6px; background: rgba(5, 3, 9, 0.55); text-align: center; }
+.gp-goal-final span { font-family: var(--font-ui), monospace; font-size: 0.65rem; letter-spacing: 0.25em; color: var(--gilt-bright); margin-right: 0.5rem; }
+.gp-now { max-width: calc(100vw - 3rem); white-space: normal; }
+.gp-now-k { flex-shrink: 0; }
+.gp-now-t { font-size: clamp(1.1rem, 1.6vw, 1.85rem); line-height: 1.15; overflow-wrap: anywhere; }
+.qt-stage { padding-top: 10rem; }
+.gp-turn { max-height: 64vh; }
+.gp-turn-h { font-size: 4rem !important; }
+.gp-turn-sit { font-size: 2rem !important; }
+.gp-turn-busy .gp-turn-h { font-size: 3rem !important; }
+.gp-turn-busy .gp-turn-sit { font-size: 1.6rem !important; }
+.gp-turn-busy .qt-plan p { font-size: 1.15rem !important; }

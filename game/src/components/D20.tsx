@@ -103,6 +103,10 @@ export function D20({
     raf = requestAnimationFrame(spin);
     const flick = () => {
       const el = performance.now() - start;
+      if (value != null && el > 1300) {
+        setFlicker(value); // the last stretch shows the face it lands on, never a misleading high number
+        return;
+      }
       setFlicker((p) => randFace(p));
       const p = Math.min(el / 1400, 1);
       timer = setTimeout(flick, 45 + 190 * p * p);
@@ -113,7 +117,7 @@ export function D20({
       if (timer) clearTimeout(timer);
       if (node) node.style.transform = "";
     };
-  }, [rolling, size]);
+  }, [rolling, size]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // detect the rolling -> landed transition
   useEffect(() => {

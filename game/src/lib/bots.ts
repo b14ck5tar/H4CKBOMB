@@ -91,7 +91,7 @@ export class Bots {
   /** Every move a bot has suggested tonight, so they don't repeat themselves. */
   private said: string[] = [];
 
-  private isBot(pid: string) {
+  isBot(pid: string) {
     return this.list.some((b) => b.pid === pid);
   }
 

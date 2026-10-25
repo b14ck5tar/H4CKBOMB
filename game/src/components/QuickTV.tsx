@@ -191,10 +191,10 @@ function QTopBar({ host, s, onNotes, notesOpen }: { host: Stage; s: GameState; o
   return (
     <header className="qt-top">
       <span className="font-display text-xl text-[var(--gilt-bright)] uppercase tracking-wide">Group Project</span>
-      {s.mode === "quick" && <span className="on-air">Quick Tale</span>}
-      {s.quest && s.phase !== "story_vote" && <span className="font-heading text-xl uppercase truncate text-parchment/85">{s.quest.title}</span>}
+      {s.mode === "quick" && <span className="on-air qt-top-opt">Quick Tale</span>}
+      {s.quest && s.phase !== "story_vote" && <span className="font-heading text-xl uppercase text-parchment/85 qt-top-title">{s.quest.title}</span>}
       <span className="flex-1" />
-      {s.narrated && s.cast && <span className="font-ui text-sm uppercase tracking-[0.2em] text-parchment/50">Narrated by {s.cast.name}</span>}
+      {s.narrated && s.cast && <span className="font-ui text-sm uppercase tracking-[0.2em] text-parchment/50 qt-top-opt">Narrated by {s.cast.name}</span>}
       {FEATURES.hopeDisplay && <Hope hope={s.hope} max={s.hopeMax} />}
       {left > 0 && !reading && (
         <span className="flex items-baseline gap-1.5">
@@ -264,12 +264,13 @@ function GoalBar({ s }: { s: GameState }) {
           </span>
           <span className="gp-goal-t">{now || s.goal}</span>
         </div>
+        {/* The story's goal sits right under "Right now" (a corner box collided with it on narrower screens). */}
+        {now && (
+          <div className="gp-goal-final" title="The story's goal">
+            <span>The goal</span> {s.goal}
+          </div>
+        )}
       </div>
-      {now && (
-        <div className="gp-goal-corner" title="The story's goal">
-          <span>The goal</span> {s.goal}
-        </div>
-      )}
     </>
   );
 }
@@ -529,16 +530,16 @@ function Turn({ host, s }: { host: Stage; s: GameState }) {
   const typing = s.typing.map((pid) => s.players.find((p) => p.id === pid)).filter((p): p is Player => !!p);
   return (
     <div className="qt-stage">
-      <div className="gp-lowerthird !max-w-[110rem] !gap-4">
+      <div className={`gp-lowerthird !max-w-[110rem] !gap-4 gp-turn ${ideas.length >= 2 ? "gp-turn-busy" : ""}`}>
         <div className="flex items-center gap-5 qt-pop">
           <div className="gp-owner" style={{ ["--pc" as string]: owner.color }}>
-            <Avatar host={host} p={owner} size={96} />
+            <Avatar host={host} p={owner} size={ideas.length >= 2 ? 72 : 96} />
           </div>
-          <h2 className="qt-question !text-[4rem]" style={{ color: owner.color }}>
+          <h2 className="qt-question gp-turn-h" style={{ color: owner.color }}>
             {shortName(owner.hero?.name)}&apos;s turn
           </h2>
         </div>
-        <p className="qt-narration !text-[2rem] max-w-[80rem]">{s.situation}</p>
+        <p className="qt-narration gp-turn-sit max-w-[80rem]">{s.situation}</p>
         <div className="flex gap-4 flex-wrap items-stretch min-h-[5.5rem]">
           {ideas.map(([pid, text]) => {
             const pl = s.players.find((p) => p.id === pid);
