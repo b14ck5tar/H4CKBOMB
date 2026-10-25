@@ -6,7 +6,7 @@
  *                                         your own plan, and "Solved by…"
  */
 import type { Player, Storybook } from "@/lib/types";
-import { Kicker, ReactionBar, Say, SceneThumb } from "./kit";
+import { GameButton, Kicker, ReactionBar, Say, SceneThumb } from "./kit";
 
 /**
  * `text` may mark words with *stars* (lime); the stamp already says "based on a true story". Never dark: the scene,
@@ -18,6 +18,8 @@ export function RevealScreen({
   line,
   reactions,
   onReact,
+  onDone,
+  done,
 }: {
   text?: string;
   art?: string;
@@ -25,6 +27,9 @@ export function RevealScreen({
   line?: string;
   reactions?: readonly string[];
   onReact?: (emoji: string) => void;
+  /** "I'm done": the reveal moves on once everyone here has tapped (or the TV taps Continue). */
+  onDone?: () => void;
+  done?: boolean;
 }) {
   return (
     <>
@@ -44,6 +49,7 @@ export function RevealScreen({
         </p>
       )}
       {reactions && onReact && <ReactionBar reactions={reactions} onReact={onReact} big />}
+      {onDone && (done ? <p className="pk-hint">Waiting for the others…</p> : <GameButton tone="lime" onClick={onDone}>I&apos;m done ▸</GameButton>)}
     </>
   );
 }

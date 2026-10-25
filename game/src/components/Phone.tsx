@@ -281,7 +281,7 @@ export function Phone({ code }: { code: string }) {
         body = <ShakeScreen final={state.final} phase={state.phase} meId={me.id} deadlineAt={deadlineAt} onArm={() => send("arm")} onShake={() => send("roll")} onUnlock={() => sfx.unlock()} />;
         break;
       case "reveal":
-        body = <RevealScreen art={art} line={state.recap || state.endingLine} reactions={REACTIONS} onReact={(emoji) => send("react", { emoji })} />;
+        body = <RevealScreen art={art} line={state.recap || state.endingLine} reactions={REACTIONS} onReact={(emoji) => send("react", { emoji })} onDone={() => send("ready")} done={state.ready.includes(me.id)} />;
         break;
       case "storybook":
         body = (

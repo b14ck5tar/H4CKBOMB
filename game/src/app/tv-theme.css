@@ -2944,3 +2944,19 @@
   .tvx-credit-slam { animation: tvx-credit-fade 1.9s ease both 0.3s; }
   @keyframes tvx-credit-fade { 0%, 100% { opacity: 0; } 12%, 80% { opacity: 1; } }
 }
+
+/* Keepsake QR still binding (the storybook call is out): say so instead of an empty white box. */
+.tvx-take-wait {
+  display: grid;
+  place-items: center;
+  padding: calc(var(--u) * 1);
+  text-align: center;
+  font-family: var(--font-heading), sans-serif;
+  font-weight: 800;
+  font-size: calc(var(--u) * 1.5);
+  line-height: 1.15;
+  text-transform: uppercase;
+  color: #2a1840;
+  animation: tvx-take-pulse 1.4s ease-in-out infinite;
+}
+@keyframes tvx-take-pulse { 50% { opacity: 0.45; } }

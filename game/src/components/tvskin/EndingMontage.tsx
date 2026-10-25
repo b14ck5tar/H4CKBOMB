@@ -192,7 +192,7 @@ function Reveal({ r, keepsake, keepsakeUrl }: { r: RevealData; keepsake?: React.
         {keepsake ?? (
           <span className="tvx-take-qr">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            {take ? <img src={take} alt="QR code: your storybook" /> : <span className="tvx-take-wait" />}
+            {take ? <img src={take} alt="QR code: your storybook" /> : <span className="tvx-take-wait">Binding your storybook…</span>}
           </span>
         )}
         <p className="tvx-take-sub">Scan for your storybook</p>
