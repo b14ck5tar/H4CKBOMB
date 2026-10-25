@@ -7,6 +7,18 @@ wall, the Norwich Batman.
 
 Meta scores: Human Connection 30 · AI Centrality 25 · Originality 20 · **Execution & Demo Quality 25**.
 
+## The 2 PM demo: a LOCAL build on the laptop
+The submission is final (tag `submission-1130`, live at groupproject-game.vercel.app, video youtu.be/9emoutd3gQQ).
+Judges play a local build that may include improvements made after 11:30.
+- **Start it:** in PowerShell at the repo root: `TODO: command from scripts/demo.ps1 (look is building it)`. Then open
+  the TV at `TODO: local URL from demo.ps1` + `/tv?judge=1&bots=1`, full screen (F11). Phones scan the lobby QR
+  (laptop and phones on the same network).
+- **Say it once, up front (honest disclosure):** "What we submitted is live at the link; what you're playing has a few
+  improvements we made since. Here's what changed: ___." (Fill in from `git log --oneline submission-1130..HEAD`;
+  nothing yet as of 11:40.)
+- **Fallback, if the laptop build or the local network fails:** open `https://groupproject-game.vercel.app/tv?judge=1&bots=1`
+  (the submitted build) and play that. Say: "This is exactly what we submitted."
+
 ## Opener B (10 s, say it first) ⭐ then A
 "Our application to HackTX got denied. My teammate never even applied. We walked in anyway, and built the one group project where everyone actually shows up."
 
