@@ -116,6 +116,7 @@ const AWAY_AFTER_TIMEOUTS = 2;
 export const MONTAGE_PANEL_MS = 4800; // one ending-montage panel on the TV
 const DANGER_MAX = 3;
 /** design/35 rule 4: progress is decided by code from the grade, never by the AI. */
+const HINT_PROGRESS: Record<string, number> = { low: 8, mid: 18, high: 32 };
 const PROGRESS_BY_GRADE: Record<string, number> = { LEGENDARY: 40, GREAT: 30, PROGRESS: 20, PARTIAL: 8, SETBACK: 0, DISASTER: -5 };
 const QUICK_IS_CURATED = true; // judge mode (CD, Sun)
 const USE_BRANCHES = false; // outcome_branches (3 high-effort calls) vs one live outcome with the real roll
@@ -134,7 +135,7 @@ function openerText(sc: SeedScene) {
   return `${sc.narration}${npc}`;
 }
 
-type OutcomeData = { text: string; situation?: string; why?: string; now_goal?: string; where?: string; changed?: string; new_fact?: string; new_prop?: string; memorable?: string; scene?: string; open_thread?: string };
+type OutcomeData = { progress_hint?: "low" | "mid" | "high"; step_solved?: boolean; text: string; situation?: string; why?: string; now_goal?: string; where?: string; changed?: string; new_fact?: string; new_prop?: string; memorable?: string; scene?: string; open_thread?: string };
 
 /** In a sentence that names a they/them hero, "he/she/his/her/him" become "they/their/them" (a cheap post-check). */
 function fixPronouns(text: string, heroes: { name: string; pronouns: string }[]) {
@@ -519,6 +520,7 @@ export class GameHost {
       fling: null,
       danger: 0,
       progress: 0,
+      sceneArt: "",
       narration: "",
       situation: "",
       banner: "",
@@ -979,7 +981,7 @@ export class GameHost {
       case "real":
         return this.onReal(m.pid, m.skill, m.fear);
       case "pitch":
-        return this.onPitch(m.pid, m.text, String(m.creditId ?? ""));
+        return this.onPitch(m.pid, m.text, String(m.creditId ?? ""), m.own, m.idea);
       case "idea":
         return this.onIdea(m.pid, m.text);
       case "typing":
@@ -1837,14 +1839,16 @@ export class GameHost {
   }
 
   /** The owner picks: their own words, or a friend's suggestion (maybe edited). Using a friend's idea is +1 and credited. */
-  private onPitch(pid: string, text: string, creditId = "") {
+  private onPitch(pid: string, text: string, creditId = "", own?: unknown, idea?: unknown) {
     const s = this.state;
     if (s.phase === "turn") {
       if (pid !== this.owner()) return this.onIdea(pid, text);
       const clean = cleanPlan(text);
       if (!clean) return;
       const credit = creditId && creditId !== pid && s.ideas[creditId] ? creditId : "";
-      return this.takePlan({ id: `t${s.turnIndex}-${pid}`, playerId: pid, text: clean, useAbility: false, embraceFlaw: false, creditId: credit || undefined });
+      // Both parts travel to the writer as the player wrote them (their nouns and jokes intact).
+      const parts = { own: cleanPlan(own) || undefined, idea: credit ? cleanPlan(idea) || s.ideas[credit] : undefined };
+      return this.takePlan({ id: `t${s.turnIndex}-${pid}`, playerId: pid, text: clean, useAbility: false, embraceFlaw: false, creditId: credit || undefined, ...parts });
     }
     if (s.phase !== "pitch") return;
     if (!this.player(pid)?.hero || s.pitches.some((p) => p.playerId === pid)) return;
@@ -1991,6 +1995,8 @@ export class GameHost {
         finale: this.state.finale,
         hero: { name: h.name, best_stat: bestStat(h), stats: h.stats, power: h.ability?.text ?? "", weakness: h.flaw },
         plan: firstAction(pitch.text).action,
+        own_words: pitch.own,
+        friend_idea: pitch.idea,
         earlier: this.state.log.map((l) => `${l.hero} (${l.band}): ${l.narration}`).slice(-4),
         story_so_far: this.storySoFar(),
         real_event: this.seed?.real_event,
@@ -2118,6 +2124,7 @@ export class GameHost {
         const key = this.artSeq++;
         this.sceneImages[key] = res.url;
         this.turnArt.set(forTurn, res.url);
+        if (!res.url.startsWith("data:")) this.set({ sceneArt: res.url });
         this.note("scene", "Scene art", `Painted by Muse Image, a new shot (${Math.round((Date.now() - t0) / 1000)}s): ${clip(where, 90)}`);
         this.set({ artKey: key });
       })
@@ -2552,6 +2559,8 @@ export class GameHost {
       pronouns: this.pronounMap(),
       attempt: pitch.verdict?.interpretation ?? "",
       plan: firstAction(pitch.text).action,
+      own_words: pitch.own,
+      friend_idea: pitch.idea,
       idea_from: pitch.creditId && won ? this.heroName(pitch.creditId) : "", // a friend is credited, never blamed
       heroes: this.heroes().map((p) => p.hero!.name),
       next_hero: nextId ? this.heroName(nextId) : "",
@@ -2589,6 +2598,7 @@ export class GameHost {
       memorable: String(d.memorable ?? "").trim(),
       scene: String(d.scene ?? "").trim(),
       openThread: d.open_thread === undefined ? undefined : String(d.open_thread ?? "").trim(),
+      hint: d.progress_hint,
     };
   }
 
@@ -2648,7 +2658,7 @@ export class GameHost {
     const op = this.outcomeP ?? Promise.resolve({ text: fbl.text, situation: fbl.situation, why: "", nowGoal: "", where: "", changed: "", prop: "", memorable: "", scene: "", openThread: undefined as string | undefined });
     op.then(() => (settled = true));
     setTimeout(() => !settled && this.state.phase === "outcome" && this.set({ busy: "The DM is writing it down…" }), 600);
-    const { text, situation, why, nowGoal: asked, where, changed, prop, memorable, openThread } = await op;
+    const { text, situation, why, nowGoal: asked, where, changed, prop, memorable, openThread, hint } = await op as Awaited<typeof op> & { hint?: string };
     // design/35: the plan is what happened; the roll set how well. Code decides progress from the grade, and only
     // accepts a new "Right now" that is fresh (never a repeat, never "again").
     const g = gradeRoll(roll.total, roll.kept);
@@ -2657,7 +2667,10 @@ export class GameHost {
     const fresh = !!asked && !backward && asked.toLowerCase() !== prev.toLowerCase() && !this.shownGoals.has(norm(asked));
     const nowGoal = fresh ? asked : this.state.nowGoal;
     if (fresh) this.shownGoals.add(norm(asked));
-    const delta = PROGRESS_BY_GRADE[g.grade] ?? 0;
+    // The AI judges how far the action logically got (progress_hint); code only clamps: a success never moves
+    // backward, a backfire never jumps ahead. Without a hint, the grade sets a default.
+    const base = hint && HINT_PROGRESS[hint] !== undefined ? HINT_PROGRESS[hint] : PROGRESS_BY_GRADE[g.grade] ?? 0;
+    const delta = g.branch === "better" || g.branch === "legendary" ? Math.max(5, base) : g.branch === "worse" ? Math.max(-5, Math.min(5, base)) : base;
     const progress = Math.max(0, Math.min(100, this.state.progress + delta));
     this.note("scene", "Progress", `${progress}/100 (${delta >= 0 ? "+" : ""}${delta}, ${g.label.toLowerCase()}).${progress >= 100 ? " The finish line is in reach: the finale is next." : ""}`);
     // The story state: where we are, true facts (max 8), the last 3 moments, 2 memorable lines, one new prop.

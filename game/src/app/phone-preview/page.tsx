@@ -260,7 +260,7 @@ export default function PhonePreview() {
         step === "reveal" ? (
           <RevealScreen />
         ) : (
-          <KeepsakeScreen book={book} me={me} portrait={heroImg(me)} said="I ask the park ranger what it wants" solvedBy="Solved by Ava’s parallel parking (Gus) and Cam’s finding lost things (Mabel)." />
+          <KeepsakeScreen book={book} me={me} portrait={heroImg(me)} said="I ask the park ranger what it wants" solvedBy="Solved by Ava’s parallel parking (Gus) and Cam’s finding lost things (Nell)." />
         );
       break;
     }

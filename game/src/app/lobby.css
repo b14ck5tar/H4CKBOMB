@@ -1202,3 +1202,6 @@
     display: none;
   }
 }
+
+/* The test-player button (only with ?bots) stays clickable above the "Waiting for heroes" panel. */
+.lb-bot { z-index: 30; position: relative; bottom: auto; right: auto; margin-top: calc(var(--u) * 1); align-self: flex-end; }

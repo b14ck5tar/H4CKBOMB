@@ -69,6 +69,8 @@ export interface Pitch {
   embraceFlaw: boolean;
   verdict?: Verdict;
   creditId?: string; // the friend whose suggestion the turn owner used (+1, credit shown)
+  own?: string; // the owner's own words (phone sends both parts)
+  idea?: string; // the friend's idea they picked
   auto?: boolean; // filled in for a player who ran out of time
   autopilot?: boolean; // filled in because the player was away (TV shows "on autopilot")
 }
@@ -323,6 +325,7 @@ export interface GameState {
   step: number; // the step the table is on (0-based)
   fling: { power: number; angle: number } | null;
   danger: number;
+  sceneArt: string; // the current painting's URL (phones show it as a live thumbnail); "" if it's a data URL
   progress: number; // 0-100 toward the finish line (procedural stories, design/35): set by code from each roll's grade // the team's danger meter, 0..3: worse branches raise it, better ones lower it; full = a harder finale // how the die was thrown (flight only; the number is decided in code)
   narration: string;
   situation: string;
