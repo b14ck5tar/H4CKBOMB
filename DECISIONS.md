@@ -190,3 +190,4 @@ Full history and train of thought: `design/00-where-we-are.md`.
 - ✅ CD: "why are the storylines so kiddy?" The prompts' "an 8-year-old follows it" bar is replaced with "a tired adult at a party gets it on first hearing": plain and followable, with grown-up dry/dark humor. The Kids setting keeps the gentle tone. Default + judge rating: adults.
 - ✅ CD: stories are lame ("nobody cares about bridges"), and the same few have been reused too long. Research 20 fresh real odd-news stories (Aug-Oct 2026, worldwide); the CD picks the new judge stories.
 - ⏳ Full Story cap at 6 turns (⭐).
+- ✅ (Sun ~6 AM) CD: new judge stories = the Busan canal shark, the Met Opera snake audition, the €9M gold in a Dendermonde cellar wall (from 20 researched Aug-Oct 2026 stories). The other 7 of the top 10 go into the library. The old rust-wyrm/boulder/cornfield stories leave the judge top 3.
