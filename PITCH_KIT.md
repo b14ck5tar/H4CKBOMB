@@ -215,7 +215,8 @@ The 10-minute plan and the 15-question drill are in `pitch/REHEARSAL.md`.
 - **Judge mode stays max 3 turns.** Say "about five minutes" up front; drop to max 2 if rehearsal runs go past 6:00
   from hello.
 - **Quick Tale = 1 turn each, ~5 min** (CD; the story session is building it). Full Story keeps 2 each at 2-4 players.
-- **Narrator: ElevenLabs (Eleven v3)**, OpenAI TTS as the backup (CD). **Gemini track: off.**
+- **Narrator: ElevenLabs (Eleven v3 for the story beats, Flash for instant turn lines)**, OpenAI TTS as the backup (CD). **Pending:** the switch goes live when the CD confirms the
+  plan purchase; until the deployed narrator is ElevenLabs, say "OpenAI TTS" instead. **Gemini track: off.**
 - **Phone footer** reworded by the look session (4b8cfa2): "No accounts. Your words go to Meta's Muse AI to run the
   game; the TV keeps the finished tale, and our server caches the art and audio."
 

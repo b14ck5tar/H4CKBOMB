@@ -75,7 +75,7 @@ Take Muse away and there is no game: no stories, no rulings, no outcomes, no art
 the act changes, the turn order, and the "Solved by" line, which is built from the players' own answers. The AI
 judges ideas, never people. Nobody is scored or ranked. DM's Notes on the TV shows every call Muse made and why.
 
-**The one non-Meta job is the narrator's voice,** because Meta has no text-to-speech model: ElevenLabs (Eleven v3), with OpenAI TTS as the automatic backup, Gemini TTS behind it, and plain text as the last fallback.
+**The one non-Meta job is the narrator's voice,** because Meta has no text-to-speech model: ElevenLabs (Eleven v3 for the story beats, Flash for instant turn lines), with OpenAI TTS as the automatic backup, Gemini TTS behind it, and plain text as the last fallback.
 Everything else is Meta.
 
 ## How we built it

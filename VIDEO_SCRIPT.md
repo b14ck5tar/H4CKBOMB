@@ -128,7 +128,9 @@ the table first, then sends it. Plans with one clear noun (a ladder, a cinnamon 
 - "Picks news that makes a good, safe story": the storyability gate, `server/news/candidates.ts` (7 scores, average 4+,
   none below 3). In judge mode the story comes from the saved, gated library: say "a real, odd news story", never
   "this week's".
-- Narrator: ElevenLabs v3 (Vesper = Sarah, Hollis = George, Wren = Charlie), OpenAI TTS backup (DECISIONS, db136e7).
+- Narrator: ElevenLabs (Eleven v3 for the story beats, Flash for instant turn lines); Vesper = Sarah, Hollis = George, Wren = Charlie; OpenAI TTS backup (DECISIONS, db136e7).
+  **Pending** the CD's plan purchase: if the deployed narrator is still OpenAI when you record, read "The narrator is
+  OpenAI" instead (CD_MORNING §1).
 - "Frame by frame": design/33. "A test harness": `scripts/procedural-test.mjs`. "5 of 8 → 8 of 8": design/23.
 - Finale: backing a plan you didn't write; one shared shake die (`host.ts` `startFinale`).
 

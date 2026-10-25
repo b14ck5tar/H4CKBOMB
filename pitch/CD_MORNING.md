@@ -28,7 +28,9 @@ Open `https://groupproject-game.vercel.app/tv?bots=1` and play to the first turn
 - [ ] One meter (progress with 3 act dots), no danger meter.
 - [ ] Quick gives 1 turn each (2 players = 2 turns, then the finale). If it still gives 2 each, tell Claude: DEVPOST
       says "about 5 minutes".
-- [ ] The narrator sounds like ElevenLabs (Sarah, George or Charlie), not the old OpenAI voice.
+- [ ] The narrator sounds like ElevenLabs (Sarah, George or Charlie), not the old OpenAI voice. Still OpenAI (the plan
+      isn't bought yet)? Then in the voiceover say "The narrator is OpenAI", and tell Claude so DEVPOST and the deck
+      get switched back.
 
 ## 2. The live take (about 15 min for 2 takes)
 
