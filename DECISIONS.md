@@ -214,3 +214,6 @@ Full history and train of thought: `design/00-where-we-are.md`.
 2. Narrator time warnings at ~10 s left (pre-voiced variants, never over another line).
 3. An editor pass on every outcome (code checks + one fast Muse editor call only if it fits the hidden window; never adds wait).
 4. A grand ending: a big final event + a music swell + build-up/payoff SFX + a visual punch; expanded "What you did → What really happened" (a panel per hero, the real story in 2-3 beats, a closing line linking them).
+- ✅ (Sun ~7 AM) CD: no personal judge story; the judge 3 stay shark/gold/Batman.
+- ✅ CD: the ending is PLAYER-LED. The real event gives only the setup (place, problem, stakes); the middle and end follow the players with no steering to the real outcome (reverses 74cec6d's arc steering). The reveal contrasts or matches "What you did" vs "What really happened" with a bridge line.
+- Optional pitch opener from the CD's real HackTX journey (denied application, walk-in line, the chess tournament win): pitch drafts it as Opener A/B.
