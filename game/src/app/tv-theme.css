@@ -3354,3 +3354,22 @@
   text-transform: uppercase;
   color: #c6ff2e;
 }
+/* Story v3: the scene's pressure as a small amber chip under "Right now" ("⏳ The tide is rising"). */
+.tvx-ladder-pressure {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--u) * 0.4);
+  align-self: flex-start;
+  margin: calc(var(--u) * 0.3) 0 0;
+  padding: calc(var(--u) * 0.2) calc(var(--u) * 0.8) calc(var(--u) * 0.15);
+  border-radius: calc(var(--u) * 0.4);
+  background: rgba(255, 173, 59, 0.16);
+  border: calc(var(--u) * 0.1) solid rgba(255, 173, 59, 0.6);
+  font-family: var(--font-heading), sans-serif;
+  font-weight: 800;
+  font-size: calc(var(--u) * 1.15);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #ffd29a;
+  animation: tvx-rise 0.4s ease both;
+}

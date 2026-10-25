@@ -862,7 +862,7 @@ function SkinHud({ s }: { s: GameState }) {
     const clock = s.finale ? "Finale" : `Act ${act}${total ? ` · Turn ${Math.min(total, s.turnIndex + 1)} of ${total}` : ""}`;
     return (
       <HudStrip
-        ladder={{ steps: 4, at: s.finale ? 3 : act - 1, now: s.nowGoal || s.goal, goal: s.nowGoal ? s.goal : undefined, goalLabel: "Maybe:", clock }}
+        ladder={{ steps: 4, at: s.finale ? 3 : act - 1, now: s.nowGoal || s.goal, goal: s.nowGoal ? s.goal : undefined, goalLabel: "Maybe:", clock, pressure: (s as GameState & { pressureNow?: string }).pressureNow || undefined }}
       />
     );
   }
@@ -1013,7 +1013,7 @@ function SkinEnding({ host, s }: { host: Stage; s: GameState }) {
       onReachEnd={() => setWant(2)}
       reveal={{
         // Where the story came from (design/37 §4): the start's problem really happened.
-        originalProblem: s.originalProblem || (s as GameState & { original_problem?: string }).original_problem || s.goal || undefined,
+        originalProblem: (s as GameState & { originalProblem?: string; original_problem?: string }).originalProblem || (s as GameState & { original_problem?: string }).original_problem || s.goal || undefined,
         headline: real.headline,
         source: real.source,
         date: real.date,
