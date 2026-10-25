@@ -37,7 +37,8 @@ const show = (label, r, ms) => {
   line(`\n=== ${label}  (${ms} ms, fallback=${r.fallback}, safe=${r.safe}, grade=${r.meta?.grade}, attempts=${r.meta?.attempts}${r.meta?.facts_fetched !== undefined ? `, article=${r.meta.facts_fetched}` : ""})`);
   if (!r.safe) return line(`  UNSAFE: ${r.message}`);
   const o = r.opener;
-  line(`  TITLE:     ${o.title}`);
+  line(`  TITLE:     ${o.quest_title ?? o.title}  [${o.mood ?? "?"}]`);
+  if (o.teaser) line(`  TEASER:    ${o.teaser}`);
   line(`  NARRATION: ${o.narration}`);
   line(`  GOAL:      ${o.goal}`);
   line(`  SITUATION: ${o.situation}`);

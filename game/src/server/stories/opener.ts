@@ -13,7 +13,19 @@ export type PartyMember = { hero_id: string; name: string; power: string };
 export type NewsSource = { headline: string; snippet: string; source: string; url: string; date: string; place?: string };
 export type PersonalSource = { author_id: string; title: string; setup: string; steps: string | string[]; real_ending: string };
 
-export type Opener = { title: string; narration: string; goal: string; situation: string; npc_line?: { speaker: string; line: string } };
+/** The opener is the FANTASY version only. Real facts live only in ending_facts, for the reveal. */
+export type Opener = {
+  title: string; // same as quest_title (kept for older callers)
+  quest_title: string; // 2-5 words, for the story vote card
+  teaser: string; // one intriguing fantasy sentence for the vote card, <= 18 words
+  mood: Mood;
+  narration: string;
+  goal: string;
+  situation: string;
+  npc_line?: { speaker: string; line: string };
+};
+export const MOODS = ["silly", "spooky", "cozy", "eerie", "wondrous", "tense"] as const;
+export type Mood = (typeof MOODS)[number];
 export type EndingFacts =
   | { kind: "news"; official_line: string; whats_happening_now: string; headline: string; source: string; url: string; date: string }
   | { kind: "personal"; author_id: string; real_ending: string };
@@ -29,29 +41,33 @@ export type OpenerResult = {
 
 const DEADLINE_MS = 22_500; // + article fetch overhead and JSON stays under 25 s
 const MAX_GRADE = 6;
-const HEDGE_MS = 13_000;
+const HEDGE_MS = 9_000; // high effort often runs 15-20 s; a low backup needs 6-9 s when several run at once
 
 const clip = (s: unknown, n: number) => String(s ?? "").replace(/[<>]/g, "").replace(/\s+/g, " ").trim().slice(0, n);
 
 // ---------------------------------------------------------------- prompt
 
-const EXAMPLES = `EXAMPLES of the style we want (based on the team's hand-written ones):
-1. title "The Bridge Is Breakfast"
-   event_line "A road in Porter, Indiana, finally reopens at sunrise with a brand-new bridge."
+const EXAMPLES = `EXAMPLES of the style we want (based on the team's hand-written ones). Note that none of them
+names the real town, country, date, organization or number from the news. That is all saved for the reveal.
+1. quest_title "The Bridge Is Breakfast"  mood "eerie"
+   teaser "Something hungry is chewing on the brand-new bridge, and it opens at sunrise."
+   scene_line "A brand-new bridge over a sleepy river opens at sunrise, and tonight it is humming."
    trouble_line "A giant river snake that eats metal is wrapped around the bridge, chewing the railing."
    stakes_line "It already ate the old bridge, so if it eats this one, the road stays closed for years."
    goal "Get the snake off the bridge before sunrise"
    situation "A giant rust-red snake coiled around a new bridge, chewing the railing, while the sky gets lighter."
    npc_line {"speaker": "Bridge inspector", "line": "Good morning! Is the bridge supposed to be humming?"}
-2. title "The Hand That Let Go"
-   event_line "An 80-ton boulder that hung over a park path in New Hampshire for 100 years just fell."
-   trouble_line "A giant ice hand was holding it up, and now that it let go, it grabs everything in the park."
-   stakes_line "If the hand is still grabbing by winter, the park can't reopen."
+2. quest_title "The Hand That Let Go"  mood "spooky"
+   teaser "A huge rock hung over a park path for a hundred years. Then something let go."
+   scene_line "A huge boulder that hung over a park path for a hundred years just fell, and frosty handprints cover the rocks."
+   trouble_line "A giant ice hand was holding it up, and now it grabs everything in the park."
+   stakes_line "If the hand is still grabbing by winter, the park can't open again."
    goal "Put the grabby ice hand to sleep for winter"
    situation "A smashed walkway, the fallen boulder, and a giant ice hand juggling traffic cones."
    npc_line {"speaker": "Park ranger", "line": "It took my lunch. It does not even have a mouth."}
-3. title "Mom Wants Her Eggs"
-   event_line "A billion tiny plastic beads spilled into a river in England."
+3. quest_title "Mom Wants Her Eggs"  mood "silly"
+   teaser "A billion tiny eggs washed up on the beach, and their mom wants them back."
+   scene_line "Tiny white beads are washing up on a cold, windy beach, millions and millions of them."
    trouble_line "A sea creature as big as a ferry thinks the beads are her eggs, so she is building a nest out of them."
    stakes_line "The beads will never hatch, and if she keeps going, the whole river fills up with plastic."
    goal "Get the beads back without breaking her heart"
@@ -67,10 +83,18 @@ Odd and funny, a little spooky at most. Deadpan: the joke is one specific detail
 
 You get a SOURCE. It is either NEWS (a real news story) or PERSONAL (a real thing that happened to one player).
 
+THE REVEAL RULE (most important): players must NOT recognize the real story until the end. Everything you write
+except official_line, whats_happening_now and real_ending is the FANTASY version only. Keep the odd core of the
+story (a giant pumpkin, a crowd of elves, a glowing rock), but never use the real place names, countries,
+dates, months, holidays, organizations, people, record numbers or any number from the source, and never
+retell the headline. Say "a seaside town", "a farm show", "the biggest crowd ever", "a hundred years".
+
 WRITE:
-- title: 2 to 6 words, funny and concrete. Not a pun on a real person.
+- quest_title: 2 to 5 words, funny and concrete, fantasy only. Shown on the story vote card.
+- teaser: ONE intriguing fantasy sentence for the vote card, 18 words max, no real-world giveaways.
+- mood: one word from the list that fits the story.
 - The narration is three sentences, 45 words max in total, written as three fields:
-  - event_line: the real event, plainly (what happened and where).
+  - scene_line: where we are and what is strange (fantasy only, no real names or numbers).
   - trouble_line: WHO or WHAT the trouble is, in plain words, and what it is doing. This is the one magical
     twist that secretly explains the real event. Anyone or anything named in the goal MUST be explained here
     ("a ghost who rents a room under the volcano", not just "the lodger").
@@ -99,9 +123,11 @@ WRITING RULES (hard):
   just to match a hero's power. The situation comes from the story itself.
 
 NEWS SOURCE RULES:
-- The real part must use ONLY facts in the source text. Never invent numbers, names, dates or outcomes.
-- Use the real place (town and region or country). Never name or describe real people, brands or companies.
-  Say "a farmer", "a museum", "scientists". Never mock or blame anyone real.
+- The fantasy must grow from the real facts in the source text, but must not give them away (THE REVEAL RULE).
+  The user message lists GIVEAWAY WORDS: never use any of them outside official_line and whats_happening_now.
+- Never name or describe real people, brands or companies anywhere. Never mock or blame anyone real.
+- official_line and whats_happening_now use ONLY facts in the source text. Never invent numbers, names, dates
+  or outcomes. Here the real place, date and numbers are welcome.
 - official_line: ONE plain sentence saying the main real event from the headline (what, who in general
   terms, where), from the source text only. Not a side detail.
 - official_line and whats_happening_now are read at the end as "this really happened". Write them in your own
@@ -116,7 +142,8 @@ PERSONAL SOURCE RULES:
 - Keep it recognizable (the same place, the same problem, the same key objects) but add one magical twist
   that secretly explains it. It is happening to the whole group right now.
 - You may name the author's hero (AUTHOR_HERO) as the one this happened to. Nobody else.
-- REAL_ENDING is how it really ended. NEVER reveal it, hint at it, or set up its exact solution in the opener.
+- REAL_ENDING is how it really ended. NEVER reveal it, hint at it, or set up its exact solution in the opener,
+  the quest_title or the teaser.
   The table will play their own ending and see the real one at the end.
 - real_ending: rewrite REAL_ENDING as 1 or 2 clean, plain sentences in the first person, keeping every fact
   the same. Fix spelling only. Do not add anything.
@@ -138,12 +165,14 @@ const str = { type: "string" } as const;
 export const OPENER_SCHEMA = {
   type: "object",
   additionalProperties: false,
-  required: ["safe", "unsafe_message", "title", "event_line", "trouble_line", "stakes_line", "goal", "situation", "npc_speaker", "npc_line", "official_line", "whats_happening_now", "real_ending"],
+  required: ["safe", "unsafe_message", "quest_title", "teaser", "mood", "scene_line", "trouble_line", "stakes_line", "goal", "situation", "npc_speaker", "npc_line", "official_line", "whats_happening_now", "real_ending"],
   properties: {
     safe: { type: "boolean" },
     unsafe_message: str,
-    title: str,
-    event_line: str,
+    quest_title: str,
+    teaser: str,
+    mood: { type: "string", enum: [...MOODS] },
+    scene_line: str,
     trouble_line: str,
     stakes_line: str,
     goal: str,
@@ -159,8 +188,11 @@ export const OPENER_SCHEMA = {
 type Draft = {
   safe: boolean;
   unsafe_message: string;
-  title: string;
-  event_line: string;
+  quest_title: string;
+  teaser: string;
+  mood: Mood;
+  title: string; // = quest_title, set in code
+  scene_line: string;
   trouble_line: string;
   stakes_line: string;
   narration: string; // built in code from the three lines
@@ -229,9 +261,56 @@ function cleanFact(s: string, sourceSentences: string[]) {
   );
 }
 
-function problems(d: Draft, mode: "news" | "personal", sourceText: string, personal?: PersonalSource, sourceSentences: string[] = []): { list: string[]; grade: number } {
+// ---------------------------------------------------------------- reveal rule (news)
+
+/** Capitalized words that are not names. */
+const COMMON_CAPS = new Set(
+  "the a an and but or of in on at to for from by with as is are was were be it its this that these those new old how why what when where who which after before over into about our my your his her their they we you she he i not no yes all one two three first last more most giant huge big small world earth moon sun sea people visitors scientists researchers experts officials organisers organizers residents locals there here now then today yesterday next while although however despite since some many both each every once during if its local team staff workers volunteers children kids families".split(" "),
+);
+
+/**
+ * Words that would give the real story away: names (capitalized mid-sentence in the headline, place or text),
+ * acronyms, the source's name, and every number. Lowercase common words never count, so "giant" or "pumpkin" pass.
+ */
+export function giveawayWords(n: NewsSource, facts = ""): string[] {
+  const out = new Set<string>();
+  const add = (w: string) => {
+    const t = w.replace(/['’]s$/, "");
+    if (t.length >= 3 && !COMMON_CAPS.has(t.toLowerCase())) out.add(t);
+  };
+  const headline = clip(n.headline, 300);
+  const hw = headline.split(/\s+/).filter(Boolean);
+  const titleCase = hw.filter((w) => /^[A-Z]/.test(w)).length / Math.max(1, hw.length) > 0.6;
+  // In a sentence-case headline, any capitalized word after the first is a name.
+  if (!titleCase) hw.slice(1).forEach((w) => /^[A-Z]/.test(w) && add(w.replace(/[^A-Za-z'’-]/g, "").split("-")[0]));
+  for (const t of [clip(n.snippet, 1000), clip(facts, 1600)]) {
+    for (const m of t.matchAll(/(?<=[a-z0-9,;:]\s+)([A-Z][A-Za-z'’]+)/g)) add(m[1]);
+  }
+  // Sentence-start names ("Weymouth in Dorset will..."): capitalized words that never appear in lowercase.
+  const all = `${headline} ${clip(n.snippet, 1000)} ${clip(facts, 1600)}`;
+  for (const m of all.matchAll(/\b[A-Z][a-z'’]{2,}\b/g)) {
+    if (!new RegExp(`\\b${m[0].toLowerCase()}\\b`).test(all)) add(m[0]);
+  }
+  for (const m of all.matchAll(/\b[A-Z]{2,}\b/g)) add(m[0]); // NASA, BBC
+  for (const w of clip(n.place, 80).split(/[^A-Za-z'’]+/)) if (/^[A-Z]/.test(w)) add(w);
+  for (const w of clip(n.source, 120).split(/[^A-Za-z]+/)) if (/^[A-Z]/.test(w) && w.toLowerCase() !== "news") add(w);
+  // Title-case headline: use only words that are also capitalized mid-sentence in the text (already added above).
+  for (const m of `${headline} ${n.snippet}`.matchAll(/\d[\d,.]*/g)) out.add(m[0].replace(/[,.]$/, ""));
+  return [...out].slice(0, 60);
+}
+
+/** Giveaway words that appear in `text`. Names match case-sensitively ("Reading" the town, not "reading"). */
+function giveawayHits(text: string, words: string[]) {
+  return words.filter((w) => {
+    if (/^\d/.test(w)) return new RegExp(`(^|[^\\d])${w.replace(/[.,]/g, "[.,]?")}($|[^\\d])`).test(text);
+    const name = w.replace(/[^A-Za-z'’]/g, "");
+    return name.length >= 3 && new RegExp(`\\b${name}\\b`).test(text);
+  }).concat(/\d/.test(text) ? ["(any digits: spell small numbers out or say \"a lot\")"] : []).filter((x, i, a) => a.indexOf(x) === i);
+}
+
+function problems(d: Draft, mode: "news" | "personal", sourceText: string, personal?: PersonalSource, sourceSentences: string[] = [], giveaway: string[] = []): { list: string[]; grade: number } {
   const list: string[] = [];
-  const grade = fkGrade([d.event_line, d.trouble_line, d.stakes_line, d.goal, d.situation]);
+  const grade = fkGrade([d.scene_line, d.trouble_line, d.stakes_line, d.goal, d.situation, d.teaser]);
   if (grade > MAX_GRADE) list.push(`reading grade is ${grade}, the max is ${MAX_GRADE}: use shorter sentences and everyday words, but keep it natural English`);
   const nw = wordCount(d.narration);
   if (nw > 48) list.push(`the three lines are ${nw} words together, the max is 45`);
@@ -239,19 +318,26 @@ function problems(d: Draft, mode: "news" | "personal", sourceText: string, perso
   if (gw > 10) list.push(`goal is ${gw} words, the max is 10`);
   if (NOT_VERB_START.test(d.goal.trim())) list.push(`goal must start with a verb like "Get" or "Find"`);
   if (wordCount(d.situation) > 28) list.push(`situation is ${wordCount(d.situation)} words, the max is 25`);
-  if (!d.title.trim() || wordCount(d.title) > 7) list.push("title must be 2 to 6 words");
-  const all = [d.title, d.narration, d.goal, d.situation, d.npc_speaker, d.npc_line].join(" ");
+  if (wordCount(d.quest_title) < 2 || wordCount(d.quest_title) > 5) list.push("quest_title must be 2 to 5 words");
+  if (!d.teaser.trim() || wordCount(d.teaser) > 18) list.push(`teaser must be one sentence of 18 words max (it is ${wordCount(d.teaser)})`);
+  if (!(MOODS as readonly string[]).includes(d.mood)) list.push(`mood must be one of ${MOODS.join(", ")}`);
+  const all = [d.quest_title, d.teaser, d.narration, d.goal, d.situation, d.npc_speaker, d.npc_line].join(" ");
+  if (giveaway.length) {
+    // THE REVEAL RULE: no real names, places, dates or numbers before the end.
+    const hits = giveawayHits(all, giveaway);
+    if (hits.length) list.push(`giveaway: the opener uses real-story words (${hits.join(", ")}). Replace them with fantasy words`);
+  }
   for (const p of styleProblems(all)) list.push(p);
   const coined = inventedNames(all, sourceText);
   if (coined.length) list.push(`invented names (${coined.join(", ")}): describe things in plain words instead`);
   if (/\byou(r|'re)?\b/i.test(`${d.narration} ${d.situation}`)) list.push(`do not say "you"`);
-  for (const [k, v] of [["event_line", d.event_line], ["trouble_line", d.trouble_line], ["stakes_line", d.stakes_line]] as const) {
+  for (const [k, v] of [["scene_line", d.scene_line], ["trouble_line", d.trouble_line], ["stakes_line", d.stakes_line]] as const) {
     if (!v.trim()) list.push(`${k} is required`);
     else if ((v.trim().match(/[.!?](\s|$)/g) ?? []).length > 1) list.push(`${k} must be ONE sentence`);
   }
   if (d.stakes_line.trim() && !STAKES.test(d.stakes_line)) list.push(`stakes_line must say what goes wrong if the group fails ("if ... then ...")`);
   // Everything the goal mentions must be explained in the narration (the "who is the lodger?" bug).
-  const told = stems(`${d.event_line} ${d.trouble_line} ${d.stakes_line}`);
+  const told = stems(`${d.scene_line} ${d.trouble_line} ${d.stakes_line}`);
   const unexplained = [...contentWords(d.goal)].filter((w) => !GOAL_VERBS.has(w) && !told.has(w.slice(0, 4)));
   if (unexplained.length) list.push(`the goal mentions ${unexplained.map((w) => `"${w}"`).join(", ")} but the three lines never say who or what that is`);
   if (mode === "news") {
@@ -264,7 +350,7 @@ function problems(d: Draft, mode: "news" | "personal", sourceText: string, perso
   if (mode === "personal" && personal) {
     // Leak check: distinctive words from the real ending that the setup never mentioned must not show up early.
     const known = contentWords(`${personal.title} ${personal.setup} ${[personal.steps].flat().join(" ")}`);
-    const opener = contentWords(`${d.title} ${d.narration} ${d.goal} ${d.situation} ${d.npc_line}`);
+    const opener = contentWords(`${d.quest_title} ${d.teaser} ${d.narration} ${d.goal} ${d.situation} ${d.npc_line}`);
     const leaked = [...contentWords(personal.real_ending)].filter((w) => !known.has(w) && opener.has(w));
     if (leaked.length >= 2 || leaked.some((w) => w.length >= 8)) list.push(`the opener hints at the real ending (${leaked.join(", ")}): remove that`);
     if (!d.real_ending.trim()) list.push("real_ending is required");
@@ -278,13 +364,16 @@ function problems(d: Draft, mode: "news" | "personal", sourceText: string, perso
 const PERSONAL_UNSAFE = /\b(suicid\w*|self[- ]?harm|kill(ed|ing)? (my|him|her|them)sel(f|ves)|cutting myself|abus\w*|rap(e|ed|ist)|molest\w*|sexual\w*|assault\w*|overdos\w*|stabb\w*|shooting|gunpoint|funeral|cancer|terminal(ly)? ill)\b/i;
 const GENTLE = "This one sounds like a lot to carry into a silly game. Want to share a lighter story instead?";
 
-function newsFallback(src: NewsSource): OpenerResult["opener"] {
-  const where = clip(src.place, 60) || "a town not far from here";
+function newsFallback(): Opener {
+  // Fantasy only: no real names, so the reveal still lands even when the AI is down.
   return {
-    title: "The Story Behind the Story",
-    narration: `Something odd made the news in ${where}. The news got the facts right, but it missed one strange thing. The group is the first to find it.`,
-    goal: "Find out what is really going on",
-    situation: "The spot from the news, quiet for now, with one thing that looks a little out of place.",
+    title: "The Thing Nobody Noticed",
+    quest_title: "The Thing Nobody Noticed",
+    teaser: "Something strange happened in a quiet town, and only one small detail is out of place.",
+    mood: "eerie",
+    narration: "A quiet town woke up to something very strange this morning. Something hidden is causing it, and it is still nearby. If nobody finds it tonight, it will happen again tomorrow.",
+    goal: "Find the hidden thing before morning",
+    situation: "A quiet street at night, a flickering lamp, and one thing that looks a little out of place.",
   };
 }
 
@@ -310,8 +399,12 @@ function newsFacts(src: NewsSource, d?: Partial<Draft>): EndingFacts {
 
 function personalFallback(src: PersonalSource, authorHero: string): Opener {
   const who = authorHero || "One of the group";
+  const t = clip(src.title, 60) || "A Very Strange Day";
   return {
-    title: clip(src.title, 60) || "A Very Strange Day",
+    title: t,
+    quest_title: t,
+    teaser: "One ordinary day went wrong in a very strange way.",
+    mood: "silly",
     narration: sanitize(`${who} had a day that went wrong in a very strange way. ${firstSentence(src.setup, 160)} Tonight, the whole group is stuck in it too.`),
     goal: "Get through the day and fix what went wrong",
     situation: "The exact spot where it all started, looking normal except for one strange detail.",
@@ -320,23 +413,28 @@ function personalFallback(src: PersonalSource, authorHero: string): Opener {
 
 // ---------------------------------------------------------------- main
 
-function userPrompt(mode: "news" | "personal", rating: Rating, party: PartyMember[], body: string, authorHero: string, prev?: { draft: Draft; problems: string[] }) {
+function userPrompt(mode: "news" | "personal", rating: Rating, party: PartyMember[], body: string, authorHero: string, prev?: { draft: Draft; problems: string[] }, giveaway: string[] = []) {
   const heroes = party.length
     ? party.map((p) => `- ${clip(p.name, 40)} (good at: ${clip(p.power, 80) || "unknown"})`).join("\n")
     : "(not known yet)";
   let u = `MODE: ${mode.toUpperCase()}\nAUDIENCE: ${rating}\nHEROES (for context only; do not name them or build the scene around their powers):\n${heroes}\n`;
   if (mode === "personal") u += `AUTHOR_HERO: ${authorHero || "(unknown, do not name anyone)"}\n`;
   u += `\n<source>\n${body}\n</source>\n`;
+  if (giveaway.length) u += `\nGIVEAWAY WORDS (only allowed in official_line and whats_happening_now): ${giveaway.join(", ")}. Also no digits outside those two fields.\n`;
   if (prev) {
-    const { title, event_line, trouble_line, stakes_line, goal, situation, official_line, whats_happening_now } = prev.draft;
-    u += `\nYour previous draft had problems. Write a new version that fixes ALL of them and keeps what worked.\nPREVIOUS DRAFT: ${JSON.stringify({ title, event_line, trouble_line, stakes_line, goal, situation, ...(mode === "news" ? { official_line, whats_happening_now } : {}) })}\nPROBLEMS:\n${prev.problems.map((p) => `- ${p}`).join("\n")}\n`;
+    const { quest_title, teaser, scene_line, trouble_line, stakes_line, goal, situation, official_line, whats_happening_now } = prev.draft;
+    u += `\nYour previous draft had problems. Write a new version that fixes ALL of them and keeps what worked.\nPREVIOUS DRAFT: ${JSON.stringify({ quest_title, teaser, scene_line, trouble_line, stakes_line, goal, situation, ...(mode === "news" ? { official_line, whats_happening_now } : {}) })}\nPROBLEMS:\n${prev.problems.map((p) => `- ${p}`).join("\n")}\n`;
   }
   return u;
 }
 
 function finish(d: Draft): Opener {
+  const qt = sanitize(d.quest_title || d.title).replace(/[.!]+$/, "");
   const o: Opener = {
-    title: sanitize(d.title).replace(/[.!]+$/, ""),
+    title: qt,
+    quest_title: qt,
+    teaser: sanitize(d.teaser),
+    mood: (MOODS as readonly string[]).includes(d.mood) ? d.mood : "eerie",
     narration: sanitize(d.narration),
     goal: sanitize(d.goal).replace(/[.!]+$/, ""),
     situation: sanitize(d.situation),
@@ -362,6 +460,7 @@ export async function makeOpener(input: {
   let authorHero = "";
   let personal: PersonalSource | undefined;
   let news: NewsSource | undefined;
+  let giveaway: string[] = [];
 
   if (mode === "news") {
     news = input.source as NewsSource;
@@ -373,6 +472,8 @@ export async function makeOpener(input: {
     }
     body = `HEADLINE: ${clip(n.headline, 300)}\nSOURCE: ${clip(n.source, 120)}\nDATE: ${clip(n.date, 40).slice(0, 10) || "unknown"}\nPLACE: ${clip(n.place, 80) || "see text"}\nTEXT: ${clip(n.snippet, 1000)}${facts ? `\nARTICLE: ${clip(facts, 1600)}` : ""}`;
     sourceText = body;
+    giveaway = giveawayWords(n, facts);
+    console.log(`[opener] giveaway words: ${giveaway.join(", ")}`);
   } else {
     personal = input.source as PersonalSource;
     const p = personal;
@@ -396,13 +497,14 @@ ${RATING_GUIDE[rating]}`;
     return museJSON<Draft>({
       task: "story-opener",
       system,
-      user: userPrompt(mode, rating, party, body, authorHero, prev),
+      user: userPrompt(mode, rating, party, body, authorHero, prev, giveaway),
       schema: OPENER_SCHEMA,
       effort,
       maxTokens: effort === "high" ? 16000 : 8000, // reasoning tokens count against this
       timeoutMs: Math.max(3_000, left() - 900),
     }).then((d) => {
-      d.narration = [d.event_line, d.trouble_line, d.stakes_line].map((x) => String(x ?? "").trim()).filter(Boolean).join(" ");
+      d.title = d.quest_title;
+      d.narration = [d.scene_line, d.trouble_line, d.stakes_line].map((x) => String(x ?? "").trim()).filter(Boolean).join(" ");
       return { d, effort };
     });
   };
@@ -423,9 +525,10 @@ ${RATING_GUIDE[rating]}`;
   type Best = { d: Draft; probs: string[]; grade: number };
   let best = null as Best | null; // assigned inside judge(), so no narrowing to null
   const judge = (d: Draft, label: string) => {
-    const { list, grade } = problems(d, mode, sourceText, personal, sourceSentences);
+    const { list, grade } = problems(d, mode, sourceText, personal, sourceSentences, giveaway);
     console.log(`[opener] ${label} grade ${grade}, problems: ${list.length ? list.join(" | ") : "none"}`);
-    if (!best || list.length < best.probs.length || (list.length === best.probs.length && grade < best.grade)) best = { d, probs: list, grade };
+    const w = (l: string[]) => l.reduce((a, x) => a + (x.startsWith("giveaway") ? 10 : 1), 0);
+    if (!best || w(list) < w(best.probs) || (w(list) === w(best.probs) && grade < best.grade)) best = { d, probs: list, grade };
     return list;
   };
 
@@ -457,7 +560,7 @@ ${RATING_GUIDE[rating]}`;
   }
 
   // Canned fallback: the table never waits on a failed AI call.
-  if (mode === "news") return done({ opener: newsFallback(news!), ending_facts: newsFacts(news!), safe: true, fallback: true });
+  if (mode === "news") return done({ opener: newsFallback(), ending_facts: newsFacts(news!), safe: true, fallback: true });
   return done({
     opener: personalFallback(personal!, authorHero),
     ending_facts: { kind: "personal", author_id: clip(personal!.author_id, 80), real_ending: clip(personal!.real_ending, 600) },
