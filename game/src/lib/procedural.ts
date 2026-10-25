@@ -298,7 +298,10 @@ export function circles(rn: string, state: StoryState) {
 export function pressureNow(state: StoryState) {
   const ps = state.pressures ?? [];
   if (!ps.length) return null;
-  const i = state.turn % ps.length;
+  // Never the pressure the players are acting on right now ("Clear the crowd" + "more tourists arrive" contradicts
+  // the outcome on screen): the next one in turn takes its place.
+  const order = ps.map((_, k) => (state.turn + k) % ps.length);
+  const i = order.find((k) => !usesPlan(state.right_now, ps[k].name)) ?? order[0];
   const p = ps[i];
   return { i, name: p.name, stage: p.stages[Math.min(p.level, p.stages.length - 1)], fix: p.fix };
 }
