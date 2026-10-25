@@ -27,6 +27,7 @@ export type Stage = Pick<
   | "subscribe" | "getState" | "deadlineAt" | "portraits" | "thumbs" | "sceneImages" | "realStory" | "questSeed"
   | "transportKind" | "onReaction" | "skip" | "setPartyName" | "chooseQuest" | "canBegin" | "begin" | "nextTale"
   | "setMode" | "startedAt" | "endedAt" | "setRating" | "voiceUrl" | "setSource" | "optionArt" | "addBot" | "montage"
+  | "kick" | "playAgain"
 > & { readOnly?: boolean; onToast?: GameHost["onToast"] };
 
 export function useHost(host: Stage) {
@@ -399,6 +400,7 @@ export function TV({ host, embedded = false }: { host: Stage; embedded?: boolean
           onStart={() => host.begin()}
           localMode={host.transportKind === "local"}
           onAddBot={showBots && !host.readOnly ? () => host.addBot() : undefined}
+          onKick={FEATURES.kick && !host.readOnly ? (id) => host.kick(id) : undefined}
         />
         {overlays}
         {toast && (

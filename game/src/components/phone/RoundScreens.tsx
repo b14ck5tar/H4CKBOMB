@@ -28,7 +28,7 @@ export function RemovedScreen({ onRejoin }: { onRejoin: () => void }) {
   );
 }
 
-export function AgainScreen({ me, portrait, onNewHero }: { me: Player; portrait?: string; onNewHero: () => void }) {
+export function AgainScreen({ me, portrait, onKeep, onNewHero }: { me: Player; portrait?: string; onKeep?: () => void; onNewHero: () => void }) {
   return (
     <div className="pk-choices pk-center" style={{ flex: 1, justifyContent: "center", gap: 16 }}>
       <Kicker tone="lime">Back at the table</Kicker>
@@ -41,7 +41,18 @@ export function AgainScreen({ me, portrait, onNewHero }: { me: Player; portrait?
           </span>
         </p>
       )}
-      <p className="pk-hint pk-hint-bright">The TV starts the next story.</p>
+      {me.hero && onKeep && (
+        <GameButton
+          tone="lime"
+          xl
+          onClick={() => {
+            vibrate(15);
+            onKeep();
+          }}
+        >
+          Keep {me.hero.name}
+        </GameButton>
+      )}
       <GameButton
         tone="cyan"
         onClick={() => {

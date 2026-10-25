@@ -1611,6 +1611,12 @@ export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameS
           Skip ▸
         </button>
       )}
+      {/* The story is over (keepsake up): another round, same room, same heroes (CD). */}
+      {FEATURES.playAgain && s.phase === "storybook" && !host.readOnly && (
+        <button className="qt-continue qt-again" onClick={() => host.playAgain()} title="Same room, same heroes">
+          Back to lobby ▸
+        </button>
+      )}
       {/* The ending stretch (montage + reveal) runs on timers; the table can always move on (CD playtest). */}
       {["epilogue", "reveal"].includes(s.phase) && host.deadlineAt > 0 && !s.busy && !host.readOnly && (
         <button className="qt-continue" onClick={() => host.skip()} title="Spacebar works too">
