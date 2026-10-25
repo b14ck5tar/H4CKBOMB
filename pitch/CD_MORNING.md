@@ -28,29 +28,26 @@ Open `https://groupproject-game.vercel.app/tv?bots=1` and play to the first turn
 - [ ] One meter (progress with 3 act dots), no danger meter.
 - [ ] Quick gives 1 turn each (2 players = 2 turns, then the finale). If it still gives 2 each, tell Claude: DEVPOST
       says "about 5 minutes".
-- [ ] The narrator sounds like ElevenLabs (Sarah, George or Charlie), not the old OpenAI voice. Still OpenAI (the plan
+- [ ] The narrator is your ElevenLabs voice (one voice for everything), not the old OpenAI voice. Still OpenAI (the plan
       isn't bought yet)? Then in the voiceover say "The narrator is OpenAI", and tell Claude so DEVPOST and the deck
       get switched back.
 
 ## 2. The live take (about 15 min for 2 takes)
 
-Setup (VIDEO_SCRIPT.md, "Shot list"): `/tv?judge=1` (a saved, tested true story), **Quick · Odd news · Teens**,
-**3 real people on their own phones** (you, the partner, a friend), no test players. That's 3 turns (1 each) + the
-finale, about 5-6 minutes. Real faces reacting to each other are the human-connection score (30%); bots can't show it.
-*Solo backup only, if no third person is around:* `/tv?judge=1&bots=1`, 2 of you + 2 test players (press **B** twice).
+Setup (VIDEO_SCRIPT.md, "Shot list"): `/tv?judge=1&bots=1` (a saved, tested true story), **Quick · Odd news · Teens**,
+you on a real phone (plus any real player who's around) + 2 test players (press **B** twice). Each real player gets
+1 turn, then the finale.
 
 Start every recording before the lobby (in the edit, line the tracks up on the first die-landing sound):
 1. **TV:** OBS (1920x1080, 60 fps, desktop audio on, mic off), or Snipping Tool (Win+Shift+R, system audio on).
 2. **Phone A (and B if you can):** screen recording, mic off, "Show touches" on (Android).
 
 Play these moves (plan the moves, not the words):
-- [ ] A types a custom hero ("a night-shift baker who argues with her sourdough"); B and C grab ready-made heroes.
-      Everyone answers "What's your secret talent?" with something real.
-- [ ] A's turn: B and C both pitch ideas **out loud** and type them. A picks one (+1 and that name on screen).
-- [ ] B's turn: B reads the plan to the table first, then sends it. C's turn: play it straight.
+- [ ] Type a custom hero ("a night-shift baker who argues with her sourdough") and a real secret talent.
+- [ ] Your turn: pick a test player's (or a friend's) idea, so "+1" and their name show on screen.
+- [ ] With a second real player: they read their plan to the table first, then send it.
 - [ ] Use plans with one clear noun (a ladder, a cinnamon roll, a marching band).
-- [ ] Finale: all three shake at the same moment, laughing.
-- [ ] Reveal: someone says "wait, that's real?" out loud.
+- [ ] Finale: shake the phone (everyone real shakes at the same moment).
 
 Keep the take that has: a friend's idea picked, one low roll and one high roll, an outcome that uses the player's
 own word, a readable headline at the reveal. **One good take is enough.**

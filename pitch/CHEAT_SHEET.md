@@ -24,7 +24,7 @@ the TV runs."
 ## The visit
 1. QR card first, then the pitch. "It's a whole game in about five minutes. The best part is the last 30 seconds."
 2. Heroes: "Muse is painting you as a cartoon. Your secret talent comes back at the end."
-3. Start. Over the opener, once: "Muse wrote this, cast that narrator and painted you in." Then quiet.
+3. Start. Over the opener, once: "Muse wrote this and painted you in." Then quiet.
 4. Turn 1: "Everyone else, send [A] an idea. Use a friend's and you get plus one." / "Which one made you laugh?"
 5. "Swipe up to throw." / "Every number is its own outcome. Code rolls, never the AI."
 6. Finale: "Everyone back one plan, not your own. Then everyone shakes at once."

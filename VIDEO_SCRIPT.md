@@ -83,22 +83,20 @@ Muse calls"; "Every number is its own outcome."
 
 ## Shot list (keyed to `pitch/CD_MORNING.md`)
 
-**The take (§2):** `/tv?judge=1`, **Quick · Odd news · Teens**, **3 real people on their own phones** (CD, partner,
-a friend), no test players. Human connection is 30% of the score, and only real people reacting to each other prove
-it. Judge mode plays a saved, tested true story and gives each person 1 turn, then the finale: about 5-6 minutes of
-footage, all screen recordings (the TV and the phones).
-*Solo backup only* (no third person around): `/tv?judge=1&bots=1` with 2 people + 2 test players (press **B**
-twice). Test players only suggest ideas, never own a turn; never call one "my friend".
+**The take (§2):** `/tv?judge=1&bots=1`, **Quick · Odd news · Teens**, the CD on a real phone (plus any real player
+who's around) + 2 test players (press **B** twice in the lobby). Judge mode plays a saved, tested true story and gives
+each real player 1 turn, then the finale. All screen recordings (the TV and the phones). Test players only suggest
+ideas, never own a turn; never call one "my friend". A test player's idea can still be the "+1" pick.
 
 | Time | VO beat | Shot | Source |
 |---|---|---|---|
 | **Part 1** | | | |
 | 0:00-0:09 | "everyone on their own phone" | Two friends on a couch, each scrolling, nobody talking. 2 s of silence first. | §2 couch shot (LIVE) |
 | 0:09-0:19 | "Tabletop games fix that…" | Hands rolling real dice, people leaning in. No dice? Use `deck-slide-3.png` with a slow push. | §2 dice shot / §4 B-roll |
-| 0:19-0:30 | "So we built Group Project…" | The TV lobby: neon title, big QR and the lobby filling with three heroes. Title: **Group Project**, subtitle *the one group project where everyone actually shows up.* | §2 take: TV |
+| 0:19-0:30 | "So we built Group Project…" | The TV lobby: neon title, big QR and the lobby filling with heroes. Title: **Group Project**, subtitle *the one group project where everyone actually shows up.* | §2 take: TV |
 | **Part 2** | | | |
 | 0:30-0:40 | "Scan the code…" | Phone A: type the hero, answer "What's your secret talent?" TV: the hero card pops in, the portrait paints in. | §2 take: phone A + TV |
-| 0:40-0:48 | "Muse turns a real, odd news story…" | TV: the opening painting with all three heroes; the narrator starts reading, text in sync. | §2 take: TV |
+| 0:40-0:48 | "Muse turns a real, odd news story…" | TV: the opening painting with the party's heroes; the narrator starts reading, text in sync. | §2 take: TV |
 | 0:48-1:06 | "There's no script…" (**the money shot**) | TV: "{A}, tell the table your plan." Phone B: typing the idea. Phone A: friends' ideas; A taps B's. TV: the plan card with "+ B's idea +1". Hold 2 s on the credit. | §2 take: both phones + TV |
 | 1:06-1:16 | "Swipe up to throw…" | Phone A: the thumb flicks up. TV: the d20 flies onto the table, lands, the meter fills to its grade. Caption: *1 = DISASTER … 20 = LEGENDARY*. | §2 take: phone A + TV |
 | 1:16-1:32 | "Muse takes your plan literally…" | TV: the outcome uses A's own word, the new painting crossfades in, the progress meter moves, the last line names B. | §2 take: TV |
@@ -117,8 +115,8 @@ twice). Test players only suggest ideas, never own a turn; never call one "my fr
 **Keep the take that has:** a friend's idea picked, one low roll and one high roll, an outcome that uses the
 player's own word, a readable headline at the reveal. One good take is enough.
 
-**Plan the moves, not the words:** A's turn: B and C both pitch out loud, A picks one (+1, their name on screen).
-B's turn: B reads the plan to the table first, then sends it. C's turn: play it straight. Plans with one clear noun (a ladder, a cinnamon roll, a marching band) read best.
+**Plan the moves, not the words:** on A's turn, pick a friend's or a test player's idea (+1, their name on screen).
+With a second real player: B reads the plan to the table first, then sends it. Plans with one clear noun (a ladder, a cinnamon roll, a marching band) read best.
 
 ---
 
@@ -130,7 +128,7 @@ B's turn: B reads the plan to the table first, then sends it. C's turn: play it 
 - "Picks news that makes a good, safe story": the storyability gate, `server/news/candidates.ts` (7 scores, average 4+,
   none below 3). In judge mode the story comes from the saved, gated library: say "a real, odd news story", never
   "this week's".
-- Narrator: ElevenLabs (Eleven v3 for the story beats, Flash for instant turn lines); Vesper = Sarah, Hollis = George, Wren = Charlie; OpenAI TTS backup (DECISIONS, db136e7).
+- Narrator: one ElevenLabs voice for everything (the CD's pick; Eleven v3 for the story beats, the same voice on Flash for instant turn lines); OpenAI TTS backup. No per-story casting (DECISIONS, db136e7).
   **Pending** the CD's plan purchase: if the deployed narrator is still OpenAI when you record, read "The narrator is
   OpenAI" instead (CD_MORNING §1).
 - "Frame by frame": design/33. "A test harness": `scripts/procedural-test.mjs`. "5 of 8 → 8 of 8": design/23.

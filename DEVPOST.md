@@ -46,8 +46,8 @@ players in one room. Quick Tale is about 5 minutes (one turn each); a Full Story
    all game. Code keeps that in bounds: a success never moves you backward, and nothing you achieved is undone. The
    story runs in 3 acts; an act ends when a plan solves it (or its time runs out). Then the narration hands the spotlight to
    the next player by name: "Leo, the lights are yours."
-7. **Every decision gets painted and read aloud.** Muse paints a new scene with your group's heroes in it. A
-   narrator, cast by Muse to fit the story (Vesper, Hollis or Wren), reads it over original music made in
+7. **Every decision gets painted and read aloud.** Muse paints a new scene with your group's heroes in it. One
+   narrator voice reads it, with the text appearing in sync, over original music made in
    the browser (a lobby theme and 5 story moods), with sound on every tap and roll. Muse also picks one of 6 art themes
    per story, all built on Neon Ink so the heroes stay recognizable.
 8. **The finale, together.** Everyone proposes a last plan and backs one that isn't theirs (each backer adds +1, up to
@@ -59,7 +59,7 @@ players in one room. Quick Tale is about 5 minutes (one turn each); a Full Story
 
 ## How AI is essential (and where code takes over)
 
-Take Muse away and there is no game: no stories, no rulings, no outcomes, no art and no narrator casting.
+Take Muse away and there is no game: no stories, no rulings, no outcomes, no art.
 
 | Job | Model |
 |---|---|
@@ -67,7 +67,7 @@ Take Muse away and there is no game: no stories, no rulings, no outcomes, no art
 | Writes each story opening from the real article or a player's true story; code checks reading level and length | muse-spark-1.3 (high effort, with faster backups racing it) |
 | Reads each plan at face value and stamps its difficulty | muse-spark-1.3 (minimal effort, temperature 0) |
 | Writes each turn: what happened, what changed, the next step, progress, and the hand-off to the next player | muse-spark-1.3 (minimal effort, started the moment the plan is judged so it's ready when the die lands) |
-| Casts the narrator and the art theme per story; writes the ending and the credits | muse-spark-1.3 |
+| Picks the art theme per story; writes the ending and the credits | muse-spark-1.3 |
 | Hero portraits, and the heroes painted into a new scene after every decision | muse-image-1.0 (image edits, with the heroes and the last scene as references so characters stay consistent) |
 | Optional voice input | muse-voice-transcribe-1.0 |
 
