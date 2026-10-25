@@ -1,8 +1,10 @@
 "use client";
 /**
- * YOUR TURN: a spotlight burst, the goal, the plan box, and your friends' ideas as cards. Tap an idea to drop it in
- * the box: a "+1" chip pops and GO! credits them. Editing the text keeps the credit; clearing it drops it.
- *   onPitch(text, creditId)  ->  send("pitch", { text, creditId })        onTyping  ->  send("typing")
+ * YOUR TURN: a spotlight burst, the goal, the plan box, and your friends' ideas as cards. Tap an idea to use it: the
+ * card gets a check, the box shows "Using Kai's idea ✕", and whatever you type rides along with it (+1, Kai gets the
+ * credit). Tap the card again or ✕ to drop it.
+ *   onPitch(text, creditId, parts)  ->  send("pitch", { text, creditId, own, idea })   text = both, joined to fit max
+ *   onTyping  ->  send("typing")
  */
 import { useState } from "react";
 import type { Player } from "@/lib/types";
@@ -28,6 +30,7 @@ export function YourTurnScreen({
   max,
   onPitch,
   onTyping,
+  voice = false,
   timer,
 }: {
   /** state.ideas: suggester id -> idea */
@@ -40,7 +43,9 @@ export function YourTurnScreen({
   ladder?: string[];
   step?: number;
   max: number;
-  onPitch: (text: string, creditId: string) => void;
+  onPitch: (text: string, creditId: string, parts: { own: string; idea: string }) => void;
+  /** show the small "hold to speak" under the box (typing stays the default) */
+  voice?: boolean;
   onTyping?: () => void;
   timer?: TimerSpec;
 }) {
@@ -48,16 +53,22 @@ export function YourTurnScreen({
   const [credit, setCredit] = useState("");
   const [ex] = useState(() => PLAN_EXAMPLES[Math.floor(Math.random() * PLAN_EXAMPLES.length)]);
   const list = Object.entries(ideas);
-  const creditName = shortName(players.find((p) => p.id === credit)?.hero?.name, 12);
+  const creditPl = players.find((p) => p.id === credit);
+  const creditName = shortName(creditPl?.hero?.name, 12) || "a friend";
+  const picked = credit ? (ideas[credit] ?? "").trim() : "";
+  const own = text.trim();
+  // What the DM reads: your words plus the friend's idea (or just one of them), never more than `max`.
+  const joined = picked && own && own !== picked ? `${own}, using ${creditName}'s idea: ${picked}` : own || picked;
+  const plan = joined.length > max ? `${joined.slice(0, max - 1).trimEnd()}…` : joined;
   return (
     <form
       className="pk-choices"
       style={{ flex: 1, gap: 14 }}
       onSubmit={(e) => {
         e.preventDefault();
-        if (!text.trim()) return;
+        if (!plan) return;
         vibrate([20, 40, 30]);
-        onPitch(text.trim(), credit);
+        onPitch(plan, credit, { own, idea: picked });
       }}
     >
       {timer && <Fuse {...timer} />}
@@ -68,17 +79,16 @@ export function YourTurnScreen({
       <Goal goal={goal} nowGoal={nowGoal} ladder={ladder} step={step} />
       <PlanBox
         value={text}
-        onChange={(t) => {
-          setText(t);
-          if (!t.trim()) setCredit("");
-        }}
+        onChange={setText}
         max={max}
         onTyping={onTyping}
-        placeholder={`e.g. ${ex}`}
+        onVoice={voice ? setText : undefined}
+        placeholder={credit ? `Add your own spin (optional), or just hit GO` : `e.g. ${ex}`}
+        using={credit ? { name: creditName, color: creditPl?.color, text: picked, onClear: () => setCredit("") } : undefined}
       />
       {list.length > 0 && (
         <>
-          <span className="pk-sec">Friends suggest · tap to use, +1</span>
+          <span className="pk-sec">{credit ? "Friends suggest · using 1, +1" : "Friends suggest · tap one to use it, +1"}</span>
           <div className="pk-choices" style={{ gap: 10 }}>
             {list.map(([pid, idea], i) => {
               const pl = players.find((p) => p.id === pid);
@@ -92,12 +102,7 @@ export function YourTurnScreen({
                   aria-pressed={on}
                   onClick={() => {
                     vibrate(on ? 8 : [10, 25, 10]);
-                    if (on) {
-                      setCredit("");
-                      return;
-                    }
-                    setText(idea.slice(0, max));
-                    setCredit(pid);
+                    setCredit(on ? "" : pid);
                   }}
                 >
                   <Face player={pl} src={heroImg(pl, pl ? portraitOf?.(pl) : undefined)} />
@@ -105,7 +110,13 @@ export function YourTurnScreen({
                     <span className="pk-plan-who">{shortName(pl?.hero?.name) || "A friend"}</span>
                     <span className="pk-plan-txt">{idea}</span>
                   </span>
-                  {on ? <span className="pk-plus">+1</span> : <span className="pk-plus pk-plus-ghost">+1</span>}
+                  {on ? (
+                    <span className="pk-plus pk-plus-on" aria-label="Using this idea">
+                      ✓
+                    </span>
+                  ) : (
+                    <span className="pk-plus pk-plus-ghost">+1</span>
+                  )}
                 </button>
               );
             })}
@@ -113,7 +124,7 @@ export function YourTurnScreen({
         </>
       )}
       <div className="pk-bottom">
-        <GameButton type="submit" tone="lime" xl disabled={!text.trim()} sub={credit ? `+1 for ${creditName}’s idea` : undefined}>
+        <GameButton type="submit" tone="lime" xl disabled={!plan} sub={credit ? `+1 for ${creditName}’s idea` : undefined}>
           Go!
         </GameButton>
       </div>

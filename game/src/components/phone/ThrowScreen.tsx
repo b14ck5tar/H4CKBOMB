@@ -30,7 +30,7 @@ export function ThrowScreen({
   onThrow: (power: number, angle: number) => void;
   /** the winning plan, shown small at the top */
   plan?: string;
-  /** e.g. [{label:"Brains", value:2}, {label:"Mabel's idea", value:1}] */
+  /** e.g. [{label:"Brains", value:2}, {label:"Kai's idea", value:1}] */
   bonuses?: Bonus[];
   timer?: TimerSpec;
   dieSize?: number;
