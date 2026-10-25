@@ -179,18 +179,19 @@ function Lobby({ host, s }: { host: Stage; s: GameState }) {
             ? "Everyone's in. One turn each, about five minutes."
             : "Everyone's in. You'll vote on the story first.";
   return (
-    <div className="grid grid-cols-[minmax(0,26rem)_minmax(0,1fr)] gap-10 px-10 pb-8 pt-2 flex-1 min-h-0">
-      <div className="page p-7 flex flex-col gap-4 items-center text-center self-start">
+    // Fits 1366x768 to 1920x1080: the whole lobby scrolls if a screen is shorter still.
+    <div className="grid grid-cols-[minmax(0,24rem)_minmax(0,1fr)] gap-8 px-8 pb-6 pt-1 flex-1 min-h-0 overflow-y-auto">
+      <div className="page p-6 flex flex-col gap-3 items-center text-center self-start">
         <p className="font-heading text-2xl uppercase">Scan to join</p>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        {qr ? <img src={qr} alt="QR code to join" className="w-64 h-64 rounded" /> : <div className="w-64 h-64" />}
+        {qr ? <img src={qr} alt="QR code to join" className="rounded" style={{ width: "min(16rem, 34vh)", height: "min(16rem, 34vh)" }} /> : <div style={{ width: "min(16rem, 34vh)", height: "min(16rem, 34vh)" }} />}
         <p className="font-ui uppercase tracking-[0.2em] text-sm text-ink-soft">or go to {joinUrl.replace(/^https?:\/\//, "").replace(/\/play.*$/, "/play")}</p>
-        <p className="font-display text-7xl tracking-[0.2em] leading-none">{s.code}</p>
+        <p className="font-display text-6xl tracking-[0.2em] leading-none">{s.code}</p>
         <p className="font-ui uppercase tracking-[0.3em] text-xs text-ink-soft">Your Dungeon Master: Muse</p>
         {host.transportKind === "local" && <p className="font-ui text-xs text-crimson">Local mode: phones on other devices can’t connect until Supabase keys are set.</p>}
       </div>
 
-      <div className="flex flex-col gap-7 min-h-0">
+      <div className="flex flex-col gap-5">
         <section className="flex flex-col gap-3">
           <h2 className="font-heading text-3xl uppercase text-[var(--gilt-bright)]">Your crew</h2>
           {s.players.length === 0 ? (
@@ -198,8 +199,8 @@ function Lobby({ host, s }: { host: Stage; s: GameState }) {
           ) : (
             <div className="flex gap-6 flex-wrap">
               {s.players.map((p) => (
-                <div key={p.id} className="flex flex-col items-center gap-2 w-28 text-center fade-in">
-                  {p.hero ? <Avatar host={host} p={p} size={88} /> : <WaxSeal initials={initials(p.name)} color={p.color} size={88} pulse />}
+                <div key={p.id} className="flex flex-col items-center gap-1.5 w-28 text-center fade-in">
+                  {p.hero ? <Avatar host={host} p={p} size={72} /> : <WaxSeal initials={initials(p.name)} color={p.color} size={72} pulse />}
                   <span className="font-heading text-xl uppercase leading-none">{p.hero ? shortName(p.hero.name) : mask(p.name)}</span>
                   <span className="font-ui text-xs text-parchment/60">{p.hero ? mask(p.name) : p.status === "building" ? "drawing a hero…" : "picking a hero…"}</span>
                 </div>
@@ -209,44 +210,39 @@ function Lobby({ host, s }: { host: Stage; s: GameState }) {
         </section>
 
         {!host.readOnly && (
-          <>
-            <section className="flex flex-col gap-3">
-              <h2 className="font-heading text-2xl uppercase text-[var(--gilt-bright)]">How long?</h2>
-              <div className="qt-mode">
-                <button aria-pressed={s.mode === "quick"} onClick={() => { sfx.unlock(); sfx.pageTurn(); host.setMode("quick"); }}>
-                  <span className="font-heading text-2xl font-bold uppercase block">Quick Tale · ~5 min</span>
-                  <span className="text-sm text-ink-soft">One turn each, then a grand finale.</span>
+          <div className="gp-settings">
+            <span className="gp-set-k">How long?</span>
+            <div className="gp-set-v">
+              <button className={`gp-pill ${s.mode === "quick" ? "on" : ""}`} aria-pressed={s.mode === "quick"} onClick={() => { sfx.unlock(); sfx.pageTurn(); host.setMode("quick"); }}>
+                Quick Tale · ~5 min
+              </button>
+              <button className={`gp-pill ${s.mode === "full" ? "on" : ""}`} aria-pressed={s.mode === "full"} onClick={() => { sfx.unlock(); sfx.pageTurn(); host.setMode("full"); }}>
+                Full Story · ~10 min
+              </button>
+            </div>
+            <span className="gp-set-k">Tonight&apos;s story</span>
+            <div className="gp-set-v">
+              <button className={`gp-pill ${s.source === "news" ? "on" : ""}`} aria-pressed={s.source === "news"} onClick={() => { sfx.unlock(); sfx.pageTurn(); host.setSource("news"); }}>
+                Odd news
+              </button>
+              <button className={`gp-pill ${s.source === "ours" ? "on" : ""}`} aria-pressed={s.source === "ours"} onClick={() => { sfx.unlock(); sfx.pageTurn(); host.setSource("ours"); }}>
+                Our stories
+              </button>
+            </div>
+            <span className="gp-set-k">Who&apos;s playing?</span>
+            <div className="gp-set-v">
+              {RATINGS.map((r) => (
+                <button key={r} className={`gp-pill ${s.rating === r ? "on" : ""}`} aria-pressed={s.rating === r} onClick={() => { sfx.unlock(); sfx.pageTurn(); host.setRating(r); }}>
+                  {RATING_LABEL[r]}
                 </button>
-                <button aria-pressed={s.mode === "full"} onClick={() => { sfx.unlock(); sfx.pageTurn(); host.setMode("full"); }}>
-                  <span className="font-heading text-2xl font-bold uppercase block">Full Story · ~10 min</span>
-                  <span className="text-sm text-ink-soft">Two turns each (one with 5+ players), then a grand finale.</span>
-                </button>
-              </div>
-            </section>
-            <section className="flex flex-col gap-3">
-              <h2 className="font-heading text-2xl uppercase text-[var(--gilt-bright)]">Tonight’s story</h2>
-              <div className="qt-mode">
-                <button aria-pressed={s.source === "news"} onClick={() => { sfx.unlock(); sfx.pageTurn(); host.setSource("news"); }}>
-                  <span className="font-heading text-2xl font-bold uppercase block">Odd news</span>
-                  <span className="text-sm text-ink-soft">A strange, harmless story from this week’s real news.</span>
-                </button>
-                <button aria-pressed={s.source === "ours"} onClick={() => { sfx.unlock(); sfx.pageTurn(); host.setSource("ours"); }}>
-                  <span className="font-heading text-2xl font-bold uppercase block">Our stories</span>
-                  <span className="text-sm text-ink-soft">Each of you writes a small true story. Play one, then hear how it really ended.</span>
-                </button>
-              </div>
-            </section>
-            <section className="flex flex-col gap-3">
-              <h2 className="font-heading text-2xl uppercase text-[var(--gilt-bright)]">Who’s playing?</h2>
-              <div className="grid grid-cols-3 gap-3">
-                {RATINGS.map((r) => (
-                  <button key={r} className={`gp-pill ${s.rating === r ? "on" : ""}`} aria-pressed={s.rating === r} onClick={() => { sfx.unlock(); sfx.pageTurn(); host.setRating(r); }}>
-                    {RATING_LABEL[r]}
-                  </button>
-                ))}
-              </div>
-            </section>
-          </>
+              ))}
+            </div>
+            <span />
+            <p className="font-ui text-sm text-parchment/65 leading-snug">
+              {s.source === "ours" ? "Each of you writes a small true story. Play one, then hear how it really ended." : "A strange, harmless story from this week's real news."}{" "}
+              {s.mode === "quick" ? "One turn each, then a grand finale." : "Two turns each (one with 5+ players), then a grand finale."}
+            </p>
+          </div>
         )}
 
         <div className="flex items-center gap-5 mt-auto">
