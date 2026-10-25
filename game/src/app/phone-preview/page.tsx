@@ -7,7 +7,7 @@
  * Best viewed at 390x844 (browser device mode).
  */
 import { useEffect, useMemo, useState } from "react";
-import quick from "@/data/quickstart_heroes.json";
+import quick from "@/data/quickstart_heroes_v2.json";
 import questImages from "@/data/quest_images.json";
 import { REACTIONS, TYPE_MAX } from "@/lib/rules";
 import type { FinalRoll, Hero, Pitch, Player, Storybook } from "@/lib/types";
