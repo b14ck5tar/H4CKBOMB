@@ -3251,7 +3251,9 @@ export class GameHost {
     const moves = this.heroes().map((p) => {
       const mine = this.state.log.filter((l) => l.heroId === p.id && l.pitch);
       const best = mine.slice().sort((a, b) => BAND_RANK[a.band] - BAND_RANK[b.band])[0];
-      return { heroId: p.id, name: p.hero!.name, move: cleanText(best?.pitch ?? "", 140) };
+      // No turn of their own (judge mode, 4+ players): their finale plan is their move.
+      const finalePlan = this.state.pitches.find((x) => x.playerId === p.id && !x.auto)?.text ?? "";
+      return { heroId: p.id, name: p.hero!.name, move: cleanText(best?.pitch || finalePlan, 140) };
     });
     return { moves, real: { what: rs?.headline ?? "", ending: [rs?.summary, rs?.now].filter(Boolean).join(" "), source: rs?.source ?? "", date: rs?.date ?? "" }, bridge: e?.bridge ?? "" };
   }
