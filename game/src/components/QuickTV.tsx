@@ -721,14 +721,14 @@ function RevealCard({ host, s }: { host: Stage; s: GameState }) {
           <p className="qt-paper-meta">
             {rs.source} · {rs.date}
           </p>
-          <p className="text-[1.3rem] leading-snug mt-3 line-clamp-4">{rs.summary}</p>
-          <p className="text-[1.1rem] leading-snug mt-2 text-[#444]">
+          <p className="text-[1.25rem] leading-snug mt-3 line-clamp-3">{rs.summary}</p>
+          <p className="text-[1rem] leading-snug mt-2 text-[#444] line-clamp-2">
             <b>Officially:</b> {seed.the_threat.mapped_from}
           </p>
           {qr && (
             <div className="flex items-center gap-3 mt-auto pt-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={qr} alt="QR code to the real article" className="w-28 h-28" />
+              <img src={qr} alt="QR code to the real article" className="w-24 h-24" />
               <span className="qt-paper-meta">Read the real article</span>
             </div>
           )}
