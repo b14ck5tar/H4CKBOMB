@@ -224,7 +224,7 @@ function GoalBar({ s }: { s: GameState }) {
 /** The ONE instruction on the TV right now. Phones show the same words. */
 function NowBanner({ s }: { s: GameState }) {
   const text = nowText(s);
-  if (!text || s.phase === "storybook" || s.phase === "reveal") return null;
+  if (!text || ["storybook", "reveal", "final_result"].includes(s.phase)) return null;
   return (
     <div className="gp-now" key={text}>
       <span className="gp-now-k">Now</span>
