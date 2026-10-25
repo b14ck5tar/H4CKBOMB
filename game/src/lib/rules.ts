@@ -120,8 +120,10 @@ export const PITCH_MS = 40_000;
 /** One player's turn: everyone else suggests, the owner picks (design/24). */
 export const TURN_MS = 60_000;
 export const QUICK_TURN_MS = 45_000; // 45 s to type a suggestion or a plan (100-persona sim: 30 s was too tight)
-/** One action, ~140 characters. */
-export const PLAN_MAX = 280; // own words + a friend's idea, together
+/** One action as a player types it: 140 characters (CD: "why did we up the limit to 280?"). */
+export const TYPE_MAX = 140;
+/** What the host accepts: the owner's words + ", using Mo's idea: " + the friend's idea, joined (each part <= TYPE_MAX). */
+export const PLAN_MAX = 320;
 export const VOTE_MS = 20_000; // the finale vote
 export const STORY_VOTE_MS = 15_000;
 export const RULING_MS = 2_200; // the plan card: long enough to read the label (CD playtest: 3.5 s felt like dead air)

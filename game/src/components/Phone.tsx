@@ -5,7 +5,7 @@
  */
 import { useCallback, useEffect } from "react";
 import { usePhone } from "@/lib/usePhone";
-import { PLAN_MAX, QUICK_TURN_MS, REACTIONS, STAT_LABEL, TURN_MS, stampText } from "@/lib/rules";
+import { TYPE_MAX, QUICK_TURN_MS, REACTIONS, STAT_LABEL, TURN_MS, stampText } from "@/lib/rules";
 import { eligibleIds, heroFirst, nowText, plateFor, turnOwner, winnerPid } from "@/lib/now";
 import { sfx } from "@/lib/sfx";
 import { playSfx } from "@/lib/sound";
@@ -48,6 +48,7 @@ const QUICK = quickHeroes as ReadyHero[];
 /** The plate behind the current moment (the same picture the TV is showing, from the pre-painted set). */
 function artFor(s: GameState | null) {
   if (!s?.questId || s.phase === "lobby" || s.phase === "story_vote") return "";
+  if (s.sceneArt) return s.sceneArt; // the painting on the TV right now (the host sends a small copy)
   const plates = (questImages as Record<string, string[]>)[s.questId] ?? [];
   return plates[plateFor(s)] ?? plates[0] ?? s.storyOptions.find((o) => o.id === s.questId)?.art ?? "";
 }
@@ -121,7 +122,8 @@ export function Phone({ code }: { code: string }) {
   // once it's in), the plan on the table, the latest thing that happened, the goal, and big reactions for the TV.
   const tablePitch = state.pitches.find((p) => p.id === state.winnerId) ?? (state.finale ? undefined : state.pitches[0]);
   const showPlan = !!tablePitch && ["ruling", "roll"].includes(state.phase);
-  const planText = tablePitch?.verdict?.interpretation && !tablePitch.verdict.fallback && tablePitch.verdict.moderation !== "ok" ? tablePitch.verdict.interpretation : tablePitch?.text;
+  // the same words as the TV: the DM's version once it's ruled (CD playtest: phone showed the raw text, TV the DM's)
+  const planText = tablePitch?.verdict?.interpretation && !tablePitch.verdict.fallback ? tablePitch.verdict.interpretation : tablePitch?.text;
   const latest =
     state.phase === "epilogue"
       ? { label: "How it ended", text: state.epilogue || state.endingLine }
@@ -194,7 +196,7 @@ export function Phone({ code }: { code: string }) {
               players={state.players}
               portraitOf={(p) => heroImg(p, undefined)}
               {...ladderProps}
-              max={PLAN_MAX}
+              max={TYPE_MAX}
               onPitch={(text, creditId, { own, idea }) => send("pitch", { text, creditId, own, idea })}
               onTyping={() => send("typing")}
               voice
@@ -207,7 +209,7 @@ export function Phone({ code }: { code: string }) {
               ownerPortrait={heroImg(owner)}
               sent={state.ideas[me.id]}
               {...ladderProps}
-              max={PLAN_MAX}
+              max={TYPE_MAX}
               onIdea={(text) => send("idea", { text })}
               onTyping={() => send("typing")}
               voice
@@ -221,7 +223,7 @@ export function Phone({ code }: { code: string }) {
             key={state.sceneIndex}
             sent={state.pitches.find((p) => p.playerId === me.id)?.text}
             goal={state.goal}
-            max={PLAN_MAX}
+            max={TYPE_MAX}
             onPitch={(text) => send("pitch", { text })}
             onTyping={() => send("typing")}
             voice
@@ -286,7 +288,7 @@ export function Phone({ code }: { code: string }) {
       case "storybook":
         body = (
           <KeepsakeScreen
-            book={state.storybook}
+            book={state.storybook && { ...state.storybook, title: state.quest?.title || state.storybook.title }}
             me={me}
             portrait={heroImg(me, portrait)}
             said={state.log.filter((l) => l.heroId === me.id && !l.flagged).map((l) => l.pitch)[0]}
