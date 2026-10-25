@@ -30,12 +30,20 @@ export const FEATURES = {
   artStyles: true,
   /** Paint the party's heroes into each scene (server/art, muse-image edits, ~$0.01 each, cached). */
   heroArt: true,
+  /** Story characters speak their quoted lines in their own ElevenLabs voices; Sarah narrates (server/tts.ts). */
+  characterVoices: false,
   /** AI plan suggestions on phones (they made everyone's plans the same). */
   suggestions: false,
   /** One AI-picked sound effect per story slide (lib/storySfx.ts, game/public/sfx/). Voice owns it; ships off unless solid. */
   storySfx: true,
   /** The finale talk (CD): 60 s to convince each other before the final vote (phase "convince"). Off until the screens exist. */
   finaleTalk: true, // look: TV FinaleTalk + phone TalkScreen are in (6c6dbb8, c684ff7); off again if the real run shows a problem
+  /** CD (Sun AM): the TV host can remove a player or bot from the lobby (host.kick); their phone offers Rejoin. */
+  kick: true,
+  /** CD (Sun AM): after the ending, "Back to lobby" keeps the room, the players and their heroes (host.playAgain). */
+  playAgain: true,
+  /** CD (Sun AM): cast dialogue in its own voice (outcome `lines`, speaker "" = the narrator). Voice owns /api/tts. */
+  castVoices: false,
 } as const;
 
 export type Feature = keyof typeof FEATURES;
