@@ -531,14 +531,8 @@
    ================================================================== */
 .qt-stage { padding: 8.2rem 3rem 7.2rem; }
 .qt-cold { padding: 0; }
+.gp-goal-row { position: absolute; top: 4.4rem; left: 0; right: 0; z-index: 15; display: flex; justify-content: center; pointer-events: none; }
 .gp-goal {
-  position: absolute;
-  top: 4.4rem;
-  left: 0;
-  right: 0;
-  margin: 0 auto;
-  width: fit-content;
-  z-index: 15;
   display: flex;
   align-items: baseline;
   gap: 1rem;
@@ -622,3 +616,25 @@
   filter: blur(8px);
 }
 .qt-keep { padding-top: 6rem; padding-bottom: 2.5rem; }
+
+/* ---------- let the art breathe ---------- */
+/* Scene title beat: the painting, bright and alone. */
+.qt-bd[data-mood="title"] .qt-shade { background: linear-gradient(to top, rgba(5, 3, 9, 0.75) 0%, rgba(5, 3, 9, 0.15) 30%, transparent 45%); }
+.qt-bd[data-mood="title"] .qt-vignette { opacity: 0.45; }
+/* Narration and outcome: only the lower third is shaded; the top 55% of the art stays clear. */
+.qt-bd[data-mood="scene"] .qt-shade { background: linear-gradient(to top, rgba(5, 3, 9, 0.96) 0%, rgba(5, 3, 9, 0.85) 26%, rgba(5, 3, 9, 0.35) 42%, transparent 55%), linear-gradient(to bottom, rgba(5, 3, 9, 0.55) 0%, transparent 14%); }
+.qt-bd[data-mood="scene"] .qt-vignette { opacity: 0.6; }
+.qt-bd[data-mood="action"] .qt-shade { background-color: rgba(5, 3, 9, 0.38); }
+.qt-bd[data-mood="action"] .qt-bd-zoom { filter: saturate(0.95) brightness(0.9); }
+.qt-bd[data-mood="end"] .qt-shade { background-color: rgba(5, 3, 9, 0.5); }
+.qt-bd-zoom .qt-bd-layer img, .qt-shade, .qt-vignette { transition: opacity 1.2s ease, background 1.2s ease; }
+
+.gp-scene-title { margin-top: auto; margin-bottom: 4rem; display: flex; flex-direction: column; gap: 0.6rem; animation: qt-rise 0.9s cubic-bezier(0.2, 0.8, 0.25, 1) both; }
+.gp-lowerthird { margin-top: auto; max-width: 82rem; display: flex; flex-direction: column; gap: 0.6rem; min-height: 0; max-height: 42vh; justify-content: flex-end; padding-bottom: 1.2rem; }
+.gp-lowerthird .qt-narration { font-size: 2.2rem; }
+
+/* ---------- a quiet top bar: the story is the focus ---------- */
+.gp-tb { font-family: var(--font-ui), monospace; font-size: 0.8rem; letter-spacing: 0.15em; text-transform: uppercase; padding: 0.25rem 0.6rem; border-radius: 3px; color: var(--parchment); opacity: 0.4; transition: opacity 0.2s, background 0.2s; }
+.gp-tb:hover, .gp-tb:focus-visible, .gp-tb.on { opacity: 1; background: rgba(255, 255, 255, 0.08); }
+.qt-top { padding: 0.6rem 2rem; }
+.qt-top .qt-secs { font-size: 1.7rem; opacity: 0.85; }

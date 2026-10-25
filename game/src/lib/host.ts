@@ -234,7 +234,7 @@ export class GameHost {
   private finalRoll: RollResult | null = null;
   private finalPitch: Pitch | null = null;
   private artP = new Map<string, Promise<void>>(); // `${questId}:${scene}` -> hero-painted scene art in flight
-  private epilogueP: Promise<{ ending: string; line: string }> | null = null;
+  private epilogueP: Promise<{ ending: string; line: string; recap: string }> | null = null;
   private storybookP: Promise<Storybook> | null = null;
   private reactionId = 0;
   private lastReact: Record<string, number> = {};
@@ -301,6 +301,7 @@ export class GameHost {
       wins: {},
       outcome: "",
       endingLine: "",
+      recap: "",
       storyOptions: [],
       boosts: {},
       rolls: [],
@@ -1046,6 +1047,7 @@ export class GameHost {
       winnerId: "",
       outcome: "",
       endingLine: "",
+      recap: "",
       solvedBy: "",
       round: null,
       final: null,
@@ -1565,10 +1567,10 @@ export class GameHost {
     const sc = this.sceneList[this.state.sceneIndex];
     const heroes = this.heroes().map((p) => ({ id: p.id, name: p.hero!.name }));
     const winner = this.heroName(pitch.playerId);
-    const fb = () => ({ ending: FALLBACK_ENDING[ending].replaceAll("{name}", winner), line: FALLBACK_LINE[ending] });
+    const fb = () => ({ ending: FALLBACK_ENDING[ending].replaceAll("{name}", winner), line: FALLBACK_LINE[ending], recap: "" });
     this.epilogueP = this.viaAI(
       "The ending",
-      this.ask<{ ending: string; line: string }>("epilogue", {
+      this.ask<{ ending: string; line: string; recap: string }>("epilogue", {
         scene: { title: sc?.title, goal: sc?.goal },
         winner,
         attempt: pitch.verdict?.interpretation ?? "",
@@ -1576,10 +1578,11 @@ export class GameHost {
         ending,
         heroes: heroes.map((h) => h.name),
         earlier: this.state.log.map((l) => l.narration),
+        finale_plan: pitch.verdict?.interpretation ?? "",
         quick_tale: this.quick || undefined,
       }),
       15_000,
-      (d, f) => (f ? fb() : d?.ending?.trim() ? { ending: d.ending.trim(), line: (d.line ?? "").trim() || fb().line } : null),
+      (d, f) => (f ? fb() : d?.ending?.trim() ? { ending: d.ending.trim(), line: (d.line ?? "").trim() || fb().line, recap: (d.recap ?? "").trim() } : null),
       fb,
     );
     const images = this.artCount().map((i) => `scene_${i + 1}`);
@@ -1858,9 +1861,9 @@ export class GameHost {
   private async startEpilogue(done: () => void) {
     this.clearTimer();
     this.set({ phase: "epilogue", busy: "The DM wraps it up…", ready: [] });
-    const { ending, line } = await this.epilogueP!;
+    const { ending, line, recap } = await this.epilogueP!;
     if (this.state.phase !== "epilogue") return;
-    this.set({ epilogue: ending, endingLine: line, busy: "" });
+    this.set({ epilogue: ending, endingLine: line, recap: recap || this.state.log.map((l) => l.narration).slice(0, 1).join(" "), busy: "" });
     // The finale's log line becomes the real ending, for the keepsake.
     const log = this.state.log.map((l, i, all) => (i === all.length - 1 ? { ...l, narration: ending } : l));
     this.set({ log });

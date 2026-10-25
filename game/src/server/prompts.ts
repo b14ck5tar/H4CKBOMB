@@ -245,9 +245,10 @@ Input: the finale scene (title, goal), winner (the hero whose plan it was), atte
   - Credit the winner's plan by name, and say the whole group pulled it off (or went down together).
   - TRIUMPHANT: the goal is done and someone in the world reacts like a real person. BITTERSWEET: it's done, but something specific and silly is lost or changed for good. GRIM_BUT_HILARIOUS: the threat wins in the gentlest, funniest way, the heroes are fine, and the town is oddly better.
   - Where you can, the threat ends up outwitted, befriended, or given a job.
-- line: 12 words max. One plain sentence for the last card: how it ended ("The snake works at the scrapyard now.").`;
+- line: 12 words max. One plain sentence for the last card: how it ended ("The snake works at the scrapyard now.").
+- recap: 1 or 2 sentences, 35 words max. What this group actually did tonight, from start to finish, using earlier and the finale, by hero name, in plain words a kid could retell ("Gus asked the ranger what the hand wanted, Juno got their stuff back, and Bev sang it to sleep."). Only things that happened.`;
 
-export const EPILOGUE_SCHEMA = obj({ ending: str, line: str });
+export const EPILOGUE_SCHEMA = obj({ ending: str, line: str, recap: str });
 
 /** Quick Tale: one scene, so there is no "earlier". */
 export const EPILOGUE_QUICK = `

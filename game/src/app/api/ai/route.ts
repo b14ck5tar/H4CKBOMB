@@ -81,13 +81,13 @@ async function run(task: string, input: Any, rating: Rating) {
       // One winning plan per call: spark-1.3 at minimal effort answers in 1-2 s (design/23).
       return museJSON({ task: t("ruling"), model: MODELS.ruling, system: withRating(RULING_SYSTEM, rating), schema: RULING_SCHEMA, effort: "minimal", timeoutMs: 9000, maxTokens: 1500, user: JSON.stringify(input) });
     case "outcome":
-      return museJSON({ task: t("outcome"), model: MODELS.writing, system: withRating(OUTCOME_SYSTEM, rating), schema: OUTCOME_SCHEMA, effort: "low", timeoutMs: 12_000, maxTokens: 2000, user: JSON.stringify(input) });
+      return museJSON({ task: t("outcome"), model: MODELS.writing, system: withRating(OUTCOME_SYSTEM, rating), schema: OUTCOME_SCHEMA, effort: "low", timeoutMs: 12_000, maxTokens: 3000, user: JSON.stringify(input) });
     case "round":
       return museJSON({ task: t("round"), system: withRating(ROUND_SYSTEM, rating), schema: ROUND_SCHEMA, effort: "low", timeoutMs: 14_000, user: JSON.stringify(input) });
     case "kind":
       return museJSON({ task: t("kind"), system: withRating(KIND_SYSTEM, rating), schema: KIND_SCHEMA, effort: "minimal", timeoutMs: 9000, maxTokens: 1200, user: JSON.stringify(input) });
     case "epilogue":
-      return museJSON({ task: t("epilogue"), system: withRating(input?.quick_tale ? EPILOGUE_SYSTEM + EPILOGUE_QUICK : EPILOGUE_SYSTEM, rating), schema: EPILOGUE_SCHEMA, effort: "low", timeoutMs: 15_000, maxTokens: 2000, user: JSON.stringify(input) });
+      return museJSON({ task: t("epilogue"), system: withRating(input?.quick_tale ? EPILOGUE_SYSTEM + EPILOGUE_QUICK : EPILOGUE_SYSTEM, rating), schema: EPILOGUE_SCHEMA, effort: "low", timeoutMs: 15_000, maxTokens: 4000, user: JSON.stringify(input) });
     case "storybook":
       return museJSON({
         task: t("storybook"),

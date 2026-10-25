@@ -7,7 +7,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import QRCode from "qrcode";
 import type { Stage } from "./TV";
-import { BAND_LABEL, ENDING_LABEL, ROLL_ANIM_MS, STAT_LABEL, TIER_LABEL, isFailure, lineMs, narrationLines, stampText } from "@/lib/rules";
+import { BAND_LABEL, ENDING_LABEL, ROLL_ANIM_MS, STAT_LABEL, TIER_LABEL, TITLE_BEAT_MS, isFailure, lineMs, narrationLines, stampText } from "@/lib/rules";
 import { coldOpenTimeline } from "@/lib/quick";
 import { eligibleIds, heroFirst, nowText, winnerPid } from "@/lib/now";
 import { sfx } from "@/lib/sfx";
@@ -23,7 +23,7 @@ import { FEATURES } from "@/lib/features";
 
 const READING = ["quest", "narrating", "ruling", "outcome", "epilogue", "reveal"];
 const SCENE_PHASES = ["narrating", "pitch", "vote", "ruling", "roll", "outcome"];
-type Mood = "push" | "scene" | "action" | "final" | "end";
+type Mood = "push" | "title" | "scene" | "action" | "final" | "end";
 const fmt = (n: number) => (n >= 0 ? `+${n}` : `−${-n}`);
 
 function usePrefersReducedMotion() {
@@ -163,23 +163,18 @@ function QTopBar({ host, s, onNotes, notesOpen }: { host: Stage; s: GameState; o
       {FEATURES.hopeDisplay && <Hope hope={s.hope} max={s.hopeMax} />}
       {left > 0 && !reading && <span className="qt-secs tabular-nums">{Math.ceil(left / 1000)}</span>}
       {host.deadlineAt > 0 && reading && !host.readOnly && (
-        <button className="btn btn-ghost !py-1 !px-4 text-base" onClick={() => host.skip()} title="Spacebar works too">
+        <button className="gp-tb" onClick={() => host.skip()} title="Spacebar works too">
           Skip ▸
         </button>
       )}
       <RunClock host={host} />
       {onNotes && !host.readOnly && (
-        <button
-          className={`btn btn-ghost !py-1 !px-3 text-sm ${notesOpen ? "ring-2 ring-[var(--crimson)]" : ""}`}
-          onClick={onNotes}
-          title="What the AI is doing, and why (press N)"
-          aria-pressed={!!notesOpen}
-        >
+        <button className={`gp-tb ${notesOpen ? "on" : ""}`} onClick={onNotes} title="What the AI is doing, and why (press N)" aria-pressed={!!notesOpen}>
           DM&apos;s Notes
         </button>
       )}
       <button
-        className="btn btn-ghost !py-1 !px-3 text-sm"
+        className="gp-tb"
         onClick={() => {
           sfx.setMuted(!muted);
           setMuted(!muted);
@@ -188,7 +183,7 @@ function QTopBar({ host, s, onNotes, notesOpen }: { host: Stage; s: GameState; o
       >
         {muted ? "🔇" : "🔊"}
       </button>
-      <span className="tracking-[0.3em] font-heading text-xl">{s.code}</span>
+      <span className="tracking-[0.3em] font-heading text-lg text-parchment/45">{s.code}</span>
     </header>
   );
 }
@@ -214,9 +209,11 @@ function GoalBar({ s }: { s: GameState }) {
   const scene = s.scenes[s.sceneIndex];
   const label = s.mode === "quick" ? "The goal" : scene?.kind === "climax" ? "Finale · the goal" : `Scene ${s.sceneIndex + 1} of ${s.scenes.length} · the goal`;
   return (
-    <div className="gp-goal" key={s.goal}>
-      <span className="gp-goal-k">{label}</span>
-      <span className="gp-goal-t">{s.goal}</span>
+    <div className="gp-goal-row">
+      <div className="gp-goal" key={s.goal}>
+        <span className="gp-goal-k">{label}</span>
+        <span className="gp-goal-t">{s.goal}</span>
+      </div>
     </div>
   );
 }
@@ -364,14 +361,14 @@ function TitleCard({ s, kicker, sub }: { s: GameState; kicker: string; sub: stri
   );
 }
 
-// ---------- 1. the scene: narration, line by line ----------
-function Narration({ s }: { s: GameState }) {
+// ---------- 1. the scene: the art alone, then narration line by line in a lower third ----------
+function Narration({ s, onTitle }: { s: GameState; onTitle: (on: boolean) => void }) {
   const lines = useMemo(() => narrationLines(s.narration), [s.narration]);
   const npc = s.npcLine?.speaker && s.npcLine?.line ? s.npcLine : null;
   const all = npc ? [...lines, npc.line] : lines;
   // The same pacing the table's timer uses (lib/rules.ts), so the last line lands just before plans open.
   const starts = useMemo(() => {
-    let t = 600;
+    let t = TITLE_BEAT_MS + 600;
     return all.map((l) => {
       const at = t;
       t += lineMs(l);
@@ -381,6 +378,8 @@ function Narration({ s }: { s: GameState }) {
   const reduced = usePrefersReducedMotion();
   const t = useElapsed(true, 100);
   const shown = reduced ? all.length : starts.filter((at) => t >= at).length;
+  const titleBeat = !reduced && t < TITLE_BEAT_MS;
+  useEffect(() => onTitle(titleBeat), [titleBeat, onTitle]);
   const last = useRef(0);
   useEffect(() => {
     if (shown > last.current) sfx.tick();
@@ -389,22 +388,34 @@ function Narration({ s }: { s: GameState }) {
   useEffect(() => {
     sfx.pageTurn();
   }, [s.sceneIndex]);
+  if (titleBeat)
+    return (
+      <div className="qt-stage">
+        <div className="gp-scene-title">
+          <p className="font-ui uppercase tracking-[0.4em] text-lg text-[var(--gilt-bright)]">{s.mode === "quick" ? "The scene" : s.scenes[s.sceneIndex]?.kind === "climax" ? "Finale" : `Scene ${s.sceneIndex + 1}`}</p>
+          <h2 className="qt-title !text-[6.5rem]">{s.sceneTitle}</h2>
+        </div>
+      </div>
+    );
+  // Like subtitles: the line being read, with the one before it dimmed above it. The upper art stays clear.
+  const from = Math.max(0, Math.min(shown, lines.length) - 2);
   return (
     <div className="qt-stage">
-      <div className="qt-lower flex flex-col gap-4 max-w-[78rem] pb-24 gp-scrim">
-        <p className="kicker !text-[var(--gilt-bright)] !text-lg qt-rise">{s.sceneTitle}</p>
-        <div className="flex flex-col gap-3">
-          {lines.slice(0, shown).map((l, i) => (
-            <p key={i} className={`qt-narration gp-line ${i < shown - 1 ? "gp-line-old" : ""}`}>
+      <div className="gp-lowerthird">
+        <p className="kicker !text-[var(--gilt-bright)] !text-base">{s.sceneTitle}</p>
+        {lines.slice(from, shown).map((l, k) => {
+          const i = from + k;
+          return (
+            <p key={i} className={`qt-narration gp-line ${i < Math.min(shown, lines.length) - 1 ? "gp-line-old" : ""}`}>
               {l}
             </p>
-          ))}
-          {npc && shown > lines.length && (
-            <p className="text-[2rem] leading-snug border-l-4 border-[var(--crimson)] pl-5 gp-line">
-              <b className="font-heading uppercase text-[var(--crimson)]">{npc.speaker}:</b> “{npc.line}”
-            </p>
-          )}
-        </div>
+          );
+        })}
+        {npc && shown > lines.length && (
+          <p className="text-[2rem] leading-snug border-l-4 border-[var(--crimson)] pl-5 gp-line">
+            <b className="font-heading uppercase text-[var(--crimson)]">{npc.speaker}:</b> “{npc.line}”
+          </p>
+        )}
       </div>
     </div>
   );
@@ -570,7 +581,7 @@ function Outcome({ host, s }: { host: Stage; s: GameState }) {
   if (!r || !pl) return null;
   return (
     <div className="qt-stage">
-      <div className="qt-lower qt-beat pb-24">
+      <div className="qt-lower qt-beat gp-lowerthird !flex-row !items-end">
         <div className="qt-beat-portrait qt-pop" style={{ ["--pc" as string]: pl.color }}>
           {host.portraits[pl.id] ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -582,7 +593,7 @@ function Outcome({ host, s }: { host: Stage; s: GameState }) {
             <Stamp text={BAND_LABEL[r.band]} sub={`rolled ${r.kept}`} size="md" tone={bandTone(r.band)} slam={false} />
           </div>
         </div>
-        <div className="flex flex-col gap-3 min-w-0 min-h-[12rem] justify-center gp-scrim">
+        <div className="flex flex-col gap-3 min-w-0 min-h-[10rem] justify-center">
           {s.outcome ? (
             <TypeReveal text={s.outcome} className="qt-narration !text-[2.6rem]" phraseMs={300} />
           ) : (
@@ -710,7 +721,10 @@ function RevealCard({ host, s }: { host: Stage; s: GameState }) {
           <p className="qt-paper-meta">
             {rs.source} · {rs.date}
           </p>
-          <p className="text-[1.3rem] leading-snug mt-3 line-clamp-5">{rs.summary}</p>
+          <p className="text-[1.3rem] leading-snug mt-3 line-clamp-4">{rs.summary}</p>
+          <p className="text-[1.1rem] leading-snug mt-2 text-[#444]">
+            <b>Officially:</b> {seed.the_threat.mapped_from}
+          </p>
           {qr && (
             <div className="flex items-center gap-3 mt-auto pt-4">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -722,26 +736,19 @@ function RevealCard({ host, s }: { host: Stage; s: GameState }) {
         <div className="qt-seam" aria-hidden>
           <span>vs</span>
         </div>
-        <div className="qt-glass qt-uncovered qt-slide-r">
+        <div className="qt-glass qt-uncovered qt-slide-r !justify-center">
           <p className="font-ui uppercase tracking-[0.3em] text-lg text-[var(--signal)]">Your version</p>
           <h2 className="font-display text-6xl uppercase leading-none text-[var(--crimson)] qt-glow">{seed.the_threat.name}</h2>
-          <p className="text-xl leading-snug text-parchment/80">
-            <span className="font-ui uppercase tracking-widest text-sm text-parchment/60 block">Officially</span>
-            {seed.the_threat.mapped_from}
-          </p>
+          {(s.recap || s.epilogue) && <p className="text-[1.6rem] leading-snug qt-rise" style={{ animationDelay: "0.9s" }}>{s.recap || s.epilogue}</p>}
           {s.solvedBy && (
             <p className="font-heading text-3xl uppercase leading-tight text-[var(--gilt-bright)] qt-rise" style={{ animationDelay: "1.4s" }}>
               {s.solvedBy}
             </p>
           )}
-          {s.endingLine && (
-            <p className="text-2xl italic leading-snug qt-rise" style={{ animationDelay: "1.8s" }}>
-              {s.endingLine}
-            </p>
-          )}
           {f && (
-            <div className="mt-auto pt-3">
+            <div className="flex items-center gap-5 pt-2 qt-rise" style={{ animationDelay: "1.8s" }}>
               <Stamp text={ENDING_LABEL[f.ending]} size="md" rotate={-4} slam={false} tone={f.ending === "TRIUMPHANT" ? "gilt" : f.ending === "BITTERSWEET" ? "forest" : "crimson"} />
+              {s.endingLine && <p className="text-xl italic leading-snug text-parchment/85">{s.endingLine}</p>}
             </div>
           )}
         </div>
@@ -824,8 +831,9 @@ function Keepsake({ host, s }: { host: Stage; s: GameState }) {
 }
 
 // ---------- root ----------
-function moodFor(s: GameState): Mood {
+function moodFor(s: GameState, title: boolean): Mood {
   if (s.phase === "quest") return "push";
+  if (s.phase === "narrating" && title) return "title";
   if (s.phase === "final_roll" || s.phase === "final_result") return "final";
   if (["pitch", "vote", "ruling", "roll"].includes(s.phase)) return "action";
   if (["epilogue", "reveal", "storybook", "story_vote"].includes(s.phase)) return "end";
@@ -857,7 +865,8 @@ export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameS
       if (u && !u.startsWith("data:")) new Image().src = u;
     });
   }, [plates]);
-  const mood = moodFor(s);
+  const [title, setTitle] = useState(false);
+  const mood = moodFor(s, title && s.phase === "narrating");
   const art = s.phase === "story_vote" ? undefined : host.sceneImages[plateFor(s)] ?? host.sceneImages[0];
   // One key per "shot": a new key plays the dip-to-dark transition and the enter animation.
   const shot = s.phase === "final_result" ? "final_roll" : s.phase === "narrating" ? `narrating-${s.sceneIndex}` : s.phase;
@@ -878,7 +887,7 @@ export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameS
         );
       break;
     case "narrating":
-      main = <Narration s={s} />;
+      main = <Narration s={s} onTitle={setTitle} />;
       break;
     case "pitch":
       main = <Planning host={host} s={s} />;
@@ -931,8 +940,8 @@ export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameS
       <div key={shot + "-c"} className="qt-shot">
         {main}
       </div>
-      {inScene && <GoalBar s={s} />}
-      {s.phase !== "quest" && <NowBanner s={s} />}
+      {inScene && !(title && s.phase === "narrating") && <GoalBar s={s} />}
+      {s.phase !== "quest" && !(title && s.phase === "narrating") && <NowBanner s={s} />}
       <Reactions items={reactions} />
       <ThankHearts s={s} />
     </div>

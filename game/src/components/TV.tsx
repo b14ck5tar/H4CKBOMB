@@ -77,13 +77,13 @@ function TopBar({ host, s, notesOpen, onNotes }: { host: Stage; s: GameState; no
       {s.phase !== "lobby" && FEATURES.hopeDisplay && <Hope hope={s.hope} max={s.hopeMax} />}
       {left > 0 && !reading && <span className="tabular-nums font-bold text-2xl w-14 text-right">{Math.ceil(left / 1000)}s</span>}
       {host.deadlineAt > 0 && reading && !host.readOnly && (
-        <button className="btn btn-ghost !py-1 !px-4 text-base" onClick={() => host.skip()} title="Spacebar works too">
+        <button className="gp-tb" onClick={() => host.skip()} title="Spacebar works too">
           Continue ▸
         </button>
       )}
       {!host.readOnly && (
         <button
-          className={`btn btn-ghost !py-1 !px-3 text-sm ${notesOpen ? "ring-2 ring-[var(--crimson)]" : ""}`}
+          className={`gp-tb ${notesOpen ? "on" : ""}`}
           onClick={onNotes}
           title="What the AI is doing, and why (press N)"
           aria-pressed={notesOpen}
@@ -92,7 +92,7 @@ function TopBar({ host, s, notesOpen, onNotes }: { host: Stage; s: GameState; no
         </button>
       )}
       <button
-        className="btn btn-ghost !py-1 !px-3 text-sm"
+        className="gp-tb"
         onClick={() => {
           sfx.setMuted(!muted);
           setMuted(!muted);
@@ -101,7 +101,7 @@ function TopBar({ host, s, notesOpen, onNotes }: { host: Stage; s: GameState; no
       >
         {muted ? "🔇" : "🔊"}
       </button>
-      <span className="tracking-[0.3em] font-heading text-xl">{s.code}</span>
+      <span className="tracking-[0.3em] font-heading text-lg text-parchment/45">{s.code}</span>
     </header>
   );
 }

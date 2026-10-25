@@ -104,6 +104,7 @@ export function fallbackRound(actions: { hero_id: string; hero_name?: string; ba
 export const FALLBACK_EPILOGUE = {
   ending: "The die lands, and somehow the plan holds. Everyone goes home with a story nobody will believe.",
   line: "Nobody will believe it, but it happened.",
+  recap: "",
 };
 
 /** Ruling backup: no AI, so the plan counts as Solid (and DM's Notes says the plan was never reviewed). */

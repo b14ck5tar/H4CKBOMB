@@ -109,6 +109,8 @@ export function readMs(text: string, min = 7000) {
 
 /** Narration reveals line by line at reading speed (~200 wpm). Shared by the table's timer and the TV's reveal. */
 export const LINE_GAP_MS = 500;
+/** Each scene opens on the art alone (plus its title) before the first line of narration. */
+export const TITLE_BEAT_MS = 2500;
 export function narrationLines(text: string) {
   return (text ?? "").split(/(?<=[.!?]["”]?)\s+/).map((l) => l.trim()).filter(Boolean);
 }
@@ -119,5 +121,5 @@ export function lineMs(line: string) {
 /** How long the whole scene opener takes to reveal, plus a beat to finish reading the last line. */
 export function narrationMs(narration: string, npcLine = "") {
   const lines = [...narrationLines(narration), ...(npcLine ? [npcLine] : [])];
-  return lines.reduce((t, l) => t + lineMs(l), 600) + 2200;
+  return lines.reduce((t, l) => t + lineMs(l), TITLE_BEAT_MS + 600) + 2200;
 }

@@ -316,6 +316,7 @@ export interface GameState {
   wins: Record<string, number>; // player id -> plans of theirs that won (the spotlight rule)
   outcome: string; // 1-2 sentences: what the winning plan did
   endingLine: string; // one line for the reveal: how it ended
+  recap: string; // the reveal's "your version": 1-2 sentences on what this group actually did
   storyOptions: { id: string; title: string; teaser: string }[]; // the story vote's 3 headlines
   boosts: Record<string, string>; // booster id -> pitch id
   rolls: RollResult[]; // in reveal order (lowest result first)
