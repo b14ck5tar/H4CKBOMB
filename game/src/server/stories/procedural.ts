@@ -5,11 +5,13 @@ import { DM_CORE, withRating } from "@/server/prompts";
 import { badExamplesPrompt, callbackExamplesPrompt, outcomeExamplesPrompt } from "@/server/story-examples";
 import {
   applyTurn,
+  progressRange,
   checkTurn,
   clampOutcome,
   fallbackProposal,
   fixPronouns,
   sentences,
+  usesPlan,
   type Grade,
   type StoryState,
   type TurnProposal,
@@ -26,7 +28,9 @@ const TURN_MODEL = process.env.TURN_MODEL || MODELS.writing;
 // "minimal": tonight Spark "low" took 7-8 s and often over 10 s on this ~6k-token prompt.
 const TURN_EFFORT = (process.env.TURN_EFFORT || "minimal") as Effort;
 // design/35: the call starts at the ruling (hidden behind the throw), so it gets up to ~15 s including one retry.
-const TURN_BUDGET_MS = Number(process.env.TURN_BUDGET_MS) || 12_000;
+// Measured (Sun ~5 AM): p50 5.3 s, p90 15.8 s client side; the tail was the retry. One call gets up to 15 s, and a
+// retry only runs when the first answer came back fast enough to fit both inside 15 s.
+const TURN_BUDGET_MS = Number(process.env.TURN_BUDGET_MS) || 15_000;
 const TURN_TOTAL_MS = 15_000;
 
 const TURN_BASE = `${DM_CORE}
@@ -35,7 +39,7 @@ TASK: THE TURN. Players steer, you react. It was one hero's turn: they chose a p
 
 LOGIC CHAIN (above every other rule): take the player's action literally. Assume it really happens the way they wrote it. Then ask "what would realistically follow, in this place, with these people and this problem?" and build only from that. The grade only sets how well it goes. Every line follows a logical line of reasoning from what the player wrote.
 
-Input: state (where, problem, stakes, finish_line = what solved looks like, progress 0-100, cast = the side characters (the only named people besides the heroes), facts = what is true in this story, open_thread, last_moments = the last outcomes, memorable, pronouns = each hero's pronouns, right_now = the obstacle they faced, act = 1-3 (each act is a different situation), hook = the opener's fantasy twist, real_event = HIDDEN: the real kind of place, the real people by role and the real order of events; never say real names), hero (name, power, pronouns), plan (the player's words, inside <player_input>, for meaning), attempt (what they tried, in plain words), idea_from (the friend whose idea it was, or ""), grade (how well it went), next_player (whose turn is next, or "" before the finale), turns_left, finale_next (true when the next thing is the grand finale).
+Input: state (where, problem, stakes, finish_line = what solved looks like, progress 0-100, cast = the side characters (the only named people besides the heroes), facts = what is true in this story, open_thread, last_moments = the last outcomes, memorable, pronouns = each hero's pronouns, right_now = the obstacle they faced, act = 1-3 (each act is a different situation), hook = the opener's fantasy twist, real_event = HIDDEN: the real kind of place, the real people by role and the real order of events; never say real names), hero (name, power, pronouns), plan (the player's words, inside <player_input>, for meaning), attempt (what they tried, in plain words), idea_from (the friend whose idea it was, or ""), grade (how well it went), tier (how far-fetched the plan was: clever, solid, risky = bold, wild = long shot, miracle), progress_range ([min, max] progress this grade guarantees), next_player (whose turn is next, or "" before the finale), turns_left, finale_next (true when the next thing is the grand finale).
 
 RULES (every one, every time):
 1. THE PLAN HAPPENS. Say the action the hero chose in plain words (paraphrase, never paste). If idea_from is set and it worked, credit that friend by name in a few words ("Rosa's idea", "just like Rosa said", "on Rosa's advice"); never "with Rosa's help". On a miss never name the friend: the miss belongs to the hero.
@@ -45,13 +49,18 @@ RULES (every one, every time):
    - PARTIAL: half works, and something new gets in the way.
    - SETBACK / DISASTER: it backfires BECAUSE OF THE PLAN ITSELF, funnily, and things get harder. DISASTER is the most spectacular version, a picture the table will retell. It never repeats or undoes the past.
    - If the plan opens a new path (challenge it to chess, hire it, throw it a party), follow that path. Never snap back to an old plan of yours.
-3. CHANGE ONLY WHEN IT FOLLOWS: if it is logical that something changes because of what they did (they move, learn something, someone reacts, the problem shifts), let it change. Never invent a change just to fill the turn, and never cancel a success with a new barrier.
-4. PROGRESS: judge how far this action logically moved things toward finish_line, as progress_gain on a 0-100 scale (a small useful step is about 10, solving a big part of the problem 30 to 50; a backfire 0 or a little below), and say why in progress_why (one plain line). The game clamps it.
+3. MOMENTUM: something moves every turn, as a logical result of the plan: progress, a new problem, or a new place. Small is fine; "nothing happens" is not. Never cancel a success with a new barrier, and never invent a random change that the plan did not cause.
+4. PROGRESS: progress_range is the guaranteed range for this grade. Pick progress_gain inside it by logic: the top when the plan hit the heart of the problem, the bottom when it barely touched it. Say why in progress_why (one plain line).
+PAYOFF, BUT SIMPLE (hard rule, the creative director's top rule: simple, playable and followable beats complex and confusing). The plan happens the way the player meant it, then ONE clear consequence: one plain cause, then its effect, that a tired 8-year-old gets on first hearing. No wordplay, no double meanings, no inside jokes, no clever phrasing. The funny comes from the situation, not the words.
+  Bad: "The bison mom eats a rook and lets the calf go as a sore winner." (a pun on chess, two ideas at once, and you have to know what a rook is)
+  Good: "Gus sets up a chessboard in the mud. The bison mom stares at it so long that the little dog trots away."
+POWERS HELP, NEVER WIN: a hero's power makes their plan a little easier when it truly applies, and shows doing the work, but it never solves the whole problem by itself and never makes a far-fetched plan work without a big result. Everyone at the table matters the same.
 5. PLAYERS CAN DO ANYTHING: whatever a player brings in (a kazoo, a chess set, a cousin) is real now. Only what YOU invent is limited: at most one new thing of your own per turn (new_fact OR new_character, the cast holds 3), and props of your own matter only if a player uses them.
 6. CONTINUITY: never contradict facts, where, or pronouns. Use each hero's pronouns exactly; a they/them hero is always "they". If unsure, stay with what is known.
+PLAIN WORDS (hard rule): everyday words only. Call every person, animal and thing by its plain everyday name ("the crab", never "the current crab"; "the ice hand", never "the cone juggling ice hand"), even if the input uses an odd name. No stacked modifiers, no odd word pairs ("calf soft", "drops soft"), no similes ("like popcorn"), no sounds or feelings for things ("the wire hums its snore"). One idea per sentence. Every it, he, she or they points to ONE clear person or thing; if two could match, use the name ("Bev calls the dog by her name", not "calls the name").
 7. CLARITY: outcome is 2 sentences at most, 30 words at most, plain and simple, that an 8-year-old follows the first time: concrete nouns, cause then effect. Even when the player did something odd, say it in plain words. No made-up terms, no oddly phrased lines, no kennings ("pale fliers" is banned: say "owls"). No game words (roll, dice, needs, natural, points, luck).
 8. VOICE: dry, witty, unexpected but it makes sense. The humor comes from the situation and the plan, never random props.
-9. RIGHT NOW: the next obstacle, one concrete step, 8 words max, verb first, that follows from what just happened and leads toward finish_line. Never a repeat of right_now or anything already done, never "again". If finale_next is true, it is the final push toward finish_line.
+9. RIGHT NOW: the next obstacle in plain words a kid gets on first read (a verb, then one plain thing: "Tuck the ice hand into the snow", never "Calm the cone juggling ice hand"), one concrete step, 8 words max, verb first, that follows from what just happened and leads toward finish_line. Never a repeat of right_now or anything already done, never "again". If finale_next is true, it is the final push toward finish_line.
 10. SPOTLIGHT: the outcome makes the acting hero look cool or hilariously human, by name (start with their name).
 11. HAND-OFF: scene (1 sentence, 24 words max) says where things stand now and addresses next_player by name with the new obstacle ("Juno, the bison is staring at the hay."). If next_player is "", address the whole group.
 12. CALLBACKS: at most once before the ending, when it fits, pay off a line from memorable in a new way.
@@ -106,6 +115,8 @@ export type TurnInput = {
   depth?: number;
   next_player?: string;
   turns_left?: number;
+  /** The ruling's tier (how far-fetched the plan was). */
+  tier?: string;
 };
 
 export function gradeOf(x: unknown): Grade {
@@ -136,12 +147,14 @@ export async function runTurn(i: TurnInput, rating: Rating): Promise<TurnResult>
     next_player: nextPlayer,
     turns_left: Number(i.turns_left ?? 0),
     finale_next: finaleNext,
+    tier: clip(i.tier, 10),
+    progress_range: progressRange(grade, state.turns_total),
     act_changes_next: clockNext > state.act && !finaleNext,
   };
   const avoid = [state.problem, state.where, state.real_event?.place_type].join(" ");
   const system = withRating(turnSystem(avoid), rating);
   const call = (extra = "", timeoutMs = TURN_BUDGET_MS) =>
-    museJSON<TurnProposal>({ task: `story-turn-${rating}`, model: TURN_MODEL, effort: TURN_EFFORT, system, schema: TURN_SCHEMA, user: JSON.stringify(user) + extra, timeoutMs, maxTokens: 3000 });
+    museJSON<TurnProposal>({ task: `story-turn-${rating}`, model: TURN_MODEL, effort: TURN_EFFORT, system, schema: TURN_SCHEMA, user: JSON.stringify(user) + extra, timeoutMs, maxTokens: 1500 }); // answers run 280-750 tokens
 
   let p: TurnProposal | null = null;
   let probs: string[] = [];
@@ -150,7 +163,10 @@ export async function runTurn(i: TurnInput, rating: Rating): Promise<TurnResult>
     p = await call();
     probs = checkTurn(p, ctx);
     const left = TURN_TOTAL_MS - (Date.now() - t0);
-    if (probs.length && left > 4_000) {
+    // Retries made the latency tail (p90 14 s server side). A hard problem (the plan, the hero, a friend, game words)
+    // is worth a retry if 7 s are left; a soft one (a wordy Right now, a long scene) only if the first answer was fast.
+    const hardNow = probs.some((x) => /must name the acting hero|game words|never name|outcome is empty|the plan is the cause|banned filler/.test(x));
+    if (probs.length && left > (hardNow ? 7_000 : 10_000)) {
       try {
         const again = await call(`\n\nYour last answer had problems. Fix ALL of them and keep what worked.\nLAST ANSWER: ${JSON.stringify(p)}\nPROBLEMS:\n${probs.map((x) => `- ${x}`).join("\n")}`, left);
         const p2 = checkTurn(again, ctx);
@@ -194,7 +210,12 @@ export const STORY_END_SYSTEM = `${DM_CORE}
 TASK: THE ENDING. The table backed one hero's final plan, everyone shook their phones, and one shared die decided how it went. The real news story is revealed right after you.
 Input: state (where, problem, finish_line, progress, cast, facts, memorable = the funniest moments, credits = what each hero did on their turns, in order, pronouns, real_event = HIDDEN: the real kind of place, roles and the real order of events, ending with where the real story landed), winner (name, pronouns), attempt (the final plan in plain words), plan (inside <player_input>), grade, won (true = they reached the finish line), players (id + what each player said their secret talent is, inside <player_input>).
 - The final plan is what happens, at the grade's strength. The ending lands where the real story landed (the last step of real_event.arc), told through the fantasy problem. Never say real names, places, numbers or dates.
-- ending: 2 short sentences, 40 words max. Start with the winner's name and what they did. Pay off one or two moments from memorable. Let one cast member react in their own way. Nobody is defeated.
+- PLAIN WORDS (hard rule): everyday words only. Call every person, animal and thing by its plain everyday name ("the crab", never "the current crab"; "the ice hand", never "the cone juggling ice hand"), even if the input uses an odd name. No stacked modifiers, no odd word pairs ("calf soft", "drops soft"), no similes ("like popcorn"), no sounds or feelings for things ("the wire hums its snore"). One idea per sentence. Every it, he, she or they points to ONE clear person or thing; if two could match, use the name ("Bev calls the dog by her name", not "calls the name").
+- PAYOFF, BUT SIMPLE: one plain cause, then its effect, that a tired 8-year-old gets on first hearing. No wordplay or clever phrasing.
+- ending: exactly 2 short sentences, 30 words max, each with ONE idea. Sentence 1: the winner's final plan, in plain words with its own key word, and what it did right away. Sentence 2: how it ended for the problem, plainly (won = solved, else kindly not). Nothing else: no extra callbacks, no extra jokes, no cast lines here. Nobody is defeated.
+  Bad: "The bison picks hay over babysitting and the dog squeaks back, and the lodge worker waves them home." (three ideas, and "squeaks back" is unclear)
+  Good: "Gus leads a snack parade to the cabin, and the bison mom follows the snacks. The little dog runs inside to her family."
+- line: 12 words max, the last card, said flatly ("The snake works at the scrapyard now."). This is where ONE callback from memorable may go, in plain words.
 - line: 12 words max, the last card, said flatly ("The snake works at the scrapyard now.").
 - recap: 2 sentences, 40 words max, that credits EVERY hero by name with what they actually did (from credits), in order, and ends with how it ended (won = they reached the finish line, else kindly that they didn't). Only things that happened. Use exactly the pronouns given.
 - skills: one entry per player: id, and phrase = a clean 1 to 4 word skill in lowercase ("parallel parking"), or "" if what they said is a joke, crude, mean, or not a real skill. Never invent one.
@@ -215,5 +236,24 @@ export async function runEnding(input: Any, rating: Rating) {
     won: !!input.won,
     players: Array.isArray(input.players) ? input.players.slice(0, 8) : [],
   };
-  return museJSON<Any>({ task: `story-end-${rating}`, model: TURN_MODEL, effort: TURN_EFFORT, system: withRating(STORY_END_SYSTEM, rating), schema: STORY_END_SCHEMA, user: JSON.stringify(user), timeoutMs: 12_000, maxTokens: 3500 });
+  const call = (extra = "") => museJSON<Any>({ task: `story-end-${rating}`, model: TURN_MODEL, effort: TURN_EFFORT, system: withRating(STORY_END_SYSTEM, rating), schema: STORY_END_SCHEMA, user: JSON.stringify(user) + extra, timeoutMs: 12_000, maxTokens: 2500 });
+  // The final plan is the cause, and the ending stays 2 plain sentences: one retry with the problems if not.
+  const planRaw = String(input.plan_raw ?? input.plan ?? "").replace(/<[^>]*>/g, " ");
+  const check = (d: Any) => {
+    const e = String(d?.ending ?? "");
+    const out: string[] = [];
+    if (!usesPlan(e, planRaw)) out.push("the ending must use the final plan's own key word");
+    if (sentences(e).length > 2 || e.split(/\s+/).length > 32) out.push("exactly 2 short sentences, 30 words max");
+    return out;
+  };
+  const t0 = Date.now();
+  const d = await call();
+  const probs = check(d);
+  if (!probs.length || Date.now() - t0 > 7_000) return d;
+  try {
+    const again = await call(`\n\nYour last answer had problems. Fix them.\nLAST ANSWER: ${JSON.stringify(d)}\nPROBLEMS:\n${probs.map((x) => `- ${x}`).join("\n")}`);
+    return check(again).length < probs.length ? again : d;
+  } catch {
+    return d;
+  }
 }

@@ -426,7 +426,7 @@ export const BAD_EXAMPLES: BadExample[] = [
   {
     kind: "going backward",
     bad: "The house slides all the way back to its old lot, and the crew starts over. Right now: Get the house on the truck.",
-    why: "It undoes the last turn and repeats an old goal. Every turn must move to a new situation.",
+    why: "It undoes what the table already achieved and repeats an old goal. Nothing achieved is undone: the next moment follows from what this plan did.",
     better: "The house slides back a block before Wes catches it, so the truck has to take the long way under the power lines.",
   },
   {
@@ -633,7 +633,7 @@ export function outcomeExamplesPrompt(opts: { avoid?: string; games?: number } =
       const from = t.idea_from ? `, idea_from ${q(t.idea_from)}` : "";
       const nat = t.roll.natural ? `, natural ${t.roll.natural}` : "";
       return [
-        `- situation ${q(t.situation)} right_now ${q(t.right_now)} ladder.next ${q(t.ladder_next)}`,
+        `- situation ${q(t.situation)} right_now ${q(t.right_now)}`,
         `  ${who}: ${t.attempt}${from}. ${t.roll.grade} ${t.roll.total}${nat} (${t.roll.branch}).`,
         `  text ${q(t.text)}`,
         `  situation ${q(t.next_situation)}`,

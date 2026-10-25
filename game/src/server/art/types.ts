@@ -46,7 +46,15 @@ export type SceneArtRequest = Common & {
   setting?: string;
   /** true = paint a NEW shot of the next moment (sceneText + moment); Image 1 is only a style/continuity reference. */
   newScene?: boolean;
+  /**
+   * Which story beat this painting marks (only with newScene). Changes the shot and the cache key:
+   * "act" = the story moved on (a new act: establishing shot of the new situation, the whole party in it),
+   * "win" = a big success (low heroic angle, the result huge), "finale" = the climax (the whole party, biggest image).
+   */
+  beat?: ArtBeat;
 };
+
+export type ArtBeat = "act" | "win" | "finale";
 
 export type PosterRequest = Common & {
   mode: "poster";

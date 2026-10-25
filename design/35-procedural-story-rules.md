@@ -79,3 +79,26 @@ One outcome call per turn with spark (low), started the moment the plan is ruled
 7. **Remove:** outcome_branches, the "fresh/backward" Right-now guards, ladder clamping, and canned fallbacks that ignore the plan.
 8. **Ending** (`askEnding`): `ask("story_end", { state: this.story, winner: { name, pronouns }, attempt, plan, grade, won, players })` → `{ ending, line, recap, skills }` (same as `epilogue`). Then the reveal: "Based on a true story".
 9. **Badges** from `skills`: "Starring Riley (makes people laugh), Sam (plans group trips) and Jo (remembers every birthday)".
+
+## The CD's 4 tweaks (Sun ~5 AM): built and tested
+1. **Payoff, but simple** (hard rule in the turn, outcome and ending prompts): the plan happens as meant, then ONE plain cause and its effect that a tired 8-year-old gets on first hearing. No wordplay, double meanings or inside jokes. Bad: "The bison mom eats a rook and lets the calf go as a sore winner." Good: "Gus sets up a chessboard in the mud. The bison mom stares at it so long that the little dog trots away." Plus a **plain words** rule (everyday names, no stacked modifiers like "the cone juggling ice hand", no odd pairs like "calf soft", no similes, every "it/she" points to one thing) and a code check on Right now (4+ stacked words = retry).
+2. **Momentum by default**: something moves every turn as a result of the plan (progress, a new problem or a new place). SETBACK still moves the meter a little.
+3. **Hybrid progress** (`lib/procedural.ts`: `progressRange`, `progressDelta`, `paceProgress`). Ranges are multiples of par = 100 / turns, so every table size lands on time; the AI picks inside the range by logic (`progress_gain` + `progress_why`), code clamps:
+
+   | Grade | Range (x par) | 2 turns | 3 turns | 4 turns | 6 turns |
+   |---|---|---|---|---|---|
+   | LEGENDARY | 1.7-2.3 | 85-115 | 57-77 | 43-57 | 28-38 |
+   | GREAT | 1.3-1.7 | 65-85 | 43-57 | 33-43 | 22-28 |
+   | PROGRESS | 0.8-1.2 | 40-60 | 27-40 | 20-30 | 13-20 |
+   | PARTIAL | 0.4-0.7 | 20-35 | 13-23 | 10-18 | 7-12 |
+   | SETBACK | 0.1-0.25 | 5-13 | 3-8 | 3-6 | 2-4 |
+   | DISASTER | -0.25-0 | -12-0 | -8-0 | -6-0 | -4-0 |
+
+   Pacing: no finale before the planned turn count, except one turn early in games of 4+ turns (the meter stops at 90 until then); a forward turn (PARTIAL or better) keeps the meter at least 35% of the way per turn and at least 75 after the last turn, so the finale always feels earned; a backfire is never pushed forward. A success that solves the step takes the top of its range.
+   Simulation (`node scripts/progress-sim.mjs`, 20,000 games each, real dice math, a realistic plan mix): finale on the planned turn 78-100% of games (otherwise one turn early, only at 4+ turns), the meter at the finale averages 83-89, a GREAT is always 1.3-1.7 par. Live traces (`scripts/procedural-test.mjs`): 1 human/2 turns, good rolls: PROGRESS +60, GREAT +40 = 100 (finale on time); 1 human, two PARTIALs: +25, +50 = 75 (earned, not stalled); 2 players: GREAT +43, SETBACK +3, PROGRESS +30, PARTIAL +12 = 88; 3 players: PARTIAL +8, GREAT +28, DISASTER -2, PROGRESS +20, LEGENDARY +38, SETBACK +2 = 94; 4 players: PROGRESS +30, GREAT +43, SETBACK +4, PARTIAL +12 = 89.
+4. **Wild plans need big rolls; powers never dominate** (ruling prompt): the tier scales with how far-fetched the plan is ("I teleport the bison home" = miracle); a power helps only when it truly applies and then at most one tier easier, never makes a plan clever by itself, never auto-wins. Tested: teleport -> miracle; "freeze time forever and carry everyone home" (Bev's 3-second freeze) -> miracle; Gus finding a thrown-away treat -> clever (uses the scene's food bin too).
+5. **Playful labels**: lib/rules.ts tier labels are now CLEVER / SOLID / BOLD / LONG SHOT / ONLY A MIRACLE (were RISKY / WILD). components/tvskin/shared.tsx still says "Risky plan" (builder's file).
+
+Followable on first hearing (my read of the 23 lines in the last run): 19/23 = 83% (turns 15/18, endings 4/5; the run before the plain-words rule was 14/23 = 61%). The 4 misses were odd specifics, not puns: "blinks wide and holds it", "the blink fits zero past cases in the tapes", "empty pockets full of sand", "the tape rail". Two of the stories (the sky turtle, the napping turtle) carry the openers' sleep/snore motif, which still leaks into lines.
+
+Turn-call speed (spark minimal, server side, 19 turns): single model calls 4.0-9.0 s; per turn incl. retries p50 5.7 s, p90 14.2 s (the tail is retries). So TURN_BUDGET_MS is 15 s, max tokens 1500 (answers are 280-750 tokens), and a retry only runs for a hard problem with 7 s left, or a soft one with 10 s left.

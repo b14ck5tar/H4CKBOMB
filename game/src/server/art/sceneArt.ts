@@ -82,8 +82,10 @@ export async function paintArt(req: ArtRequest, origin?: string): Promise<ArtRes
   const style = poster ? "" : String((req as { style?: string }).style ?? "");
   const fresh = !poster && !!(req as { newScene?: boolean }).newScene;
   const setting = poster ? "" : String((req as { setting?: string }).setting ?? "").replace(/[<>]/g, "").slice(0, 120);
+  const rawBeat = poster ? "" : String((req as { beat?: string }).beat ?? "");
+  const beat = fresh && (rawBeat === "act" || rawBeat === "win" || rawBeat === "finale") ? rawBeat : undefined;
   const key = hash(
-    [PROMPT_VERSION, poster ? "poster" : "scene", req.questId, String(scene), hash(plateBuf).slice(0, 8), heroKey, req.rating ?? "", extras, req.quality ?? "", style, fresh ? "new" : "", fresh ? sceneText : "", setting].join("|"),
+    [PROMPT_VERSION, poster ? "poster" : "scene", req.questId, String(scene), hash(plateBuf).slice(0, 8), heroKey, req.rating ?? "", extras, req.quality ?? "", style, fresh ? "new" : "", fresh ? sceneText : "", setting, beat ?? ""].join("|"),
   ).slice(0, 24);
 
   const hit = await getCached(key);
@@ -103,11 +105,11 @@ export async function paintArt(req: ArtRequest, origin?: string): Promise<ArtRes
     const prompt = poster
       ? posterEditPrompt({ heroes: withPortrait, sceneText, rating: req.rating })
       : fresh
-        ? newScenePrompt({ heroes: withPortrait, sceneText, moment: extras || undefined, setting: setting || undefined, rating: req.rating, style })
+        ? newScenePrompt({ heroes: withPortrait, sceneText, moment: extras || undefined, setting: setting || undefined, rating: req.rating, style, beat })
         : sceneEditPrompt({ heroes: withPortrait, sceneText, moment: extras || undefined, rating: req.rating, style });
     const t1 = Date.now();
     store.stats.calls++;
-    const tag = `${poster ? "poster" : "scene"} ${req.questId}/${String(scene)} heroes=${withPortrait.map((h) => h.id).join(",")} q=${quality} key=${key}`;
+    const tag = `${poster ? "poster" : "scene"}${beat ? `[${beat}]` : ""} ${req.questId}/${String(scene)} heroes=${withPortrait.map((h) => h.id).join(",")} q=${quality} key=${key}`;
     console.log(`[scene-art] CALL #${store.stats.calls} ${tag} refs=${refs.length} refKB=${Math.round(refs.reduce((a, r) => a + r.length, 0) / 1365)}`);
     try {
       const img = await museImage({

@@ -26,8 +26,8 @@ export function judge(die: number, total: number, tier: Tier): Band {
 export const TIER_LABEL: Record<Tier, string> = {
   clever: "CLEVER",
   solid: "SOLID",
-  risky: "RISKY",
-  wild: "WILD",
+  risky: "BOLD", // playful, never insulting (CD): "bold", "long shot"
+  wild: "LONG SHOT",
   miracle: "ONLY A MIRACLE",
 };
 
@@ -45,9 +45,9 @@ export function stampText(tier: Tier): string {
     case "solid":
       return "SOLID";
     case "risky":
-      return "RISKY";
+      return "BOLD";
     case "wild":
-      return "WILD";
+      return "LONG SHOT";
     case "miracle":
       return "ONLY A MIRACLE";
   }

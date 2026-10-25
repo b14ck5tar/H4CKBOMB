@@ -92,23 +92,49 @@ const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9 ]+/g, "").replace(
 // ---------------------------------------------------------------- progress (CD refinement: the AI judges, code clamps)
 
 /**
- * The AI judges how far the action logically moved things toward the finish line (progress_gain + a one-line why).
- * Code only clamps it: a success never moves the story backward, a miss moves it back a little at most, and the
- * act clock (applyTurn) makes sure the game reaches the finale on time. No fixed numbers per grade.
+ * HYBRID PROGRESS (CD, Sun): each grade has a guaranteed range, the AI picks inside it by logic (progress_gain +
+ * progress_why), and code clamps. Ranges are multiples of "par" = 100 / turns, so a 2-turn and a 6-turn game both
+ * land at the finale on time. Tuned with scripts/progress-sim.mjs (design/35 "Progress tuning").
+ *   LEGENDARY 1.7-2.3 par (always big)   GREAT 1.3-1.7 par (always feels big)   PROGRESS 0.8-1.2 par
+ *   PARTIAL 0.4-0.7 par                  SETBACK 0.1-0.25 par (momentum: small, never nothing)   DISASTER -0.25-0 par
  */
-export const PROGRESS_CLAMP: Record<Grade, [number, number]> = {
-  LEGENDARY: [10, 70],
-  GREAT: [5, 60],
-  PROGRESS: [0, 50],
-  PARTIAL: [0, 30],
-  SETBACK: [-10, 10],
-  DISASTER: [-15, 5],
+export const PROGRESS_PAR: Record<Grade, [number, number]> = {
+  LEGENDARY: [1.7, 2.3],
+  GREAT: [1.3, 1.7],
+  PROGRESS: [0.8, 1.2],
+  PARTIAL: [0.4, 0.7],
+  SETBACK: [0.1, 0.25],
+  DISASTER: [-0.25, 0],
 };
 
-export function progressDelta(grade: Grade, gain: unknown) {
-  const [lo, hi] = PROGRESS_CLAMP[grade] ?? [0, 0];
+/** The guaranteed [min, max] progress for a grade in a game of `turns` turns (whole numbers). */
+export function progressRange(grade: Grade, turns: number): [number, number] {
+  const par = 100 / Math.max(1, turns || 1);
+  const [a, b] = PROGRESS_PAR[grade] ?? [0, 0];
+  return [Math.round(a * par), Math.round(b * par)];
+}
+
+/** The AI's gain clamped into the grade's range (no number from the AI -> the middle of the range). */
+export function progressDelta(grade: Grade, gain: unknown, turns = 4) {
+  const [lo, hi] = progressRange(grade, turns);
   const g = Math.round(Number(gain));
-  return Math.max(lo, Math.min(hi, Number.isFinite(g) ? g : 0));
+  return Math.max(lo, Math.min(hi, Number.isFinite(g) ? g : Math.round((lo + hi) / 2)));
+}
+
+/**
+ * Pacing, so the finale lands on time. Early finale: at most one turn early, and only in games of 4+ turns (the
+ * meter stops at 90 before that, so a hot streak never ends the game on turn 2). Never stalled: when a turn goes
+ * forward on PARTIAL or better, the meter is at least 35% of the way after turn t of T, and at least 75 after the
+ * last turn (a backfire is never pushed forward). Returns the new progress after `turn` turns (1-based).
+ */
+export function paceProgress(prev: number, delta: number, turn: number, turns: number, grade?: Grade) {
+  const T = Math.max(1, turns || 1);
+  let p = Math.max(0, Math.min(100, prev + delta));
+  const earliest = T >= 4 ? T - 1 : T;
+  if (turn < earliest) p = Math.min(p, 90);
+  const miss = grade === "SETBACK" || grade === "DISASTER";
+  if (delta > 0 && !miss) p = Math.max(p, prev, turn >= T ? 75 : Math.round((35 * turn) / T));
+  return p;
 }
 
 const WON = (g: Grade) => g === "PROGRESS" || g === "GREAT" || g === "LEGENDARY";
@@ -221,6 +247,22 @@ export function fixPronouns(text: string, pronouns: Record<string, string>) {
   return out;
 }
 
+const FUNCTION_WORDS = new Set(
+  "the a an and or but to of in on at by for with from into onto over under up down out off its it his her their them they he she him this that these those so as than then before after until while past near by toward towards around through across behind beside between is are was were be been has have had will can just not no".split(" "),
+);
+
+/** The longest run of words with no little word between them ("cone juggling ice hand" = 4), skipping the first. */
+export function longestStack(s: string, skipFirst = false) {
+  const w = s.replace(/[^A-Za-z' -]/g, " ").split(/\s+/).filter(Boolean);
+  let best = 0;
+  let run = 0;
+  w.forEach((x, i) => {
+    if ((skipFirst && i === 0) || FUNCTION_WORDS.has(x.toLowerCase()) || /^[A-Z]/.test(x)) run = 0;
+    else best = Math.max(best, ++run);
+  });
+  return best;
+}
+
 /** Everything code can check about a proposal. Each string is a problem the retry is told to fix. */
 export function checkTurn(p: TurnProposal, ctx: { state: StoryState; hero: string; idea_from?: string; grade: Grade; next_player?: string; plan?: string; hook_due?: boolean }): string[] {
   const out: string[] = [];
@@ -241,6 +283,7 @@ export function checkTurn(p: TurnProposal, ctx: { state: StoryState; hero: strin
   if (!rn) out.push("right_now is empty");
   else {
     if (words(rn) > 8) out.push(`right_now is ${words(rn)} words (8 max)`);
+    if (longestStack(rn, true) >= 4) out.push(`right_now "${rn}" stacks too many words: a verb, then one plain thing ("Tuck the ice hand into the snow")`);
     if (NOT_VERB_START.test(rn) || VAGUE.test(rn)) out.push(`right_now "${rn}" must start with a concrete verb (no vague verbs)`);
     if (/\bagain\b/i.test(rn) || ctx.state.goals_done.some((x) => norm(x) === norm(rn))) out.push(`right_now "${rn}" repeats an earlier goal: give the NEXT step`);
   }
@@ -266,25 +309,22 @@ export function actOf(progress: number) {
   return progress >= 67 ? 3 : progress >= 34 ? 2 : 1;
 }
 
-/** Progress where the next act starts (a success that solves the step jumps at least here). */
-const ACT_START = [0, 0, 34, 67, 100];
 
 export function applyTurn(
   state: StoryState,
   p: TurnProposal,
   ctx: { hero: string; attempt?: string; grade: Grade; depth?: number },
 ): { state: StoryState; delta: number; finale: boolean; act_changed: boolean } {
-  let delta = progressDelta(ctx.grade, p.progress_gain);
-  // A success that solves the current step finishes the act: progress jumps at least to the next act.
-  if (WON(ctx.grade) && p.step_solved) delta = Math.max(delta, ACT_START[Math.min(4, state.act + 1)] - state.progress);
-  let progress = Math.max(0, Math.min(100, state.progress + delta));
-  // Nothing achieved is ever undone: progress never drops below the start of an act already reached.
-  progress = Math.max(progress, ACT_START[state.act]);
-  // The act clock: by the last third of the turns the story is at least in act 3, by the middle at least act 2.
   const turn = state.turn + 1;
+  let delta = progressDelta(ctx.grade, p.progress_gain, state.turns_total);
+  // A success that solves the current step takes the top of its grade's range (a bigger roll is always a bigger step).
+  if (WON(ctx.grade) && p.step_solved) delta = Math.max(delta, progressRange(ctx.grade, state.turns_total)[1]);
+  // Nothing achieved is undone (wins become facts); a backfire only dips the meter a little (its range).
+  let progress = paceProgress(state.progress, delta, turn, state.turns_total, ctx.grade);
+  // The act clock moves the act dots on time (it never adds progress by itself).
   const clockAct = turn >= Math.ceil((state.turns_total * 2) / 3) ? 3 : turn >= Math.ceil(state.turns_total / 3) ? 2 : 1;
-  const act = Math.max(state.act, actOf(progress), clockAct);
-  if (act > actOf(progress) && progress < 100) progress = Math.max(progress, ACT_START[act]);
+  const act = Math.max(state.act, actOf(progress), Math.min(3, clockAct));
+  progress = Math.min(100, progress);
   delta = progress - state.progress;
   let rn = clip(p.right_now, 80).replace(/[.!]+$/, "");
   if (!rn || /\bagain\b/i.test(rn) || state.goals_done.some((x) => norm(x) === norm(rn))) rn = state.finish_line;
@@ -328,11 +368,19 @@ export function fallbackProposal(state: StoryState, o: { hero: string; attempt?:
     SETBACK: "but it backfires, and the problem gets a little bigger.",
     DISASTER: "but it backfires in the most spectacular way, and the problem gets bigger.",
   };
+  // The canned turn still carries the story: the scene names what the plan did (by its own key word), and the
+  // Right now is a fresh step built from it, never the big goal twice in a row.
+  // The key word: the plan's last content word, usually its object ("chess", "toy", "net").
+  const content = action.split(/\s+/).map((w) => w.replace(/[^A-Za-z'-]/g, "")).filter((w) => planWords(w).length);
+  const key = (content[content.length - 1] ?? "big").toLowerCase();
+  const won = WON(o.grade);
+  const result = won ? "worked" : o.grade === "PARTIAL" ? "half worked" : "made things harder";
+  const fresh = [won ? `Finish what ${o.hero} started` : `Fix what the ${key} plan shook loose`, `Build on ${o.hero}'s ${key} plan`, state.finish_line].find((g) => !state.goals_done.some((x) => norm(x) === norm(g))) ?? state.finish_line;
   return {
     outcome: `${o.hero} ${action}${credit} ${how[o.grade]}`.replace(/\s+/g, " ").trim(),
-    scene: o.next_player ? `${o.next_player}, the next move is yours.` : "Everyone, the grand finale is next.",
-    right_now: state.finish_line,
-    progress_gain: ({ LEGENDARY: 30, GREAT: 25, PROGRESS: 18, PARTIAL: 8, SETBACK: 0, DISASTER: -5 } as Record<Grade, number>)[o.grade] ?? 0,
+    scene: o.next_player ? `${o.next_player}, ${o.hero}'s ${key} plan ${result}, so what now?` : `Everyone, ${o.hero}'s ${key} plan ${result}, and the grand finale is next.`,
+    right_now: fresh,
+    progress_gain: Number.NaN, // the middle of the grade's range (progressDelta)
     progress_why: "",
     new_fact: "",
     new_character: { name: "", role: "" },
