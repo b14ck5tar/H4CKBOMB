@@ -43,9 +43,8 @@ export const FEATURES = {
    * NEW circumstance it created; 2-3 pressures worsen on their own each turn; the meter is a story clock by turns;
    * the finish line is only a suggested goal. Off = the design/35 engine (one fixed finish line).
    */
-  // OFF for the Sun 11:20 publish: the sim (design/38) had v3 at 83% followable / 16% repeats vs the ship rule of
-  // 95% / 15% (fun 5.7 vs 4.9 for v2). On = NEXT_PUBLIC_STORY_V3=1 at build time, or set this to true.
-  storyV3: process.env.NEXT_PUBLIC_STORY_V3 === "1",
+  // ON (CD, Sun 11:07: "we want the story working now to show the judges"). Off = NEXT_PUBLIC_STORY_V2=1 at build time.
+  storyV3: process.env.NEXT_PUBLIC_STORY_V2 !== "1",
   /** CD (Sun AM): the TV host can remove a player or bot from the lobby (host.kick); their phone offers Rejoin. */
   kick: true,
   /** CD (Sun AM): after the ending, "Back to lobby" keeps the room, the players and their heroes (host.playAgain). */

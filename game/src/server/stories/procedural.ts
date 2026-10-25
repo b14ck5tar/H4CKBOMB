@@ -132,7 +132,7 @@ const V3_SWAPS: [string, string][] = [
     "11. HAND-OFF: scene (1 sentence, 24 words max) says where things stand now and addresses next_player by name with the new obstacle",
     "11. HAND-OFF: scene = ONE short sentence, 10 words max including the name (less text on screen: the judges found it hard to follow): next_player's name, then the new obstacle",
   ],
-  ["WRITE: outcome, scene, right_now,", "REPEAT CHECK: repeat_of = the item in goals_done that right_now is the same goal as, even reworded (\"Free the bus\" and \"Unstick the bus\" are the same goal), or \"\" if it is a new goal. Be honest: a repeat gets rewritten.\nAFTER A MISS: the next right_now is never cleaning up the mess the hero's own plan just made (no \"free the mayor from the dough\" after a dough plan backfires); a pressure gets worse or a NEW problem starts.\nWRITE: outcome, scene, problem_now, repeat_of, right_now,"],
+  ["WRITE: outcome, scene, right_now,", "ONE-AND-DONE: every goal in goals_done is RETIRED forever, whatever happened (solved, failed, or the player refused it): NEVER give any of them again, reworded or not; choose a DIFFERENT goal that follows from what just happened.\nREPEAT CHECK: repeat_of =the item in goals_done that right_now is the same goal as, even reworded (\"Free the bus\" and \"Unstick the bus\" are the same goal), or \"\" if it is a new goal. Be honest: a repeat gets rewritten.\nAFTER A MISS: the next right_now is never cleaning up the mess the hero's own plan just made (no \"free the mayor from the dough\" after a dough plan backfires); a pressure gets worse or a NEW problem starts.\nWRITE: outcome, scene, problem_now, repeat_of, right_now,"],
 ];
 
 function v3(base: string) {
