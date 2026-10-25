@@ -1,0 +1,409 @@
+{
+ "out": "group-project",
+ "notes": "Draft: PT = playtests/playtest-0631-judge.mp4 (old build, placeholder footage). Swap in raw/tv.mp4 and raw/phone.mp4 from the 9:00 take. TV crop of PT = [0,52,1295,903], phone = [1300,45,605,910], both = [0,52,1905,903].",
+ "beats": [
+  {
+   "id": "h1",
+   "part": "hook",
+   "vo": "This really happened.",
+   "min": 2.6,
+   "shots": [
+    {
+     "img": "devpost-media/video/stills/clipping-draft.png",
+     "zoom": 1.1
+    }
+   ]
+  },
+  {
+   "id": "h2",
+   "part": "hook",
+   "vo": "Tonight, your friends decide what happens next.",
+   "gameVol": 0.35,
+   "shots": [
+    {
+     "src": "devpost-media/playtests/playtest-0631-judge.mp4",
+     "in": 234.5,
+     "crop": [
+      0,
+      52,
+      1295,
+      903
+     ],
+     "dur": 1.6
+    },
+    {
+     "src": "devpost-media/playtests/playtest-0631-judge.mp4",
+     "in": 316.5,
+     "crop": [
+      0,
+      52,
+      1295,
+      903
+     ]
+    }
+   ]
+  },
+  {
+   "id": "h3",
+   "part": "hook",
+   "min": 3.2,
+   "gameVol": 0,
+   "shots": [
+    {
+     "card": "title"
+    }
+   ]
+  },
+  {
+   "id": "p1",
+   "part": "problem",
+   "vo": "When friends hang out, a lot of the night is everyone on their own phone.",
+   "shots": [
+    {
+     "img": "devpost-media/broll/deck-slide-2.png",
+     "zoom": 1.05
+    }
+   ]
+  },
+  {
+   "id": "p2",
+   "part": "problem",
+   "vo": "Tabletop games fix that. But someone has to run the game, so most groups never play.",
+   "shots": [
+    {
+     "img": "devpost-media/broll/deck-slide-2.png",
+     "zoom": 1.04
+    }
+   ]
+  },
+  {
+   "id": "p3",
+   "part": "problem",
+   "vo": "So Meta's Muse runs it. The TV is the table, your phones are the controllers, and every story really happened.",
+   "gameVol": 0.3,
+   "shots": [
+    {
+     "src": "devpost-media/playtests/playtest-0631-judge.mp4",
+     "in": 80,
+     "crop": [
+      0,
+      52,
+      1295,
+      903
+     ]
+    }
+   ],
+   "pad": 1.5
+  },
+  {
+   "id": "d1",
+   "part": "demo",
+   "vo": "Scan the code. No app, no account. Name your character, describe them in one line, and add your secret talent.",
+   "gameVol": 0.3,
+   "shots": [
+    {
+     "src": "devpost-media/playtests/playtest-0631-judge.mp4",
+     "in": 40,
+     "crop": [
+      0,
+      52,
+      1905,
+      903
+     ]
+    }
+   ],
+   "pad": 1.0
+  },
+  {
+   "id": "d2",
+   "part": "demo",
+   "vo": "Your hero is exactly what you typed, painted in by Muse.",
+   "gameVol": 0.3,
+   "shots": [
+    {
+     "src": "devpost-media/playtests/playtest-0631-judge.mp4",
+     "in": 88,
+     "crop": [
+      0,
+      52,
+      1905,
+      903
+     ]
+    }
+   ],
+   "pad": 1.5
+  },
+  {
+   "id": "d3",
+   "part": "demo",
+   "vo": "Muse turns a real, odd news story into tonight's adventure.",
+   "pad": 5.0,
+   "gameVol": 0.7,
+   "shots": [
+    {
+     "src": "devpost-media/playtests/playtest-0631-judge.mp4",
+     "in": 108,
+     "crop": [
+      0,
+      52,
+      1295,
+      903
+     ]
+    }
+   ]
+  },
+  {
+   "id": "d4",
+   "part": "demo",
+   "vo": "On your turn, you tell the table your plan, and your friends pitch ideas from their phones.",
+   "gameVol": 0.3,
+   "shots": [
+    {
+     "src": "devpost-media/playtests/playtest-0631-judge.mp4",
+     "in": 184,
+     "crop": [
+      0,
+      52,
+      1905,
+      903
+     ]
+    }
+   ],
+   "pad": 1.5
+  },
+  {
+   "id": "d5",
+   "part": "demo",
+   "vo": "Use one, and their name goes up on screen.",
+   "pad": 2.5,
+   "gameVol": 0.4,
+   "shots": [
+    {
+     "src": "devpost-media/playtests/playtest-0631-judge.mp4",
+     "in": 234,
+     "crop": [
+      0,
+      52,
+      1295,
+      903
+     ]
+    }
+   ]
+  },
+  {
+   "id": "d6",
+   "part": "demo",
+   "vo": "Every hero has Guts, Brains and Charm: force, tricks and talk.",
+   "shots": [
+    {
+     "ph": "S6 stats explained"
+    }
+   ],
+   "pad": 1.0
+  },
+  {
+   "id": "d7",
+   "part": "demo",
+   "vo": "Swipe up to throw. Code rolls the dice, never the AI.",
+   "gameVol": 0.5,
+   "shots": [
+    {
+     "src": "devpost-media/playtests/playtest-0631-judge.mp4",
+     "in": 166.5,
+     "crop": [
+      0,
+      52,
+      1905,
+      903
+     ],
+     "dur": 2.6
+    },
+    {
+     "ph": "S7 the one die lands"
+    }
+   ],
+   "pad": 2.5
+  },
+  {
+   "id": "d8",
+   "part": "demo",
+   "vo": "Muse takes your plan literally, writes what happens next, and paints a new scene.",
+   "pad": 5.0,
+   "gameVol": 0.7,
+   "shots": [
+    {
+     "src": "devpost-media/playtests/playtest-0631-judge.mp4",
+     "in": 177,
+     "crop": [
+      0,
+      52,
+      1295,
+      903
+     ]
+    }
+   ]
+  },
+  {
+   "id": "d9",
+   "part": "demo",
+   "vo": "For the finale, everyone gets thirty seconds to convince each other.",
+   "pad": 3.0,
+   "shots": [
+    {
+     "ph": "S9 Convince each other (30 s talk)"
+    }
+   ]
+  },
+  {
+   "id": "d10",
+   "part": "demo",
+   "vo": "Then you back a plan, and the whole table shakes their phones at once.",
+   "pad": 3.0,
+   "gameVol": 0.5,
+   "shots": [
+    {
+     "src": "devpost-media/playtests/playtest-0631-judge.mp4",
+     "in": 302,
+     "crop": [
+      0,
+      52,
+      1905,
+      903
+     ],
+     "dur": 3.5
+    },
+    {
+     "src": "devpost-media/playtests/playtest-0631-judge.mp4",
+     "in": 316,
+     "crop": [
+      0,
+      52,
+      1295,
+      903
+     ]
+    }
+   ]
+  },
+  {
+   "id": "r1",
+   "part": "reveal",
+   "vo": "And the twist. Here's what you did.",
+   "pad": 4.0,
+   "gameVol": 0.4,
+   "shots": [
+    {
+     "ph": "S11 WHAT YOU DID"
+    }
+   ]
+  },
+  {
+   "id": "r2",
+   "part": "reveal",
+   "vo": "And here's what really happened.",
+   "pad": 6.0,
+   "gameVol": 0.7,
+   "shots": [
+    {
+     "src": "devpost-media/playtests/playtest-0631-judge.mp4",
+     "in": 337,
+     "crop": [
+      0,
+      52,
+      1295,
+      903
+     ]
+    }
+   ]
+  },
+  {
+   "id": "a1",
+   "part": "ai",
+   "vo": "Muse runs the night. Muse Spark picks odd news that makes a good, safe story, judges every plan, and writes every turn.",
+   "shots": [
+    {
+     "img": "devpost-media/broll/deck-slide-7.png",
+     "zoom": 1.05
+    }
+   ],
+   "pad": 1.5
+  },
+  {
+   "id": "a2",
+   "part": "ai",
+   "vo": "Muse Image paints your heroes into every scene. Code rolls the dice, and the AI judges ideas, never people.",
+   "shots": [
+    {
+     "ph": "S13 DM's Notes"
+    }
+   ],
+   "pad": 3.0
+  },
+  {
+   "id": "a3",
+   "part": "ai",
+   "vo": "Every brain in this game is Meta's Muse. The only thing it borrowed is a voice.",
+   "caption": "Every brain in this game is Meta's Muse. The only thing it borrowed is a voice. (Narrator: ElevenLabs; Meta has no text-to-speech.)",
+   "shots": [
+    {
+     "img": "devpost-media/broll/deck-slide-7.png",
+     "zoom": 1.08
+    }
+   ],
+   "pad": 1.5
+  },
+  {
+   "id": "t1",
+   "part": "tools",
+   "vo": "It was built by a first-time hacker making every creative call, with Claude Code as lead engineer, running a team of agents.",
+   "shots": [
+    {
+     "ph": "S14 Claude Code sessions"
+    }
+   ],
+   "pad": 1.0
+  },
+  {
+   "id": "t2",
+   "part": "tools",
+   "vo": "They watched our playtests frame by frame. Our worst run is why we rebuilt the story around the players' choices.",
+   "shots": [
+    {
+     "src": "devpost-media/playtests/playtest-0631-judge.mp4",
+     "in": 150,
+     "crop": [
+      0,
+      52,
+      1905,
+      903
+     ]
+    }
+   ],
+   "pad": 1.0
+  },
+  {
+   "id": "t3",
+   "part": "tools",
+   "vo": "A test harness plays whole games with real Muse calls, and a better rubric took Muse Spark from five of eight fair rulings to eight.",
+   "shots": [
+    {
+     "img": "devpost-media/broll/deck-slide-7.png",
+     "zoom": 1.12
+    }
+   ],
+   "pad": 1.0
+  },
+  {
+   "id": "e1",
+   "part": "end",
+   "vo": "Play free at groupproject-game dot vercel dot app.",
+   "caption": "",
+   "min": 5,
+   "pad": 2.5,
+   "shots": [
+    {
+     "card": "end"
+    }
+   ]
+  }
+ ]
+}
