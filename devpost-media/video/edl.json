@@ -354,15 +354,15 @@
   {
    "id": "a3",
    "part": "ai",
-   "vo": "Every brain in this game is Meta's Muse. The only thing it borrowed is a voice.",
-   "caption": "Every brain in this game is Meta's Muse. The only thing it borrowed is a voice. (Narrator: ElevenLabs; Meta has no text-to-speech.)",
+   "vo": "Every brain in this game is Meta's Muse: it writes, judges every plan, paints you in, listens, and even picks the sound effects. All it borrowed is a voice and a box of sounds.",
+   "caption": "Every brain in this game is Meta's Muse: it writes, judges every plan, paints you in, listens, and even picks the sound effects. All it borrowed is a voice and a box of sounds. (ElevenLabs.)",
    "shots": [
     {
      "img": "devpost-media/broll/deck-slide-7.png",
      "zoom": 1.08
     }
    ],
-   "pad": 1.5,
+   "pad": 1.0,
    "gameVol": 0
   },
   {

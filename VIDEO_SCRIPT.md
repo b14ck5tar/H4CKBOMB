@@ -62,8 +62,7 @@ new scene. / For the finale, everyone gets thirty seconds to convince each other
 whole table shakes their phones at once. / And the twist. Here's what you did. / And here's what really happened.
 **Part 3:** Muse runs the night. Muse Spark picks odd news that makes a good, safe story, judges every plan, and
 writes every turn. / Muse Image paints your heroes into every scene. Code rolls the dice, and the AI judges ideas,
-never people. / Every brain in this game is Meta's Muse. The only thing it borrowed is a voice. *(caption adds:
-Narrator: ElevenLabs; Meta has no text-to-speech.)*
+never people. / Every brain in this game is Meta's Muse: it writes, judges every plan, paints you in, listens, and even picks the sound effects. All it borrowed is a voice and a box of sounds. *(caption adds: ElevenLabs.)*
 **Part 4:** It was built by a first-time hacker making every creative call, with Claude Code as lead engineer,
 running a team of agents. / They watched our playtests frame by frame. Our worst run is why we rebuilt the story
 around the players' choices. / A test harness plays whole games with real Muse calls, and a better rubric took Muse
