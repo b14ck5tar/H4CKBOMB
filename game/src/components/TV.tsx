@@ -128,7 +128,24 @@ export function Avatar({ host, p, size = 64 }: { host: Stage; p: Player; size?: 
   if (url)
     // eslint-disable-next-line @next/next/no-img-element
     return <img src={url} alt="" className="rounded-full object-cover object-top shrink-0" style={{ width: size, height: size, boxShadow: `0 0 0 3px ${p.color}` }} />;
-  return <WaxSeal initials={initials(p.hero?.name ?? p.name)} color={p.color} size={size} />;
+  if (p.hero) return <Silhouette color={p.color} size={size} />;
+  return <WaxSeal initials={initials(p.name)} color={p.color} size={size} />;
+}
+
+/** While a custom hero's portrait is being painted: an instant cartoon silhouette in the player's color, never a blank. */
+export function Silhouette({ color, size = 64 }: { color: string; size?: number }) {
+  return (
+    <svg viewBox="0 0 64 64" width={size} height={size} className="shrink-0 rounded-full" style={{ boxShadow: `0 0 0 3px ${color}`, background: "#1b122b" }} aria-hidden>
+      <defs>
+        <radialGradient id={`sil-${color.slice(1)}`} cx="50%" cy="35%" r="70%">
+          <stop offset="0%" stopColor={color} stopOpacity="0.95" />
+          <stop offset="100%" stopColor={color} stopOpacity="0.45" />
+        </radialGradient>
+      </defs>
+      <circle cx="32" cy="25" r="12" fill={`url(#sil-${color.slice(1)})`} />
+      <path d="M10 62c1-13 10-21 22-21s21 8 22 21z" fill={`url(#sil-${color.slice(1)})`} />
+    </svg>
+  );
 }
 
 /** Autopilot: this hero's player stepped away, so the hero is acting on its own. */

@@ -718,20 +718,18 @@ function RevealCard({ host, s }: { host: Stage; s: GameState }) {
               {typed < rs.headline.length && <span className="animate-pulse">▍</span>}
             </span>
           </h2>
-          <p className="qt-paper-meta">
-            {rs.source} · {rs.date}
-          </p>
+          <div className="flex items-center gap-4 mt-1">
+            <p className="qt-paper-meta flex-1">
+              {rs.source} · {rs.date}
+              <span className="block mt-1">Scan to read the real article</span>
+            </p>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            {qr ? <img src={qr} alt="QR code to the real article" className="w-24 h-24 shrink-0" /> : <div className="w-24 h-24 shrink-0" />}
+          </div>
           <p className="text-[1.25rem] leading-snug mt-3 line-clamp-3">{rs.summary}</p>
           <p className="text-[1rem] leading-snug mt-2 text-[#444] line-clamp-2">
             <b>Officially:</b> {seed.the_threat.mapped_from}
           </p>
-          {qr && (
-            <div className="flex items-center gap-3 mt-auto pt-4">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={qr} alt="QR code to the real article" className="w-24 h-24" />
-              <span className="qt-paper-meta">Read the real article</span>
-            </div>
-          )}
         </div>
         <div className="qt-seam" aria-hidden>
           <span>vs</span>

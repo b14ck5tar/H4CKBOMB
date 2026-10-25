@@ -828,12 +828,18 @@ export class GameHost {
     this.patchPlayer(pid, { status: "ready", hero, abilityAvailable: true, heart: 1 });
     this.applyReal(pid);
     const url = await image({ kind: "portrait", visual: hero.visual, flaw: hero.flaw, ability: hero.ability?.text });
-    if (this.player(pid)?.hero !== hero) return;
-    if (!url || this.player(pid)?.hero !== hero) return;
+    // Same hero still? (Compare by name: the join answers replace the hero object with a new power and weakness.)
+    if (!url || !this.sameHero(pid, hero)) return;
     this.portraits[pid] = url;
     this.thumbs[pid] = await thumbnail(url);
     this.t.send({ type: "portrait", pid, url: this.thumbs[pid] });
     this.patchPlayer(pid, { hasPortrait: true });
+  }
+
+  /** The player still has this hero (not redrawn, not swapped for a stand-in). */
+  private sameHero(pid: string, hero: Hero, pick?: string) {
+    const p = this.player(pid);
+    return !!p?.hero && p.hero.name === hero.name && p.pick === pick;
   }
 
   /** A ready-made character: instant, no AI call, pre-painted portrait. One of each per table. */
@@ -850,7 +856,7 @@ export class GameHost {
     const url = `/heroes/${q.id}.webp`;
     this.portraits[pid] = url;
     const thumb = await thumbnail(url);
-    if (this.player(pid)?.hero !== hero) return;
+    if (!this.sameHero(pid, hero, q.id)) return;
     if (thumb) {
       this.thumbs[pid] = thumb;
       this.t.send({ type: "portrait", pid, url: thumb });
@@ -1895,7 +1901,7 @@ export class GameHost {
       this.note("reveal", "The source", `Now revealed: "${rs.headline}" (${rs.source}, ${rs.date}).`);
     }
     // "Solved by Ava's parallel parking and Ben's coffee.": built in code from the join answers, never by the AI.
-    const solvedBy = solvedByLine(this.heroes().map((p) => ({ name: p.name, real: this.reals[p.id] })));
+    const solvedBy = solvedByLine(this.heroes().map((p) => ({ name: p.name, real: this.reals[p.id], hero: p.hero?.name })));
     if (solvedBy) this.note("reveal", "Solved by", `${solvedBy} (built from the join answers, in code)`);
     this.set({ phase: "reveal", solvedBy });
     const text = `${this.seed?.the_real_story.headline ?? ""} ${this.seed?.the_real_story.summary ?? ""}`;

@@ -54,11 +54,12 @@ const poss = (name: string) => `${name}'s`;
  * The reveal's hero line, built in code (never by the AI): "Solved by Ava's parallel parking and Ben's coffee."
  * Uses the players' real names. "" when nobody shared a usable skill.
  */
-export function solvedByLine(players: Pick<Player, "name" | "real">[]) {
+export function solvedByLine(players: (Pick<Player, "name" | "real"> & { hero?: string })[]) {
   const parts = players
     .map((p) => {
       const s = skillPhrase(p.real?.skill ?? "");
-      return s ? `${poss(p.name)} ${s}` : "";
+      // The real player's name and knack, then their hero, so the room can connect the two.
+      return s ? `${poss(p.name)} ${s}${p.hero ? ` (${p.hero.split(" ")[0]})` : ""}` : "";
     })
     .filter(Boolean);
   if (!parts.length) return "";
