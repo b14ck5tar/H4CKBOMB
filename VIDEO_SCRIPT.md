@@ -67,9 +67,10 @@ cuts). Slower than feels natural. No trailer voice.
 > `[pause]`
 >
 > Muse runs the night. Muse Spark picks news that makes a good, safe story, writes the opening, judges every plan and
-> writes every turn. Muse Image paints your heroes into every scene. Take Muse away, and there is no game.
-> Code rolls the dice. The AI judges ideas, never people. The narrator is ElevenLabs, because Meta has no
-> text-to-speech.
+> writes every turn. Muse Image paints your heroes into every scene. Code rolls the dice, and the AI judges ideas,
+> never people.
+> Every brain in this game is Meta's Muse: it writes, judges every plan, paints you in, and listens. The only thing it
+> borrowed is a voice.
 >
 > `[pause]`
 >
@@ -78,7 +79,7 @@ cuts). Slower than feels natural. No trailer voice.
 > choices. A test harness plays whole games with real Muse calls, and a better rubric took Muse Spark from five of
 > eight fair rulings to eight.
 
-About 330 words: ~2:30 of speech, leaving ~30 s of game sound (the narrator, the die, the laughs) inside 3:00. Part 1
+About 345 words: ~2:35 of speech, leaving ~25 s of game sound (the narrator, the die, the laughs) inside 3:00. Part 1
 ~60 words, Part 2 ~140, Part 3 ~60, Part 4 ~62. Too long? Drop, in this order: "running a team of agents"; "with real
 Muse calls"; "Every number is its own outcome."
 
@@ -107,8 +108,8 @@ ideas, never own a turn; never call one "my friend". A test player's idea can st
 | *optional* | (only if time allows) | **Our stories reveal, ~20 s**: a short second take with the lobby on **Our stories**; record only its ending, "Based on Ava's true story" and how it really ended. It's the strongest connection beat (fresh-eyes). Slot it right after the odd-news reveal and trim the finale shake to fit 3:00. Optional VO line: "Or play a friend's true story, and find out how it really ended." | a second §2 take, TV |
 | **Part 3** | | | |
 | 2:00-2:14 | "Muse runs the night…" | The one-turn diagram: real news → Muse Spark → plan → Muse Spark judges → code rolls → Muse Spark writes → Muse Image paints → narrator. Chips: *muse-spark-1.3*, *muse-image-1.0*. | §4 `how-it-works.png` |
-| 2:14-2:24 | "Code keeps it fair…" | TV with DM's Notes open, entries scrolling (rulings, progress with one line of why). | §3 DM's Notes clip |
-| 2:24-2:30 | "The narrator is ElevenLabs…" | `deck-slide-7.png` (Muse writes and judges. Code rolls the dice. Players steer.) | §4 B-roll |
+| 2:14-2:22 | "Code rolls the dice…" | TV with DM's Notes open, entries scrolling (rulings, progress with one line of why). | §3 DM's Notes clip |
+| 2:22-2:30 | "Every brain in this game is Meta's Muse…" | `deck-slide-7.png` (Muse Spark, Muse Image, Muse Voice Transcribe, MCP connector chips). Caption on "borrowed is a voice": *Narrator voice: ElevenLabs (Meta has no text-to-speech)*. | §4 B-roll |
 | **Part 4** | | | |
 | 2:30-2:39 | "This is my first hackathon…" | Claude Code with several sessions in the sidebar. **Safety check first.** Unsure? Stay on `deck-slide-7.png`. | §3 Claude Code clip |
 | 2:39-2:49 | "They watched our playtest videos…" | A contact sheet of frames from the worst playtest (design/33), then the clean turn screen from today's take. | a still from design/33 + §2 take |
