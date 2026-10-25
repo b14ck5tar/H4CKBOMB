@@ -329,7 +329,7 @@ async function call(model: string, voice: VoiceId, style: string, text: string, 
 
 /** `ahead: true` asks for v3 (nothing sends it today: every live line reads with the Combo Flash settings). */
 export type SpeakLine = { speaker: string; text: string };
-export type SpeakOpts = { ahead?: boolean; timeoutMs?: number; characterVoices?: boolean; lines?: SpeakLine[] };
+export type SpeakOpts = { ahead?: boolean; timeoutMs?: number; characterVoices?: boolean; lines?: SpeakLine[]; cast?: { name: string; role: string }[] };
 
 /** Reads a clip from memory, then disk, else makes it once (concurrent asks share one call) and caches it. */
 async function cached(id: string, provider: Clip["provider"], make: () => Promise<Clip | null>): Promise<Clip | null> {
@@ -520,15 +520,16 @@ export function voiceForSpeaker(name: string, near = "") {
 type Part = { text: string; as?: { voiceId: string; voice: string } };
 
 /** Story's structured dialogue: speaker "" = the narrator, anyone else reads in their own stable voice. */
-function partsFromLines(lines: SpeakLine[]): Part[] {
+function partsFromLines(lines: SpeakLine[], cast: { name: string; role: string }[] = []): Part[] {
+  const roleOf = (who: string) => cast.find((c) => c.name.toLowerCase() === who.toLowerCase())?.role ?? "";
   return lines
     .map((l) => ({ text: String(l.text ?? "").replace(/\s+/g, " ").trim(), speaker: String(l.speaker ?? "").trim() }))
     .filter((l) => l.text)
-    .map((l) => (l.speaker ? { text: l.text.replace(/^"|"$/g, ""), as: voiceForSpeaker(l.speaker.toLowerCase(), l.speaker) } : { text: l.text }));
+    .map((l) => (l.speaker ? { text: l.text.replace(/^"|"$/g, ""), as: voiceForSpeaker(l.speaker.toLowerCase(), `${l.speaker} ${roleOf(l.speaker)}`) } : { text: l.text }));
 }
 
 async function speakWithCharacters(voice: VoiceId, style: string, text: string, opts: SpeakOpts): Promise<Clip | null> {
-  if (opts.lines?.length) return speakParts(voice, style, partsFromLines(opts.lines), opts);
+  if (opts.lines?.length) return speakParts(voice, style, partsFromLines(opts.lines, opts.cast), opts);
   const parts: Part[] = [];
   const re = /"([^"]{2,})"/g;
   let last = 0;
