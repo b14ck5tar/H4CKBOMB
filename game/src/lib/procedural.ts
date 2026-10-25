@@ -28,7 +28,7 @@ export type StoryState = {
   facts: string[];
   /** At most one loose end the story can pick up ("the keeper still has the spare key"). */
   open_thread: string;
-  /** The last 3 outcome lines (for flow and the never-repeat rule). */
+  /** The last 6 outcome lines (for flow and the never-repeat rule; a game has up to 8 turns). */
   last_moments: string[];
   /** Up to 2 funny lines or moments worth calling back. */
   memorable: string[];
@@ -335,6 +335,20 @@ export function plainProblems(text: string, known = ""): string[] {
   return out;
 }
 
+/** A 5-word run of the outcome that already happened in an earlier moment ("admits she hid the dog because"), or "". */
+export function repeatsMoment(text: string, moments: string[], plan = "") {
+  const w = norm(text).split(" ");
+  const own = new Set(planWords(plan));
+  const past = moments.map((m) => ` ${norm(m)} `);
+  for (let i = 0; i + 5 <= w.length; i++) {
+    const run = w.slice(i, i + 5);
+    const content = run.filter((x) => !FUNCTION_WORDS.has(x));
+    // The player's own words may come back (they chose them again); the DM's own beats may not.
+    if (content.length >= 3 && !content.every((x) => own.has(stem(x))) && past.some((m) => m.includes(` ${run.join(" ")} `))) return run.join(" ");
+  }
+  return "";
+}
+
 /** Everything code can check about a proposal. Each string is a problem the retry is told to fix. */
 export function checkTurn(p: TurnProposal, ctx: { state: StoryState; hero: string; idea_from?: string; grade: Grade; next_player?: string; plan?: string; hook_due?: boolean }): string[] {
   const out: string[] = [];
@@ -342,6 +356,8 @@ export function checkTurn(p: TurnProposal, ctx: { state: StoryState; hero: strin
   if (!o) return ["outcome is empty"];
   if (ctx.plan && !usesPlan(o, ctx.plan)) out.push(`the plan is the cause: the outcome must use the player's own key word (one of: ${planWords(ctx.plan).slice(0, 5).join(", ")})`);
   if (ctx.hook_due && ctx.state.hook && !usesPlan(`${o} ${p.scene}`, ctx.state.hook)) out.push("keep the opener's hook in play (state.hook) in this act");
+  const retold = repeatsMoment(o, ctx.state.last_moments, ctx.plan);
+  if (retold) out.push(`repeats an earlier moment ("${retold}"): something new happens now, and what was learned stays learned`);
   if (/\b(still right there|isn't solved yet|is not solved yet)\b/i.test(o)) out.push("banned filler: never 'still right there' or 'isn't solved yet'; say what the action did");
   if (sentences(o).length > 2) out.push(`outcome has ${sentences(o).length} sentences (2 max)`);
   if (words(o) > 30) out.push(`outcome is ${words(o)} words (30 max)`);
@@ -426,7 +442,7 @@ export function applyTurn(
     cast,
     facts,
     open_thread: clip(p.open_thread, 120) || state.open_thread,
-    last_moments: [...state.last_moments, clip(p.outcome, 240)].slice(-3),
+    last_moments: [...state.last_moments, clip(p.outcome, 240)].slice(-6),
     memorable: mem,
     right_now: progress >= 100 ? state.finish_line : rn,
     goals_done: [...state.goals_done, rn].slice(-12),
