@@ -54,9 +54,15 @@ paste. This fixes everything stale in the old text:
 1. keep `https://groupproject-game.vercel.app/tv`
 2. add `https://groupproject-game.vercel.app/tv?judge=1`
 
-**GitHub: CD decides.** The repo `b14ck5tar/H4CKBOMB` is private. ⭐ Leave it out unless a judge asks. To add it:
-ask Claude to scan the git history for keys first, then make it public and add `https://github.com/b14ck5tar/H4CKBOMB`
-as a third link.
+**Code repository: REQUIRED by Meta's official rules** ("a link to a publicly accessible code repository").
+`b14ck5tar/H4CKBOMB` is private today. **CD does this:**
+1. History is checked: none of our 7 key values appear in any of the 362 commits, and no `.env` file was ever committed
+   (Claude, Sun ~8 AM). A `README.md` at the root says what we built vs the libraries and APIs we used.
+2. GitHub → b14ck5tar/H4CKBOMB → **Settings** → General → scroll to **Danger Zone** → **Change visibility** →
+   **Change to public** → confirm.
+3. Make sure the final code is on the default branch (`main`), or link the branch:
+   `https://github.com/b14ck5tar/H4CKBOMB/tree/rebuild-around-the-table`.
+4. Add `https://github.com/b14ck5tar/H4CKBOMB` as a "Try it out" link (and in any "code repository" field the form has).
 
 ## 4. Project media
 **Image gallery: replace all 5** (old lobby, old Gus turn, old phones, old boulder reveal). Delete each, then upload
@@ -88,6 +94,9 @@ Yes. Meta's Muse is the Dungeon Master and runs the whole game. Muse Spark score
 ```
 
 ## 6. Submit
+- [ ] **Every team member is a registered HackTX participant** (official rule). Both of you: confirm you're checked in /
+      registered with HackTX.
+- [ ] Required by Meta: the video link, the public repo link, and the description (the About text) are all filled in.
 - [ ] Keep the terms box ticked. If the page shows a **Submit** or **Update** button, press it.
 - [ ] Check the status still says **"Project submitted!"**.
 - [ ] Screenshot the public project page and post it in the team hub notes:

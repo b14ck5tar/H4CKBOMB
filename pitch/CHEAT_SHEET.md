@@ -5,6 +5,8 @@ TV: `groupproject-game.vercel.app/tv?judge=1&bots=1` (Quick · Odd news · Adult
 then the finale. About 5 min from Start. Judge stories: the Busan canal shark, the €9M gold in a Dendermonde cellar
 wall, the Norwich Batman.
 
+Meta scores: Human Connection 30 · AI Centrality 25 · Originality 20 · **Execution & Demo Quality 25**.
+
 ## Opener B (10 s, say it first) ⭐ then A
 "Our application to HackTX got denied. My teammate never even applied. We walked in anyway, and built the one group project where everyone actually shows up."
 

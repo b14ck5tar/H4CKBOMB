@@ -9,6 +9,12 @@ runs the judge table alone from 2:00 to ~4:45**, and both are there for the last
 pitch. So every line below is written for one person. HOST = the person talking to judges. With two people, the
 second person is DRIVER (laptop, hotkeys, tech questions).
 
+**Meta's official track rules (the CD's PDF):** Human Connection 30%, AI Centrality 25%, Originality 20%,
+**Execution & Demo Quality 25%**. Required: a 2-3 min working demo video, a link to a **publicly accessible code
+repository**, and a short description of what was built and the role AI plays. Submit on HackTX's platform by
+11:30 AM CST; late or incomplete entries aren't considered. Original work made during the event, open-source libraries
+identified (README.md), no PII collected without consent, every team member a registered HackTX participant.
+
 ## 1. The one-liner and the 30-second pitch
 
 **One-liner (say it):** "A party game where nobody has to be the Dungeon Master."
