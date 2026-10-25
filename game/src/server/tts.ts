@@ -208,6 +208,7 @@ async function elevenRemaining(): Promise<number | null> {
 async function decide(): Promise<Decision> {
   const at = Date.now();
   if (process.env.TTS_PROVIDER !== "elevenlabs" || !process.env.ELEVENLABS_API_KEY) return { provider: "openai", remaining: null, why: "TTS_PROVIDER is not elevenlabs", at, credits: 0 };
+  if (Date.now() < elevenOffUntil) return { provider: "openai", remaining: null, why: "ElevenLabs paused (out of credits or a key error)", at, credits: 0 };
   const remaining = await elevenRemaining();
   if (remaining != null && remaining < GAME_CREDITS)
     return { provider: "openai", remaining, why: `only ${remaining} ElevenLabs credits left (a game needs ~${GAME_CREDITS})`, at, credits: 0 };
@@ -239,8 +240,25 @@ function elevenText(model: ElevenModel, text: string) {
   return model === "eleven_v3" ? text : text.replace(/\[[^\]]{1,30}\]\s*/g, "").trim();
 }
 
-/** Streams 24 kHz PCM; aborts if the first audio byte takes over 4 s. null on any failure (caller falls back). */
+// Starter allows 3 requests at once (a 4th gets HTTP 429). The host asks for the outcome, the scene and the next turn
+// line together, so requests queue here instead.
+const ELEVEN_MAX_AT_ONCE = 3;
+let elevenActive = 0;
+const elevenQueue: (() => void)[] = [];
+
 async function eleven(voice: VoiceId, model: ElevenModel, text: string, timeoutMs: number): Promise<Buffer | null> {
+  if (elevenActive >= ELEVEN_MAX_AT_ONCE) await new Promise<void>((r) => elevenQueue.push(r));
+  elevenActive++;
+  try {
+    return await elevenOnce(voice, model, text, timeoutMs);
+  } finally {
+    elevenActive--;
+    elevenQueue.shift()?.();
+  }
+}
+
+/** Streams 24 kHz PCM; aborts if the first audio byte takes over 4 s. null on any failure. */
+async function elevenOnce(voice: VoiceId, model: ElevenModel, text: string, timeoutMs: number): Promise<Buffer | null> {
   const k = process.env.ELEVENLABS_API_KEY;
   if (!k || Date.now() < elevenOffUntil) return null;
   const cfg = ELEVEN[voice];
@@ -258,7 +276,7 @@ async function eleven(voice: VoiceId, model: ElevenModel, text: string, timeoutM
       const why = (await res.text().catch(() => "")).slice(0, 160).replace(/\s+/g, " ");
       // 401 = out of characters or a bad key, 402/403 = plan: stop trying for 10 minutes. Other errors: just this line.
       if ([401, 402, 403].includes(res.status)) elevenOffUntil = Date.now() + 10 * 60_000;
-      console.warn(`[tts] elevenlabs HTTP ${res.status} (${why}), falling back to OpenAI`);
+      console.warn(`[tts] elevenlabs HTTP ${res.status} (${why})`);
       return null;
     }
     const cost = Number(res.headers.get("character-cost"));
@@ -276,7 +294,7 @@ async function eleven(voice: VoiceId, model: ElevenModel, text: string, timeoutM
     const pcm = Buffer.concat(parts);
     return pcm.length > 2_400 ? pcm : null; // under 50 ms of audio = something went wrong
   } catch (e) {
-    console.warn(`[tts] elevenlabs ${model} failed (${(e as Error).message}), falling back to OpenAI`);
+    console.warn(`[tts] elevenlabs ${model} failed (${(e as Error).message})`);
     return null;
   } finally {
     clearTimeout(first);
@@ -379,16 +397,24 @@ async function openaiClip(voice: VoiceId, style: string, text: string, timeoutMs
 }
 
 /**
- * One narrator line as WAV. TTS_PROVIDER=elevenlabs tries ElevenLabs first (v3 for `ahead` text, Flash for live
- * lines, Flash again if v3 is slow), then OpenAI, then Gemini. Default (openai): OpenAI, then Gemini.
+ * One narrator line as WAV, from the provider picked for this game (gameProvider). On ElevenLabs: v3 for `ahead`
+ * text, Flash for live lines; a failed line tries Flash, then Flash once more, then throws (that line is text only).
+ * It never falls back to OpenAI mid-game, so the narrator's voice never switches. An out-of-credits error stops
+ * ElevenLabs for 10 minutes, so the next game picks OpenAI. On OpenAI: OpenAI, then Gemini.
  */
 export async function speak(voice: VoiceId, style: string, text: string, opts: SpeakOpts = {}): Promise<Clip> {
   const timeoutMs = opts.timeoutMs ?? 20_000;
   if ((await gameProvider()).provider === "elevenlabs") {
     const cfg = ELEVEN[voice];
     const model = opts.ahead ? cfg.ahead : cfg.live;
-    const clip = (await elevenClip(voice, text, model, timeoutMs)) ?? (model !== cfg.live ? await elevenClip(voice, text, cfg.live, timeoutMs) : null);
+    let clip = await elevenClip(voice, text, model, timeoutMs);
+    if (!clip && model !== cfg.live) clip = await elevenClip(voice, text, cfg.live, timeoutMs);
+    if (!clip && Date.now() >= elevenOffUntil) {
+      await new Promise((r) => setTimeout(r, 400)); // one retry, staggered
+      clip = await elevenClip(voice, text, cfg.live, timeoutMs);
+    }
     if (clip) return clip;
+    throw new Error("elevenlabs could not read this line: text only (no mid-game switch to another voice)");
   }
   return openaiClip(voice, style, text, timeoutMs);
 }
