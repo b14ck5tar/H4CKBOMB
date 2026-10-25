@@ -30,7 +30,7 @@ Open `https://groupproject-game.vercel.app/tv?bots=1` and play to the first turn
 ## 2. The live take (about 15 min for 2 takes)
 
 Setup (VIDEO_SCRIPT.md, "The take to record"): `/tv?bots=1`, **Quick · Odd news · Teens**, 2 humans on real phones +
-2 test players (press **B** twice). A Quick Tale with 2 humans is 4 turns, about 6 minutes.
+2 test players (press **B** twice). A Quick Tale with 2 humans is 2 turns (1 each), about 4-5 minutes.
 
 Start every recording first, then **clap once on camera** (it syncs the tracks):
 1. **TV:** OBS (1920x1080, 60 fps, desktop audio on, mic off), or Snipping Tool (Win+Shift+R, system audio on).
@@ -103,10 +103,8 @@ Never on screen: hotkeys, the "?" help, "Local mode", the address bar, any key, 
 - [ ] Paste the video link.
 - [ ] Gallery: the 5-6 shots Claude picks (listed in `devpost-media/gallery-v2/PICKS.md` once the run is done),
       cover first. JPG/PNG up to 5 MB, 3:2 crops best.
-- [ ] Tracks: Meta, Most Entertaining, Best Use of SerpApi. **Your call on Gemini:** ⭐ leave it off (Gemini is only
-      the backup narrator, a weak entry); or add it if the voice session keeps Gemini as the backup and there's no
-      track limit.
-- [ ] Built with: if the narrator is now ElevenLabs, swap `openai-tts` for `elevenlabs` (Claude will tell you).
+- [ ] Tracks: Meta, Most Entertaining, Best Use of SerpApi. Gemini: off (your call).
+- [ ] Built with: already lists `elevenlabs` (the narrator) and `openai-tts` (its backup). Paste as is.
 - [ ] Both teammates added. **Submit.** Screenshot the "submitted" page.
 
 ## 9. Before you leave (11:00)

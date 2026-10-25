@@ -40,7 +40,7 @@ not shots. Burn in captions for every spoken line (judges often watch muted).
 | Setting | Value | Why |
 |---|---|---|
 | URL | `https://groupproject-game.vercel.app/tv?bots=1` on the laptop | `?bots=1` shows "+ test player" in the lobby |
-| Players | **2 humans on real phones + 2 test players** (click "+ test player" twice before the lobby shot) | 4 heroes on screen; 2 real faces. With people playing, test players only suggest ideas; the humans own every turn (2 turns each). |
+| Players | **2 humans on real phones + 2 test players** (click "+ test player" twice before the lobby shot) | 4 heroes on screen; 2 real faces. With people playing, test players only suggest ideas; the humans own every turn (Quick: 1 turn each). |
 | How long? | **Quick** (~5 min) | Opens on a hand-picked true story from our library: no vote, a known-good story |
 | Tonight's story | **Odd news** | Gives the "Based on a true story" reveal with the real article |
 | Who's playing? | **Teens** | The funniest tone that's still safe |
@@ -92,7 +92,7 @@ Part 2 spoken: ~160 words, ~73 s. The rest is game sound: let the narrator and t
 |---|---|---|---|---|
 | 2:00 to 2:14 | One turn as a simple left-to-right graphic: real news → **Muse Spark** (storyable? + opening) → the player's plan → **Muse Spark** (judge) → **code** (d20) → **Muse Spark** (what happens next, progress, hand-off) → **Muse Image** (new painting) → narrator. | PREP (`devpost-media/broll/how-it-works.png`, then `deck-slide-7.png`) | "Muse runs the night. Muse Spark picks news that makes a good story, writes the opening, judges every plan and writes every turn. Muse Image paints your heroes into each new scene." | Labels: *muse-spark-1.3*, *muse-image-1.0* |
 | 2:14 to 2:24 | TV with DM's Notes open (press N off camera, then record), entries scrolling. | PREP (screen capture after the take) | "Code keeps it honest. It rolls the dice, keeps every win, and checks the story uses your words. The AI judges ideas, never people." | Check DM's Notes shows no cut features first |
-| 2:24 to 2:30 | Narrator caption on the TV, a waveform. | PREP | "The one non-Meta piece is the narrator's voice, because Meta has no text-to-speech model." | On screen: *Narrator: the one non-Meta model* (name the vendor once the voice pick is final) |
+| 2:24 to 2:30 | Narrator caption on the TV, a waveform. | PREP | "The one non-Meta piece is the narrator's voice, because Meta has no text-to-speech model." | On screen: *Narrator: ElevenLabs (Meta has no text-to-speech)* |
 
 ## PART 4: Tools, harnesses and how they helped (2:30 to 3:00)
 

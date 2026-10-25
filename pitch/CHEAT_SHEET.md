@@ -60,5 +60,5 @@ the TV runs."
 - **Judge in a hurry:** 30-second pitch + deck reveal slide + QR card.
 
 ## Never say
-"4 minutes" · "this week's news" (at the table) · the narrator's vendor · "nothing is saved" · "20 cents" as fact ·
+"4 minutes" · "this week's news" (at the table) · "nothing is saved" · "20 cents" as fact ·
 danger meter, Catch, Boost, Mirror, clues, Convince the DM, Hope · "Play it now" until the deploy is checked.

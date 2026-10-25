@@ -19,7 +19,7 @@ come from real life, so the ending starts a real conversation: "wait, that actua
 ## What it does
 
 A laptop or TV is the table. Phones scan a QR code and become controllers. No app, no accounts, no prep. 2 to 6
-players in one room. A Quick Tale takes about 5 to 10 minutes, depending on how many play; a Full Story 10 to 15.
+players in one room. Quick Tale is about 5 minutes (one turn each); a Full Story 10 to 15.
 
 1. **Make a hero.** Describe them in one line and answer one question: "What's your secret talent?" Muse paints the
    hero in our house style, Neon Ink (hand-inked lines, flat neon color). Or grab one of 18 ready-made heroes and
@@ -75,9 +75,8 @@ Take Muse away and there is no game: no stories, no rulings, no outcomes, no art
 the act changes, the turn order, and the "Solved by" line, which is built from the players' own answers. The AI
 judges ideas, never people. Nobody is scored or ranked. DM's Notes on the TV shows every call Muse made and why.
 
-**The one non-Meta model is the narrator's voice,** because Meta has no text-to-speech model: OpenAI
-gpt-4o-mini-tts (and tts-1-hd for one voice), with Gemini TTS as the automatic backup and plain text as the last
-fallback.
+**The one non-Meta job is the narrator's voice,** because Meta has no text-to-speech model: ElevenLabs (Eleven v3), with OpenAI TTS as the automatic backup, Gemini TTS behind it, and plain text as the last fallback.
+Everything else is Meta.
 
 ## How we built it
 
@@ -150,7 +149,7 @@ What actually changed the game:
 ## Built with
 
 `next.js` · `typescript` · `react` · `tailwindcss` · `vercel` · `supabase-realtime` · `meta-muse-spark` ·
-`meta-muse-image` · `meta-muse-voice-transcribe` · `openai-tts` · `gemini-tts` · `web-audio-api` · `serpapi` ·
+`meta-muse-image` · `meta-muse-voice-transcribe` · `elevenlabs` · `openai-tts` · `web-audio-api` · `serpapi` ·
 `google-news` · `mcp` · `claude-code`
 
 ## Tracks to select
@@ -158,7 +157,6 @@ What actually changed the game:
 - Meta: Bringing People Closer Together with AI
 - Most Entertaining
 - Best Use of SerpApi
-- MLH Best Use of Gemini API: only if the CD keeps it (see `pitch/CD_MORNING.md`).
 - Best Novice applies automatically if we're eligible.
 
 ## Try it

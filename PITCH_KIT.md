@@ -126,7 +126,7 @@ code rolled the dice. It was based on a true story. And you just played it."
 > reads each plan literally and says how hard it is, then writes what happens at the grade you rolled, following
 > written story rules so it stays logical. Muse Image paints your heroes into a new scene every turn. Muse Voice
 > Transcribe lets you speak your plan instead of typing. And our Muse connector lets Muse, the agent, start a game
-> night. Press N for DM's Notes: every call it made and why. One part isn't Meta: the narrator's voice, because Meta
+> night. Press N for DM's Notes: every call it made and why. One part isn't Meta: the narrator's voice (ElevenLabs), because Meta
 > has no text-to-speech model. Code decides every number."
 
 - **Why essential:** no Muse = no story, no rulings, no outcomes, no paintings. It is the host, not a garnish.
@@ -214,7 +214,8 @@ The 10-minute plan and the 15-question drill are in `pitch/REHEARSAL.md`.
 - **Partner runs judging solo 2:00-4:45** (DECISIONS Sun ~12:30 AM stands).
 - **Judge mode stays max 3 turns.** Say "about five minutes" up front; drop to max 2 if rehearsal runs go past 6:00
   from hello.
-- **Quick Tale length:** asked to the CD; DEVPOST says "5 to 10 minutes" until they answer.
+- **Quick Tale = 1 turn each, ~5 min** (CD; the story session is building it). Full Story keeps 2 each at 2-4 players.
+- **Narrator: ElevenLabs (Eleven v3)**, OpenAI TTS as the backup (CD). **Gemini track: off.**
 - **Phone footer** reworded by the look session (4b8cfa2): "No accounts. Your words go to Meta's Muse AI to run the
   game; the TV keeps the finished tale, and our server caches the art and audio."
 
@@ -224,8 +225,6 @@ The 10-minute plan and the 15-question drill are in `pitch/REHEARSAL.md`.
   meter, "RISKY", no "tell the table"). `origin/main` is 55 commits behind the branch (Sun ~4:30 AM).
 - **"This is this week's news"** at the table: judge mode plays a saved story from the library. Say "a real story".
 - **"4 minutes"**: a judge-mode game is ~5 min from Start (section 3).
-- **The narrator's vendor** (OpenAI / ElevenLabs / Gemini) until the voice session confirms the final pick. Say "the
-  narrator's voice is the one non-Meta piece".
 - **"Nothing is saved"**: the server caches art and audio. Say "no accounts, no player database".
 - **"About 20 cents a game"** as a measured fact: it's an estimate.
 - **Danger meter, Needs 12+, Mirror, Catch, Boost, clues, Convince the DM, Hope:** cut.

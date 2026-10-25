@@ -110,10 +110,9 @@ heroes are pre-painted, so they're free. The live news search is cached for 4 ho
 
 ### Why a non-Meta voice
 **"Why a non-Meta narrator?"** Meta has no text-to-speech model; Muse Voice Transcribe only listens. So the voice
-is the one job that had to leave Meta. We compared voices by ear, there's an automatic backup voice, and plain text
-if both fail. Meta's team told us on Saturday to pick the best model per job, and we tested every job (design/23,
-design/26). *(Name the vendor only once the voice session confirms the final pick: OpenAI today, ElevenLabs being
-tested.)*
+is the one job that had to leave Meta. We compared voices by ear and picked ElevenLabs (Eleven v3), with OpenAI TTS
+as the automatic backup and plain text if both fail. Meta's team told us on Saturday to pick the best model per job,
+and we tested every job (design/23, design/26).
 
 ### Safety
 **"How do you keep tragic news out?"** A keyword block list, then the Muse Spark storyability gate, which also throws
