@@ -86,6 +86,9 @@ export class WatchSource {
   addBot() {
     return "";
   }
+  montage() {
+    return [] as { image: string; line: string; heroIds: string[] }[];
+  }
   voiceUrl() {
     return "";
   }

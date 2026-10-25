@@ -22,6 +22,11 @@ import { Avatar, Hope, ThankHearts, useFastNow } from "./TV";
 import { KeepsakeQR } from "./Keepsake";
 import { FEATURES } from "@/lib/features";
 import { music, playSfx, useMusic } from "@/lib/sound";
+import { EndingMontage, HudStrip, OutcomeCaption, PlanCard, QualityMeter, SuggestionBubbles, TurnCard, TvStage, TIER_LOOK } from "@/components/tvskin";
+import type { CardHero, MontagePanel } from "@/components/tvskin";
+import { TIER_SHIFT, gradeRoll } from "@/lib/grade";
+import { speakableName } from "@/lib/now";
+import { MONTAGE_PANEL_MS } from "@/lib/host";
 
 const READING = ["quest", "narrating", "ruling", "outcome", "epilogue", "reveal"];
 const SCENE_PHASES = ["narrating", "turn", "pitch", "vote", "ruling", "roll", "outcome"];
@@ -756,25 +761,11 @@ function Roll({ host, s }: { host: Stage; s: GameState }) {
       <ThrowFlight fling={s.fling} thrown={shown} ms={ROLL_ANIM_MS - 200}>
         <D20 value={shown ? r.kept : null} rolling={shown && !settled} size={300} tone={settled && r.band === "CATASTROPHE" ? "crimson" : "gold"} />
       </ThrowFlight>
-      <div className="flex items-center gap-3">
-        <Avatar host={host} p={pl} size={56} />
-        <span className="font-heading text-3xl uppercase">{pl.hero?.name}</span>
-      </div>
-      <div className="min-h-[9rem] flex flex-col items-center gap-3 relative z-[70]">
-        {settled ? (
-          <>
-            <RollMath s={s} r={r} />
-            <Stamp text={r.gradeLabel ?? BAND_LABEL[r.band]} size="lg" tone={bandTone(r.band)} />
-          </>
-        ) : (
-          !shown && (
-            <>
-              <ShiftBadge s={s} r={r} />
-
-            </>
-          )
-        )}
-      </div>
+      {settled && (
+        <TvStage>
+          <SkinMeter s={s} r={r} />
+        </TvStage>
+      )}
     </div>
   );
 }
@@ -842,6 +833,156 @@ function ThrowFlight({ fling, thrown, ms, children }: { fling: GameState["fling"
         {children}
       </div>
     </div>
+  );
+}
+
+// ---------- the in-game TV skin (components/tvskin): what a real game looks like, piece by piece ----------
+const portraitOf = (host: Stage, p: Player) => (p.pick ? `/heroes/${p.pick}.webp` : host.thumbs[p.id] ?? host.portraits[p.id]);
+const cardHero = (host: Stage, p: Player): CardHero => ({
+  name: p.hero?.name ?? p.name,
+  epithet: p.hero?.epithet,
+  color: p.color,
+  portrait: portraitOf(host, p),
+  stats: p.hero ? (["brave", "clever", "charming"] as const).map((k) => ({ label: STAT_LABEL[k], value: p.hero!.stats[k] ?? 0 })) : undefined,
+});
+const GRADE_COLOR: Record<string, string> = { DISASTER: "#ff3b4e", SETBACK: "#ff6b3d", PARTIAL: "#ffad3b", PROGRESS: "#3de7ff", GREAT: "#2cf5c0", LEGENDARY: "#ffd23f" };
+
+/** The HUD under the top bar: the ladder (one dot per turn, the finale on top), Right now, the goal, the danger bar. */
+function SkinHud({ s }: { s: GameState }) {
+  if (!s.goal) return null;
+  return (
+    <HudStrip
+      ladder={s.ladder.length > 1 ? { steps: s.ladder.length, at: s.step, now: s.nowGoal || s.goal, goal: s.goal } : { steps: 1, at: 0, now: s.nowGoal || s.goal, goal: s.goal }}
+      danger={{ level: s.danger, max: 3 }}
+    />
+  );
+}
+
+/** A turn: the owner's trading card slams in; friends' suggestions float in as bubbles while they type. */
+function SkinTurn({ host, s }: { host: Stage; s: GameState }) {
+  const owner = s.players.find((p) => p.id === turnOwner(s));
+  if (!owner?.hero) return null;
+  const items = Object.entries(s.ideas)
+    .map(([pid, text]) => {
+      const pl = s.players.find((p) => p.id === pid);
+      return pl ? { id: pid, text: mask(text), by: shortName(pl.hero?.name ?? pl.name), color: pl.color, portrait: portraitOf(host, pl) } : null;
+    })
+    .filter((x): x is NonNullable<typeof x> => !!x);
+  return (
+    <>
+      <TurnCard hero={cardHero(host, owner)} playedBy={speakableName(owner.name)} turn={{ n: s.turnIndex + 1, of: s.turnOrder.length }} prompt="Everyone else: suggest a move on your phone" k={`${owner.id}-${s.turnIndex}`} />
+      <SuggestionBubbles items={items} />
+    </>
+  );
+}
+
+/** The plan the DM judged: the hero, the plan in plain words, the difficulty stamp and its shift, the friend's credit. */
+function SkinPlan({ host, s }: { host: Stage; s: GameState }) {
+  const pitch = s.pitches.find((p) => p.id === s.winnerId) ?? s.pitches.find((p) => p.playerId === s.rolls[0]?.playerId);
+  const pl = s.players.find((p) => p.id === pitch?.playerId);
+  const v = pitch?.verdict;
+  if (!pitch || !pl) return null;
+  if (!v)
+    return (
+      <div className="qt-stage qt-center">
+        <p className="font-heading text-3xl uppercase text-parchment/80 qt-throb">The DM is reading {shortName(pl.hero?.name)}&apos;s plan…</p>
+      </div>
+    );
+  const credit = pitch.creditId ? s.players.find((p) => p.id === pitch.creditId) : undefined;
+  const r = s.rolls[0];
+  return (
+    <PlanCard
+      hero={{ name: pl.hero?.name ?? pl.name, color: pl.color, portrait: portraitOf(host, pl) }}
+      plan={v.interpretation && !v.fallback ? v.interpretation : planText(pitch)}
+      tier={v.tier}
+      shift={r?.playerId === pl.id ? r.tierMod : TIER_SHIFT[v.tier]}
+      stat={{ label: STAT_LABEL[v.stat], value: pl.hero?.stats[v.stat] ?? 0 }}
+      credit={credit ? { name: shortName(credit.hero?.name ?? credit.name), color: credit.color, bonus: 1 } : undefined}
+    />
+  );
+}
+
+/** After the throw lands: the total fills the 1-20 track and slams its grade. Timed to the die's landing. */
+function SkinMeter({ s, r }: { s: GameState; r: RollResult }) {
+  const v = s.pitches.find((p) => p.playerId === r.playerId)?.verdict;
+  const credit = s.pitches.find((p) => p.playerId === r.playerId)?.creditId;
+  const g = gradeRoll(r.total, r.kept);
+  const parts = [
+    { label: "rolled", value: r.kept },
+    ...(v ? [{ label: STAT_LABEL[v.stat], value: r.statBonus, signed: true }] : []),
+    ...(r.bonus ? [{ label: r.bonusWhy === "backed" ? "backed" : credit ? `${heroFirst(s, credit)}'s idea` : "idea", value: r.bonus, signed: true }] : []),
+    ...(r.tierMod ? [{ label: v ? TIER_LOOK[v.tier].word.toLowerCase() : "plan", value: r.tierMod, signed: true }] : []),
+  ];
+  return <QualityMeter total={g.total} natural={r.kept} result={g} parts={parts} delay={0.15} />;
+}
+
+/** What happened: a subtitle caption over the new painting, tagged with the grade and the hero. */
+function SkinOutcome({ s }: { s: GameState }) {
+  const r = s.rolls[0];
+  const pl = s.players.find((p) => p.id === r?.playerId);
+  useEffect(() => {
+    if (s.outcome) sfx.pageTurn();
+  }, [s.outcome]);
+  if (!r || !pl) return null;
+  if (!s.outcome)
+    return (
+      <div className="qt-stage qt-center">
+        <p className="font-heading text-3xl uppercase text-parchment/70 qt-throb">{s.busy || "…"}</p>
+      </div>
+    );
+  const g = gradeRoll(r.total, r.kept);
+  const words = s.outcome.split(/\s+/).length;
+  return (
+    <OutcomeCaption
+      text={s.outcome}
+      tag={r.gradeLabel ?? g.label}
+      tagColor={GRADE_COLOR[g.grade] ?? "#3de7ff"}
+      hero={{ name: pl.hero?.name ?? pl.name, color: pl.color }}
+      pace={s.voice ? Math.max(0.05, Math.min(0.2, s.voice.ms / 1000 / Math.max(1, words))) : 0.07}
+      k={`${s.turnIndex}-${s.finale}`}
+    />
+  );
+}
+
+/** The ending montage ("Because of you"), then "Based on a true story" and the keepsake QR. One instance across the
+ *  epilogue, reveal and keepsake phases, so it never restarts. */
+function SkinEnding({ host, s }: { host: Stage; s: GameState }) {
+  const rs = host.realStory;
+  const seed = host.questSeed;
+  const data = host.montage();
+  const panels: MontagePanel[] = data.map((d) => ({
+    image: d.image,
+    line: d.line,
+    who: d.heroIds
+      .map((id) => s.players.find((p) => p.id === id))
+      .filter((p): p is Player => !!p)
+      .slice(0, 4)
+      .map((p) => ({ name: shortName(p.hero?.name ?? p.name), color: p.color, portrait: portraitOf(host, p) })),
+  }));
+  const f = s.final;
+  const start = s.phase === "epilogue" ? 0 : panels.length;
+  if (!rs || !seed) return null;
+  return (
+    <EndingMontage
+      panels={panels}
+      start={start}
+      panelMs={MONTAGE_PANEL_MS}
+      reveal={{
+        headline: rs.headline,
+        source: rs.source,
+        date: rs.date,
+        summary: dedupeSentences(rs.summary),
+        now: knownNow(rs.now) || undefined,
+        articleUrl: rs.link || undefined,
+        author: seed.author?.name,
+        yourTitle: s.quest?.title ?? seed.quest_title,
+        yourVersion: s.recap || s.epilogue,
+        solvedBy: s.solvedBy || undefined,
+        ending: f ? ENDING_LABEL[f.ending] : undefined,
+        endingColor: f?.ending === "TRIUMPHANT" ? "#ffd23f" : f?.ending === "BITTERSWEET" ? "#2cf5c0" : "#ff2e7e",
+      }}
+      keepsake={s.storybook ? <KeepsakeQR host={host} s={s} size={260} /> : undefined}
+    />
   );
 }
 
@@ -927,10 +1068,9 @@ function Final({ host, s }: { host: Stage; s: GameState }) {
       <D20 value={value} rolling={stage === "tumble" || (stage === "shake" && shook.length > 0)} size={280} tone="gold" />
       <div className="min-h-[8rem] flex flex-col items-center gap-3">
         {result && r && f ? (
-          <>
-            <RollMath s={s} r={r} />
-            <Stamp text={ENDING_LABEL[f.ending]} size="xl" tone={f.ending === "TRIUMPHANT" ? "gilt" : f.ending === "BITTERSWEET" ? "forest" : "crimson"} />
-          </>
+          <TvStage>
+            <SkinMeter s={s} r={r} />
+          </TvStage>
         ) : (
           <div className="flex items-center gap-10">
             {r ? <ShiftBadge s={s} r={r} /> : null}
@@ -1279,7 +1419,7 @@ export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameS
       main = <Narration s={s} onTitle={setTitle} />;
       break;
     case "turn":
-      main = <Turn host={host} s={s} />;
+      main = null; // the tvskin TurnCard + SuggestionBubbles (below)
       break;
     case "pitch":
       main = <Planning host={host} s={s} />;
@@ -1288,26 +1428,22 @@ export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameS
       main = <Vote host={host} s={s} />;
       break;
     case "ruling":
-      main = <Ruling host={host} s={s} />;
+      main = null; // the tvskin PlanCard (below)
       break;
     case "roll":
       main = <Roll host={host} s={s} />;
       break;
     case "outcome":
-      main = <Outcome host={host} s={s} />;
+      main = null; // the tvskin OutcomeCaption (below)
       break;
     case "final_roll":
     case "final_result":
       main = <Final host={host} s={s} />;
       break;
     case "epilogue":
-      main = <EndingSlot s={s} />;
-      break;
     case "reveal":
-      main = <RevealCard host={host} s={s} />;
-      break;
     case "storybook":
-      main = <Keepsake host={host} s={s} onNotes={onNotes} />;
+      main = null; // the tvskin EndingMontage (below)
       break;
     default:
       main = (
@@ -1322,7 +1458,7 @@ export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameS
     <div className="qt-root" onPointerDown={() => sfx.unlock()}>
       <Backdrop url={art} mood={mood} />
       <div key={shot} className="qt-dip" aria-hidden />
-      {s.phase !== "quest" && <QTopBar host={host} s={s} onNotes={onNotes} notesOpen={notesOpen} />}
+      {s.phase !== "quest" && !["epilogue", "reveal", "storybook"].includes(s.phase) && <QTopBar host={host} s={s} onNotes={onNotes} notesOpen={notesOpen} />}
       {s.phase === "quest" && !host.readOnly && (
         <button className="qt-skip font-ui" onClick={() => host.skip()}>
           Skip ▸
@@ -1332,8 +1468,18 @@ export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameS
       <div key={shot + "-c"} className="qt-shot">
         {main}
       </div>
-      {inScene && !(title && s.phase === "narrating") && <GoalBar s={s} />}
-      {s.phase !== "quest" && !(title && s.phase === "narrating") && <NowBanner s={s} />}
+      {/* The in-game TV skin over the scene: HUD, turn card + suggestions, the plan, the caption. */}
+      {(inScene || s.phase === "final_roll" || s.phase === "final_result") && !(title && s.phase === "narrating") && (
+        <TvStage>
+          <SkinHud s={s} />
+          {s.phase === "turn" && <SkinTurn host={host} s={s} />}
+          {s.phase === "ruling" && <SkinPlan host={host} s={s} />}
+          {s.phase === "outcome" && <SkinOutcome s={s} />}
+        </TvStage>
+      )}
+      {["epilogue", "reveal", "storybook"].includes(s.phase) && <SkinEnding host={host} s={s} />}
+      {/* One instruction pill, only where no skin piece already says what to do. */}
+      {["story_write", "story_vote", "pitch", "vote", "final_roll"].includes(s.phase) || (s.phase === "roll" && !s.revealed.length) ? <NowBanner s={s} /> : null}
       {s.paused && (
         <div className="gp-paused" role="status">
           <p className="font-heading text-5xl uppercase">Reconnecting phones…</p>

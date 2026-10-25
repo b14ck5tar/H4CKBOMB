@@ -111,6 +111,7 @@ const outcomeMs = (text: string) => Math.min(12_000, Math.max(6500, text.split(/
 // Autopilot: a phone that's said nothing for this long (mid-story) is away; its hero keeps playing on its own.
 const AWAY_SILENCE_MS = 25_000;
 const AWAY_AFTER_TIMEOUTS = 2;
+export const MONTAGE_PANEL_MS = 4800; // one ending-montage panel on the TV
 const DANGER_MAX = 3; // the danger meter's top: at full, the finale gets a -3 shift
 const PRESENCE_ONLY = new Set(["hello", "ping", "away"]); // these don't count as "I'm back"
 /** Every phone silent this long = the table pauses ("Reconnecting phones…"). Phones ping every 3 s. */
@@ -1580,6 +1581,7 @@ export class GameHost {
     const goal = scenes[scenes.length - 1].goal;
     this.sceneList = [{ ...opener, goal }];
     this.rememberStory(seed);
+    this.turnArt.clear();
     // Where the heroes are: the real kind of place (never a real place name, which would leak into story_so_far).
     const placeType = typeof seed.real_event?.place_type === "string" ? (seed.real_event.place_type as string) : "";
     this.spine = { problem: seed.the_threat.name, pronoun: seed.problem?.pronoun ?? "", stakes: seed.problem?.stakes ?? "", where: placeType || (seed.real_event ? "" : opener.location || ""), facts: [], prop: "", memorable: [] };
@@ -1978,6 +1980,7 @@ export class GameHost {
     if (!heroes.length || !prev) return;
     const t0 = Date.now();
     const asked = this.artSeq;
+    const forTurn = this.state.finale ? -1 : this.state.turnIndex;
     fetch("/api/scene-art", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -2022,6 +2025,7 @@ export class GameHost {
         this.lastArtAsked = asked;
         const key = this.artSeq++;
         this.sceneImages[key] = res.url;
+        this.turnArt.set(forTurn, res.url);
         this.note("scene", "Scene art", `Painted by Muse Image, a new shot (${Math.round((Date.now() - t0) / 1000)}s): ${clip(where, 90)}`);
         this.set({ artKey: key });
       })
@@ -2030,6 +2034,28 @@ export class GameHost {
   }
 
   private lastArtAsked = 0;
+  /** The painting of each turn's decision (turn index; -1 = the finale), for the ending montage. */
+  private turnArt = new Map<number, string>();
+
+  /**
+   * The ending montage ("Because of you"): up to 3 turn moments plus the ending, each with its painting, its line and
+   * whose move it was. The TV plays them as panels; the narrator reads the ending on the last one.
+   */
+  montage(): { image: string; line: string; heroIds: string[] }[] {
+    const log = this.state.log;
+    const turns = log.slice(0, -1).map((l, i) => ({ l, i }));
+    const pick = turns.length <= 3 ? turns : [turns[0], turns[Math.floor(turns.length / 2)], turns[turns.length - 1]];
+    const fallback = this.sceneImages[this.state.artKey] ?? this.sceneImages[2] ?? this.sceneImages[0] ?? "";
+    const panels = pick.map(({ l, i }) => ({ image: this.turnArt.get(i) ?? this.sceneImages[Math.min(2, i)] ?? fallback, line: l.narration, heroIds: [l.heroId] }));
+    const winner = log[log.length - 1]?.heroId ?? "";
+    if (this.state.epilogue)
+      panels.push({
+        image: this.turnArt.get(-1) ?? fallback,
+        line: this.state.epilogue,
+        heroIds: [winner, ...this.heroes().map((p) => p.id).filter((id) => id !== winner)].filter(Boolean),
+      });
+    return panels;
+  }
 
   // ---------- story sources (design/24 P6) ----------
   private newsCands: NewsCand[] = [];
@@ -2926,8 +2952,11 @@ export class GameHost {
     // The finale's log line becomes the real ending, for the keepsake.
     const log = this.state.log.map((l, i, all) => (i === all.length - 1 ? { ...l, narration: ending } : l));
     this.set({ log });
-    const spoken = this.play(clip);
-    this.setTimer(spoken ? Math.max(spoken + 1200, 5000) : Math.min(11_000, Math.max(7000, ending.split(/\s+/).length * 320 + 3000)), done);
+    // The TV plays the ending montage: one panel per big moment, the ending last. The narrator reads the ending on
+    // its panel, and the reveal follows once it's been said.
+    const lead = Math.max(0, this.montage().length - 1) * MONTAGE_PANEL_MS;
+    const spoken = this.play(clip, lead);
+    this.setTimer(lead + (spoken ? Math.max(spoken + 1200, MONTAGE_PANEL_MS) : Math.min(11_000, Math.max(7000, ending.split(/\s+/).length * 320 + 3000))), done);
   }
 
   private startReveal() {
