@@ -147,8 +147,8 @@ export interface QuestSeed {
   the_real_story: { summary: string; headline: string; source: string; link: string; date: string; context_note?: string; now?: string };
   /** A live-news or player-written story's opener (fixed start + fixed goal; the middle branches). */
   opener?: SeedScene;
-  /** The threat's fixed pronoun and what it wants (live stories, from the writer). */
-  threat?: { pronoun: string; want: string };
+  /** The problem's stakes, and a pronoun if the problem is a creature (live stories, from the writer). */
+  problem?: { pronoun: string; stakes: string };
   /** The story ladder: 3-4 step goals, setup → twist → climax (live stories, from the writer). */
   beats?: string[];
   /** "Our stories": who wrote it (their real ending is the_real_story.summary, hidden until the reveal). */

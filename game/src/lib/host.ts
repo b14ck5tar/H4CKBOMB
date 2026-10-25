@@ -144,6 +144,7 @@ interface OpenerRes {
     teaser?: string;
     mood?: string;
     threat?: { name?: string; pronoun?: string; want?: string };
+    problem?: { name?: string; stakes?: string; pronoun?: string };
     beats?: string[];
   };
   ending_facts?: { kind: "news"; whats_happening_now?: string; official_line?: string } | { kind: "personal"; real_ending?: string };
@@ -1567,7 +1568,7 @@ export class GameHost {
     const ladder = this.buildLadder(seed, goal);
     this.set({ ladder, step: 0 });
     if (ladder.length) this.note("scene", "The ladder", `${ladder.map((x, i) => `${i + 1}. ${x}`).join(" → ")}. A hit climbs a step, a miss stays put; the top step is the finale.`);
-    this.spine = { threat: seed.the_threat.name, pronoun: seed.threat?.pronoun ?? "", want: seed.threat?.want ?? "", where: opener.location || "", facts: [], prop: "" };
+    this.spine = { problem: seed.the_threat.name, pronoun: seed.problem?.pronoun ?? "", stakes: seed.problem?.stakes ?? "", where: opener.location || "", facts: [], prop: "" };
     this.set({
       scenes: [{ kind: "hook", location: opener.location, description: opener.situation, twist: "", hasImage: !!this.sceneImages[this.plateFor(0)] }],
       turnOrder: this.makeTurnOrder(),
@@ -2045,9 +2046,14 @@ export class GameHost {
         if (teaser) this.teasers.set(seed.id, teaser);
         if (mood) seed.tone = mood; // the writer's mood steers the narrator, music and paint
         // One consistent threat (name, pronoun, want) and the story ladder, from the writer.
+        // The problem (new shape) or the threat (older shape): one name, what's at stake, a creature's pronoun.
+        const pr = j.opener.problem ?? (j as { problem?: { name?: string; stakes?: string; pronoun?: string } }).problem;
         const th = j.opener.threat;
-        if (th?.name) seed.the_threat = { ...seed.the_threat, name: th.name };
-        if (th?.want || th?.pronoun) seed.threat = { pronoun: String(th.pronoun ?? ""), want: String(th.want ?? "") };
+        const name = pr?.name || th?.name;
+        const stakes = pr?.stakes || th?.want || "";
+        const pronoun = pr?.pronoun || th?.pronoun || "";
+        if (name) seed.the_threat = { ...seed.the_threat, name };
+        if (stakes || pronoun) seed.problem = { pronoun: /^(she|he|it|they)$/.test(pronoun) ? pronoun : "", stakes };
         if (Array.isArray(j.opener.beats)) seed.beats = j.opener.beats.map((b) => String(b).trim()).filter(Boolean).slice(0, 4);
         this.builtSeeds.set(seed.id, seed);
         this.paintOpening(seed);
@@ -2128,11 +2134,12 @@ export class GameHost {
   private castCache = new Map<string, Promise<{ cast: NonNullable<GameState["cast"]>; failed: boolean; want: string; pronoun: string }>>();
 
   /** The story spine, passed into every ruling, outcome and ending so the story stays on one track. */
-  private spine = { threat: "", pronoun: "", want: "", where: "", facts: [] as string[], prop: "" };
+  private spine = { problem: "", pronoun: "", stakes: "", where: "", facts: [] as string[], prop: "" };
 
-  private storySoFar() {
+  /** The story so far: the problem (never a villain), what's at stake, where the heroes are, what changed. */
+  storySoFar() {
     const sp = this.spine;
-    return { threat: sp.threat, threat_pronoun: sp.pronoun || "it", threat_wants: sp.want, where: sp.where, what_changed: sp.facts.slice(-3) };
+    return { problem: sp.problem, at_stake: sp.stakes, ...(sp.pronoun ? { pronoun: sp.pronoun } : {}), where: sp.where, what_changed: sp.facts.slice(-3) };
   }
 
   /** The audio for voice line `id` (the TV plays it; nothing goes over the network to phones). */
@@ -2148,10 +2155,10 @@ export class GameHost {
     const moodMusic = MOOD_MUSIC[String(seed.tone ?? "").toLowerCase()] ?? "";
     const fb = () => ({ voice: DEFAULT_CAST.voice, name: VOICES[DEFAULT_CAST.voice].name, style: DEFAULT_CAST.style, kind: "a strange true story", art: "neon", artName: ART_STYLES.neon.name, music: moodMusic });
     const p = withTimeout(
-      this.ask<{ voice: string; style: string; kind: string; art: string; music: string; threat_want?: string; threat_pronoun?: string }>("cast", {
+      this.ask<{ voice: string; style: string; kind: string; art: string; music: string; problem_stakes?: string; problem_pronoun?: string }>("cast", {
         title: seed.quest_title,
         premise: seed.fairytale_premise,
-        threat: { name: seed.the_threat.name, description: seed.the_threat.description },
+        problem: { name: seed.the_threat.name, description: seed.the_threat.description },
         category: seed.category ?? "",
         tone: seed.tone ?? "",
       }).then(
@@ -2161,8 +2168,8 @@ export class GameHost {
           return {
             cast: { voice: d.voice, name: VOICES[d.voice].name, style: String(d.style ?? "").slice(0, 160) || DEFAULT_CAST.style, kind: String(d.kind ?? "").slice(0, 60) || "a strange true story", art, artName: ART_STYLES[art].name, music: String(d.music ?? "") || moodMusic },
             failed: false,
-            want: String(d.threat_want ?? "").slice(0, 120),
-            pronoun: /^(she|he|it|they)$/.test(String(d.threat_pronoun)) ? String(d.threat_pronoun) : "",
+            want: String(d.problem_stakes ?? "").slice(0, 120),
+            pronoun: /^(she|he|it|they)$/.test(String(d.problem_pronoun)) ? String(d.problem_pronoun) : "",
           };
         },
         () => ({ cast: fb(), failed: true, want: "", pronoun: "" }),
@@ -2188,10 +2195,10 @@ export class GameHost {
       if (r.failed) this.fellBack("Casting the narrator", "the AI call failed or was too slow");
       if (this.seed?.id !== seed.id) return r.cast;
       this.set({ cast: r.cast });
-      this.spine.want = seed.threat?.want || r.want;
-      this.spine.pronoun = seed.threat?.pronoun || r.pronoun;
+      this.spine.stakes = seed.problem?.stakes || r.want;
+      this.spine.pronoun = seed.problem?.pronoun || r.pronoun;
       this.note("hero", "Narrator", `Cast by Muse Spark: ${r.cast.name} (${VOICES[r.cast.voice as keyof typeof VOICES]?.gemini ?? r.cast.voice} voice) for ${r.cast.kind}: "${r.cast.style}". Painted in ${r.cast.artName}. Music: ${r.cast.music || "rotating"}.`);
-      if (this.spine.want) this.note("scene", "The threat", `${seed.the_threat.name} (${this.spine.pronoun || "it"}): ${this.spine.want}. Every complication comes from this.`);
+      if (this.spine.stakes) this.note("scene", "The problem", `${seed.the_threat.name}. At stake: ${this.spine.stakes}. Every complication comes from the problem; nobody has to be defeated.`);
       return r.cast;
     });
     return this.castP;
