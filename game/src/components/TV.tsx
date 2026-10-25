@@ -1,24 +1,19 @@
 "use client";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import QRCode from "qrcode";
-import { type GameHost, loadShelf, thankYouLines, type ShelfBook } from "@/lib/host";
-import { BAND_LABEL, ENDING_LABEL, ROLL_ANIM_MS, STAT_LABEL, autoSucceeds, isFailure, stampText } from "@/lib/rules";
+import { type GameHost } from "@/lib/host";
 import { sfx } from "@/lib/sfx";
-import type { GameState, Player, RollResult } from "@/lib/types";
-import { D20 } from "./D20";
-import { Stamp, WaxSeal } from "./Stamp";
+import type { GameState, Player } from "@/lib/types";
+import { WaxSeal } from "./Stamp";
 import { Reactions } from "./Reactions";
-import { Hourglass, ScreenFlash, TypeReveal } from "./Effects";
-import { HeroCard } from "./HeroCard";
+import { Hourglass, TypeReveal } from "./Effects";
 import { mask } from "@/lib/mask";
-import { DMNotesPanel, HowThisWasMade } from "./DMNotes";
-import { KeepsakeQR } from "./Keepsake";
+import { DMNotesPanel } from "./DMNotes";
 import { Presenter } from "./Presenter";
 import { QuickTV } from "./QuickTV";
 import { RATINGS, RATING_LABEL } from "@/lib/rating";
 import { FEATURES } from "@/lib/features";
 
-const fmt = (n: number) => (n >= 0 ? `+${n}` : `${n}`);
 const initials = (s: string) => s.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
 const READING = ["quest", "narrating", "outcome", "mirror_reveal", "epilogue", "reveal"];
 
@@ -45,10 +40,6 @@ function useNow(active: boolean) {
     return () => clearInterval(iv);
   }, [active]);
   return now;
-}
-
-function bandTone(b: RollResult["band"]): "gilt" | "forest" | "crimson" {
-  return b === "LEGENDARY" ? "gilt" : isFailure(b) ? "crimson" : "forest";
 }
 
 // ---------- shared bits ----------
@@ -103,23 +94,6 @@ function TopBar({ host, s, notesOpen, onNotes }: { host: Stage; s: GameState; no
       </button>
       <span className="tracking-[0.3em] font-heading text-lg text-parchment/45">{s.code}</span>
     </header>
-  );
-}
-
-function SceneImage({ host, index, className = "" }: { host: Stage; index: number; className?: string }) {
-  const url = host.sceneImages[index];
-  return (
-    <div className={`relative overflow-hidden rounded bg-[var(--surface-2)] ${className}`} style={{ aspectRatio: "16 / 9" }}>
-      {url ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={url} alt="" className="absolute inset-0 w-full h-full object-cover fade-in" />
-      ) : (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-parchment/70">
-          <Hourglass size={56} />
-          <span className="font-heading">Painting the scene…</span>
-        </div>
-      )}
-    </div>
   );
 }
 
@@ -180,33 +154,6 @@ function Footer() {
     <footer className="text-center font-ui text-sm tracking-[0.2em] uppercase text-parchment/55 py-2">
       Narrated by AI · Decided by friends · Dice are real
     </footer>
-  );
-}
-
-/** Always on screen during play: the goal, the question this scene asks, and what just happened. */
-function QuestBoard({ s }: { s: GameState }) {
-  const scene = s.scenes[s.sceneIndex];
-  const stuck = s.players.filter((p) => p.peril);
-  return (
-    <div className="grid grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1fr)] gap-3 font-ui">
-      <div className="rounded border border-[var(--gilt)]/50 bg-black/30 px-4 py-2">
-        <span className="uppercase tracking-[0.2em] text-xs text-[var(--gilt-bright)]">The goal</span>
-        <p className="text-lg leading-snug text-parchment line-clamp-2">{s.quest?.goalShort}</p>
-      </div>
-      <div className="rounded border border-[var(--crimson)]/70 bg-black/30 px-4 py-2">
-        <span className="uppercase tracking-[0.2em] text-xs text-[var(--crimson)]">
-          Right now · {scene?.kind === "climax" ? "Finale" : `Scene ${s.sceneIndex + 1}`}
-          {scene ? ` · ${scene.location}` : ""}
-        </span>
-        <p className="text-xl leading-snug text-parchment line-clamp-2">{s.question || s.situation}</p>
-      </div>
-      <div className="rounded border border-[var(--signal)]/50 bg-black/30 px-4 py-2">
-        <span className="uppercase tracking-[0.2em] text-xs text-[var(--signal)]">{stuck.length ? "Stuck" : "Last time"}</span>
-        <p className="text-lg leading-snug text-parchment line-clamp-2">
-          {stuck.length ? stuck.map((p) => `${p.hero?.name}: ${p.peril}`).join(" · ") : s.lastTime || "Nothing yet. Give it a minute."}
-        </p>
-      </div>
-    </div>
   );
 }
 
@@ -308,236 +255,6 @@ function Lobby({ host, s }: { host: Stage; s: GameState }) {
   );
 }
 
-// ---------- round screens ----------
-function PlanCards({ host, s }: { host: Stage; s: GameState }) {
-  const boosts: Record<string, number> = {};
-  Object.values(s.boosts).forEach((id) => (boosts[id] = (boosts[id] ?? 0) + 1));
-  return (
-    <div className="grid grid-cols-2 gap-3">
-      {s.pitches.map((p, i) => {
-        const pl = s.players.find((x) => x.id === p.playerId)!;
-        return (
-          <div key={p.id} className="page p-4 flex flex-col gap-2 fade-in" style={{ animationDelay: `${i * 80}ms` }}>
-            <div className="flex items-center gap-3">
-              <Avatar host={host} p={pl} size={40} />
-              <span className="font-heading text-xl font-bold uppercase flex-1">{pl.hero?.name}</span>
-              {(p.autopilot || pl.away) && <AutopilotTag />}
-              {!!boosts[p.id] && <span className="font-ui text-lg">{"🔥".repeat(boosts[p.id])}</span>}
-            </div>
-            <p className="text-xl leading-snug">{p.verdict && p.verdict.moderation !== "ok" ? p.verdict.interpretation : `“${mask(p.text)}”`}</p>
-            {p.appeal && <p className="text-base italic text-ink-soft">Argued: “{mask(p.appeal)}”</p>}
-            {p.verdict && (
-              <div className="flex items-center gap-3 flex-wrap">
-                <Stamp text={stampText(p.verdict.tier)} size="sm" rotate={-3} slam={false} tone={autoSucceeds(p.verdict.tier) ? "forest" : p.verdict.tier === "solid" ? "ink" : p.verdict.tier === "miracle" ? "gilt" : "crimson"} />
-                <span className="italic text-ink-soft">{p.verdict.quip}</span>
-              </div>
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-export function PartyDice({ host, s }: { host: Stage; s: GameState }) {
-  const [settled, setSettled] = useState<Record<string, boolean>>({});
-  const prev = useRef<string[]>([]);
-  useEffect(() => {
-    const fresh = s.revealed.filter((id) => !prev.current.includes(id));
-    prev.current = s.revealed;
-    fresh.forEach((id) => {
-      const r = s.rolls.find((x) => x.playerId === id);
-      if (!r || r.noRoll) return setSettled((m) => ({ ...m, [id]: true }));
-      setSettled((m) => ({ ...m, [id]: false }));
-      sfx.diceRoll(ROLL_ANIM_MS - 300);
-      setTimeout(() => {
-        setSettled((m) => ({ ...m, [id]: true }));
-        sfx.diceLand();
-        if (r.band === "LEGENDARY") sfx.choir();
-        else if (r.band === "CATASTROPHE") sfx.recordScratch();
-      }, ROLL_ANIM_MS - 200);
-    });
-  }, [s.revealed, s.rolls]);
-  return (
-    <div className="flex gap-8 flex-wrap justify-center items-start">
-      {s.rolls.map((r) => {
-        const pl = s.players.find((x) => x.id === r.playerId)!;
-        const shown = s.revealed.includes(r.playerId);
-        const done = shown && settled[r.playerId];
-        const pitch = s.pitches.find((p) => p.playerId === r.playerId);
-        return (
-          <div key={r.playerId} className="flex flex-col items-center gap-2 w-56 text-center">
-            {r.noRoll ? (
-              <div className="h-[170px] flex items-center justify-center">
-                <Stamp text="THAT WORKS" sub="no roll needed" size="lg" tone="forest" />
-              </div>
-            ) : (
-              <D20 value={shown ? r.kept : null} rolling={shown && !settled[r.playerId]} size={170} tone={done && r.band === "CATASTROPHE" ? "crimson" : "gold"} />
-            )}
-            <span className="font-heading text-2xl uppercase">{pl.hero?.name.split(" ")[0]}</span>
-            {r.rescuerId && <span className="font-ui text-sm text-[var(--signal)]">Caught by {s.players.find((x) => x.id === r.rescuerId)?.hero?.name}</span>}
-            {!shown && <span className="font-ui text-sm text-parchment/70 animate-pulse">tap ROLL on your phone</span>}
-            {done && !r.noRoll && (
-              <span className="font-ui text-sm text-parchment/80 tabular-nums">
-                {r.kept} {fmt(r.statBonus)} {pitch?.verdict ? STAT_LABEL[pitch.verdict.stat] : ""} {fmt(r.tierMod)} = <b>{r.total}</b>
-                {r.boosted ? " · 🔥" : ""}
-              </span>
-            )}
-            {done && <Stamp text={BAND_LABEL[r.band]} size="md" tone={bandTone(r.band)} />}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function BeatCards({ host, s }: { host: Stage; s: GameState }) {
-  const round = s.round!;
-  const i = s.beatIndex;
-  const beat = round.beats[i];
-  const roll = beat ? s.rolls.find((r) => r.playerId === beat.hero_id) : undefined;
-  const pl = beat ? s.players.find((p) => p.id === beat.hero_id) : undefined;
-  const pitch = beat ? s.pitches.find((p) => p.playerId === beat.hero_id) : undefined;
-  if (!beat) {
-    return (
-      <div className="page p-10 flex flex-col gap-4 items-center text-center fade-in">
-        <p className="font-ui uppercase tracking-[0.25em] text-sm text-ink-soft">{round.headline}</p>
-        <p className="font-heading text-5xl leading-tight uppercase">{round.now}</p>
-      </div>
-    );
-  }
-  return (
-    <div key={i} className="page p-8 grid grid-cols-[auto_minmax(0,1fr)] gap-8 items-center fade-in">
-      <div className="flex flex-col items-center gap-3 w-56">
-        {pl && host.portraits[pl.id] ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={host.portraits[pl.id]} alt="" className="portrait-oval w-48 h-60" />
-        ) : (
-          pl && <Avatar host={host} p={pl} size={160} />
-        )}
-        {roll && <Stamp text={roll.noRoll ? "THAT WORKS" : BAND_LABEL[roll.band]} sub={roll.noRoll ? "" : `rolled ${roll.kept}`} size="md" tone={bandTone(roll.band)} />}
-      </div>
-      <div className="flex flex-col gap-4 min-w-0">
-        <p className="font-heading text-3xl uppercase text-[var(--gilt-bright)]">{pl?.hero?.name}</p>
-        {pitch && <p className="text-2xl italic text-ink-soft">“{pitch.verdict && pitch.verdict.moderation !== "ok" ? pitch.verdict.interpretation : mask(pitch.text)}”</p>}
-        <TypeReveal text={beat.text} className="text-[2.1rem] leading-snug" />
-        <p className="font-ui text-sm text-ink-soft">
-          {i + 1} of {round.beats.length}
-        </p>
-      </div>
-    </div>
-  );
-}
-
-function RoundStage({ host, s }: { host: Stage; s: GameState }) {
-  const scene = s.scenes[s.sceneIndex];
-  const victim = s.rescue ? s.players.find((p) => p.id === s.rescue!.victimId) : undefined;
-  const [flash, setFlash] = useState<{ kind: "legendary" | "catastrophe" | null; n: number }>({ kind: null, n: 0 });
-  const lastRound = useRef<unknown>(null);
-
-  useEffect(() => {
-    if (s.phase === "outcome" && s.round && s.round !== lastRound.current) {
-      lastRound.current = s.round;
-      sfx.play(s.round.sfx);
-      if (s.rolls.some((r) => r.band === "LEGENDARY")) setFlash((f) => ({ kind: "legendary", n: f.n + 1 }));
-      else if (s.rolls.some((r) => r.band === "CATASTROPHE")) setFlash((f) => ({ kind: "catastrophe", n: f.n + 1 }));
-    }
-  }, [s.phase, s.round, s.rolls]);
-  useEffect(() => {
-    if (s.phase === "narrating") sfx.pageTurn();
-    if (s.phase === "outcome" && s.round) sfx.pageTurn();
-  }, [s.phase, s.beatIndex, s.round]);
-
-  let body: React.ReactNode;
-  if (s.phase === "narrating") {
-    body = (
-      <div className="flex-1 min-h-0 grid grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] gap-6 items-start">
-        <div className="relative">
-          <SceneImage host={host} index={s.sceneIndex} />
-          {s.banner && (
-            <div className="absolute left-4 bottom-4">
-              <Stamp text={s.banner} size="md" rotate={-3} slam={false} />
-            </div>
-          )}
-        </div>
-        <div className="page p-7 overflow-auto max-h-full">
-          {s.busy ? (
-            <div className="flex flex-col items-center gap-3 py-10"><Hourglass size={64} /><p className="font-heading text-xl">{s.busy}</p></div>
-          ) : (
-            <div className="flex flex-col gap-5">
-              <TypeReveal text={s.narration} className="text-[1.9rem] leading-snug" />
-              {s.npcLine?.speaker && s.npcLine?.line && (
-                <p className="text-2xl border-l-4 border-[var(--gilt)] pl-4">
-                  <b className="font-heading uppercase">{s.npcLine.speaker}:</b> “{s.npcLine.line}”
-                </p>
-              )}
-              {FEATURES.clueBox && <p className="font-ui text-[var(--signal)]">🔍 Check your phone: you each noticed something different.</p>}
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  } else if (s.phase === "pitch" || s.phase === "appeal") {
-    const final = scene?.kind === "climax";
-    body = (
-      <div className="flex-1 min-h-0 flex flex-col gap-4 overflow-auto">
-        {victim && <Stamp text={`SAVE ${victim.hero?.name?.toUpperCase()}`} sub={s.rescue!.peril} size="md" />}
-        <p className="font-heading text-4xl leading-tight uppercase text-center">
-          {s.phase === "appeal" ? "Not sure it'll work? Argue your case on your phone." : final ? "Everyone: what's your final move?" : s.situation}
-        </p>
-        {s.busy ? (
-          <div className="flex flex-col items-center gap-3 py-6"><Hourglass size={64} /><p className="font-heading text-xl">{s.busy}</p></div>
-        ) : (
-          !final && s.pitches.length > 0 && <PlanCards host={host} s={s} />
-        )}
-        {FEATURES.boost && !final && s.phase === "pitch" && s.pitches.length > 0 && (
-          <p className="text-center font-ui text-parchment/70">Like someone’s plan? 🔥 it on your phone to give them a better roll.</p>
-        )}
-      </div>
-    );
-  } else if (s.phase === "roll" || s.phase === "catch") {
-    body = (
-      <div className="flex-1 min-h-0 flex flex-col gap-6 justify-center">
-        <p className="font-heading text-4xl text-center uppercase text-[var(--gilt-bright)]">
-          {s.phase === "catch" ? "Catch! Spend your heart to re-roll a friend’s fail" : "Everyone roll!"}
-        </p>
-        <PartyDice host={host} s={s} />
-      </div>
-    );
-  } else if (s.phase === "outcome") {
-    body = s.round && !s.busy ? (
-      <div className="flex-1 min-h-0 flex flex-col justify-center">
-        <BeatCards host={host} s={s} />
-      </div>
-    ) : (
-      <div className="flex-1 flex flex-col items-center justify-center gap-3"><Hourglass size={72} /><p className="font-heading text-2xl">{s.busy || "Writing it all down…"}</p></div>
-    );
-  }
-
-  return (
-    <div className="flex-1 min-h-0 flex flex-col gap-4 px-8 pb-2">
-      <ScreenFlash kind={flash.kind} trigger={flash.n} />
-      <QuestBoard s={s} />
-      {body}
-      <Crew
-        host={host}
-        s={s}
-        mark={(p) => {
-          if (READING.includes(s.phase) && !s.busy) return s.ready.includes(p.id) ? "ready ✓" : "";
-          if (s.phase === "pitch") return s.pitches.some((x) => x.playerId === p.id) ? "plan in ✓" : "…";
-          if (s.phase === "appeal") {
-            const x = s.pitches.find((q) => q.playerId === p.id);
-            return x?.verdict && !autoSucceeds(x.verdict.tier) && !x.auto && !x.appealed && !x.appeal ? "deciding…" : "✓";
-          }
-          if (s.phase === "roll") return s.revealed.includes(p.id) ? "" : "…";
-          if (s.phase === "catch") return s.catchers.includes(p.id) ? "♥ can catch" : "";
-          return "";
-        }}
-      />
-    </div>
-  );
-}
-
 /** Ticks fast enough for a countdown to land on the beat. */
 export function useFastNow(active: boolean) {
   const [now, setNow] = useState(() => Date.now());
@@ -547,103 +264,6 @@ export function useFastNow(active: boolean) {
     return () => clearInterval(iv);
   }, [active]);
   return now;
-}
-
-/** The Final Roll, all together: arm, one shared "3, 2, 1, SHAKE!", every die in the air, one drumroll, one landing. */
-function FinalRollView({ host, s }: { host: Stage; s: GameState }) {
-  const f = s.final;
-  const heroes = s.players.filter((p) => p.hero);
-  const result = s.phase === "final_result";
-  const stage = result ? "landed" : f?.stage ?? "arm";
-  const now = useFastNow(stage === "count");
-  const left = host.deadlineAt ? Math.max(0, host.deadlineAt - now) : 0;
-  const beat = stage === "count" ? Math.max(1, Math.min(3, Math.ceil(left / 1000))) : 0;
-  const shook = f?.shook ?? [];
-  const shookCount = useRef(0);
-  useEffect(() => {
-    if (s.phase === "final_roll" && stage === "arm") sfx.heartbeat();
-    if (stage === "shake") sfx.countBeat(true);
-    if (stage === "tumble") sfx.drumroll(2100);
-    if (stage === "landed" && !result) sfx.diceLand();
-  }, [s.phase, stage, result]);
-  useEffect(() => {
-    if (beat) sfx.countBeat(false);
-  }, [beat]);
-  useEffect(() => {
-    if (stage === "shake" && shook.length > shookCount.current) sfx.pop();
-    shookCount.current = shook.length;
-  }, [stage, shook.length]);
-  useEffect(() => {
-    if (result) {
-      if (f?.ending === "TRIUMPHANT") sfx.fanfare();
-      else if (f?.ending === "GRIM_BUT_HILARIOUS") sfx.sadTrombone();
-      else sfx.stamp();
-    }
-  }, [result, f?.ending]);
-  const big = stage === "count" ? String(beat) : stage === "shake" ? "SHAKE!" : "";
-  return (
-    <div className="flex-1 flex flex-col items-center justify-center gap-8 px-8 relative">
-      <h2 className="font-display text-6xl uppercase text-[var(--gilt-bright)] text-center">The Final Roll</h2>
-      <div className="flex gap-10 flex-wrap justify-center">
-        {heroes.map((p) => {
-          const v = f?.dice[p.id];
-          const inAir = (stage === "shake" || stage === "tumble") && shook.includes(p.id);
-          const sub =
-            stage === "arm"
-              ? p.away
-                ? "on autopilot"
-                : f?.armed?.includes(p.id)
-                ? "armed ✓"
-                : "tap to arm…"
-              : stage === "shake"
-                ? inAir
-                  ? "in the air!"
-                  : "SHAKE!"
-                : stage === "tumble" && f?.auto?.includes(p.id)
-                  ? "rolled for them"
-                  : "";
-          return (
-            <div key={p.id} className="flex flex-col items-center gap-2 w-52 text-center">
-              <D20 value={inAir ? null : v ?? null} rolling={inAir} size={170} tone={f?.best === p.id && result ? "gold" : "ink"} label={p.hero!.name} />
-              {sub && <span className="font-ui text-base text-[var(--gilt-bright)]">{sub}</span>}
-              {s.finalMoves[p.id] && <p className="italic text-parchment/80 line-clamp-3">“{mask(s.finalMoves[p.id])}”</p>}
-            </div>
-          );
-        })}
-      </div>
-      {result && f && (
-        <div className="flex flex-col items-center gap-3 fade-in">
-          {f.best && (
-            <p className="font-ui text-3xl text-parchment tabular-nums">
-              Best roll {f.dice[f.best]} + Hope {f.hopeBonus} = <b className="text-4xl">{f.total}</b>
-            </p>
-          )}
-          <Stamp text={ENDING_LABEL[f.ending]} size="xl" tone={f.ending === "TRIUMPHANT" ? "gilt" : f.ending === "BITTERSWEET" ? "forest" : "crimson"} />
-        </div>
-      )}
-      {!result && stage === "arm" && (
-        <div className="flex flex-col items-center gap-2 text-center">
-          <p className="font-heading text-4xl uppercase animate-pulse">Phones out. Tap to arm your die.</p>
-          <p className="font-ui text-xl text-parchment/75">Then we all shake at once. Yell your battle cry on SHAKE.</p>
-        </div>
-      )}
-      {!result && stage === "tumble" && <p className="font-heading text-4xl uppercase animate-pulse">Here it comes…</p>}
-      {!result && big && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none bg-black/55">
-          <span
-            key={big}
-            className="ouar-stamp-slam font-display leading-none text-[var(--gilt-bright)] drop-shadow-[0_0_30px_rgba(255,46,126,0.8)]"
-            style={{ fontSize: stage === "count" ? "16rem" : "12rem", ["--ouar-rot" as string]: stage === "count" ? "0deg" : "-4deg" }}
-          >
-            {big}
-          </span>
-          <p className="font-heading text-5xl uppercase text-parchment mt-4">
-            {stage === "count" ? "Yell your battle cry on SHAKE!" : "Battle cry! Shake your phone!"}
-          </p>
-        </div>
-      )}
-    </div>
-  );
 }
 
 // ---------- Mirror, Mirror ----------
@@ -738,210 +358,6 @@ function MirrorRevealCard({ host, s }: { host: Stage; s: GameState }) {
           <p className="font-ui text-sm text-ink-soft">
             {s.mirrorIndex + 1} of {s.mirror.length}
           </p>
-        </div>
-      </div>
-      <Crew host={host} s={s} mark={(p) => (s.ready.includes(p.id) ? "ready ✓" : "")} />
-    </div>
-  );
-}
-
-function Epilogue({ s }: { s: GameState }) {
-  return (
-    <div className="flex-1 flex items-center justify-center px-8">
-      <div className="page p-10 max-w-5xl">
-        {s.busy || !s.epilogue ? (
-          <div className="flex flex-col items-center gap-3"><Hourglass size={64} /><p className="font-heading text-xl">{s.busy}</p></div>
-        ) : (
-          <TypeReveal text={s.epilogue} className="text-[2rem] leading-snug" />
-        )}
-      </div>
-    </div>
-  );
-}
-
-function Reveal({ host, s }: { host: Stage; s: GameState }) {
-  const rs = host.realStory;
-  const seed = host.questSeed;
-  const [qr, setQr] = useState("");
-  const [typed, setTyped] = useState(0);
-  useEffect(() => {
-    if (rs?.link) QRCode.toDataURL(rs.link, { margin: 1, width: 220 }).then(setQr);
-    sfx.whoosh();
-  }, [rs?.link]);
-  useEffect(() => {
-    if (!rs) return;
-    setTyped(0);
-    const iv = setInterval(() => {
-      setTyped((n) => {
-        if (n >= rs.headline.length) {
-          clearInterval(iv);
-          return n;
-        }
-        if (n % 3 === 0) sfx.tick();
-        return n + 1;
-      });
-    }, 45);
-    return () => clearInterval(iv);
-  }, [rs]);
-  if (!rs || !seed) return null;
-  return (
-    <div className="flex-1 flex items-center justify-center px-8 pb-4">
-      <div className="max-w-5xl w-full bg-[#f7f5ef] text-[#151515] p-10 shadow-2xl rotate-[-0.6deg] fade-in" style={{ fontFamily: "Georgia, 'Times New Roman', serif" }}>
-        <p className="uppercase tracking-[0.3em] text-sm text-[#555] border-b border-[#bbb] pb-2">The official story</p>
-        <h2 className="text-5xl font-bold leading-tight mt-4 min-h-[2.4em]">
-          {rs.headline.slice(0, typed)}
-          <span className="animate-pulse">{typed < rs.headline.length ? "▍" : ""}</span>
-        </h2>
-        <p className="mt-2 text-[#555]" style={{ fontFamily: "var(--font-ui), monospace" }}>
-          {rs.source} · {rs.date}
-        </p>
-        <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-8 mt-6">
-          <div className="flex flex-col gap-3 text-xl leading-snug">
-            <p>{rs.summary}</p>
-            <p className="uppercase tracking-wider text-base text-[#777] mt-2" style={{ fontFamily: "var(--font-ui), monospace" }}>What your group uncovered</p>
-            <p>
-              <b>{seed.the_threat.name}</b> → {seed.the_threat.mapped_from}
-            </p>
-            <p>
-              <b>Your goal</b> → {seed.the_goal.mapped_from}
-            </p>
-            {s.solvedBy && <p className="font-bold text-2xl mt-2">{s.solvedBy}</p>}
-          </div>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          {qr && <div className="flex flex-col items-center gap-2"><img src={qr} alt="QR code to the real article" className="w-44 h-44" /><span className="text-sm text-[#555]">Read the real story</span></div>}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function StorybookView({ host, s }: { host: Stage; s: GameState }) {
-  const [page, setPage] = useState(0);
-  const book = s.storybook;
-  if (!book || s.busy) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center gap-3"><Hourglass size={72} /><p className="font-heading text-2xl">{s.busy || "Putting your story together…"}</p></div>
-    );
-  }
-  const pages = book.pages;
-  const total = pages.length + 3; // cover, pages, crew, the end, how this story was made
-  const imgIndex = (ref: string) => Math.max(0, Number(String(ref).replace("scene_", "")) - 1);
-  const said = (id: string) => s.mirror.find((c) => c.wardId === id)?.sentence ?? "";
-  const quotes = s.log
-    .filter((l) => l.band === "LEGENDARY" || l.band === "SUCCESS" || l.band === "CATASTROPHE")
-    .filter((l, i, all) => all.findIndex((x) => x.pitch === l.pitch) === i)
-    .slice(0, 4);
-  return (
-    <div className="flex-1 min-h-0 flex flex-col gap-4 px-8 pb-4">
-      <div className={`flex-1 min-h-0 page p-8 grid grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] gap-8 items-center ${page === total ? "grid-rows-[minmax(0,1fr)]" : ""}`}>
-        {page === 0 && (
-          <>
-            <SceneImage host={host} index={s.scenes.length - 1} />
-            <div className="flex flex-col gap-4">
-              <h2 className="font-display text-6xl leading-none uppercase">{book.title}</h2>
-              <p className="italic text-2xl text-ink-soft">{book.dedication}</p>
-              <p className="font-ui uppercase tracking-widest text-sm text-ink-soft">
-                {s.partyName || "The Group"} · Chapter {loadShelf().filter((b) => b.party === (s.partyName || "The Group")).length || 1}
-              </p>
-            </div>
-          </>
-        )}
-        {page > 0 && page <= pages.length && (
-          <>
-            <SceneImage host={host} index={imgIndex(pages[page - 1].image_ref)} />
-            <TypeReveal key={page} text={mask(pages[page - 1].text)} className="text-[1.8rem] leading-snug" />
-          </>
-        )}
-        {page === pages.length + 1 && (
-          <div className="col-span-2 flex flex-col gap-4 overflow-auto">
-            <h2 className="font-heading text-4xl uppercase">The crew</h2>
-            <div className="grid grid-cols-2 gap-4">
-              {book.hero_pages.map((hp) => {
-                const p = s.players.find((x) => x.id === hp.hero_id);
-                if (!p?.hero) return null;
-                return (
-                  <div key={hp.hero_id} className="flex gap-3 items-start">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    {host.portraits[p.id] && <img src={host.portraits[p.id]} alt="" className="portrait-oval w-20 h-24" />}
-                    <div>
-                      <p className="font-heading text-xl font-bold">{[p.hero.name, ...p.titles].join(", ")}</p>
-                      <Stamp text={hp.award} size="sm" slam={false} tone="gilt" />
-                      <p className="text-lg leading-snug mt-1">{hp.best_moment}</p>
-                      {said(hp.hero_id) && (
-                        <p className="text-lg leading-snug mt-1 italic">
-                          <b className="not-italic font-ui text-sm uppercase tracking-widest text-[var(--crimson)]">Said about you:</b> {said(hp.hero_id)}
-                        </p>
-                      )}
-                      {p.truth && (
-                        <p className="text-lg leading-snug mt-1">
-                          <b className="font-ui text-sm uppercase tracking-widest text-[var(--signal)]">Fun fact, really true:</b> {p.name} says “{mask(p.truth)}”
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            {thankYouLines(s).length > 0 && (
-              <div className="flex flex-col gap-1">
-                <p className="font-ui uppercase tracking-widest text-sm text-[var(--crimson)]">Thank-yous</p>
-                {thankYouLines(s).map((t, i) => (
-                  <p key={i} className="text-lg">❤️ {t}.</p>
-                ))}
-              </div>
-            )}
-            {quotes.length > 0 && (
-              <div className="flex flex-col gap-1">
-                <p className="font-ui uppercase tracking-widest text-sm text-ink-soft">In their own words</p>
-                {quotes.map((l, i) => (
-                  <p key={i} className="text-lg italic">
-                    “{mask(l.pitch)}” — {l.hero}
-                  </p>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-        {page === pages.length + 2 && (
-          <div className="col-span-2 grid grid-cols-[minmax(0,1fr)_auto] gap-10 items-center">
-          <div className="flex flex-col items-center gap-5 text-center">
-            <p className="font-display text-6xl uppercase">The End</p>
-            <p className="italic text-2xl">{book.moral}</p>
-            {book.real_story_bridge && <p className="text-xl max-w-3xl">{book.real_story_bridge}</p>}
-            <p className="font-ui text-ink-soft">Saved to {s.partyName || "your group"}’s shelf. Next chapter, same crew, whenever you’re ready.</p>
-            {!host.readOnly && (
-              <button className="btn btn-crimson text-xl" onClick={() => host.nextTale()}>
-                Next chapter
-              </button>
-            )}
-            <p className="font-ui text-sm text-ink-soft">One more page: how the AI made this story ▸</p>
-          </div>
-          <KeepsakeQR host={host} s={s} size={320} />
-          </div>
-        )}
-        {page === pages.length + 3 && <HowThisWasMade s={s} />}
-      </div>
-      <div className="flex items-center justify-center gap-4">
-        <button className="btn btn-ghost" disabled={page === 0} onClick={() => { setPage((p) => p - 1); sfx.pageTurn(); }}>◂ Back</button>
-        <span className="font-ui tabular-nums">{page + 1} / {total + 1}</span>
-        <button className="btn btn-gilt" disabled={page >= total} onClick={() => { setPage((p) => p + 1); sfx.pageTurn(); }}>Next page ▸</button>
-      </div>
-    </div>
-  );
-}
-
-function QuestIntro({ host, s }: { host: Stage; s: GameState }) {
-  return (
-    <div className="flex-1 min-h-0 flex flex-col gap-4 px-8 pb-4">
-      <div className="flex-1 min-h-0 grid grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] gap-6 items-center">
-        <SceneImage host={host} index={0} />
-        <div className="page p-8 flex flex-col gap-4">
-          <p className="font-ui uppercase tracking-[0.25em] text-sm text-ink-soft">{s.quest?.realm}</p>
-          <h2 className="font-display text-5xl leading-none uppercase">{s.quest?.title}</h2>
-          <div className="gilt-rule" />
-          <TypeReveal text={s.quest?.premise ?? ""} className="text-[1.7rem] leading-snug" />
-          <p className="font-ui text-[var(--gilt-bright)] text-lg">The goal: {s.quest?.goalShort}</p>
-          {Object.keys(s.wards).length > 0 && <p className="font-ui text-[var(--signal)] text-lg">🪞 Check your phone. Everyone has a secret mission tonight.</p>}
         </div>
       </div>
       <Crew host={host} s={s} mark={(p) => (s.ready.includes(p.id) ? "ready ✓" : "")} />
@@ -1078,16 +494,6 @@ export function TV({ host, embedded = false }: { host: Stage; embedded?: boolean
 
   let main: React.ReactNode;
   switch (s.phase) {
-    case "lobby":
-      main = <Lobby host={host} s={s} />;
-      break;
-    case "quest":
-      main = <QuestIntro host={host} s={s} />;
-      break;
-    case "final_roll":
-    case "final_result":
-      main = <FinalRollView host={host} s={s} />;
-      break;
     case "mirror_write":
     case "mirror_guess":
       main = <MirrorWait host={host} s={s} />;
@@ -1095,17 +501,8 @@ export function TV({ host, embedded = false }: { host: Stage; embedded?: boolean
     case "mirror_reveal":
       main = <MirrorRevealCard host={host} s={s} />;
       break;
-    case "epilogue":
-      main = <Epilogue s={s} />;
-      break;
-    case "reveal":
-      main = <Reveal host={host} s={s} />;
-      break;
-    case "storybook":
-      main = <StorybookView host={host} s={s} />;
-      break;
     default:
-      main = <RoundStage host={host} s={s} />;
+      main = <Lobby host={host} s={s} />;
   }
 
   return (

@@ -149,7 +149,8 @@ export const SCENE_SCHEMA = obj({
 // Rubric v2 from design/23-model-choices.md (8/8 consistent across 3 runs on spark-1.3 minimal, vs 5-7/8 before).
 export const RULING_SYSTEM = `${DM_CORE}
 
-TASK: RULING. The table voted, and one hero's plan won. Rule how likely it is to work. You never decide whether it works: a d20 does, after you rule.
+TASK: RULING. It's one hero's turn and they picked a plan. Rule how likely it is to work. You never decide whether it works: a d20 does, after you rule.
+- Judge it LITERALLY, at face value: only the first concrete action in the plan. Ignore chains and backups ("and if that fails I..."), wishes and claims that it works. Don't make it smarter or dumber than it is.
 Input: the scene (title, goal, situation, who is there), finale (true in the last scene), the hero (name, stats, power, weakness), the plan (inside <player_input>), and earlier (what already happened tonight).
 - tier: decide with these tests, in order:
   - miracle: breaks the basic rules of this world even for a cartoon (teleporting a town, eating stone, time travel).
@@ -189,6 +190,9 @@ Input: the scene (title, goal, situation), the hero (name, power, weakness), att
   - Use only people, places and things named in the scene or the plan.
   - If finale is false, the threat is never beaten for good here. Even a LEGENDARY wins only this scene's goal, and the threat slips away or something bigger shows up.
   - Mention a natural 1 or 20 only if natural is set. Never other numbers.
+  - A natural 20 always works, even for a silly plan, in the funniest way that still makes sense. A natural 1 always flops, harmlessly.
+  - If helped_by is set, the plan was partly a friend's idea: give that friend a few words of credit ("Gus's idea, Juno's hands").
+  - Only the first concrete action happens. Ignore anything the player chained after it.
 
 EXAMPLES (different scene, style only, never reuse):
 SUCCESS: "Pip offers the troll a job, and he takes it on the spot. He wants to know where the snacks are, but the bridge is open."

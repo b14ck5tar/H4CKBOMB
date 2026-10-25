@@ -13,14 +13,18 @@ import {
   PLAYER_COLORS,
   ROLL_ANIM_MS,
   ROLL_MS,
+  PLAN_MAX,
+  QUICK_TURN_MS,
   RULING_MS,
   STAT_LABEL,
   STORY_VOTE_MS,
+  TIER_DC,
   TIER_LABEL,
-  TIER_MOD,
+  TURN_MS,
   VOTE_MS,
-  band,
   d20,
+  judge,
+  needOnDie,
   endingFromBand,
   narrationMs,
   readMs,
@@ -103,6 +107,11 @@ const AWAY_SILENCE_MS = 25_000;
 const AWAY_AFTER_TIMEOUTS = 2;
 const PRESENCE_ONLY = new Set(["hello", "ping", "away"]); // these don't count as "I'm back"
 const BAND_RANK: Record<Band, number> = { LEGENDARY: 0, SUCCESS: 1, YES_BUT: 2, FAIL: 3, CATASTROPHE: 4 };
+
+/** One action, ~140 characters, one line. */
+function cleanPlan(text: unknown) {
+  return String(text ?? "").replace(/[<>]/g, "").replace(/\s+/g, " ").trim().slice(0, PLAN_MAX);
+}
 
 /** Uniform-enough random int in [0, n) from crypto. */
 function randInt(n: number) {
@@ -303,6 +312,10 @@ export class GameHost {
       endingLine: "",
       recap: "",
       storyOptions: [],
+      turnOrder: [],
+      turnIndex: 0,
+      ideas: {},
+      finale: false,
       boosts: {},
       rolls: [],
       revealed: [],
@@ -524,6 +537,9 @@ export class GameHost {
       case "story_vote":
         if (this.storyVoters().every((p) => s.votes[p.id])) this.endStoryVote();
         return;
+      case "turn":
+        if (this.player(this.owner())?.away) this.endTurn();
+        return;
       case "pitch":
         if (this.allPresent((id) => s.pitches.some((x) => x.playerId === id))) this.endPitch();
         return;
@@ -629,7 +645,8 @@ export class GameHost {
     const name = this.heroName(pitch.playerId);
     // Safety: player text that never reached the AI's moderation is not printed.
     const plan = v.fallback ? "(plan hidden: not reviewed)" : v.moderation === "ok" ? `"${clip(mask(pitch.text), 90)}"` : `(${clip(v.interpretation, 80)})`;
-    this.note("ruling", name, `${plan} → ${TIER_LABEL[v.tier]} (${fmtMod(TIER_MOD[v.tier])}, rolls ${STAT_LABEL[v.stat]}). ${end(v.reason || "No reason given")}`);
+    const target = v.tier === "miracle" ? "only a natural 20" : `needs ${TIER_DC[v.tier]}+ in total`;
+    this.note("ruling", name, `${plan}${pitch.creditId ? ` (+ ${this.heroName(pitch.creditId)}'s idea, +1)` : ""} → ${TIER_LABEL[v.tier]}, ${target}, rolls ${STAT_LABEL[v.stat]}. ${end(v.reason || "No reason given")}`);
     if (v.moderation === "redirected") {
       this.bump("safety");
       this.note("safety", name, "Plan steered to the nearest harmless version. The original is never repeated.");
@@ -647,10 +664,11 @@ export class GameHost {
       this.bump("rolls");
       if (r.kept === 1) this.bump("nat1");
       if (r.kept === 20) this.bump("nat20");
-      const mods = v ? ` ${fmtMod(r.statBonus)} ${STAT_LABEL[v.stat]} ${fmtMod(r.tierMod)} ${TIER_LABEL[v.tier]}` : "";
+      const mods = v ? ` ${fmtMod(r.statBonus)} ${STAT_LABEL[v.stat]}${r.bonus ? ` +${r.bonus} friend's idea` : ""}` : "";
+      const vs = v ? ` vs ${v.tier === "miracle" ? "a natural 20" : `${TIER_DC[v.tier]}+`}` : "";
       const nat = r.kept === 1 ? " Natural 1." : r.kept === 20 ? " Natural 20." : "";
       const miracle = v?.tier === "miracle" && r.kept !== 20 ? " (only a natural 20 makes a miracle)" : "";
-      this.note("roll", name, `${auto ? "Didn't tap in time, so the table rolled. " : ""}d20 rolled ${r.kept}${mods} = ${r.total} → ${end(BAND_LABEL[r.band].replace(/…$/, "") + miracle)}${nat}`);
+      this.note("roll", name, `${auto ? "Didn't tap in time, so the table rolled. " : ""}d20 rolled ${r.kept}${mods} = ${r.total}${vs} → ${end(BAND_LABEL[r.band].replace(/…$/, "") + miracle)}${nat}`);
     };
     if (delay > 0) setTimeout(write, delay);
     else write();
@@ -684,7 +702,9 @@ export class GameHost {
       case "real":
         return this.onReal(m.pid, m.skill, m.fear);
       case "pitch":
-        return this.onPitch(m.pid, m.text);
+        return this.onPitch(m.pid, m.text, String(m.creditId ?? ""));
+      case "idea":
+        return this.onIdea(m.pid, m.text);
       case "vote":
         return this.onVote(m.pid, String(m.id ?? ""));
       case "roll":
@@ -978,31 +998,33 @@ export class GameHost {
     return [make("hook", 0, 0), make("twist", Math.floor(locs.length / 2), 1), make("climax", locs.length - 1, 2)];
   }
 
-  /** Which pre-painted plate a played scene uses. */
-  private plateFor(i: number) {
-    return this.quick ? 2 : i;
+  /** Which pre-painted plate is behind turn k: the story moves through the three plates as the turns go by. */
+  private plateFor(k: number) {
+    if (this.quick) return 2;
+    const n = Math.max(1, this.state.turnOrder.length);
+    return Math.min(2, Math.floor((k * 3) / (n + 1)));
   }
 
   /**
-   * The art hook: paint the party's heroes into scene i (server/art via /api/scene-art, muse-image edits, ~15 s,
+   * The art hook: paint the party's heroes into a plate (server/art via /api/scene-art, muse-image edits, ~15 s,
    * cached). Fires in the background; when it lands, the TV crossfades from the pre-painted plate to the new art.
    * Never blocks: a failure just keeps the plate.
    */
-  private getSceneArt(i: number) {
+  private getSceneArt(plateIn: number) {
     if (!FEATURES.heroArt || !this.seed) return;
     const questId = this.seed.id;
-    const key = `${questId}:${i}`;
-    if (this.artP.has(key) || i >= this.sceneList.length) return;
+    const plate = this.quick ? 2 : plateIn;
+    const key = `${questId}:${plate}`;
+    if (this.artP.has(key)) return;
     const heroes = this.heroes()
       .slice(0, 4)
       .map((p) => ({ id: p.pick ?? p.id, name: p.hero!.name, portraitUrl: p.pick ? `/heroes/${p.pick}.webp` : this.portraits[p.id], visual: p.hero!.visual }));
     if (!heroes.length) return;
-    const plate = this.plateFor(i);
     const t0 = Date.now();
     const p = fetch("/api/scene-art", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ questId, sceneIndex: this.quick ? "quick" : i, heroes, rating: this.state.rating }),
+      body: JSON.stringify({ questId, sceneIndex: this.quick ? "quick" : plate, heroes, rating: this.state.rating }),
     })
       .then((r) => (r.ok ? r.json() : null))
       .then((res: { url?: string; fallback?: boolean; cached?: boolean } | null) => {
@@ -1010,7 +1032,7 @@ export class GameHost {
         this.sceneImages[plate] = res.url;
         this.sceneCopies.delete(`${questId}:${plate}`);
         this.note("scene", "Scene art", `Painted the heroes into the scene with muse-image edits (${res.cached ? "cached" : `${Math.round((Date.now() - t0) / 1000)}s`}). The pre-painted scene showed until it was ready.`);
-        this.set({ scenes: this.state.scenes.map((sc, j) => (j === i ? { ...sc, hasImage: true } : sc)) });
+        this.set({});
       })
       .catch(() => {});
     this.artP.set(key, p);
@@ -1054,6 +1076,10 @@ export class GameHost {
       outcome: "",
       endingLine: "",
       recap: "",
+      turnOrder: [],
+      turnIndex: 0,
+      ideas: {},
+      finale: false,
       solvedBy: "",
       round: null,
       final: null,
@@ -1123,49 +1149,59 @@ export class GameHost {
   }
 
   // ---------- the story ----------
+  /**
+   * Fixed start, fixed goal, open middle (design/24). The opener is hand-written; the goal is the story's final goal;
+   * after that every turn's outcome moves the story on.
+   */
   private startStory() {
     const seed = this.seed!;
     const quick = this.quick;
-    this.sceneList = this.seedScenes(seed, quick);
-    const scenes: SceneView[] = this.sceneList.map((sc, i) => ({
-      kind: sc.kind,
-      location: sc.location,
-      description: sc.situation,
-      twist: "",
-      hasImage: !!this.sceneImages[this.plateFor(i)],
-    }));
+    const scenes = this.seedScenes(seed, quick);
+    const opener = scenes[0];
+    const goal = scenes[scenes.length - 1].goal;
+    this.sceneList = [{ ...opener, goal }];
+    this.set({
+      scenes: [{ kind: "hook", location: opener.location, description: opener.situation, twist: "", hasImage: !!this.sceneImages[this.plateFor(0)] }],
+      turnOrder: this.makeTurnOrder(),
+      turnIndex: 0,
+      ideas: {},
+      finale: false,
+    });
     this.note("safety", "Why it's safe", SAFETY_NOTES[seed.id] ?? SAFETY_GENERIC);
     this.note(
       "source",
       "The story",
       quick
-        ? `Quick Tale (one scene) built from a real news story. The cold open shows the real headline; how each part maps to it is revealed at the end.`
+        ? `Quick Tale built from a real news story. The cold open shows the real headline; how each part maps to it is revealed at the end.`
         : `Built from a real news story${seed.category ? ` (${seed.category.replace(/_/g, " ")})` : ""}. The headline stays hidden until the end so it can't spoil the twist.`,
     );
-    this.note("scene", "How scenes are written", "Every scene was written by the team in plain English ahead of time. The AI only rules on plans and says what happened.");
-    this.set({ phase: "quest", scenes, sceneIndex: 0, narration: "", sceneTitle: "", goal: "", ready: [] });
+    const n = this.state.turnOrder.length;
+    this.note("turn", "Turns", `${n} turns (${this.heroes().length} players × ${this.heroes().length ? n / this.heroes().length : 0}), then the grand finale. The opener and the goal were written by the team; the AI writes what each action does.`);
+    this.set({ phase: "quest", sceneIndex: 0, narration: "", sceneTitle: "", goal: "", ready: [] });
     this.getSceneArt(0);
-    // Quick Tale: the real headline types out, then the title card. Full Story: a short title card.
     const ms = quick ? coldOpenTimeline(seed.the_real_story.headline).total : TITLE_CARD_MS;
-    this.setTimer(ms, () => this.openScene(0));
+    this.setTimer(ms, () => this.openStory());
+  }
+
+  /** Turn order: everyone in join order, repeated. 2-4 players get 2 turns each, 5-8 get 1, Quick Tale 1. */
+  private makeTurnOrder() {
+    const ids = this.heroes().map((p) => p.id);
+    const cycles = this.quick || ids.length >= 5 ? 1 : 2;
+    return Array.from({ length: cycles }, () => ids).flat();
   }
 
   private isFinal() {
-    return this.state.scenes[this.state.sceneIndex]?.kind === "climax";
+    return this.state.finale;
   }
 
-  private sceneLabel(i = this.state.sceneIndex) {
-    return this.state.scenes[i]?.kind === "climax" ? "Finale" : `Scene ${i + 1}`;
-  }
-
-  /** A hand-written scene: the narration reveals line by line on the TV and moves on by itself (Space skips). */
-  private openScene(i: number) {
+  /** The hand-written opener: it reveals line by line on the TV and moves on by itself (Space skips). */
+  private openStory() {
     this.clearTimer();
-    const sc = this.sceneList[i];
+    const sc = this.sceneList[0];
     if (!sc) return;
     this.set({
       phase: "narrating",
-      sceneIndex: i,
+      sceneIndex: 0,
       sceneTitle: sc.title,
       goal: sc.goal,
       narration: sc.narration,
@@ -1182,18 +1218,89 @@ export class GameHost {
       ready: [],
       busy: "",
     });
-    this.note("scene", this.sceneLabel(i), `"${sc.title}". Goal: ${end(sc.goal)}`);
-    this.setTimer(narrationMs(sc.narration, sc.npc_line?.line ?? ""), () => this.startPitch());
-    this.getSceneArt(i + 1); // paint the next scene while this one plays
+    this.note("scene", "The opener", `"${sc.title}". Goal for the whole story: ${end(sc.goal)}`);
+    this.setTimer(narrationMs(sc.narration, sc.npc_line?.line ?? ""), () => this.startTurn(0));
   }
 
-  // ---------- 1. everyone types a plan ----------
-  private startPitch() {
+  // ---------- turns: one owner, everyone else suggests ----------
+  private turnMs() {
+    return this.quick ? QUICK_TURN_MS : TURN_MS;
+  }
+
+  /** The owner of turn i, skipping anyone who's away (they can come back later). Past the last turn: the finale. */
+  private startTurn(i: number) {
     this.clearTimer();
-    this.verdicts.clear();
     this.giveLateHeroes();
-    this.set({ phase: "pitch", pitches: [], votes: {}, winnerId: "", rolls: [], revealed: [], ready: [] });
-    this.setTimer(PITCH_MS, () => this.endPitch(true));
+    const order = this.state.turnOrder;
+    let k = i;
+    while (k < order.length && (!this.player(order[k])?.hero || this.player(order[k])?.away)) {
+      this.note("turn", this.heroName(order[k]), "Away, so their turn is skipped. They can jump back in any time.");
+      k++;
+    }
+    if (k >= order.length) return this.startFinale();
+    this.verdicts.clear();
+    const owner = order[k];
+    this.set({ phase: "turn", turnIndex: k, ideas: {}, pitches: [], votes: {}, winnerId: "", outcome: "", rolls: [], revealed: [], ready: [], busy: "" });
+    this.setTimer(this.turnMs(), () => this.endTurn(true));
+    this.getSceneArt(this.plateFor(k + 1));
+    this.note("turn", this.heroName(owner), `Turn ${k + 1} of ${order.length}. Everyone else can suggest one action; ${this.heroName(owner)} picks.`);
+  }
+
+  private owner() {
+    return this.state.turnOrder[this.state.turnIndex] ?? "";
+  }
+
+  /** A friend's suggestion for the turn owner (one action, ~140 characters). They can change it until the owner picks. */
+  private onIdea(pid: string, text: string) {
+    if (this.state.phase !== "turn" || pid === this.owner() || !this.player(pid)?.hero) return;
+    const clean = cleanPlan(text);
+    if (!clean) return;
+    this.set({ ideas: { ...this.state.ideas, [pid]: clean } });
+  }
+
+  /** The owner picks: their own words, or a friend's suggestion (maybe edited). Using a friend's idea is +1 and credited. */
+  private onPitch(pid: string, text: string, creditId = "") {
+    const s = this.state;
+    if (s.phase === "turn") {
+      if (pid !== this.owner()) return this.onIdea(pid, text);
+      const clean = cleanPlan(text);
+      if (!clean) return;
+      const credit = creditId && creditId !== pid && s.ideas[creditId] ? creditId : "";
+      return this.takePlan({ id: `t${s.turnIndex}-${pid}`, playerId: pid, text: clean, useAbility: false, embraceFlaw: false, creditId: credit || undefined });
+    }
+    if (s.phase !== "pitch") return;
+    if (!this.player(pid)?.hero || s.pitches.some((p) => p.playerId === pid)) return;
+    const clean = cleanPlan(text);
+    if (!clean) return;
+    const pitch: Pitch = { id: `f-${pid}`, playerId: pid, text: clean, useAbility: false, embraceFlaw: false };
+    this.set({ pitches: [...s.pitches, pitch] });
+    // No visible loading: every finale plan is ruled the moment it's sent, so the winner's ruling is ready when the vote ends.
+    this.verdicts.set(pitch.id, this.askRuling(pitch));
+    if (this.allPresent((id) => this.state.pitches.some((x) => x.playerId === id))) this.endPitch();
+  }
+
+  private takePlan(pitch: Pitch) {
+    if (this.state.phase !== "turn") return;
+    this.clearTimer();
+    this.set({ pitches: [pitch] });
+    const ideas = Object.keys(this.state.ideas).length;
+    const from = pitch.creditId ? `, working in ${this.heroName(pitch.creditId)}'s idea (+1)` : ideas ? `, their own idea (${ideas} suggestion${ideas > 1 ? "s" : ""} offered)` : "";
+    this.note("turn", this.heroName(pitch.playerId), `Picked a plan${from}.`);
+    this.startRuling(pitch);
+  }
+
+  /** Time's up: the owner goes with the first friend's idea, or, with none, the turn passes. */
+  private endTurn(timedOut = false) {
+    if (this.state.phase !== "turn") return;
+    const owner = this.owner();
+    if (timedOut) this.timedOut([owner]);
+    const first = Object.entries(this.state.ideas)[0];
+    if (first) {
+      this.note("turn", this.heroName(owner), `Out of time, so ${this.heroName(first[0])}'s suggestion goes ahead.`);
+      return this.takePlan({ id: `t${this.state.turnIndex}-${owner}`, playerId: owner, text: first[1], useAbility: false, embraceFlaw: false, creditId: first[0], auto: true });
+    }
+    this.note("turn", this.heroName(owner), "Out of time and no suggestions, so the turn passes.");
+    this.startTurn(this.state.turnIndex + 1);
   }
 
   /** A custom hero still drawing when play starts gets a ready-made one, so nobody ever waits on a portrait. */
@@ -1216,65 +1323,43 @@ export class GameHost {
       });
   }
 
-  private onPitch(pid: string, text: string) {
-    if (this.state.phase !== "pitch") return;
-    if (!this.player(pid)?.hero || this.state.pitches.some((p) => p.playerId === pid)) return;
-    const clean = String(text ?? "").replace(/[<>]/g, "").replace(/\s+/g, " ").trim().slice(0, 200);
-    if (!clean) return;
-    const pitch: Pitch = { id: `${this.state.sceneIndex}-${pid}`, playerId: pid, text: clean, useAbility: false, embraceFlaw: false };
-    this.set({ pitches: [...this.state.pitches, pitch] });
-    // No visible loading: every plan is ruled the moment it's sent, so the winner's ruling is ready when the vote ends.
-    this.verdicts.set(pitch.id, this.askRuling(pitch));
-    if (this.allPresent((id) => this.state.pitches.some((x) => x.playerId === id))) this.endPitch();
+  // ---------- the grand finale: everyone proposes, everyone votes (not your own), one shared die ----------
+  private startFinale() {
+    this.clearTimer();
+    this.verdicts.clear();
+    this.set({ phase: "pitch", finale: true, pitches: [], votes: {}, winnerId: "", outcome: "", rolls: [], revealed: [], ready: [], busy: "" });
+    this.note("turn", "Grand finale", "Everyone proposes the final move, everyone backs a friend's plan (never their own), and the winning plan gets one shared die.");
+    this.getSceneArt(this.plateFor(this.state.turnOrder.length));
+    this.setTimer(this.turnMs(), () => this.endPitch(true));
   }
 
   private endPitch(timedOut = false) {
     if (this.state.phase !== "pitch") return;
     this.clearTimer();
-    // Out of time with nothing typed: your hero hangs back this time, and a plan that wasn't made can't win.
     const missing = this.heroes().filter((h) => !this.state.pitches.some((p) => p.playerId === h.id));
-    if (timedOut) this.timedOut(missing.map((h) => h.id));
-    const autos: Pitch[] = missing.map((h) => ({
-      id: `${this.state.sceneIndex}-${h.id}`,
-      playerId: h.id,
-      text: `${h.hero!.name} hangs back.`,
-      useAbility: false,
-      embraceFlaw: false,
-      auto: true,
-      autopilot: !!h.away,
-    }));
-    const pitches = [...this.state.pitches, ...autos];
-    this.set({ pitches });
-    if (missing.length) this.note("ruling", "Plans", `${pitches.length - missing.length} of ${pitches.length} plans in. ${missing.map((h) => h.hero!.name).join(", ")} hung back, so ${missing.length > 1 ? "those plans" : "that plan"} can't win.`);
+    if (timedOut) this.timedOut(missing.filter((h) => !h.away).map((h) => h.id));
     let el = this.eligible();
     if (!el.length) {
       // Nobody typed anything: someone still has to do something.
-      const h = this.heroes()[randInt(this.heroes().length)];
-      const fill: Pitch = { ...pitches.find((p) => p.playerId === h.id)!, text: "tries the first thing that comes to mind", auto: false };
-      this.set({ pitches: pitches.map((p) => (p.id === fill.id ? fill : p)) });
+      const h = this.present()[0] ?? this.heroes()[0];
+      const fill: Pitch = { id: `f-${h.id}`, playerId: h.id, text: "goes for it, all in", useAbility: false, embraceFlaw: false, auto: true };
+      this.set({ pitches: [...this.state.pitches, fill] });
       this.verdicts.set(fill.id, this.askRuling(fill));
       el = [fill];
     }
+    if (missing.length) this.note("ruling", "Final plans", `${this.state.pitches.length} of ${this.heroes().length} plans in.`);
     const voters = this.planVoters(el);
     if (el.length === 1 || !voters.length) {
-      this.note("ruling", "The vote", el.length === 1 ? (this.heroes().length === 1 ? "Solo game: your plan wins." : "Only one plan could win this scene, so no vote.") : "Nobody else could back a plan, so no vote.");
+      this.note("ruling", "The vote", el.length === 1 ? "Only one final plan, so no vote." : "Nobody else could back a plan, so no vote.");
       return this.startRuling(el[0]);
     }
     this.set({ phase: "vote", votes: {} });
     this.setTimer(VOTE_MS, () => this.endVote(true));
   }
 
-  /**
-   * Plans that can win. The spotlight rule: a player whose plan already won can't win again until every present
-   * player has won once. If that leaves nothing, the rule resets.
-   */
+  /** Finale plans that can win: every plan someone actually made. */
   private eligible(): Pitch[] {
-    const real = this.state.pitches.filter((p) => !p.auto);
-    const here = this.present().map((p) => p.id);
-    const wins = this.state.wins;
-    const minWins = here.length ? Math.min(...here.map((id) => wins[id] ?? 0)) : 0;
-    const el = real.filter((p) => (wins[p.playerId] ?? 0) <= minWins);
-    return el.length ? el : real;
+    return this.state.pitches.filter((p) => !p.auto || this.state.pitches.every((x) => x.auto));
   }
 
   /** Who backs a plan: everyone here who has a friend's plan they can back (never their own). */
@@ -1282,7 +1367,6 @@ export class GameHost {
     return this.present().filter((p) => el.some((x) => x.playerId !== p.id));
   }
 
-  // ---------- 2. back a friend's plan ----------
   private onVote(pid: string, id: string) {
     const s = this.state;
     if (s.phase === "story_vote") {
@@ -1306,30 +1390,24 @@ export class GameHost {
     const el = this.eligible();
     if (timedOut) this.timedOut(this.planVoters(el).filter((p) => !this.state.votes[p.id]).map((p) => p.id));
     const count = (id: string) => Object.values(this.state.votes).filter((v) => v === id).length;
-    const wins = (p: Pitch) => this.state.wins[p.playerId] ?? 0;
     const top = Math.max(...el.map((p) => count(p.id)));
-    let best = el.filter((p) => count(p.id) === top);
-    const tieWins = best.length > 1;
-    const fewest = Math.min(...best.map(wins));
-    best = best.filter((p) => wins(p) === fewest);
+    const best = el.filter((p) => count(p.id) === top);
     const winner = best[randInt(best.length)];
     const tally = el.map((p) => `${this.heroName(p.playerId)} ${count(p.id)}`).join(", ");
-    const tie = tieWins ? (best.length > 1 ? " Tie, broken at random." : " Tie, broken by who has won least.") : "";
-    this.note("ruling", "The vote", `Backs: ${tally}.${tie} ${this.heroName(winner.playerId)}'s plan goes ahead.`);
+    this.note("ruling", "The vote", `Backs: ${tally}.${best.length > 1 ? " Tie, broken at random." : ""} ${this.heroName(winner.playerId)}'s plan is the final move.`);
     this.startRuling(winner);
   }
 
-  // ---------- 3. the DM rules on the winning plan ----------
+  // ---------- the DM rules on the plan, literally ----------
   private askRuling(pitch: Pitch): Promise<Verdict> {
     const p = this.player(pitch.playerId)!;
     const h = p.hero!;
-    const sc = this.sceneList[this.state.sceneIndex];
     const fb = (): Verdict => this.verdictFallback(pitch);
     return this.viaAI(
       `Ruling on ${h.name}'s plan`,
       this.ask<Partial<Verdict>>("verdict", {
-        scene: { title: sc?.title, goal: sc?.goal, situation: sc?.situation, who_is_there: sc?.npc_line?.speaker ?? "" },
-        finale: sc?.kind === "climax",
+        scene: { title: this.state.sceneTitle, goal: this.state.goal, situation: this.state.situation, who_is_there: this.sceneList[0]?.npc_line?.speaker ?? "" },
+        finale: this.state.finale,
         hero: { name: h.name, best_stat: bestStat(h), stats: h.stats, power: h.ability?.text ?? "", weakness: h.flaw },
         plan: pitch.text,
         earlier: this.state.log.map((l) => `${l.hero} (${l.band}): ${l.narration}`).slice(-4),
@@ -1360,36 +1438,52 @@ export class GameHost {
   private async startRuling(pitch: Pitch) {
     this.clearTimer();
     this.set({ phase: "ruling", winnerId: pitch.id, busy: "" });
-    const scene = this.state.sceneIndex;
+    const turn = this.state.turnIndex;
+    const finale = this.state.finale;
     const vp = this.verdicts.get(pitch.id) ?? this.askRuling(pitch);
+    this.verdicts.set(pitch.id, vp);
     let settled = false;
     vp.then(() => (settled = true));
-    // Only if the ruling isn't already in (it usually is), say so after a moment.
+    // Only if the ruling isn't already in, say so after a moment.
     setTimeout(() => !settled && this.state.phase === "ruling" && this.set({ busy: "The DM is reading the plan…" }), 600);
     const v = await vp;
-    if (this.state.phase !== "ruling" || this.state.sceneIndex !== scene) return;
+    if (this.state.phase !== "ruling" || this.state.turnIndex !== turn || this.state.finale !== finale) return;
     const judged = { ...pitch, verdict: v };
     this.noteRuling(judged, v);
-    this.set({ pitches: this.state.pitches.map((x) => (x.id === pitch.id ? judged : x)), busy: "" });
-    if (this.isFinal()) return this.setTimer(RULING_MS, () => this.startFinalRoll(judged));
     // The die is decided now (crypto, in code), so the outcome is written while the table watches the roll.
     const roll = this.makeRoll(judged);
+    this.set({ pitches: this.state.pitches.map((x) => (x.id === pitch.id ? judged : x)), busy: "", rolls: [{ ...roll, dice: [], kept: 0 }], revealed: [] });
+    if (finale) return this.setTimer(RULING_MS, () => this.startFinalRoll(judged, roll));
     this.pendingRoll = roll;
     this.outcomeP = this.askOutcome(judged, roll);
     this.setTimer(RULING_MS, () => this.startRoll());
   }
 
-  /** One d20 + the stat the DM picked + the tier's modifier. All in code; the AI never touches a number. */
+  /** One d20 + the stat the DM picked + 1 for a friend's idea, against the tier's target. All in code. */
   private makeRoll(pitch: Pitch, die = d20()): RollResult {
     const p = this.player(pitch.playerId)!;
     const v = pitch.verdict ?? this.verdictFallback(pitch);
     const statBonus = p.hero!.stats[v.stat] ?? 0;
-    const tierMod = TIER_MOD[v.tier] ?? 0;
-    const total = die + statBonus + tierMod;
-    return { playerId: p.id, dice: [die], kept: die, advantage: "none", statBonus, tierMod, total, band: band(die, total, v.tier), rescuerId: "", noRoll: false, boosted: false };
+    const bonus = pitch.creditId ? 1 : 0;
+    const total = die + statBonus + bonus;
+    return {
+      playerId: p.id,
+      dice: [die],
+      kept: die,
+      advantage: "none",
+      statBonus,
+      tierMod: 0,
+      bonus,
+      need: needOnDie(v.tier, statBonus + bonus),
+      total,
+      band: judge(die, total, v.tier),
+      rescuerId: "",
+      noRoll: false,
+      boosted: false,
+    };
   }
 
-  // ---------- 4. the winner rolls ----------
+  // ---------- the owner rolls ----------
   private startRoll() {
     const roll = this.pendingRoll;
     if (this.state.phase !== "ruling" || !roll) return;
@@ -1418,23 +1512,22 @@ export class GameHost {
     this.setTimer(ROLL_ANIM_MS + ROLL_HOLD_MS, () => this.showOutcome());
   }
 
-  // ---------- 5. what happened ----------
+  // ---------- what happened ----------
   private askOutcome(pitch: Pitch, roll: RollResult): Promise<string> {
     const h = this.player(pitch.playerId)!.hero!;
-    const sc = this.sceneList[this.state.sceneIndex];
-    const next = this.sceneList[this.state.sceneIndex + 1];
     const fb = () => FALLBACK_OUTCOME[roll.band].replaceAll("{name}", h.name);
     return this.viaAI(
       "What happened",
       this.ask<{ text: string }>("outcome", {
-        scene: { title: sc?.title, goal: sc?.goal, situation: sc?.situation },
+        scene: { title: this.state.sceneTitle, goal: this.state.goal, situation: this.state.situation },
         hero: { name: h.name, power: h.ability?.text ?? "", weakness: h.flaw },
         attempt: pitch.verdict?.interpretation ?? "",
         plan: pitch.text,
+        helped_by: pitch.creditId ? this.heroName(pitch.creditId) : "",
         band: roll.band,
         natural: roll.kept === 1 || roll.kept === 20 ? roll.kept : null,
         finale: false,
-        next_scene: next?.title ?? "",
+        next_scene: "",
       }),
       12_000,
       (d, f) => (f ? fb() : d?.text?.trim() || null),
@@ -1456,10 +1549,10 @@ export class GameHost {
     if ((this.state.phase as string) !== "outcome") return;
     this.recordWin(pitch, roll, text);
     this.set({ outcome: text, busy: "" });
-    this.setTimer(outcomeMs(text), () => this.openScene(this.state.sceneIndex + 1));
+    this.setTimer(outcomeMs(text), () => this.startTurn(this.state.turnIndex + 1));
   }
 
-  /** The scene's result goes in the log (keepsake, DM's Notes) and the winner's spotlight count goes up. */
+  /** The turn's result goes in the log (keepsake, DM's Notes, the next turn's "earlier"). */
   private recordWin(pitch: Pitch, roll: RollResult, text: string) {
     const pid = pitch.playerId;
     this.bump("rounds");
@@ -1468,7 +1561,7 @@ export class GameHost {
       log: [
         ...this.state.log,
         {
-          scene: this.state.sceneIndex,
+          scene: this.state.turnIndex,
           heroId: pid,
           hero: this.heroName(pid),
           pitch: pitch.text,
@@ -1484,11 +1577,11 @@ export class GameHost {
 
   // ---------- final roll (all together, one shared die) ----------
   /** The finale's winning plan: arm, one shared "3, 2, 1, SHAKE!" on the TV and every phone, then ONE die lands. */
-  private startFinalRoll(pitch: Pitch) {
+  private startFinalRoll(pitch: Pitch, roll: RollResult) {
     if (this.state.phase !== "ruling") return;
     this.clearTimer();
     this.finalPitch = pitch;
-    this.finalRoll = this.makeRoll(pitch);
+    this.finalRoll = roll;
     const ending = endingFromBand(this.finalRoll.band);
     this.set({
       phase: "final_roll",
@@ -1635,7 +1728,7 @@ export class GameHost {
     this.patchFinal({ stage: "landed", dice: { [r.playerId]: r.kept }, rolled: [r.playerId], total: r.total, ending });
     this.set({ phase: "final_result", rolls: [r], revealed: [r.playerId], players: this.state.players.map((p) => ({ ...p, peril: "" })), ready: [] });
     this.recordWin(pitch, r, `The finale: ${ENDING_LABEL[ending].toLowerCase()}.`);
-    this.note("roll", "The ending", `${r.kept} ${fmtMod(r.statBonus)} ${fmtMod(r.tierMod)} = ${r.total} → ${BAND_LABEL[r.band]} → ${ENDING_LABEL[ending]}. 15+ works, 10+ works with a cost.`);
+    this.note("roll", "The ending", `${r.kept} ${fmtMod(r.statBonus)}${r.bonus ? ` +${r.bonus}` : ""} = ${r.total} → ${BAND_LABEL[r.band]} → ${ENDING_LABEL[ending]}. Reaching the target works, up to 3 short works with a cost.`);
     this.setTimer(FINAL_RESULT_MS, () => this.runEnding(this.endingPlan[this.state.mode] ?? ["epilogue"]));
   }
 
@@ -1993,6 +2086,10 @@ export class GameHost {
       outcome: "",
       endingLine: "",
       storyOptions: [],
+      turnOrder: [],
+      turnIndex: 0,
+      ideas: {},
+      finale: false,
       pitches: [],
       rolls: [],
       revealed: [],

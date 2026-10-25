@@ -24,7 +24,7 @@ const KIND: Record<NoteKind, { label: string; color: string }> = {
   hero: { label: "Hero", color: "#7CC4FF" },
   clue: { label: "Clue", color: "#8FDCFF" },
   ruling: { label: "Ruling", color: "#FF9A1F" },
-  appeal: { label: "Argument", color: "#B98CFF" },
+  turn: { label: "Turn", color: "#B98CFF" },
   roll: { label: "Dice", color: "#2CF5C0" },
   boost: { label: "Boost", color: "#FF7A45" },
   catch: { label: "Catch!", color: "#FF7A45" },

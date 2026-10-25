@@ -16,8 +16,6 @@ export const FEATURES = {
   inspiration: false,
   /** Winner takes one friend's help for +2 (design/20). Not built yet. */
   help: false,
-  /** Convince the DM: argue your ruling once. */
-  appeal: false,
   /** The 4-6 page storybook. Off = a short 1-2 page keepsake. */
   longStorybook: false,
   /** "Only you noticed…" secret clue box on phones. */

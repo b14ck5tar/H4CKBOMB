@@ -7,9 +7,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import QRCode from "qrcode";
 import type { Stage } from "./TV";
-import { BAND_LABEL, ENDING_LABEL, ROLL_ANIM_MS, STAT_LABEL, TIER_LABEL, TITLE_BEAT_MS, isFailure, lineMs, narrationLines, stampText } from "@/lib/rules";
+import { BAND_LABEL, ENDING_LABEL, ROLL_ANIM_MS, STAT_LABEL, TIER_DC, TITLE_BEAT_MS, isFailure, lineMs, narrationLines, stampText } from "@/lib/rules";
 import { coldOpenTimeline } from "@/lib/quick";
-import { eligibleIds, heroFirst, nowText, winnerPid } from "@/lib/now";
+import { eligibleIds, heroFirst, nowText, plateFor, turnOwner, winnerPid } from "@/lib/now";
 import { sfx } from "@/lib/sfx";
 import { mask } from "@/lib/mask";
 import type { GameState, Pitch, Player, RollResult, Tier } from "@/lib/types";
@@ -22,7 +22,7 @@ import { KeepsakeQR } from "./Keepsake";
 import { FEATURES } from "@/lib/features";
 
 const READING = ["quest", "narrating", "ruling", "outcome", "epilogue", "reveal"];
-const SCENE_PHASES = ["narrating", "pitch", "vote", "ruling", "roll", "outcome"];
+const SCENE_PHASES = ["narrating", "turn", "pitch", "vote", "ruling", "roll", "outcome"];
 type Mood = "push" | "title" | "scene" | "action" | "final" | "end";
 const fmt = (n: number) => (n >= 0 ? `+${n}` : `−${-n}`);
 
@@ -206,8 +206,7 @@ function Fuse({ host, phase }: { host: Stage; phase: string }) {
 /** The scene's goal: on screen the whole scene, so nobody ever wonders what they're trying to do. */
 function GoalBar({ s }: { s: GameState }) {
   if (!s.goal) return null;
-  const scene = s.scenes[s.sceneIndex];
-  const label = s.mode === "quick" ? "The goal" : scene?.kind === "climax" ? "Finale · the goal" : `Scene ${s.sceneIndex + 1} of ${s.scenes.length} · the goal`;
+  const label = s.finale ? "Grand finale · the goal" : s.phase === "narrating" || !s.turnOrder.length ? "The goal" : `Turn ${s.turnIndex + 1} of ${s.turnOrder.length} · the goal`;
   return (
     <div className="gp-goal-row">
       <div className="gp-goal" key={s.goal}>
@@ -421,7 +420,52 @@ function Narration({ s, onTitle }: { s: GameState; onTitle: (on: boolean) => voi
   );
 }
 
-// ---------- 2. everyone types a plan ----------
+// ---------- 2. a turn: the owner picks, everyone else suggests (ideas appear as they come in) ----------
+function Turn({ host, s }: { host: Stage; s: GameState }) {
+  const owner = s.players.find((p) => p.id === turnOwner(s));
+  const ideas = Object.entries(s.ideas);
+  const count = useRef(0);
+  useEffect(() => {
+    if (ideas.length > count.current) sfx.pop();
+    count.current = ideas.length;
+  }, [ideas.length]);
+  useEffect(() => {
+    sfx.whoosh();
+  }, [s.turnIndex]);
+  if (!owner) return null;
+  return (
+    <div className="qt-stage qt-center !gap-7">
+      <div className="flex items-center gap-6 qt-pop">
+        <div className="gp-owner" style={{ ["--pc" as string]: owner.color }}>
+          <Avatar host={host} p={owner} size={140} />
+        </div>
+        <div className="flex flex-col gap-1">
+          <h2 className="qt-question !text-[5rem]" style={{ color: owner.color }}>
+            {owner.hero?.name.split(" ")[0]}&apos;s turn
+          </h2>
+        </div>
+      </div>
+      <p className="text-[1.7rem] leading-snug text-parchment/90 text-center max-w-[72rem] qt-rise">{s.situation}</p>
+      <div className="flex gap-4 justify-center flex-wrap max-w-[100rem] min-h-[7rem]">
+        {ideas.map(([pid, text]) => {
+          const pl = s.players.find((p) => p.id === pid);
+          if (!pl) return null;
+          return (
+            <div key={pid} className="qt-glass qt-plan qt-pop !py-3 max-w-[30rem]" style={{ ["--pc" as string]: pl.color }}>
+              <div className="flex items-center gap-2">
+                <Avatar host={host} p={pl} size={36} />
+                <span className="font-heading text-lg uppercase">{pl.hero?.name.split(" ")[0]} suggests</span>
+              </div>
+              <p className="text-[1.4rem] leading-snug">“{mask(text)}”</p>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ---------- 2b. the grand finale: everyone types a final move ----------
 function Planning({ host, s }: { host: Stage; s: GameState }) {
   const heroes = s.players.filter((p) => p.hero);
   const count = useRef(0);
@@ -432,7 +476,8 @@ function Planning({ host, s }: { host: Stage; s: GameState }) {
   return (
     <div className="qt-stage qt-center">
       <div className="text-center flex flex-col gap-3 qt-rise max-w-[70rem]">
-        <h2 className="qt-question">What do you do?</h2>
+        {s.finale && <p className="qt-pill !text-[var(--gilt-bright)]">The grand finale</p>}
+        <h2 className="qt-question">{s.finale ? "What's the final move?" : "What do you do?"}</h2>
         <p className="text-[1.7rem] leading-snug text-parchment/85">{s.situation}</p>
       </div>
       <CrewRow host={host} s={s} done={(p) => s.pitches.some((x) => x.playerId === p.id)} label={heroes.length > 1 ? "plans in" : undefined} />
@@ -446,7 +491,7 @@ function Vote({ host, s }: { host: Stage; s: GameState }) {
   const cols = Math.min(s.pitches.length, s.pitches.length === 4 ? 2 : 3);
   return (
     <div className="qt-stage qt-center !gap-8">
-      <h2 className="qt-question text-center qt-rise">Which plan do we go with?</h2>
+      <h2 className="qt-question text-center qt-rise">Which final move?</h2>
       <div className="grid gap-5 w-full max-w-[100rem]" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
         {s.pitches.map((p, i) => {
           const pl = s.players.find((x) => x.id === p.playerId);
@@ -457,7 +502,7 @@ function Vote({ host, s }: { host: Stage; s: GameState }) {
               <div className="flex items-center gap-3">
                 <Avatar host={host} p={pl} size={52} />
                 <span className="font-heading text-2xl uppercase flex-1">{pl.hero?.name}</span>
-                {!ok && <span className="font-ui text-sm uppercase tracking-widest text-parchment/70">{p.auto ? "hung back" : "had a turn"}</span>}
+                {!ok && <span className="font-ui text-sm uppercase tracking-widest text-parchment/70">hung back</span>}
               </div>
               <p className="text-[1.7rem] leading-snug">{p.auto ? "…" : `“${planText(p)}”`}</p>
             </div>
@@ -482,6 +527,8 @@ function Ruling({ host, s }: { host: Stage; s: GameState }) {
   }, [v]);
   if (!pitch || !pl) return null;
   const votes = Object.values(s.votes).filter((id) => id === pitch.id).length;
+  const credit = pitch.creditId ? s.players.find((p) => p.id === pitch.creditId) : undefined;
+  const need = s.rolls[0]?.need;
   return (
     <div className="qt-stage qt-center">
       <div className="qt-glass gp-card qt-pop" style={{ ["--pc" as string]: pl.color }}>
@@ -489,7 +536,7 @@ function Ruling({ host, s }: { host: Stage; s: GameState }) {
           <Avatar host={host} p={pl} size={88} />
           <div className="flex flex-col">
             <span className="font-ui uppercase tracking-[0.3em] text-base text-[var(--signal)]">
-              {votes > 0 ? `Backed by ${votes} ${votes === 1 ? "friend" : "friends"}` : "The plan"}
+              {s.finale ? (votes > 0 ? `The final move · backed by ${votes}` : "The final move") : "The plan"}
             </span>
             <span className="font-heading text-4xl uppercase" style={{ color: pl.color }}>
               {pl.hero?.name}&apos;s plan
@@ -497,14 +544,20 @@ function Ruling({ host, s }: { host: Stage; s: GameState }) {
           </div>
         </div>
         <p className="text-[2.2rem] leading-snug">“{planText(pitch)}”</p>
+        {credit && (
+          <p className="font-heading text-2xl uppercase -mt-2" style={{ color: credit.color }}>
+            + {credit.hero?.name.split(" ")[0]}&apos;s idea · +1
+          </p>
+        )}
         <div className="min-h-[7.5rem] flex items-center gap-6">
           {v ? (
             <>
               <Stamp text={stampText(v.tier)} size="lg" rotate={-4} tone={tierTone(v.tier)} />
-              <p className="text-2xl leading-snug text-parchment/90 gp-line">
+              <p className="text-2xl leading-snug text-parchment/90 gp-line flex-1">
                 <span className="font-ui uppercase tracking-widest text-sm text-parchment/60 block">Why</span>
                 {v.reason}
               </p>
+              {need ? <NeedBadge need={need} /> : null}
             </>
           ) : (
             <p className="font-heading text-2xl uppercase text-parchment/70 qt-throb">The DM is reading the plan…</p>
@@ -516,12 +569,23 @@ function Ruling({ host, s }: { host: Stage; s: GameState }) {
 }
 
 // ---------- 5. the roll ----------
+/** "Needs 12+": what the die has to show, shown before every roll so the room knows what it's cheering for. */
+function NeedBadge({ need }: { need: number }) {
+  return (
+    <div className="gp-need gp-line">
+      <span>Needs</span>
+      <b>{need >= 20 ? "20" : `${need}+`}</b>
+    </div>
+  );
+}
+
 function RollMath({ s, r }: { s: GameState; r: RollResult }) {
   const v = s.pitches.find((p) => p.playerId === r.playerId)?.verdict;
   return (
     <p className="font-ui text-3xl tabular-nums text-parchment gp-line">
-      {r.kept} <span className="text-parchment/70">{fmt(r.statBonus)} {v ? STAT_LABEL[v.stat] : ""}</span>{" "}
-      <span className="text-parchment/70">{fmt(r.tierMod)} {v ? TIER_LABEL[v.tier].toLowerCase() : ""}</span> = <b className="text-5xl text-[var(--gilt-bright)]">{r.total}</b>
+      {r.kept} <span className="text-parchment/70">{fmt(r.statBonus)} {v ? STAT_LABEL[v.stat] : ""}</span>
+      {r.bonus ? <span className="text-parchment/70"> +{r.bonus} idea</span> : null} = <b className="text-5xl text-[var(--gilt-bright)]">{r.total}</b>
+      {v && <span className="text-parchment/60 text-2xl"> · {v.tier === "miracle" ? "needed a 20" : `needed ${TIER_DC[v.tier]}`}</span>}
     </p>
   );
 }
@@ -564,7 +628,12 @@ function Roll({ host, s }: { host: Stage; s: GameState }) {
             <Stamp text={BAND_LABEL[r.band]} size="lg" tone={bandTone(r.band)} />
           </>
         ) : (
-          !shown && <p className="font-heading text-3xl uppercase text-parchment/80 qt-throb">Tap ROLL on your phone</p>
+          !shown && (
+            <>
+              {r.need ? <NeedBadge need={r.need} /> : null}
+              <p className="font-heading text-2xl uppercase text-parchment/80 qt-throb">Tap ROLL on your phone</p>
+            </>
+          )
         )}
       </div>
     </div>
@@ -658,7 +727,10 @@ function Final({ host, s }: { host: Stage; s: GameState }) {
             <Stamp text={ENDING_LABEL[f.ending]} size="xl" tone={f.ending === "TRIUMPHANT" ? "gilt" : f.ending === "BITTERSWEET" ? "forest" : "crimson"} />
           </>
         ) : (
-          <CrewRow host={host} s={s} done={(p) => (stage === "arm" ? !!f?.armed?.includes(p.id) || !!p.away : shook.includes(p.id))} />
+          <div className="flex items-center gap-10">
+            {r?.need ? <NeedBadge need={r.need} /> : null}
+            <CrewRow host={host} s={s} done={(p) => (stage === "arm" ? !!f?.armed?.includes(p.id) || !!p.away : shook.includes(p.id))} />
+          </div>
         )}
       </div>
       {!result && big && (
@@ -833,17 +905,9 @@ function moodFor(s: GameState, title: boolean): Mood {
   if (s.phase === "quest") return "push";
   if (s.phase === "narrating" && title) return "title";
   if (s.phase === "final_roll" || s.phase === "final_result") return "final";
-  if (["pitch", "vote", "ruling", "roll"].includes(s.phase)) return "action";
+  if (["turn", "pitch", "vote", "ruling", "roll"].includes(s.phase)) return "action";
   if (["epilogue", "reveal", "storybook", "story_vote"].includes(s.phase)) return "end";
   return "scene";
-}
-
-/** Which plate (0, 1, 2) is behind the current moment. */
-function plateFor(s: GameState) {
-  if (s.mode === "quick") return 2;
-  if (s.phase === "quest") return 0;
-  if (["final_roll", "final_result", "epilogue", "reveal", "storybook"].includes(s.phase)) return 2;
-  return s.sceneIndex;
 }
 
 export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameState; onNotes?: () => void; notesOpen?: boolean }) {
@@ -867,7 +931,7 @@ export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameS
   const mood = moodFor(s, title && s.phase === "narrating");
   const art = s.phase === "story_vote" ? undefined : host.sceneImages[plateFor(s)] ?? host.sceneImages[0];
   // One key per "shot": a new key plays the dip-to-dark transition and the enter animation.
-  const shot = s.phase === "final_result" ? "final_roll" : s.phase === "narrating" ? `narrating-${s.sceneIndex}` : s.phase;
+  const shot = s.phase === "final_result" ? "final_roll" : ["turn", "ruling", "roll", "outcome"].includes(s.phase) ? `${s.phase}-${s.turnIndex}-${s.finale}` : s.phase;
 
   let main: React.ReactNode;
   switch (s.phase) {
@@ -886,6 +950,9 @@ export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameS
       break;
     case "narrating":
       main = <Narration s={s} onTitle={setTitle} />;
+      break;
+    case "turn":
+      main = <Turn host={host} s={s} />;
       break;
     case "pitch":
       main = <Planning host={host} s={s} />;
@@ -934,7 +1001,7 @@ export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameS
           Skip ▸
         </button>
       )}
-      {["story_vote", "pitch", "vote", "roll"].includes(s.phase) && <Fuse host={host} phase={shot} />}
+      {["story_vote", "turn", "pitch", "vote", "roll"].includes(s.phase) && <Fuse host={host} phase={shot} />}
       <div key={shot + "-c"} className="qt-shot">
         {main}
       </div>

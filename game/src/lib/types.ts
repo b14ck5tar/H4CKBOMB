@@ -68,8 +68,7 @@ export interface Pitch {
   useAbility: boolean;
   embraceFlaw: boolean;
   verdict?: Verdict;
-  appeal?: string; // "Convince the DM": the player's argument, if they made one
-  appealed?: boolean; // true once the DM has ruled on the appeal
+  creditId?: string; // the friend whose suggestion the turn owner used (+1, credit shown)
   auto?: boolean; // filled in for a player who ran out of time
   autopilot?: boolean; // filled in because the player was away (TV shows "on autopilot")
 }
@@ -86,6 +85,8 @@ export interface RollResult {
   rescuerId: string; // "" unless this roll came from a Catch!
   noRoll: boolean; // "That works": a clever plan, no dice needed
   boosted: boolean;
+  bonus?: number; // +1 for working in a friend's suggestion
+  need?: number; // what the die had to show for the plan to fully work ("Needs 12+")
 }
 
 export interface RoundOutcome {
@@ -212,7 +213,7 @@ export type NoteKind =
   | "scene"
   | "clue"
   | "ruling"
-  | "appeal"
+  | "turn"
   | "roll"
   | "boost"
   | "catch"
@@ -262,10 +263,10 @@ export type Phase =
   | "story_vote"
   | "quest"
   | "narrating"
+  | "turn"
   | "pitch"
   | "vote"
   | "ruling"
-  | "appeal"
   | "roll"
   | "catch"
   | "outcome"
@@ -318,6 +319,11 @@ export interface GameState {
   endingLine: string; // one line for the reveal: how it ended
   recap: string; // the reveal's "your version": 1-2 sentences on what this group actually did
   storyOptions: { id: string; title: string; teaser: string }[]; // the story vote's 3 headlines
+  // Turns (design/24): one owner per turn, everyone else suggests, then a grand finale everyone votes on
+  turnOrder: string[]; // player ids, in turn order (cycles by lobby size)
+  turnIndex: number; // whose turn it is in turnOrder
+  ideas: Record<string, string>; // suggester id -> their one-action idea for the owner this turn
+  finale: boolean; // the grand finale: everyone proposes, everyone votes (not your own), one shared die
   boosts: Record<string, string>; // booster id -> pitch id
   rolls: RollResult[]; // in reveal order (lowest result first)
   revealed: string[]; // player ids whose die is shown

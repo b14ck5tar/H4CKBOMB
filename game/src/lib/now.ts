@@ -22,14 +22,20 @@ export function nowText(s: GameState, me?: string): string {
       return s.mode === "quick" ? "Eyes on the TV. This really happened" : "Here's tonight's story";
     case "narrating":
       return "Listen up. Plans in a moment";
+    case "turn": {
+      const owner = s.turnOrder[s.turnIndex] ?? "";
+      if (me === owner) return "Your turn! What do you do?";
+      if (me) return s.ideas[me] ? `Idea sent. ${heroFirst(s, owner)} picks` : `Suggest a move for ${heroFirst(s, owner)}`;
+      return `${heroFirst(s, owner)}'s turn. Everyone else: suggest a move on your phone`;
+    }
     case "pitch":
-      if (me && s.pitches.some((p) => p.playerId === me)) return "Plan in. Talk it over with the table";
-      return "Type what your hero does on your phone";
+      if (me && s.pitches.some((p) => p.playerId === me)) return "Final move in. Talk it over";
+      return s.finale ? "Grand finale: everyone types the final move" : "Type what your hero does on your phone";
     case "vote":
       if (me && s.votes[me]) return "Backed. Tap another to switch";
       return me ? "Back a friend's plan" : "Back a friend's plan on your phone";
     case "ruling":
-      return mine ? "Your plan won! The DM is ruling on it" : `The DM rules on ${heroFirst(s, w)}'s plan`;
+      return mine ? "The DM is ruling on your plan" : `The DM rules on ${heroFirst(s, w)}'s plan`;
     case "roll":
       if (s.revealed.length) return "Here it comes";
       return mine ? "Tap ROLL!" : `${heroFirst(s, w)}, tap ROLL on your phone`;
@@ -55,11 +61,21 @@ export function nowText(s: GameState, me?: string): string {
   }
 }
 
-/** Plans that can win (the spotlight rule, mirrored from the table) so the TV and phones grey out the rest. */
+/** Finale plans anyone can back: every plan someone actually made (never your own, enforced by the phone). */
 export function eligibleIds(s: GameState) {
   const real = s.pitches.filter((p) => !p.auto);
-  const here = s.players.filter((p) => p.hero && !p.away).map((p) => p.id);
-  const min = here.length ? Math.min(...here.map((id) => s.wins[id] ?? 0)) : 0;
-  const el = real.filter((p) => (s.wins[p.playerId] ?? 0) <= min);
-  return new Set((el.length ? el : real).map((p) => p.id));
+  return new Set((real.length ? real : s.pitches).map((p) => p.id));
+}
+
+/** Which pre-painted plate (0, 1, 2) is behind this moment: the story moves through them as the turns go by. */
+export function plateFor(s: GameState) {
+  if (s.mode === "quick") return 2;
+  if (s.phase === "quest" || s.phase === "narrating") return 0;
+  if (s.finale || ["final_roll", "final_result", "epilogue", "reveal", "storybook"].includes(s.phase)) return 2;
+  const n = Math.max(1, s.turnOrder.length);
+  return Math.min(2, Math.floor((s.turnIndex * 3) / (n + 1)));
+}
+
+export function turnOwner(s: GameState) {
+  return s.turnOrder[s.turnIndex] ?? "";
 }

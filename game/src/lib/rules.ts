@@ -3,6 +3,29 @@ import type { Band, Ending, Stat, Tier } from "./types";
 /** d20 + stat + this. "Most reasonable plans are Solid" (design/20), and Solid should usually work. */
 export const TIER_MOD: Record<Tier, number> = { clever: 4, solid: 2, risky: -1, wild: -3, miracle: 0 };
 
+/**
+ * design/24: the AI rates the plan at face value and the table sees the target before the roll ("Needs 12+").
+ * The total (d20 + stat + bonuses) has to reach this. A miracle only works on a natural 20.
+ */
+export const TIER_DC: Record<Tier, number> = { clever: 9, solid: 11, risky: 14, wild: 17, miracle: 21 };
+
+/** What the die itself has to show for the plan to fully work (2..20; a miracle always needs a 20). */
+export function needOnDie(tier: Tier, mods: number) {
+  if (tier === "miracle") return 20;
+  return Math.max(2, Math.min(20, TIER_DC[tier] - mods));
+}
+
+/** Natural 20 always works (in the funniest way). Natural 1 always flops. Close misses work with a cost. */
+export function judge(die: number, total: number, tier: Tier): Band {
+  if (die === 1) return "CATASTROPHE";
+  if (die === 20) return "LEGENDARY";
+  if (tier === "miracle") return "FAIL";
+  const dc = TIER_DC[tier];
+  if (total >= dc) return "SUCCESS";
+  if (total >= dc - 3) return "YES_BUT";
+  return "FAIL";
+}
+
 export const TIER_LABEL: Record<Tier, string> = {
   clever: "CLEVER",
   solid: "SOLID",
@@ -21,15 +44,15 @@ export function autoSucceeds(_tier: Tier) {
 export function stampText(tier: Tier): string {
   switch (tier) {
     case "clever":
-      return "CLEVER · +4";
+      return "CLEVER";
     case "solid":
-      return "SOLID · +2";
+      return "SOLID";
     case "risky":
-      return "RISKY · −1";
+      return "RISKY";
     case "wild":
-      return "WILD · −3";
+      return "WILD";
     case "miracle":
-      return "ONLY A MIRACLE · NEED A 20";
+      return "ONLY A MIRACLE";
   }
 }
 
@@ -90,6 +113,11 @@ export const REACTIONS = ["😂", "🔥", "😱", "👏", "👀", "❤️"];
 
 // Timers. Action phases end early when everyone has acted; reading phases advance on Continue or all-Ready.
 export const PITCH_MS = 40_000;
+/** One player's turn: everyone else suggests, the owner picks (design/24). */
+export const TURN_MS = 60_000;
+export const QUICK_TURN_MS = 40_000;
+/** One action, ~140 characters. */
+export const PLAN_MAX = 140;
 export const VOTE_MS = 15_000;
 export const STORY_VOTE_MS = 15_000;
 export const RULING_MS = 4_500;

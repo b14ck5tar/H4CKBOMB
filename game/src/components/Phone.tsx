@@ -5,8 +5,8 @@
  */
 import { useEffect, useRef, useState } from "react";
 import { useCountdown, usePhone } from "@/lib/usePhone";
-import { REACTIONS } from "@/lib/rules";
-import { eligibleIds, nowText, winnerPid } from "@/lib/now";
+import { PLAN_MAX, QUICK_TURN_MS, REACTIONS, TURN_MS } from "@/lib/rules";
+import { eligibleIds, nowText, plateFor, turnOwner, winnerPid } from "@/lib/now";
 import { sfx } from "@/lib/sfx";
 import { HeroCard } from "./HeroCard";
 import { MicButton } from "./MicButton";
@@ -31,7 +31,7 @@ const PLAN_EXAMPLES = [
   "I make a deal with it",
 ];
 
-const SCENE_PHASES = ["narrating", "pitch", "vote", "ruling", "roll", "outcome"];
+const SCENE_PHASES = ["narrating", "turn", "pitch", "vote", "ruling", "roll", "outcome"];
 
 function vibrate(p: number | number[]) {
   try {
@@ -45,9 +45,7 @@ type Send = (t: string, d?: Record<string, unknown>) => void;
 function artFor(s: GameState | null) {
   if (!s?.questId || s.phase === "lobby" || s.phase === "story_vote") return "";
   const plates = (questImages as Record<string, string[]>)[s.questId] ?? [];
-  const late = ["final_roll", "final_result", "epilogue", "reveal", "storybook"].includes(s.phase);
-  const i = s.mode === "quick" ? 2 : s.phase === "quest" ? 0 : late ? 2 : s.sceneIndex;
-  return plates[i] ?? plates[0] ?? "";
+  return plates[plateFor(s)] ?? plates[0] ?? "";
 }
 
 function Shell({ children, me, portrait, state }: { children: React.ReactNode; me?: Player; portrait?: string; state?: GameState | null }) {
@@ -338,6 +336,126 @@ function BackPlan({ state, me, send, deadlineAt }: { state: GameState; me: Playe
   );
 }
 
+/** One action, ~140 characters: the DM takes the first concrete action literally. */
+function PlanBox({ text, setText, placeholder }: { text: string; setText: (t: string) => void; placeholder: string }) {
+  return (
+    <label className="flex flex-col gap-1">
+      <textarea className="input min-h-28 text-lg" value={text} onChange={(e) => setText(e.target.value.slice(0, PLAN_MAX))} maxLength={PLAN_MAX} placeholder={placeholder} />
+      <span className="flex justify-between font-ui text-xs text-parchment/70">
+        <span>One action. The DM takes it literally.</span>
+        <span className="tabular-nums">
+          {text.length}/{PLAN_MAX}
+        </span>
+      </span>
+    </label>
+  );
+}
+
+/** Your turn: write your own move, or start from a friend's idea (+1, and they get the credit). */
+function OwnerTurn({ state, send, deadlineAt }: { state: GameState; send: Send; deadlineAt: number }) {
+  const [text, setText] = useState("");
+  const [credit, setCredit] = useState("");
+  const [ex] = useState(() => PLAN_EXAMPLES[Math.floor(Math.random() * PLAN_EXAMPLES.length)]);
+  const ideas = Object.entries(state.ideas);
+  return (
+    <form
+      className="flex flex-col gap-3"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (!text.trim()) return;
+        send("pitch", { text: text.trim(), creditId: credit });
+        vibrate(20);
+      }}
+    >
+      <Timer deadlineAt={deadlineAt} total={state.mode === "quick" ? QUICK_TURN_MS : TURN_MS} />
+      <Say text="Your turn! What do you do?" goal={state.goal} />
+      <PlanBox
+        text={text}
+        setText={(t) => {
+          setText(t);
+          if (!t.trim()) setCredit("");
+        }}
+        placeholder={`e.g. ${ex}`}
+      />
+      {ideas.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <span className="font-ui text-xs uppercase tracking-widest text-[var(--signal)]">Friends suggest (tap to use, +1)</span>
+          {ideas.map(([pid, idea]) => {
+            const pl = state.players.find((p) => p.id === pid);
+            return (
+              <button
+                key={pid}
+                type="button"
+                className={`ph-choice !py-2 ${credit === pid ? "on" : ""}`}
+                onClick={() => {
+                  setText(idea);
+                  setCredit(pid);
+                  vibrate(10);
+                }}
+              >
+                <span className="flex flex-col min-w-0">
+                  <span className="font-heading uppercase text-sm" style={{ color: pl?.color }}>
+                    {pl?.hero?.name.split(" ")[0]}
+                  </span>
+                  <span className="text-base leading-snug">{idea}</span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+      <button className="btn btn-crimson text-xl" type="submit" disabled={!text.trim()}>
+        {credit ? `Go! (+1 for ${state.players.find((p) => p.id === credit)?.hero?.name.split(" ")[0]}'s idea)` : "Go!"}
+      </button>
+    </form>
+  );
+}
+
+/** Someone else's turn: suggest one move. You can change it until they pick. */
+function IdeaForm({ state, me, send, deadlineAt }: { state: GameState; me: Player; send: Send; deadlineAt: number }) {
+  const sent = state.ideas[me.id];
+  const [text, setText] = useState("");
+  const [editing, setEditing] = useState(false);
+  const owner = state.players.find((p) => p.id === turnOwner(state));
+  const first = owner?.hero?.name.split(" ")[0] ?? "them";
+  if (sent && !editing)
+    return (
+      <div className="flex flex-col gap-3">
+        <Timer deadlineAt={deadlineAt} total={state.mode === "quick" ? QUICK_TURN_MS : TURN_MS} />
+        <Say text={`Idea sent. ${first} picks`} goal={state.goal} />
+        <p className="page p-4 text-lg leading-snug">“{sent}”</p>
+        <button
+          className="btn btn-ghost"
+          onClick={() => {
+            setText(sent);
+            setEditing(true);
+          }}
+        >
+          Change it
+        </button>
+      </div>
+    );
+  return (
+    <form
+      className="flex flex-col gap-3"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (!text.trim()) return;
+        send("idea", { text: text.trim() });
+        setEditing(false);
+        vibrate(15);
+      }}
+    >
+      <Timer deadlineAt={deadlineAt} total={state.mode === "quick" ? QUICK_TURN_MS : TURN_MS} />
+      <Say text={`Suggest a move for ${first}`} goal={state.goal} />
+      <PlanBox text={text} setText={setText} placeholder={`What should ${first} do?`} />
+      <button className="btn btn-crimson text-xl" type="submit" disabled={!text.trim()}>
+        Send my idea
+      </button>
+    </form>
+  );
+}
+
 function PitchForm({ state, send, deadlineAt }: { state: GameState; send: Send; deadlineAt: number }) {
   const [text, setText] = useState("");
   const [ex] = useState(() => PLAN_EXAMPLES[Math.floor(Math.random() * PLAN_EXAMPLES.length)]);
@@ -351,9 +469,9 @@ function PitchForm({ state, send, deadlineAt }: { state: GameState; send: Send; 
         vibrate(20);
       }}
     >
-      <Timer deadlineAt={deadlineAt} total={40000} />
-      <Say text="What does your hero do?" goal={state.goal} />
-      <textarea className="input min-h-28 text-lg" value={text} onChange={(e) => setText(e.target.value)} maxLength={200} placeholder={`e.g. ${ex}`} />
+      <Timer deadlineAt={deadlineAt} total={state.mode === "quick" ? QUICK_TURN_MS : TURN_MS} />
+      <Say text={state.finale ? "What's the final move?" : "What does your hero do?"} goal={state.goal} />
+      <PlanBox text={text} setText={setText} placeholder={`e.g. ${ex}`} />
       <MicButton onTranscript={(t) => setText(t)} />
       <button className="btn btn-crimson text-xl" type="submit" disabled={!text.trim()}>
         Send my plan
@@ -556,6 +674,14 @@ export function Phone({ code }: { code: string }) {
     case "story_vote":
       body = <StoryVote state={state} me={me} send={send} deadlineAt={deadlineAt} />;
       break;
+    case "turn":
+      body =
+        turnOwner(state) === me.id ? (
+          <OwnerTurn key={state.turnIndex} state={state} send={send} deadlineAt={deadlineAt} />
+        ) : (
+          <IdeaForm key={state.turnIndex} state={state} me={me} send={send} deadlineAt={deadlineAt} />
+        );
+      break;
     case "pitch":
       body = state.pitches.some((p) => p.playerId === me.id) ? passive() : <PitchForm key={state.sceneIndex} state={state} send={send} deadlineAt={deadlineAt} />;
       break;
@@ -568,7 +694,7 @@ export function Phone({ code }: { code: string }) {
             <Timer deadlineAt={deadlineAt} total={10000} />
             <BigButton
               label="ROLL"
-              sub="Your plan won. Tap to roll the die"
+              sub={`Needs ${state.rolls[0]?.need ?? "?"}${(state.rolls[0]?.need ?? 0) < 20 ? "+" : ""} on the die`}
               onClick={() => {
                 sfx.unlock();
                 send("roll");
