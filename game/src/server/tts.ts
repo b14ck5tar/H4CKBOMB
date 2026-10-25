@@ -167,7 +167,8 @@ async function openai(voice: VoiceId, style: string, text: string, timeoutMs: nu
 // 10.7 s cold start, so it only reads text made ahead of time (`ahead`, e.g. openers during the vote).
 type ElevenModel = "eleven_flash_v2_5" | "eleven_v3";
 type ElevenSettings = { stability: number; similarity_boost: number; style: number; use_speaker_boost: boolean; speed?: number };
-const FLASH: ElevenSettings = { stability: 0.35, similarity_boost: 0.8, style: 0, use_speaker_boost: true, speed: 1.1 };
+// "Combo" (CD pick, Sun AM): Flash's crisp sound with v3's expression. Every live line reads with it (instant).
+const FLASH: ElevenSettings = { stability: 0.2, similarity_boost: 0.75, style: 0.65, use_speaker_boost: true, speed: 1.08 };
 const V3: ElevenSettings = { stability: 0, similarity_boost: 0.8, style: 0.45, use_speaker_boost: true }; // v3 takes stability 0 / 0.5 / 1
 // ONE narrator for every story (CD, Sun AM): Sarah, at the bake-off clip's settings the CD picked (v3 funny: stability 0,
 // similarity 0.8, style 0.45, speaker boost). Every persona id maps to her, so casting and host.ts stay as they are.
@@ -325,10 +326,8 @@ async function call(model: string, voice: VoiceId, style: string, text: string, 
   return res;
 }
 
+/** `ahead: true` asks for v3 (nothing sends it today: every live line reads with the Combo Flash settings). */
 export type SpeakOpts = { ahead?: boolean; timeoutMs?: number };
-/** Without an explicit `ahead`, lines this long (openers ~250-290 chars, endings ~260-375) read with v3: the TV asks
- * for them early. Live outcome and turn lines are shorter and read with Flash (no wait). */
-const AHEAD_CHARS = 220;
 
 /** Reads a clip from memory, then disk, else makes it once (concurrent asks share one call) and caches it. */
 async function cached(id: string, provider: Clip["provider"], make: () => Promise<Clip | null>): Promise<Clip | null> {
@@ -374,11 +373,12 @@ function toClip(pcm: Buffer, provider: Clip["provider"]): Clip {
 }
 
 /** ElevenLabs, cached by (voice, model, settings, text): the style line doesn't change its read, so it's not in the key. */
-async function elevenClip(voice: VoiceId, text: string, model: ElevenModel, timeoutMs: number) {
+async function elevenClip(voice: VoiceId, text: string, model: ElevenModel, timeoutMs: number, onlyIfMade = false) {
   const cfg = ELEVEN[voice];
   const body = elevenText(model, text);
   const id = crypto.createHash("sha1").update(`el3|${cfg.voiceId}|${model}|${JSON.stringify(cfg.settings[model] ?? FLASH)}|${body}`).digest("hex");
   return cached(id, "elevenlabs", async () => {
+    if (onlyIfMade) return null; // a lookup only: is this line already voiced (committed or cached)?
     const t0 = Date.now();
     const pcm = await eleven(voice, model, text, timeoutMs);
     if (!pcm) return null;
@@ -412,23 +412,63 @@ async function openaiClip(voice: VoiceId, style: string, text: string, timeoutMs
   return clip;
 }
 
+// The finale's "Alright, everyone…" in the CD's favorite read (host style B: v3, [playfully], style 0.8), voiced once
+// and committed; spliced in front of the rest of the finale line, which reads live on Flash.
+const FINALE_INTRO = /^Alright, everyone…\s*/;
+let finaleIntro: Buffer | null | undefined;
+function finaleIntroPcm(): Buffer | null {
+  if (finaleIntro !== undefined) return finaleIntro;
+  try {
+    finaleIntro = cleanPcm(fs.readFileSync(path.join(process.cwd(), "voice-cache", "finale-intro.wav")).subarray(44));
+  } catch {
+    finaleIntro = null;
+  }
+  return finaleIntro;
+}
+
+/** A live ElevenLabs line: Flash, then one staggered retry. null = this line is text only. */
+async function elevenLive(voice: VoiceId, text: string, timeoutMs: number) {
+  const cfg = ELEVEN[voice];
+  let clip = await elevenClip(voice, text, cfg.live, timeoutMs);
+  if (!clip && Date.now() >= elevenOffUntil) {
+    await new Promise((r) => setTimeout(r, 400)); // one retry, staggered
+    clip = await elevenClip(voice, text, cfg.live, timeoutMs);
+  }
+  return clip;
+}
+
 /**
- * One narrator line as WAV, from the provider picked for this game (gameProvider). On ElevenLabs: v3 for `ahead`
- * text, Flash for live lines; a failed line tries Flash, then Flash once more, then throws (that line is text only).
- * It never falls back to OpenAI mid-game, so the narrator's voice never switches. An out-of-credits error stops
- * ElevenLabs for 10 minutes, so the next game picks OpenAI. On OpenAI: OpenAI, then Gemini.
+ * One narrator line as WAV, from the provider picked for this game (gameProvider). On ElevenLabs: a line already
+ * voiced on v3 (the judge openers) plays from its clip; the finale gets the committed "Alright, everyone…" plus the
+ * rest live; every other line reads live on Flash at the Combo settings. A failed line tries Flash once more, then
+ * throws (that line is text only): it never falls back to OpenAI mid-game, so the voice never switches. An
+ * out-of-credits error stops ElevenLabs for 10 minutes, so the next game picks OpenAI. On OpenAI: OpenAI, then Gemini.
  */
 export async function speak(voice: VoiceId, style: string, text: string, opts: SpeakOpts = {}): Promise<Clip> {
   const timeoutMs = opts.timeoutMs ?? 20_000;
   if ((await gameProvider()).provider === "elevenlabs") {
     const cfg = ELEVEN[voice];
-    const model = (opts.ahead ?? text.length >= AHEAD_CHARS) ? cfg.ahead : cfg.live;
-    let clip = await elevenClip(voice, text, model, timeoutMs);
-    if (!clip && model !== cfg.live) clip = await elevenClip(voice, text, cfg.live, timeoutMs);
-    if (!clip && Date.now() >= elevenOffUntil) {
-      await new Promise((r) => setTimeout(r, 400)); // one retry, staggered
-      clip = await elevenClip(voice, text, cfg.live, timeoutMs);
+    // 1) already voiced on v3 (the judge openers in game/voice-cache): play that, instantly
+    const made = await elevenClip(voice, text, cfg.ahead, timeoutMs, true);
+    if (made) return made;
+    // 2) asked for v3 explicitly (nothing does today): v3, else the live path
+    if (opts.ahead) {
+      const v3 = await elevenClip(voice, text, cfg.ahead, timeoutMs);
+      if (v3) return v3;
     }
+    // 3) the finale: the committed "Alright, everyone…" + the rest live on Flash
+    const intro = FINALE_INTRO.exec(text);
+    const head = intro ? finaleIntroPcm() : null;
+    if (intro && head) {
+      const rest = await elevenLive(voice, text.slice(intro[0].length), timeoutMs);
+      if (rest) {
+        const gap = Buffer.alloc(Math.floor(RATE * 0.08) * 2); // a short breath between the two reads
+        const wav = wavFromPcm(Buffer.concat([head, gap, rest.wav.subarray(44)]));
+        return { wav, ms: Math.round(((wav.length - 44) / (RATE * 2)) * 1000), rate: 1, provider: "elevenlabs" };
+      }
+    }
+    // 4) every other line: live on Flash at the Combo settings (instant)
+    const clip = await elevenLive(voice, text, timeoutMs);
     if (clip) return clip;
     throw new Error("elevenlabs could not read this line: text only (no mid-game switch to another voice)");
   }
