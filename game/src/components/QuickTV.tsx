@@ -731,7 +731,9 @@ function Roll({ host, s }: { host: Stage; s: GameState }) {
   return (
     <div className="qt-stage qt-center !gap-6">
       <ScreenFlash kind={flash.kind} trigger={flash.n} />
-      <D20 value={shown ? r.kept : null} rolling={shown && !settled} size={300} tone={settled && r.band === "CATASTROPHE" ? "crimson" : "gold"} />
+      <ThrowFlight fling={s.fling} thrown={shown} ms={ROLL_ANIM_MS - 200}>
+        <D20 value={shown ? r.kept : null} rolling={shown && !settled} size={300} tone={settled && r.band === "CATASTROPHE" ? "crimson" : "gold"} />
+      </ThrowFlight>
       <div className="flex items-center gap-3">
         <Avatar host={host} p={pl} size={56} />
         <span className="font-heading text-3xl uppercase">{pl.hero?.name}</span>
@@ -746,10 +748,76 @@ function Roll({ host, s }: { host: Stage; s: GameState }) {
           !shown && (
             <>
               {r.need ? <NeedBadge need={r.need} mods={modsOf(r)} /> : null}
-              <p className="font-heading text-2xl uppercase text-parchment/80 qt-throb">Tap ROLL on your phone</p>
+              <p className="font-heading text-2xl uppercase text-parchment/80 qt-throb">{pl.hero?.name}: swipe up on your phone to throw</p>
             </>
           )
         )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The die is thrown onto the table from the bottom edge: it flies in an arc (bigger = higher), tumbles in 3D, bounces
+ * twice and settles. The swipe sets only the flight (power = height and spin, angle = drift); the face it lands on was
+ * decided in code before the throw. Transforms only, one rAF loop, so it holds 60 fps.
+ */
+function ThrowFlight({ fling, thrown, ms, children }: { fling: GameState["fling"]; thrown: boolean; ms: number; children: React.ReactNode }) {
+  const die = useRef<HTMLDivElement>(null);
+  const shadow = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = die.current;
+    const sh = shadow.current;
+    if (!el) return;
+    if (!thrown) {
+      // Waiting at the bottom edge of the table.
+      el.style.transform = `translateY(${Math.round(window.innerHeight * 0.55)}px) scale(0.8)`;
+      if (sh) sh.style.opacity = "0";
+      return;
+    }
+    const power = fling?.power ?? 0.55;
+    const angle = fling?.angle ?? 0;
+    const vh = window.innerHeight;
+    const vw = window.innerWidth;
+    const y0 = vh * 0.6;
+    const x0 = -angle * vw * 0.22;
+    const lift = 0.45 + 0.55 * power;
+    const spins = Math.round(2 + 3 * power) * (angle < 0 ? -1 : 1); // whole turns, so it lands upright
+    const flight = 0.55;
+    const t0 = performance.now();
+    let raf = 0;
+    const step = () => {
+      const t = Math.min(1, (performance.now() - t0) / ms);
+      let x = 0;
+      let y = 0;
+      let h = 0;
+      if (t < flight) {
+        const p = t / flight;
+        const e = 1 - (1 - p) * (1 - p);
+        x = x0 * (1 - e);
+        y = y0 * (1 - e);
+        h = Math.sin(Math.PI * p) * lift;
+      } else {
+        const p = (t - flight) / (1 - flight);
+        h = p < 0.45 ? Math.sin((Math.PI * p) / 0.45) * 0.2 * lift : p < 0.75 ? Math.sin((Math.PI * (p - 0.45)) / 0.3) * 0.06 * lift : 0;
+      }
+      const spin = 1 - Math.pow(1 - t, 3);
+      const wob = 1 - t;
+      el.style.transform = `translate(${x.toFixed(1)}px, ${(y - h * vh * 0.14).toFixed(1)}px) rotateX(${(Math.sin(t * Math.PI * 6) * 45 * wob).toFixed(1)}deg) rotateY(${(Math.cos(t * Math.PI * 5) * 35 * wob).toFixed(1)}deg) rotateZ(${(spins * 360 * spin).toFixed(1)}deg) scale(${(1 + h * 0.8).toFixed(3)})`;
+      if (sh) {
+        sh.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) scale(${(1 - h * 0.45).toFixed(3)})`;
+        sh.style.opacity = (0.6 - h * 0.35).toFixed(2);
+      }
+      if (t < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [thrown]); // eslint-disable-line react-hooks/exhaustive-deps
+  return (
+    <div className="relative" style={{ perspective: "900px" }}>
+      <div ref={shadow} className="qt-die-shadow" />
+      <div ref={die} style={{ willChange: "transform", transformStyle: "preserve-3d" }}>
+        {children}
       </div>
     </div>
   );

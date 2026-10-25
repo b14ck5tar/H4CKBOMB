@@ -129,7 +129,7 @@ export const APPEAL_MS = 20_000;
 export const ROLL_MS = 10_000;
 export const CATCH_MS = 8_000;
 export const FINAL_ROLL_MS = 14_000;
-export const ROLL_ANIM_MS = 1_600;
+export const ROLL_ANIM_MS = 2_400; // the thrown die: flight, bounces, landing
 export const HOPE_START = 3;
 export const HOPE_MAX = 6;
 

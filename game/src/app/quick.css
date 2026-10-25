@@ -673,3 +673,6 @@
 .gp-ladder i { width: 0.6rem; height: 0.6rem; border-radius: 50%; border: 1.5px solid rgba(245, 241, 255, 0.45); }
 .gp-ladder i.done { background: rgba(245, 241, 255, 0.55); border-color: transparent; }
 .gp-ladder i.on { background: var(--gilt-bright); border-color: var(--gilt-bright); box-shadow: 0 0 10px var(--gilt-bright); }
+
+/* The thrown die's shadow on the table. */
+.qt-die-shadow { position: absolute; left: 15%; right: 15%; bottom: -14px; height: 28px; border-radius: 50%; background: radial-gradient(closest-side, rgba(0, 0, 0, 0.7), transparent); opacity: 0; pointer-events: none; }

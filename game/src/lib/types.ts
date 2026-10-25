@@ -316,6 +316,7 @@ export interface GameState {
   nowGoal: string; // "Right now:" the objective the players' own choices set (written after each outcome)
   ladder: string[]; // the story ladder: 2-4 planned steps, the last one is the goal (the finale). [] = no ladder
   step: number; // the step the table is on (0-based)
+  fling: { power: number; angle: number } | null; // how the die was thrown (flight only; the number is decided in code)
   narration: string;
   situation: string;
   banner: string;

@@ -454,6 +454,7 @@ export class GameHost {
       nowGoal: "",
       ladder: [],
       step: 0,
+      fling: null,
       narration: "",
       situation: "",
       banner: "",
@@ -923,7 +924,7 @@ export class GameHost {
       case "vote":
         return this.onVote(m.pid, String(m.id ?? ""));
       case "roll":
-        return this.onRoll(m.pid);
+        return this.onRoll(m.pid, m.power, m.angle);
       case "ready":
         return this.onReady(m.pid);
       case "react":
@@ -2309,15 +2310,19 @@ export class GameHost {
   private startRoll() {
     const roll = this.pendingRoll;
     if (this.state.phase !== "ruling" || !roll) return;
-    this.set({ phase: "roll", rolls: [roll], revealed: [] });
+    this.set({ phase: "roll", rolls: [roll], revealed: [], fling: null });
     // Their phone shows a big ROLL button; after 10 s the table rolls for them (and their phone buzzes).
     if (this.player(roll.playerId)?.away) return this.setTimer(1500, () => this.revealRoll());
     this.setTimer(this.quick ? 8000 : ROLL_MS, () => this.revealRoll(true));
   }
 
-  private onRoll(pid: string) {
+  /** The roller swiped (or tapped). The swipe only shapes the throw on the TV; the number was decided in code. */
+  private onRoll(pid: string, power?: unknown, angle?: unknown) {
     if (this.state.phase === "roll") {
-      if (this.state.rolls[0]?.playerId === pid && !this.state.revealed.includes(pid)) this.revealRoll();
+      if (this.state.rolls[0]?.playerId !== pid || this.state.revealed.includes(pid)) return;
+      const num = (x: unknown, lo: number, hi: number, d: number) => (typeof x === "number" && Number.isFinite(x) ? Math.min(hi, Math.max(lo, x)) : d);
+      this.set({ fling: { power: num(power, 0.1, 1, 0.55), angle: num(angle, -1, 1, 0) } });
+      this.revealRoll();
       return;
     }
     if (this.state.phase === "final_roll") return this.revealFinalDie(pid);
@@ -2328,7 +2333,8 @@ export class GameHost {
     if (this.state.phase !== "roll" || !roll || this.state.revealed.length) return;
     this.clearTimer();
     if (timedOut) this.timedOut([roll.playerId]);
-    this.set({ revealed: [roll.playerId] });
+    // Nobody swiped: the table throws it with an ordinary toss.
+    this.set({ revealed: [roll.playerId], fling: this.state.fling ?? { power: 0.5, angle: Math.random() * 0.6 - 0.3 } });
     this.noteRoll(roll, ROLL_ANIM_MS, timedOut);
     // The die tumbles, lands, shows its math for a beat, then the outcome.
     this.setTimer(ROLL_ANIM_MS + ROLL_HOLD_MS, () => this.showOutcome());
@@ -2384,16 +2390,17 @@ export class GameHost {
     op.then(() => (settled = true));
     setTimeout(() => !settled && this.state.phase === "outcome" && this.set({ busy: "The DM is writing it down…" }), 600);
     const { text, situation, why, nowGoal: asked, where, changed, prop } = await op;
-    // Never backward: a miss keeps the same step (the threat twists the situation); only a hit moves the goal on.
+    // Every turn moves the story on one step; the roll only picks a better or worse branch (a fail = the worse
+    // branch, never the same goal again). The top step is the finale, so turns stop one below it.
     const missed = roll.band === "FAIL" || roll.band === "CATASTROPHE";
-    const backward = /\b(again|start over|back to square)\b/i.test(asked);
+    const backward = /(again|start over|back to square)/i.test(asked);
     const L = this.state.ladder;
-    // A hit climbs one step (never onto the top step: that's the finale); a miss stays on the same step.
-    const climb = !missed && L.length > 1 && this.state.step + 1 < L.length - 1;
+    const prev = this.state.nowGoal || this.state.goal;
+    const climb = L.length > 1 && this.state.step + 1 < L.length - 1;
     const step = climb ? this.state.step + 1 : this.state.step;
-    const nowGoal = missed || backward ? this.state.nowGoal : asked || (climb ? L[step] : "");
-    if (climb) this.note("scene", "The ladder", `Climbed to step ${step + 1} of ${L.length}: ${L[step]}.`);
-    if (asked && nowGoal !== asked) this.note("scene", "Right now", `Kept "${this.state.nowGoal || this.state.goal}": ${missed ? "a miss never moves the goal backward" : "a step can't go backward"}.`);
+    const fresh = !!asked && !backward && asked.toLowerCase() !== prev.toLowerCase();
+    const nowGoal = fresh ? asked : climb ? L[step] : asked && !backward ? asked : this.state.nowGoal;
+    if (climb) this.note("scene", "The ladder", `${missed ? "Moved on (the worse branch)" : "Climbed"} to step ${step + 1} of ${L.length}: ${L[step]}.`);
     // The story so far: where we are, the last few things that changed, and the one new prop (which then fades).
     if (where) this.spine.where = where;
     if (changed) this.spine.facts = [...this.spine.facts, changed].slice(-3);

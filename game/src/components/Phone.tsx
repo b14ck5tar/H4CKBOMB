@@ -10,6 +10,7 @@ import { eligibleIds, nowText, plateFor, turnOwner, winnerPid, shortName } from 
 import { sfx } from "@/lib/sfx";
 import { playSfx } from "@/lib/sound";
 import { HeroCard } from "./HeroCard";
+import { D20 } from "./D20";
 import { MicButton } from "./MicButton";
 import type { GameState, Hero, Player } from "@/lib/types";
 import quickHeroes from "@/data/quickstart_heroes.json";
@@ -550,6 +551,70 @@ function PitchForm({ state, send, deadlineAt }: { state: GameState; send: Send; 
   );
 }
 
+/**
+ * "Swipe up to throw": a quick upward flick throws the die onto the TV table (a tap works too). The swipe's speed and
+ * direction only shape the throw on the TV; the number was already decided by the game.
+ */
+function SwipeThrow({ onThrow }: { onThrow: (power: number, angle: number) => void }) {
+  const [drag, setDrag] = useState({ x: 0, y: 0 });
+  const [thrown, setThrown] = useState<{ x: number } | null>(null);
+  const start = useRef<{ x: number; y: number } | null>(null);
+  const trail = useRef<{ x: number; y: number; t: number }[]>([]);
+  const fire = (power: number, angle: number) => {
+    if (thrown) return;
+    setThrown({ x: angle * 140 });
+    onThrow(Math.round(power * 100) / 100, Math.round(angle * 100) / 100);
+  };
+  return (
+    <div
+      className="relative flex flex-col items-center justify-end gap-3 select-none"
+      style={{ height: "56vh", touchAction: "none" }}
+      onPointerDown={(e) => {
+        if (thrown) return;
+        (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+        start.current = { x: e.clientX, y: e.clientY };
+        trail.current = [{ x: e.clientX, y: e.clientY, t: performance.now() }];
+      }}
+      onPointerMove={(e) => {
+        if (!start.current || thrown) return;
+        setDrag({ x: e.clientX - start.current.x, y: Math.min(0, e.clientY - start.current.y) });
+        trail.current = [...trail.current.slice(-6), { x: e.clientX, y: e.clientY, t: performance.now() }];
+      }}
+      onPointerUp={(e) => {
+        const s0 = start.current;
+        start.current = null;
+        if (!s0 || thrown) return;
+        const dx = e.clientX - s0.x;
+        const dy = e.clientY - s0.y;
+        const tr = trail.current;
+        const a = tr[0];
+        const b = tr[tr.length - 1];
+        const dt = Math.max(16, (b?.t ?? 0) - (a?.t ?? 0));
+        const vy = b && a ? (b.y - a.y) / dt : 0; // px per ms, negative = up
+        if (Math.hypot(dx, dy) < 12) return fire(0.5, 0); // a tap still throws
+        if (dy < -40 || vy < -0.35) return fire(Math.min(1, Math.max(0.15, -vy / 2.2)), Math.max(-1, Math.min(1, dx / (Math.abs(dy) + 60))));
+        setDrag({ x: 0, y: 0 }); // too small: the die slides back
+      }}
+    >
+      <p className={`font-heading text-3xl uppercase text-center ${thrown ? "opacity-0" : "animate-pulse"}`}>Swipe up to throw</p>
+      <span className={`text-4xl ${thrown ? "opacity-0" : "animate-bounce"}`} aria-hidden>
+        ↑
+      </span>
+      <div
+        style={{
+          transform: thrown ? `translate(${thrown.x}px, -80vh) rotate(540deg) scale(0.6)` : `translate(${drag.x}px, ${drag.y}px) rotate(${drag.x / 4}deg)`,
+          transition: thrown ? "transform 420ms cubic-bezier(0.2, 0.7, 0.3, 1)" : start.current ? "none" : "transform 200ms ease-out",
+        }}
+      >
+        <D20 value={null} rolling={false} size={170} />
+      </div>
+      <button className="font-ui text-sm uppercase tracking-[0.2em] opacity-60 underline" onClick={() => fire(0.5, 0)} disabled={!!thrown}>
+        or tap to throw
+      </button>
+    </div>
+  );
+}
+
 function BigButton({ label, sub, onClick, tone = "crimson" }: { label: string; sub?: string; onClick: () => void; tone?: "crimson" | "gilt" }) {
   return (
     <button
@@ -785,18 +850,10 @@ export function Phone({ code }: { code: string }) {
         mine && !shown ? (
           <div className="flex flex-col gap-3">
             <Timer deadlineAt={deadlineAt} total={10000} />
-            <BigButton
-              label="ROLL"
-              sub={(() => {
-                const r = state.rolls[0];
-                if (!r?.need) return "Tap to roll the die";
-                if (r.need > 20) return "Needs a perfect 20";
-                const mods = r.statBonus + (r.bonus ?? 0);
-                return `Needs ${r.need}+ (d20 ${mods >= 0 ? "+" : "−"} ${Math.abs(mods)})`;
-              })()}
-              onClick={() => {
+            <SwipeThrow
+              onThrow={(power, angle) => {
                 sfx.unlock();
-                send("roll");
+                send("roll", { power, angle });
                 vibrate([20, 40, 20]);
               }}
             />
