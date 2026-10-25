@@ -13,13 +13,14 @@
  *   /tv-preview?piece=finale-pitch   WRITE: sealed plan cards fly in, "2 of 4 in" (live)
  *   /tv-preview?piece=finale-vote    BACK: plans face up, vote dots land live, countdown
  *   /tv-preview?piece=finale-shake   ARM -> 3,2,1 -> SHAKE! -> ROLLING, cycling (&stage=arm|count|shake|tumble holds one)
+ *   /tv-preview?piece=payoff    the finale's payoff punch, every 2.5 s (&tone=up|mixed|down)
  *   &t=600                      freeze every animation at 600 ms (for review frames), e.g. ?piece=wipe&t=560
  *                               (&fz=4000 waits 4 s before freezing, to catch later events like the picked idea)
  * Keys: Space replays the current piece.
  */
 import { useEffect, useState } from "react";
 import type { Tier } from "@/lib/types";
-import { EndingMontage, FinalePitch, FinaleShake, FinaleVote, HudStrip, InkWipe, OutcomeCaption, PhaseSwap, PlanCard, QualityMeter, SceneArt, SuggestionBubbles, TurnCard, TvStage } from "@/components/tvskin";
+import { EndingMontage, FinalePitch, FinaleShake, FinaleVote, HudStrip, InkWipe, OutcomeCaption, PayoffPunch, PhaseSwap, PlanCard, QualityMeter, SceneArt, SuggestionBubbles, TurnCard, TvStage, type PayoffTone } from "@/components/tvskin";
 import type { MontagePanel, RevealData } from "@/components/tvskin";
 
 const ART = ["/quests/cornfield-dome/scene_1.webp", "/quests/cornfield-dome/scene_2.webp", "/quests/cornfield-dome/scene_3.webp", "/lobby/boulder_114b3c8fbac1bd2a55054597.webp"];
@@ -243,6 +244,8 @@ export default function TvPreview() {
   const total = Number(q.get("total") ?? 14);
   const nat = q.get("nat") ? Number(q.get("nat")) : undefined;
 
+  if (piece === "payoff") return <PayoffPreview key={run} tone={(q.get("tone") ?? "up") as PayoffTone} />;
+
   if (piece === "montage" || piece === "reveal")
     return (
       <div key={run} style={{ position: "fixed", inset: 0, background: "#07040d" }}>
@@ -306,6 +309,30 @@ export default function TvPreview() {
             />
           </>
         )}
+      </TvStage>
+    </div>
+  );
+}
+
+/** The payoff punch on a loop, as the host would stamp it at each payoff hit. */
+function PayoffPreview({ tone }: { tone: PayoffTone }) {
+  const [at, setAt] = useState(0);
+  useEffect(() => {
+    const fire = () => setAt(Date.now());
+    const t0 = setTimeout(fire, 600);
+    const iv = setInterval(fire, 2500);
+    return () => {
+      clearTimeout(t0);
+      clearInterval(iv);
+    };
+  }, []);
+  const word = tone === "up" ? "Triumphant" : tone === "mixed" ? "Bittersweet" : "Hilarious disaster";
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "#07040d", overflow: "hidden" }}>
+      <SceneArt src={ART[2]} />
+      <TvStage>
+        <OutcomeCaption tag="GREAT" hero={{ name: "Rosa", color: "#3de7ff" }} text="Rosa hums the lullaby, and the hatchling curls up and switches off its red light." />
+        <PayoffPunch at={at} tone={tone} word={word} />
       </TvStage>
     </div>
   );

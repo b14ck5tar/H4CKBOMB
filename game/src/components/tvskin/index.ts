@@ -24,6 +24,8 @@
  *            (it is position:fixed full screen; replaces EndingSlot/RevealCard/Keepsake). SceneArt is optional.
  */
 export { TvStage, SceneArt, HeroTradingCard, CreditChip, D20Glyph, Face, TIER_LOOK } from "./shared";
+export { PayoffPunch } from "./PayoffPunch";
+export type { PayoffTone } from "./PayoffPunch";
 export type { CardHero } from "./shared";
 export { Particles, PhaseSwap, InkWipe, Letters, shakeStage, flashScreen, useReducedMotion } from "./motion";
 export { TurnCard } from "./TurnCard";

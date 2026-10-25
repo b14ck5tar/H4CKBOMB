@@ -3026,3 +3026,48 @@
 @media (prefers-reduced-motion: reduce) {
   .tvx-meter-num.is-step, .tvx-meter-step { animation: none; }
 }
+
+/* The finale's payoff punch (synced to the payoff sound): the ending word slams, a burst flies out, ~1.1 s, gone. */
+.tvx-payoff { position: absolute; inset: 0; pointer-events: none; z-index: 6; }
+.tvx-payoff-in { position: absolute; inset: 0; display: grid; place-items: center; }
+.tvx-payoff-word {
+  position: relative;
+  top: -12%;
+  font-family: var(--font-display), Impact, sans-serif;
+  font-size: calc(var(--u) * 11);
+  line-height: 0.9;
+  text-transform: uppercase;
+  color: var(--pc);
+  -webkit-text-stroke: calc(var(--u) * 0.18) #000;
+  text-shadow: calc(var(--u) * 0.6) calc(var(--u) * 0.6) 0 #000, 0 0 calc(var(--u) * 4) var(--pc);
+  animation: tvx-payoff-slam 1.1s cubic-bezier(0.2, 1.5, 0.4, 1) both;
+}
+@keyframes tvx-payoff-slam {
+  0% { opacity: 0; transform: scale(2.8) rotate(-10deg); }
+  18% { opacity: 1; transform: scale(0.92) rotate(-3deg); }
+  28% { transform: scale(1.04) rotate(-4deg); }
+  36%, 72% { opacity: 1; transform: scale(1) rotate(-4deg); }
+  100% { opacity: 0; transform: scale(1.12) rotate(-4deg); }
+}
+.tvx-payoff-burst { position: absolute; left: 50%; top: 38%; width: 0; height: 0; }
+.tvx-payoff-burst i {
+  position: absolute;
+  width: calc(var(--u) * 1.1);
+  height: calc(var(--u) * 2.4);
+  margin: calc(var(--u) * -1.2) 0 0 calc(var(--u) * -0.55);
+  background: var(--cc);
+  border: calc(var(--u) * 0.15) solid #000;
+  border-radius: calc(var(--u) * 0.3);
+  transform: rotate(var(--a)) translateY(0) scale(0.4);
+  animation: tvx-payoff-bit 0.95s cubic-bezier(0.15, 0.8, 0.3, 1) both 0.08s;
+}
+@keyframes tvx-payoff-bit {
+  0% { opacity: 1; transform: rotate(var(--a)) translateY(0) scale(0.4); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(var(--a)) translateY(calc(var(--u) * var(--r) * -1)) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tvx-payoff-word { animation: tvx-payoff-fade 1.1s ease both; }
+  .tvx-payoff-burst { display: none; }
+  @keyframes tvx-payoff-fade { 0%, 100% { opacity: 0; } 15%, 75% { opacity: 1; } }
+}
