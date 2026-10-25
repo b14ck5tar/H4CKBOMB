@@ -4,7 +4,7 @@
  *   /tv-preview?piece=turn      TurnCard + SuggestionBubbles (add &pick=1 for the credited idea)
  *   /tv-preview?piece=plan      PlanCard            (&tier=clever|solid|risky|wild|miracle)
  *   /tv-preview?piece=meter     QualityMeter + HUD  (&total=14 &nat=20|1)
- *   /tv-preview?piece=outcome   OutcomeCaption + HUD (&danger=4)
+ *   /tv-preview?piece=outcome   OutcomeCaption + HUD
  *   /tv-preview?piece=montage   EndingMontage from the first panel (&at=3 jumps to the reveal)
  *   /tv-preview?piece=reveal    straight to "Based on a true story" (&author=Maya for the Our Stories wording)
  *   /tv-preview?piece=autoplay  a full fake game on a loop: two turns (ideas, plan, roll, outcome), a nat-20 finale,
@@ -55,18 +55,18 @@ const IDEAS2 = [
   { id: "d", text: "Give it a giant pillow to hug", by: "Jay", color: "#3de7ff", portrait: "/heroes/v2/night-baker.webp" },
   { id: "e", text: "Sing the pumpkin song backwards", by: "Luis", color: "#c6ff2e" },
 ];
-type Step = { k: string; ms: number; art: number; at: number; danger: number };
+type Step = { k: string; ms: number; art: number; at: number };
 const STEPS: Step[] = [
-  { k: "turn", ms: 7600, art: 0, at: 1, danger: 1 },
-  { k: "plan", ms: 5200, art: 0, at: 1, danger: 1 },
-  { k: "meter", ms: 5200, art: 0, at: 1, danger: 1 },
-  { k: "outcome", ms: 6500, art: 1, at: 2, danger: 1 },
-  { k: "turn2", ms: 6800, art: 1, at: 2, danger: 2 },
-  { k: "plan2", ms: 4800, art: 1, at: 2, danger: 2 },
-  { k: "meter2", ms: 5200, art: 1, at: 2, danger: 2 },
-  { k: "outcome2", ms: 6200, art: 2, at: 3, danger: 4 },
-  { k: "finale", ms: 5600, art: 2, at: 3, danger: 4 },
-  { k: "montage", ms: 26000, art: 2, at: 3, danger: 4 },
+  { k: "turn", ms: 7600, art: 0, at: 1 },
+  { k: "plan", ms: 5200, art: 0, at: 1 },
+  { k: "meter", ms: 5200, art: 0, at: 1 },
+  { k: "outcome", ms: 6500, art: 1, at: 2 },
+  { k: "turn2", ms: 6800, art: 1, at: 2 },
+  { k: "plan2", ms: 4800, art: 1, at: 2 },
+  { k: "meter2", ms: 5200, art: 1, at: 2 },
+  { k: "outcome2", ms: 6200, art: 2, at: 3 },
+  { k: "finale", ms: 5600, art: 2, at: 3 },
+  { k: "montage", ms: 26000, art: 2, at: 3 },
 ];
 
 function AutoPlay({ from }: { from?: string }) {
@@ -108,7 +108,7 @@ function AutoPlay({ from }: { from?: string }) {
       body = <QualityMeter total={14} parts={[{ label: "rolled", value: 13 }, { label: "Sam's idea", value: 1, signed: true }]} />;
       break;
     case "meter2":
-      body = <QualityMeter total={1} natural={1} parts={[{ label: "rolled", value: 1 }, { label: "Charm", value: 1, signed: true }, { label: "risky plan", value: -3, signed: true }]} />;
+      body = <QualityMeter total={1} natural={1} parts={[{ label: "rolled", value: 1 }, { label: "Charm", value: 1, signed: true }, { label: "bold plan", value: -3, signed: true }]} />;
       break;
     case "finale":
       body = <QualityMeter total={22} natural={20} parts={[{ label: "rolled", value: 20 }, { label: "Guts", value: 2, signed: true }]} />;
@@ -127,7 +127,7 @@ function AutoPlay({ from }: { from?: string }) {
     <div style={{ position: "fixed", inset: 0, background: "#07040d", overflow: "hidden" }}>
       <SceneArt src={ART[step.art]} />
       <TvStage>
-        {step.k !== "montage" && <HudStrip ladder={ladder} danger={{ level: step.danger, max: 5 }} />}
+        {step.k !== "montage" && <HudStrip ladder={ladder} />}
         <PhaseSwap k={step.k}>{body}</PhaseSwap>
       </TvStage>
     </div>
@@ -232,7 +232,7 @@ export default function TvPreview() {
       <div key={run} style={{ position: "fixed", inset: 0, background: "#07040d", overflow: "hidden" }}>
         <SceneArt src={ART[2]} dim={0.6} />
         <TvStage>
-          {piece !== "finale-vote" && <HudStrip ladder={{ steps: 4, at: 3, now: "Send the hatchling home", goal: LADDER.goal }} danger={{ level: 3, max: 5 }} />}
+          {piece !== "finale-vote" && <HudStrip ladder={{ steps: 4, at: 3, now: "Send the hatchling home", goal: LADDER.goal }} />}
           <FinalePreview piece={piece} stageParam={q.get("stage") ?? undefined} />
         </TvStage>
       </div>
@@ -242,7 +242,6 @@ export default function TvPreview() {
   const tier = (q.get("tier") ?? "wild") as Tier;
   const total = Number(q.get("total") ?? 14);
   const nat = q.get("nat") ? Number(q.get("nat")) : undefined;
-  const danger = Number(q.get("danger") ?? 2);
 
   if (piece === "montage" || piece === "reveal")
     return (
@@ -257,7 +256,7 @@ export default function TvPreview() {
       <TvStage>
         {piece === "turn" && (
           <>
-            <HudStrip ladder={LADDER} danger={{ level: danger, max: 5 }} />
+            <HudStrip ladder={LADDER} />
             <TurnCard hero={ROSA} playedBy="Jay" turn={{ n: 1, of: 3 }} prompt="Everyone else: suggest a move" k="rosa" />
             <SuggestionBubbles items={ideas} pickedId={picked} />
           </>
@@ -270,7 +269,7 @@ export default function TvPreview() {
         )}
         {piece === "plan" && (
           <>
-            <HudStrip ladder={LADDER} danger={{ level: danger, max: 5 }} />
+            <HudStrip ladder={LADDER} />
             <PlanCard
               hero={{ name: "Rosa", color: "#3de7ff", portrait: "/heroes/v2/night-baker.webp" }}
               plan="I hum it a slow lullaby and then I tuck it in with a blanket"
@@ -282,7 +281,7 @@ export default function TvPreview() {
         )}
         {piece === "meter" && (
           <>
-            <HudStrip ladder={LADDER} danger={{ level: danger, max: 5 }} />
+            <HudStrip ladder={LADDER} />
             <QualityMeter
               total={total}
               natural={nat}
@@ -290,14 +289,14 @@ export default function TvPreview() {
                 { label: "rolled", value: nat ?? 16 },
                 { label: "Charm", value: 2, signed: true },
                 { label: "Sam's idea", value: 1, signed: true },
-                { label: "wild plan", value: -5, signed: true },
+                { label: "long shot", value: -5, signed: true },
               ]}
             />
           </>
         )}
         {piece === "outcome" && (
           <>
-            <HudStrip ladder={{ ...LADDER, at: 2, now: "Get the key from the ranger" }} danger={{ level: danger, max: 5 }} />
+            <HudStrip ladder={{ ...LADDER, at: 2, now: "Get the key from the ranger" }} />
             <OutcomeCaption
               text="Rosa asks the park ranger about the creature with Mr. Han. The ranger says it wants the red light off so it can finally sleep."
               tag="It works"

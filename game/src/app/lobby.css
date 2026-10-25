@@ -837,7 +837,7 @@
   top: calc(var(--u) * 3.6);
   width: calc(var(--u) * 28.4);
   transform: rotate(2.4deg);
-  animation: lb-join-in 1s cubic-bezier(0.25, 1.5, 0.45, 1) both 0.25s;
+  animation: lb-join-in 0.8s cubic-bezier(0.25, 1.5, 0.45, 1) both 0.05s; /* in by ~0.85 s: judges scan right away */
 }
 @keyframes lb-join-in {
   from { transform: translate3d(calc(var(--u) * 20), 0, 0) rotate(14deg); opacity: 0; }

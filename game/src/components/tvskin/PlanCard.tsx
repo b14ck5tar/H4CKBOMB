@@ -2,6 +2,7 @@
 import { useEffect, useRef } from "react";
 import type { Tier } from "@/lib/types";
 import { TIER_SHIFT } from "@/lib/grade";
+import { TIER_LABEL } from "@/lib/rules";
 import { playSfx } from "@/lib/sound";
 import { CreditChip, D20Glyph, Face, TIER_LOOK, fmtSigned, possessive, type Css } from "./shared";
 import { shakeStage } from "./motion";
@@ -71,7 +72,7 @@ export function PlanCard({ hero, plan, tier, shift, stat, credit, why, cta = "Ro
             </span>
           )}
           <span className="tvx-chip tvx-chip-tier">
-            <b>{fmtSigned(sh)}</b> {tier}
+            <b>{fmtSigned(sh)}</b> {TIER_LABEL[tier].toLowerCase()}
           </span>
           <span className="tvx-chip-eq">=</span>
           <span className="tvx-chip tvx-chip-sum">
