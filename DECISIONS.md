@@ -234,3 +234,11 @@ Full history and train of thought: `design/00-where-we-are.md`.
 - ✅ CD: GitHub repo stays private, left off Devpost. Tracks: Meta, Most Entertaining, SerpApi + Best Novice. The walk-in line is removed from Devpost (optional pitch opener only).
 - ✅ Prod 07:49 (once-upon-a-roll-m6y4zur2o): storySfx + finale talk ON, "secret strength", the new final-roll buttons. Story's verdict: GO.
 - ✅ CD (via the coordinator): kick from lobby, play again / back to lobby, character voices. Built and tested on a local prod build; publish AFTER the 9:00-9:45 video recording. castVoices needs NEXT_PUBLIC_CAST_VOICES=1 on Vercel.
+
+## Sun ~11 AM: final wrap (CD decisions, relayed by the coordinator)
+- ✅ Story v3 ships before the 11:30 deadline. "One-and-done" goals (each goal resolves once, never repeats).
+- ✅ Judge stories = the canal shark + the wall gold. Batman and the opera snake are out of the judge rotation.
+- ✅ Devpost: the human-voice About, a refreshed gallery, the Meta track ticked; the GitHub repo is PUBLIC (Meta requires a public repo; history scanned clean of keys).
+- ✅ A submission git tag at 11:30; anything after the deadline goes on a branch.
+- ✅ A local demo is allowed at judging, if disclosed.
+- The video is the coordinator's single smooth cut (one narrator, ~2:00); the spliced submit/v2 cuts were rejected.
