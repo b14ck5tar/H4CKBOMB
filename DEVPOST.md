@@ -103,6 +103,9 @@ ElevenLabs ahead of time; Muse picks which ones play. Everything else is Meta.
   gate. Stories that pass are saved to a story library, so a quiet news week still has good stories.
 - **An MCP connector** (`/api/mcp`) lets Muse, the agent, list tonight's stories, open a table and draft the invite.
 - **Judge mode** (`/tv?judge=1`): a tested true story, one turn each, then the finale, about 5 minutes.
+- **An 8-point story checklist** picked the stories you play: a problem that takes the whole group, a real dilemma to
+  argue about, a setup you can tell in one plain sentence, room for unexpected routes and endings, and a "wait, that
+  REALLY happened?" payoff, all behind a safety gate enforced in code.
 
 ### How AI tools and test harnesses helped us build it
 
