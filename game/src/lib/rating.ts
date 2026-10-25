@@ -7,7 +7,7 @@ import type { Rating } from "./types";
  * separate, unbuilt Real World mode in design/16.
  */
 export const RATINGS: Rating[] = ["kids", "teens", "adults"];
-export const DEFAULT_RATING: Rating = "teens";
+export const DEFAULT_RATING: Rating = "adults"; // CD: grown-up humor by default; Kids keeps the gentle tone
 
 export const RATING_LABEL: Record<Rating, string> = {
   kids: "Kids",
@@ -26,7 +26,7 @@ export const RATING_BLURB: Record<Rating, string> = {
 export const RATING_GUIDE: Record<Rating, string> = {
   kids: `AUDIENCE: KIDS (some players may be 6-12). Gentle, silly, warm. Threats are mischievous, never menacing; nobody is ever really hurt, scared for real, or in real danger. No romance, no insults, no gross-out beyond harmless silliness, no swearing, no scary imagery. Simple words and short sentences.`,
   teens: `AUDIENCE: TEENS (13+). Spooky-funny with light peril. No gore, no swearing, no sexual content, nothing cruel. Teasing stays affectionate.`,
-  adults: `AUDIENCE: ADULTS (18+). Darker, drier humor and a spookier tone are fine, and grown-up everyday topics (money, work, landlords, city bureaucracy, tech) are fair game. Mild swearing only if a player uses it first. Still: no gore, no sexual content, no cruelty toward real people or groups, nothing about real tragedies.`,
+  adults: `AUDIENCE: ADULTS (18+). Darker, drier humor and a spookier tone are fine, and grown-up everyday topics (money, work, landlords, city bureaucracy, tech) are fair game. No swearing, nothing crude. Still: no gore, no sexual content, no cruelty toward real people or groups, nothing about real tragedies.`,
 };
 
 /** Quest ratings in order of how broad the audience is. A quest is allowed if it suits this group's rating. */

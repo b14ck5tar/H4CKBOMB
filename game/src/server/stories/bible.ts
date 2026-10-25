@@ -63,7 +63,7 @@ WRITE
 - cast: 2 or 3 side characters who really belong in real_event, by role (from real_event.roles). role (a few plain words), name (one ordinary first name like Marge, Dev, Rosa or Hank, never a hero's name, never a banned name), want (10 words max, the one thing they want), voice (8 words max, how they talk), line (12 words max, a dry sample line in that voice). The first one is the recurring side character: the opener's npc_line speaker if there is one.
 - acts: exactly "turns" acts, one per turn, in order. Each act's goal is a sub-step that clearly leads to the finale goal (opener.goal): a player can see why doing it gets them closer. Together they follow opener.beats (spread over the turns) and real_event.arc in order. Act 1's situation is opener.situation, word for word, and act 1's goal is opener.beats[0]. Each act:
   - situation: 22 words max. What is in front of the group when this turn starts. It follows from ALL THREE outcomes of the act before (any branch leads here). Name a person or a thing a player can act on.
-  - goal: the Right now goal. Verb-first, 8 words max, a vivid physical verb plus a thing in the situation, a real step toward opener.goal that a kid can tell is done. Never "deal with", "figure out", "try to", "keep", "continue", "handle", "investigate", "look for".
+  - goal: the Right now goal. Verb-first, 8 words max, a vivid physical verb plus a thing in the situation, a real step toward opener.goal that anyone can tell is done. Never "deal with", "figure out", "try to", "keep", "continue", "handle", "investigate", "look for".
   - twist: 16 words max. The planned surprise this act reveals, caused by the problem's rule (never a random door, prop or the weather). It shows up in the mixed outcome and colors the others.
   - outcomes: worse, mixed and better. Each has:
     - text: 1 or 2 short sentences, 30 words max. It starts with exactly "{hero} {action}," where {hero} is the acting hero and {action} is a slot the live writer fills with what they really did. Then what the world does back: ONE concrete picture that follows from the problem's rule, said flatly. Plan-agnostic: never assume a method, a tool or a power.
@@ -83,7 +83,7 @@ WRITE
 
 QUALITY BAR (check every line before you answer)
 - Every narration is at most 2 short sentences. Never repeat a phrase, a sentence opening or a sentence shape from another beat in this bible: after "{hero} {action},", each beat continues differently (not always "and the X does Y").
-- An 8-year-old follows it the first time: everyday words, plain cause and effect a listener could retell.
+- A tired adult at a party follows it the first time: everyday words, plain cause and effect a listener could retell.
 - House humor: iconic, a little dry and witty, unexpected but it makes sense. The joke is one specific detail that follows from the problem's rule, said flatly. The world takes the strange thing completely seriously.
 - Inside the real event: its kind of place, its real roles as the cast, its everyday objects, its real stakes, its real order of events.
 - Every act moves forward. At most one new object per act, and never a goal about a stray object.
@@ -366,7 +366,7 @@ THE PLAN DRIVES THE STORY (most important):
   - Friend: if idea_from is set and branch is better or legendary, credit them in a few words ("Rosa's idea", "just like Rosa said", "on Rosa's advice", "Rosa called it"). Never "with Rosa's help", and never invent an action for the friend. Never name a friend on worse or mixed.
   - No slot braces in your answer. Call things what they are (owls, the zoo keeper). Never coin riddle names ("pale fliers").
 - situation: 22 words max, present tense. The NEW moment this plan created, clearly different from the old situation, with something specific next_hero can act on (it may name next_hero, never as its first word). If goal_reached, the moment right before the finale.
-- now_goal: the next step from HERE toward destination.goal, along the path this plan opened (ahead[steps - 1] reworded to fit, if the plan did not open its own path). Verb-first, 8 words max, a vivid physical verb, a thing in the new situation, a kid can tell when it is done. Never a redo of what just worked, and never a goal this plan already made pointless (once the dog is in someone's arms, nobody tracks the dog). If goal_reached, destination.goal.
+- now_goal: the next step from HERE toward destination.goal, along the path this plan opened (ahead[steps - 1] reworded to fit, if the plan did not open its own path). Verb-first, 8 words max, a vivid physical verb, a thing in the new situation, anyone can tell when it is done. Never a redo of what just worked, and never a goal this plan already made pointless (once the dog is in someone's arms, nobody tracks the dog). If goal_reached, destination.goal.
 - scene: 35 words max, the brief for this moment's new painting: the spot in the real kind of place, this hero (by name) doing it, the visible result, the problem in frame. No text or signs.
 - why: 20 words max, the plain cause and effect for DM's Notes.
 - where: 8 words max, where the heroes are now.

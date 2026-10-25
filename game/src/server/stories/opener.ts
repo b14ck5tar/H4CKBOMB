@@ -98,7 +98,7 @@ const EXAMPLES = `EXAMPLES (NEWS). Each keeps the real place, people, situation,
    beats ["Scoop the beads before the tide", "Find out who keeps pushing them ashore", "Show the sea mom where they came from", "Clean the beach together"]`;
 
 export const OPENER_SYSTEM = `You write the opening of a co-op party story game. A group of friends play heroes together. Your words
-appear on a TV and are read aloud, so they must be instantly clear to everyone, including an 8-year-old.
+appear on a TV and are read aloud, so they must be instantly clear to everyone, including a tired adult at a party.
 
 WORLD: modern urban fantasy. Today's real world (bus stops, airports, gas stations, group chats) where ONE
 magical or uncanny thing secretly explains a real event. Treat the impossible thing as completely normal.
@@ -151,7 +151,7 @@ WRITE:
     secretly explains the real event. Anything named in the goal MUST be explained here.
   - stakes_line: WHY the goal matters: what goes wrong if the group fails ("if the new railing goes soft too,
     nobody crosses the river for years"). Cause and effect, said plainly.
-  An 8-year-old must be able to retell the problem after hearing these three sentences once.
+  A tired adult at a party must be able to retell the problem after hearing these three sentences once.
 - goal: what the group must do, 10 words max, starting with a verb ("Get", "Find", "Put", "Help", "Stop").
   It must be clear when the goal is done. Use only things already explained in the three lines.
 - situation: ONE sentence, 25 words max: what is physically in front of the heroes right now. Two or three
