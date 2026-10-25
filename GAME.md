@@ -1,6 +1,6 @@
 # Group Project: the game in two pages
 
-The shared truth for every session. Current as of Sun Oct 25, ~6 AM. Only final answers live here; the history is in
+The shared truth for every session. Current as of Sun Oct 25, ~4:30 AM (laptop clock). Only final answers live here; the history is in
 DECISIONS.md and `design/`. If this file and older docs disagree, this file wins.
 
 ## 1. What we're making and why
