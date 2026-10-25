@@ -2991,11 +2991,11 @@
 }
 .tvx-meter-parts { font-size: calc(var(--u) * 1.9); display: flex; align-items: center; justify-content: center; gap: calc(var(--u) * 0.5); flex-wrap: wrap; }
 .tvx-meter-parts > span { display: inline-flex; align-items: center; gap: calc(var(--u) * 0.3); }
-.tvx-meter-pd20 { width: calc(var(--u) * 3.2); height: calc(var(--u) * 3.2); }
+.tvx-meter-pd20 { width: calc(var(--u) * 4.4); height: calc(var(--u) * 4.4); }
 .tvx-meter-pd20 polygon,
 .tvx-meter-pd20 line { stroke: #3de7ff; }
 .tvx-meter-pd20 .tvx-d20-body { fill: rgba(10, 6, 18, 0.95); }
-.tvx-meter-pd20 text { font-size: 64px; }
+.tvx-meter-pd20 text { font-size: 92px; paint-order: stroke; stroke: #000; stroke-width: 6px; } /* the die's number reads at a glance */
 .tvx-meter-eq b { font-size: 1.25em; color: var(--zc); }
 
 /* The count-up: the readout is up as soon as the die lands, showing the die's number, then each bonus adds visibly
