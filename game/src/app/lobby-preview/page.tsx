@@ -9,7 +9,7 @@
  */
 import { useCallback, useEffect, useState } from "react";
 import { Lobby, type StorySource } from "@/components/Lobby";
-import quick from "@/data/quickstart_heroes.json";
+import quick from "@/data/quickstart_heroes_v2.json";
 import type { GameMode, Hero, Player, Rating } from "@/lib/types";
 
 const HEROES = quick as { id: string; hero: Hero }[];
@@ -95,7 +95,7 @@ export default function LobbyPreview() {
       mode={mode}
       source={source}
       rating={rating}
-      portraitOf={(p) => (p.pick ? `/heroes/${p.pick}.webp` : undefined)}
+      portraitOf={(p) => (p.pick ? `/heroes/v2/${p.pick}.webp` : undefined)}
       onMode={setMode}
       onSource={setSource}
       onRating={setRating}

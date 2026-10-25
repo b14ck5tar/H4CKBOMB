@@ -3,7 +3,7 @@
  * 2. In TV(): before the Mirror switch add  if (s.phase === "lobby") return (<><Lobby {...props} />{overlays}{toast…}<Reactions items={reactions} /></>);
  *    (no TopBar/Footer: the lobby is full-bleed and has its own mute button).
  * 3. props: code={s.code} players={s.players} mode={s.mode} source={s.source} rating={s.rating}
- *    portraitOf={(p) => (p.pick ? `/heroes/${p.pick}.webp` : host.thumbs[p.id] ?? host.portraits[p.id])}
+ *    portraitOf={(p) => (p.pick ? `/heroes/v2/${p.pick}.webp` : host.thumbs[p.id] ?? host.portraits[p.id])}
  *    readOnly={host.readOnly} onMode={(m) => host.setMode(m)} onSource={(x) => host.setSource(x)} onRating={(r) => host.setRating(r)}
  *    canStart={host.canBegin()} onStart={() => host.begin()} localMode={host.transportKind === "local"}
  *    onAddBot={showBots ? () => host.addBot() : undefined}   (keep the old ?bots URL check)

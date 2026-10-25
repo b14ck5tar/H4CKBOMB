@@ -8,7 +8,7 @@ import { Particles } from "./motion";
 export interface MontagePanel {
   /** The painted scene for this big choice. */
   image: string;
-  /** One line: what that choice did ("Gus asked the ranger, and the ranger had the key"). */
+  /** One line: what that choice did ("Rosa asked the ranger, and the ranger had the key"). */
   line: string;
   /** Who did it (hero or player names). The first one is the main credit. */
   who: { name: string; color: string; portrait?: string }[];
@@ -30,7 +30,7 @@ export interface RevealData {
   yourTitle: string;
   /** The table's version in one or two sentences. */
   yourVersion: string;
-  /** "Solved by Ava's parallel parking (Gus) and ..." */
+  /** "Solved by Ava's parallel parking (Rosa) and ..." */
   solvedBy?: string;
   /** Ending stamp ("YOU DID IT") and its color. */
   ending?: string;

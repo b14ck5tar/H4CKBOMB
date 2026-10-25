@@ -23,17 +23,17 @@ import { EndingMontage, FinalePitch, FinaleShake, FinaleVote, HudStrip, InkWipe,
 import type { MontagePanel, RevealData } from "@/components/tvskin";
 
 const ART = ["/quests/cornfield-dome/scene_1.webp", "/quests/cornfield-dome/scene_2.webp", "/quests/cornfield-dome/scene_3.webp", "/lobby/boulder_114b3c8fbac1bd2a55054597.webp"];
-const GUS = { name: "Gus", epithet: "of Mall Security", color: "#3de7ff", portrait: "/heroes/raccoon.webp", stats: [{ label: "Guts", value: 2 }, { label: "Brains", value: 1 }, { label: "Charm", value: 0 }] };
+const ROSA = { name: "Rosa", epithet: "of the 3 AM Ovens", color: "#3de7ff", portrait: "/heroes/v2/night-baker.webp", stats: [{ label: "Guts", value: 1 }, { label: "Brains", value: -1 }, { label: "Charm", value: 3 }] };
 const IDEAS = [
-  { id: "a", text: "I ask the park ranger what it wants", by: "Sam", color: "#ffad3b", portrait: "/heroes/substitute.webp" },
-  { id: "b", text: "I hum it a slow lullaby", by: "Priya", color: "#ff2e7e", portrait: "/heroes/grandma.webp" },
+  { id: "a", text: "I ask the park ranger what it wants", by: "Sam", color: "#ffad3b", portrait: "/heroes/v2/mail-carrier.webp" },
+  { id: "b", text: "I hum it a slow lullaby", by: "Priya", color: "#ff2e7e", portrait: "/heroes/v2/nurse.webp" },
   { id: "c", text: "Trade it my pretzel for the off switch", by: "Luis", color: "#c6ff2e" },
 ];
 const LADDER = { steps: 4, at: 1, now: "Turn off the red light", goal: "Send the hatchling home before the sun comes up" };
 const PANELS: MontagePanel[] = [
-  { image: ART[0], line: "Gus asked the ranger what the hatchling wanted, and the ranger had the key all along.", who: [{ name: "Gus", color: "#3de7ff", portrait: "/heroes/raccoon.webp" }, { name: "Sam", color: "#ffad3b" }] },
-  { image: ART[1], line: "Mr. Pruitt's lullaby echoed up the elevator shaft and woke the whole county.", who: [{ name: "Mr. Pruitt", color: "#ffad3b", portrait: "/heroes/substitute.webp" }] },
-  { image: ART[2], line: "Mabel hugged the giant pillow, fell asleep, and accidentally hit the off switch.", who: [{ name: "Mabel", color: "#ff2e7e", portrait: "/heroes/grandma.webp" }, { name: "Gus", color: "#3de7ff" }] },
+  { image: ART[0], line: "Rosa asked the ranger what the hatchling wanted, and the ranger had the key all along.", who: [{ name: "Rosa", color: "#3de7ff", portrait: "/heroes/v2/night-baker.webp" }, { name: "Sam", color: "#ffad3b" }] },
+  { image: ART[1], line: "Mr. Han's lullaby echoed up the elevator shaft and woke the whole county.", who: [{ name: "Mr. Han", color: "#ffad3b", portrait: "/heroes/v2/librarian.webp" }] },
+  { image: ART[2], line: "Bea hugged the giant pillow, fell asleep, and accidentally hit the off switch.", who: [{ name: "Bea", color: "#ff2e7e", portrait: "/heroes/v2/skater-grandma.webp" }, { name: "Rosa", color: "#3de7ff" }] },
 ];
 const REVEAL: RevealData = {
   headline: "'Space object' found in rural Minnesota cornfield came from Chinese rocket, experts say",
@@ -43,16 +43,16 @@ const REVEAL: RevealData = {
   now: "The object was secured. Nobody was hurt.",
   articleUrl: "https://bringmethenews.com/",
   yourTitle: "The Corn Hatchling",
-  yourVersion: "Gus asked the ranger, Mr. Pruitt hummed too loud, Mabel shared the pillow and snored, then Gus got the red light turned off.",
-  solvedBy: "Solved by Ava's parallel parking (Gus) and Cam's finding lost things (Mabel).",
+  yourVersion: "Rosa asked the ranger, Mr. Han hummed too loud, Bea shared the pillow and snored, then Rosa got the red light turned off.",
+  solvedBy: "Solved by Ava's parallel parking (Rosa) and Cam's finding lost things (Bea).",
   ending: "You did it",
   endingColor: "#ffd23f",
 };
 
 // ---------- autoplay: one full fake game ----------
-const MABEL = { name: "Mabel", epithet: "Ghost Hunter Since 1974", color: "#ff2e7e", portrait: "/heroes/grandma.webp", stats: [{ label: "Guts", value: 2 }, { label: "Brains", value: -1 }, { label: "Charm", value: 1 }] };
+const BEA = { name: "Bea", epithet: "the Skater Grandma", color: "#ff2e7e", portrait: "/heroes/v2/skater-grandma.webp", stats: [{ label: "Guts", value: 3 }, { label: "Brains", value: 1 }, { label: "Charm", value: -1 }] };
 const IDEAS2 = [
-  { id: "d", text: "Give it a giant pillow to hug", by: "Jay", color: "#3de7ff", portrait: "/heroes/raccoon.webp" },
+  { id: "d", text: "Give it a giant pillow to hug", by: "Jay", color: "#3de7ff", portrait: "/heroes/v2/night-baker.webp" },
   { id: "e", text: "Sing the pumpkin song backwards", by: "Luis", color: "#c6ff2e" },
 ];
 type Step = { k: string; ms: number; art: number; at: number; danger: number };
@@ -93,16 +93,16 @@ function AutoPlay({ from }: { from?: string }) {
     case "turn2":
       body = (
         <>
-          <TurnCard hero={turn2 ? MABEL : GUS} playedBy={turn2 ? "Priya" : "Jay"} turn={{ n: turn2 ? 2 : 1, of: 3 }} prompt="Everyone else: suggest a move" k={step.k} />
+          <TurnCard hero={turn2 ? BEA : ROSA} playedBy={turn2 ? "Priya" : "Jay"} turn={{ n: turn2 ? 2 : 1, of: 3 }} prompt="Everyone else: suggest a move" k={step.k} />
           <SuggestionBubbles items={ideas} pickedId={picked} />
         </>
       );
       break;
     case "plan":
-      body = <PlanCard hero={{ name: "Gus", color: "#3de7ff", portrait: "/heroes/raccoon.webp" }} plan="I ask the park ranger what it wants" tier="solid" stat={{ label: "Charm", value: 0 }} credit={{ name: "Sam", color: "#ffad3b" }} />;
+      body = <PlanCard hero={{ name: "Rosa", color: "#3de7ff", portrait: "/heroes/v2/night-baker.webp" }} plan="I ask the park ranger what it wants" tier="solid" stat={{ label: "Charm", value: 0 }} credit={{ name: "Sam", color: "#ffad3b" }} />;
       break;
     case "plan2":
-      body = <PlanCard hero={{ name: "Mabel", color: "#ff2e7e", portrait: "/heroes/grandma.webp" }} plan="I give it a giant pillow to hug" tier="risky" stat={{ label: "Charm", value: 1 }} credit={{ name: "Jay", color: "#3de7ff" }} />;
+      body = <PlanCard hero={{ name: "Bea", color: "#ff2e7e", portrait: "/heroes/v2/skater-grandma.webp" }} plan="I give it a giant pillow to hug" tier="risky" stat={{ label: "Charm", value: 1 }} credit={{ name: "Jay", color: "#3de7ff" }} />;
       break;
     case "meter":
       body = <QualityMeter total={14} parts={[{ label: "rolled", value: 13 }, { label: "Sam's idea", value: 1, signed: true }]} />;
@@ -114,10 +114,10 @@ function AutoPlay({ from }: { from?: string }) {
       body = <QualityMeter total={22} natural={20} parts={[{ label: "rolled", value: 20 }, { label: "Guts", value: 2, signed: true }]} />;
       break;
     case "outcome":
-      body = <OutcomeCaption text="Gus asks the park ranger what the hatchling wants. The ranger says it wants the red light off so it can finally sleep." tag="It works" tagColor="#3de7ff" hero={{ name: "Gus", color: "#3de7ff" }} k="o1" />;
+      body = <OutcomeCaption text="Rosa asks the park ranger what the hatchling wants. The ranger says it wants the red light off so it can finally sleep." tag="It works" tagColor="#3de7ff" hero={{ name: "Rosa", color: "#3de7ff" }} k="o1" />;
       break;
     case "outcome2":
-      body = <OutcomeCaption text="Mabel hugs the giant pillow herself and falls asleep on the switch box. The red light starts blinking faster." tag="Disaster" tagColor="#ff3b4e" hero={{ name: "Mabel", color: "#ff2e7e" }} k="o2" />;
+      body = <OutcomeCaption text="Bea hugs the giant pillow herself and falls asleep on the switch box. The red light starts blinking faster." tag="Disaster" tagColor="#ff3b4e" hero={{ name: "Bea", color: "#ff2e7e" }} k="o2" />;
       break;
     case "montage":
       body = <EndingMontage panels={PANELS} reveal={REVEAL} keepsakeUrl="https://groupproject-game.vercel.app/tale#demo" panelMs={5200} />;
@@ -136,14 +136,14 @@ function AutoPlay({ from }: { from?: string }) {
 
 // ---------- finale ----------
 const FIN_HEROES = [
-  { id: "p1", name: "Gus", color: "#3de7ff", portrait: "/heroes/raccoon.webp" },
-  { id: "p2", name: "Mabel", color: "#ff2e7e", portrait: "/heroes/grandma.webp" },
-  { id: "p3", name: "Mr. Pruitt", color: "#ffad3b", portrait: "/heroes/substitute.webp" },
-  { id: "p4", name: "Juno", color: "#c6ff2e", portrait: "/heroes/barista.webp" },
+  { id: "p1", name: "Rosa", color: "#3de7ff", portrait: "/heroes/v2/night-baker.webp" },
+  { id: "p2", name: "Bea", color: "#ff2e7e", portrait: "/heroes/v2/skater-grandma.webp" },
+  { id: "p3", name: "Mr. Han", color: "#ffad3b", portrait: "/heroes/v2/librarian.webp" },
+  { id: "p4", name: "DJ Kiko", color: "#c6ff2e", portrait: "/heroes/v2/dj.webp" },
 ];
 const FIN_PLANS = [
   { id: "f1", playerId: "p1", text: "I ask the ranger for the key and promise to turn the light back on at dawn" },
-  { id: "f2", playerId: "p2", text: "I sing the hatchling a lullaby while Gus flips the switch" },
+  { id: "f2", playerId: "p2", text: "I sing the hatchling a lullaby while Rosa flips the switch" },
   { id: "f3", playerId: "p3", text: "I hand out pop quizzes until the light gets bored and turns itself off" },
   { id: "f4", playerId: "p4", text: "Espresso for everyone, then we carry the hatchling home together", eligible: false },
 ];
@@ -258,7 +258,7 @@ export default function TvPreview() {
         {piece === "turn" && (
           <>
             <HudStrip ladder={LADDER} danger={{ level: danger, max: 5 }} />
-            <TurnCard hero={GUS} playedBy="Jay" turn={{ n: 1, of: 3 }} prompt="Everyone else: suggest a move" k="gus" />
+            <TurnCard hero={ROSA} playedBy="Jay" turn={{ n: 1, of: 3 }} prompt="Everyone else: suggest a move" k="rosa" />
             <SuggestionBubbles items={ideas} pickedId={picked} />
           </>
         )}
@@ -272,7 +272,7 @@ export default function TvPreview() {
           <>
             <HudStrip ladder={LADDER} danger={{ level: danger, max: 5 }} />
             <PlanCard
-              hero={{ name: "Gus", color: "#3de7ff", portrait: "/heroes/raccoon.webp" }}
+              hero={{ name: "Rosa", color: "#3de7ff", portrait: "/heroes/v2/night-baker.webp" }}
               plan="I hum it a slow lullaby and then I tuck it in with a blanket"
               tier={tier}
               stat={{ label: "Charm", value: 2 }}
@@ -299,10 +299,10 @@ export default function TvPreview() {
           <>
             <HudStrip ladder={{ ...LADDER, at: 2, now: "Get the key from the ranger" }} danger={{ level: danger, max: 5 }} />
             <OutcomeCaption
-              text="Gus asks the park ranger about the creature with Mr. Pruitt. The ranger says it wants the red light off so it can finally sleep."
+              text="Rosa asks the park ranger about the creature with Mr. Han. The ranger says it wants the red light off so it can finally sleep."
               tag="It works"
               tagColor="#3de7ff"
-              hero={{ name: "Gus", color: "#3de7ff" }}
+              hero={{ name: "Rosa", color: "#3de7ff" }}
               k={run}
             />
           </>
