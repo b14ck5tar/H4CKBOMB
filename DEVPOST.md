@@ -152,8 +152,7 @@ reviewers and recording analysts. What actually changed the game:
 - A turn system where listening to your friends is the best move, and a finale where you have to convince each other.
 - A story that follows the players' own logic instead of a script, with AI that runs the whole game but never decides a
   number or rates a person.
-- Our creative director's first hackathon. Our application got denied and one of us never applied, so we walked in
-  anyway, and shipped a game where the AI runs the night and the humans just get to play.
+- Our creative director's first hackathon: they made every creative call and directed AI to build it.
 
 ## What we learned
 
