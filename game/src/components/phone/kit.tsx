@@ -133,7 +133,7 @@ export function PrivacyLine({ children }: { children?: React.ReactNode }) {
   return (
     <p className="pk-privacy">
       <LockIcon />
-      <span>{children ?? "Your words go to Meta’s Muse AI to run tonight’s game. Nothing is saved after."}</span>
+      <span>{children ?? "No accounts. Your words go to Meta’s Muse AI to run the game; the TV keeps the finished tale, and our server caches the art and audio."}</span>
     </p>
   );
 }

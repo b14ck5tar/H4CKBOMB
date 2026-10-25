@@ -9,7 +9,7 @@ const KEYS: [string, string][] = [
   ["Space", "Continue (reading screens)"],
   ["S", "Skip the current timer"],
   ["N", "DM's Notes: what the AI is doing"],
-  ["Q", "Quick Tale: 3-minute mode + begin"],
+  ["Q", "Quick Tale: ~5-minute mode + begin"],
   ["B", "Add a test player (lobby, with ?bots=1)"],
   ["H", "This help"],
 ];
