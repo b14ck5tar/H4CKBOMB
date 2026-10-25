@@ -35,6 +35,7 @@ export async function museJSON<T>(opts: {
   maxTokens?: number;
   timeoutMs?: number;
   model?: string;
+  temperature?: number;
 }): Promise<T> {
   const t0 = Date.now();
   const res = await fetch(`${BASE}/chat/completions`, {
@@ -49,6 +50,7 @@ export async function museJSON<T>(opts: {
       ],
       response_format: { type: "json_schema", json_schema: { name: opts.task.replace(/\W/g, "_"), schema: opts.schema, strict: true } },
       reasoning_effort: opts.effort ?? "minimal",
+      ...(opts.temperature != null ? { temperature: opts.temperature } : {}),
       max_completion_tokens: opts.maxTokens ?? 2500,
       prompt_cache_key: opts.task,
     }),

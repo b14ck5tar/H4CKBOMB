@@ -59,7 +59,7 @@ export function solvedByLine(players: (Pick<Player, "name" | "real"> & { hero?: 
     .map((p) => {
       const s = skillPhrase(p.real?.skill ?? "");
       // The real player's name and knack, then their hero, so the room can connect the two.
-      return s ? `${poss(p.name)} ${s}${p.hero ? ` (${p.hero.split(" ")[0]})` : ""}` : "";
+      return s ? `${poss(p.name)} ${s}${p.hero ? ` (${p.hero})` : ""}` : "";
     })
     .filter(Boolean);
   if (!parts.length) return "";

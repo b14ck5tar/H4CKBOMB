@@ -9,21 +9,18 @@ export const TIER_MOD: Record<Tier, number> = { clever: 4, solid: 2, risky: -1, 
  */
 export const TIER_DC: Record<Tier, number> = { clever: 9, solid: 11, risky: 14, wild: 17, miracle: 21 };
 
-/** What the die itself has to show for the plan to fully work (2..20; a miracle always needs a 20). */
-export function needOnDie(tier: Tier, mods: number) {
-  if (tier === "miracle") return 20;
-  return Math.max(2, Math.min(20, TIER_DC[tier] - mods));
-}
-
-/** Natural 20 always works (in the funniest way). Natural 1 always flops. Close misses work with a cost. */
+/**
+ * "Needs 13+" always means the TOTAL (d20 + bonuses), everywhere. Below it, the plan fails. Just reaching it works
+ * with a cost; 3 or more over works cleanly. A natural 20 always works (the funniest way); a natural 1 always flops.
+ * A miracle only works on a natural 20.
+ */
 export function judge(die: number, total: number, tier: Tier): Band {
   if (die === 1) return "CATASTROPHE";
   if (die === 20) return "LEGENDARY";
   if (tier === "miracle") return "FAIL";
   const dc = TIER_DC[tier];
-  if (total >= dc) return "SUCCESS";
-  if (total >= dc - 3) return "YES_BUT";
-  return "FAIL";
+  if (total < dc) return "FAIL";
+  return total >= dc + 3 ? "SUCCESS" : "YES_BUT";
 }
 
 export const TIER_LABEL: Record<Tier, string> = {

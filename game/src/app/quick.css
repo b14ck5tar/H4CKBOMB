@@ -644,6 +644,7 @@
 .gp-need { display: flex; flex-direction: column; align-items: center; line-height: 1; padding: 0.7rem 1.2rem; border-radius: 6px; border: 2px solid var(--gilt-bright); background: rgba(5, 3, 9, 0.7); box-shadow: 0 0 30px -8px var(--gilt-bright); }
 .gp-need span { font-family: var(--font-ui), monospace; text-transform: uppercase; letter-spacing: 0.3em; font-size: 0.85rem; color: var(--gilt-bright); }
 .gp-need b { font-family: var(--font-display), Impact, sans-serif; font-size: 3.4rem; color: var(--parchment); }
+.gp-need i { font-style: normal; font-family: var(--font-ui), monospace; font-size: 0.9rem; color: rgba(245, 241, 255, 0.7); margin-top: 0.25rem; }
 
 .gp-out-portrait { flex-shrink: 0; width: 10rem; height: 12.5rem; border-radius: 6px; overflow: hidden; box-shadow: 0 0 0 4px var(--pc), 0 20px 50px -10px rgba(0, 0, 0, 0.9); background: #1b122b; display: flex; align-items: center; justify-content: center; }
 .gp-out-portrait img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; }

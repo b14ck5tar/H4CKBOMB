@@ -86,7 +86,7 @@ export interface RollResult {
   noRoll: boolean; // "That works": a clever plan, no dice needed
   boosted: boolean;
   bonus?: number; // +1 for working in a friend's suggestion
-  need?: number; // what the die had to show for the plan to fully work ("Needs 12+")
+  need?: number; // the TOTAL the roll needs ("Needs 13+"); 21 = only a natural 20 (a miracle)
 }
 
 export interface RoundOutcome {

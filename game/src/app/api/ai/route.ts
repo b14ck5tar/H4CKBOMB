@@ -80,7 +80,7 @@ async function run(task: string, input: Any, rating: Rating) {
       return museJSON({ task: t("scene"), system: withRating(SCENE_SYSTEM, rating), schema: SCENE_SCHEMA, effort: "low", maxTokens: 4000, user: JSON.stringify(input) });
     case "verdict":
       // One winning plan per call: spark-1.3 at minimal effort answers in 1-2 s (design/23).
-      return museJSON({ task: t("ruling"), model: MODELS.ruling, system: withRating(RULING_SYSTEM, rating), schema: RULING_SCHEMA, effort: "minimal", timeoutMs: 9000, maxTokens: 1500, user: JSON.stringify(input) });
+      return museJSON({ task: t("ruling"), model: MODELS.ruling, system: withRating(RULING_SYSTEM, rating), schema: RULING_SCHEMA, effort: "minimal", temperature: 0, timeoutMs: 9000, maxTokens: 1500, user: JSON.stringify(input) });
     case "cast":
       return museJSON({ task: t("cast"), model: MODELS.ruling, system: withRating(CAST_SYSTEM, rating), schema: CAST_SCHEMA, effort: "minimal", timeoutMs: 8000, maxTokens: 1200, user: JSON.stringify(input) });
     case "outcome":

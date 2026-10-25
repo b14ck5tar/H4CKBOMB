@@ -4,8 +4,15 @@
  */
 import type { GameState } from "./types";
 
+/** A hero's display name: the full name ("Mr. Pruitt", never "Mr."), with an ellipsis if it's very long. */
+export function shortName(name?: string, max = 16) {
+  const n = (name ?? "").trim();
+  if (!n) return "";
+  return n.length > max ? `${n.slice(0, max - 1).trimEnd()}…` : n;
+}
+
 export function heroFirst(s: GameState, pid: string) {
-  return s.players.find((p) => p.id === pid)?.hero?.name.split(" ")[0] ?? "Someone";
+  return shortName(s.players.find((p) => p.id === pid)?.hero?.name) || "Someone";
 }
 
 export function winnerPid(s: GameState) {

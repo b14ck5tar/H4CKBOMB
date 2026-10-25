@@ -6,7 +6,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useCountdown, usePhone } from "@/lib/usePhone";
 import { PLAN_MAX, QUICK_TURN_MS, REACTIONS, TURN_MS } from "@/lib/rules";
-import { eligibleIds, nowText, plateFor, turnOwner, winnerPid } from "@/lib/now";
+import { eligibleIds, nowText, plateFor, turnOwner, winnerPid, shortName } from "@/lib/now";
 import { sfx } from "@/lib/sfx";
 import { HeroCard } from "./HeroCard";
 import { MicButton } from "./MicButton";
@@ -447,7 +447,7 @@ function OwnerTurn({ state, send, deadlineAt }: { state: GameState; send: Send; 
               >
                 <span className="flex flex-col min-w-0">
                   <span className="font-heading uppercase text-sm" style={{ color: pl?.color }}>
-                    {pl?.hero?.name.split(" ")[0]}
+                    {shortName(pl?.hero?.name)}
                   </span>
                   <span className="text-base leading-snug">{idea}</span>
                 </span>
@@ -457,7 +457,7 @@ function OwnerTurn({ state, send, deadlineAt }: { state: GameState; send: Send; 
         </div>
       )}
       <button className="btn btn-crimson text-xl" type="submit" disabled={!text.trim()}>
-        {credit ? `Go! (+1 for ${state.players.find((p) => p.id === credit)?.hero?.name.split(" ")[0]}'s idea)` : "Go!"}
+        {credit ? `Go! (+1 for ${shortName(state.players.find((p) => p.id === credit)?.hero?.name)}'s idea)` : "Go!"}
       </button>
     </form>
   );
@@ -469,7 +469,7 @@ function IdeaForm({ state, me, send, deadlineAt }: { state: GameState; me: Playe
   const [text, setText] = useState("");
   const [editing, setEditing] = useState(false);
   const owner = state.players.find((p) => p.id === turnOwner(state));
-  const first = owner?.hero?.name.split(" ")[0] ?? "them";
+  const first = shortName(owner?.hero?.name) || "them";
   if (sent && !editing)
     return (
       <div className="flex flex-col gap-3">
@@ -750,7 +750,13 @@ export function Phone({ code }: { code: string }) {
             <Timer deadlineAt={deadlineAt} total={10000} />
             <BigButton
               label="ROLL"
-              sub={`Needs ${state.rolls[0]?.need ?? "?"}${(state.rolls[0]?.need ?? 0) < 20 ? "+" : ""} on the die`}
+              sub={(() => {
+                const r = state.rolls[0];
+                if (!r?.need) return "Tap to roll the die";
+                if (r.need > 20) return "Needs a perfect 20";
+                const mods = r.statBonus + (r.bonus ?? 0);
+                return `Needs ${r.need}+ (d20 ${mods >= 0 ? "+" : "−"} ${Math.abs(mods)})`;
+              })()}
               onClick={() => {
                 sfx.unlock();
                 send("roll");

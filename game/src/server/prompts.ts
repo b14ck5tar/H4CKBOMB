@@ -188,6 +188,9 @@ Input: the scene (title, goal, situation, who is there), finale (true in the las
   - risky: a normal person could try it, but it is likely to go wrong (brute force, climbing, sneaking). Hard is risky, not miracle.
   Assume heroes can get ordinary items mentioned in the scene. Never punish small logistics.
   Examples from another scene (a locked haunted library): "kick the door down" = risky; "ask the librarian ghost for the key" = solid; "return the overdue book the ghost keeps mentioning" = clever; "sing to the door" = wild; "turn the library into a cloud" = miracle.
+  Examples matched to the goal: a plan that sensibly does what the goal asks is at least solid ("sing it a lullaby" when the goal is to put it to sleep = solid). Doing exactly what a character in the scene asked for is clever ("sing" when someone said "somebody has to sing"). Something silly that has nothing to do with the goal is wild.
+  - A plan you had to steer to a harmless version is never easier than the original: rate the harmless version risky or harder.
+  - Only the first action is judged. Words like "then", "and then", "after that", "if that fails" start a second action: ignore everything from there.
   - Rate the idea, never the person: typos, short plans and plain wording are fine.
   - The same idea that already won earlier tonight (see earlier) is one step worse this time.
   - Before the finale, a plan that would end the whole threat at once is still rated as usual, but it can only partly work (the outcome will say so).
@@ -212,7 +215,7 @@ Input: the story (title, goal = where the whole story is heading), situation (wh
 - text: 1 or 2 sentences, 30 words max in total. Hard limit. Count.
   - Start with the hero's name, so the table knows whose plan it was. The outcome IS the explanation (nobody sees a separate reason): say what they tried, what the world did back, and WHY it worked or didn't, as cause and effect inside the story ("Gus threw stones, but the dragon's hard scales bounced them right back").
   - Never copy the plan. Never quote it.
-  - Match the band exactly. CATASTROPHE: the funniest disaster that follows from the plan, nobody hurt. FAIL: it backfires in a way that makes sense, and the story still moves. YES_BUT: it works, and costs something specific. SUCCESS: it works the way they hoped. LEGENDARY: better than anyone hoped, and someone nearby reacts like a real person would.
+  - Match the band exactly. CATASTROPHE: the funniest disaster that follows from the plan, nobody hurt. FAIL: it backfires in a way that makes sense, and the story still moves. YES_BUT: it works, and costs something specific. SUCCESS: it works the way they hoped. LEGENDARY: better than anyone hoped, and someone ALREADY in the scene reacts like a real person would.
   - Say plainly whether the scene's goal is done. Every outcome is about the goal: no side stories, no non-sequiturs.
   - Make it logical: the result follows from what they tried, step by step, so a listener could retell it. If the plan uses the hero's power, show the power helping. Mention the hero's weakness only on a FAIL or CATASTROPHE, and only if this exact plan walks into it. Otherwise leave the power and weakness out. Never add a second action or a side detail that wasn't in the plan or the scene.
   - Use only people, places and things named in the scene or the plan.
@@ -221,6 +224,8 @@ Input: the story (title, goal = where the whole story is heading), situation (wh
   - A natural 20 always works, even for a silly plan, in the funniest way that still makes sense. A natural 1 always flops, harmlessly.
   - If helped_by is set, the plan was partly a friend's idea: give that friend a few words of credit ("Gus's idea, Juno's hands").
   - Only the first concrete action happens. Ignore anything the player chained after it.
+  - Never add new characters: no joggers, drivers, passers-by or crowds. Only the heroes and people already in the situation or story.
+  - Never write "natural 20" or "natural 1": say "a perfect roll" or "the worst possible luck" if you mention it at all.
 - situation: 25 words max, present tense. The new situation the next hero faces, caused by what just happened: what changed, and what is in the way of the goal now. Something a player can act on. Always a step toward the goal (or a setback on the way to it), never a side quest. If turns_left is 0, the goal is now within reach for the grand finale.
 - why: 20 words max, for the DM's Notes: the plain cause and effect behind this outcome ("Juno asked the ranger, who knows the hand hates noise, so the hand calms down").
 
@@ -320,6 +325,7 @@ TASK: CASE FILE WRITER. Turn this session into a short illustrated keepsake the 
 - hero_pages: exactly one per hero: best moment ≤30 words and an award ≤5 words ("Most Likely to Pet It").
 - thank_yous (if any): moments a hero thanked a friend for saving them. Work at least one into a page or hero_page, warmly and briefly ("Ricky thanked Mara for the save").
 - moral: one dry, funny lesson ≤14 words.
+- The keepsake must agree with how it ended: if goal_reached is false, the heroes did NOT reach the goal. The title and the last page say so kindly and never claim a win.
 - real_story_bridge: ≤40 words, the transition to the real headline, using ONLY facts in real_story. Neutral and respectful. Map 1–2 invented elements to real ones ("The thing under the bridge was, officially, ...").`;
 
 export function storybookSchema(images: string[], long = false) {

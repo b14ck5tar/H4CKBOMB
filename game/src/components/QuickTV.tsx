@@ -7,9 +7,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import QRCode from "qrcode";
 import type { Stage } from "./TV";
+import { firstAction } from "@/lib/host";
 import { BAND_LABEL, ENDING_LABEL, ROLL_ANIM_MS, STAT_LABEL, TIER_DC, TITLE_BEAT_MS, isFailure, lineMs, narrationLines, stampText } from "@/lib/rules";
 import { coldOpenTimeline } from "@/lib/quick";
-import { eligibleIds, heroFirst, nowText, plateFor, turnOwner, winnerPid } from "@/lib/now";
+import { eligibleIds, heroFirst, nowText, plateFor, turnOwner, winnerPid, shortName } from "@/lib/now";
 import { sfx } from "@/lib/sfx";
 import { mask } from "@/lib/mask";
 import type { GameState, Pitch, Player, RollResult, Tier } from "@/lib/types";
@@ -240,7 +241,7 @@ function CrewRow({ host, s, done, label }: { host: Stage; s: GameState; done: (p
         {heroes.map((p) => (
           <div key={p.id} className={`gp-crew ${done(p) ? "on" : ""}`} style={{ ["--pc" as string]: p.color }}>
             <Avatar host={host} p={p} size={64} />
-            <span className="font-heading text-lg uppercase leading-none">{p.hero!.name.split(" ")[0]}</span>
+            <span className="font-heading text-lg uppercase leading-none">{shortName(p.hero!.name)}</span>
             <span className="gp-crew-tick" aria-hidden>
               ✓
             </span>
@@ -419,7 +420,7 @@ function Narration({ s, onTitle }: { s: GameState; onTitle: (on: boolean) => voi
     return (
       <div className="qt-stage">
         <div className="gp-scene-title">
-          <p className="font-ui uppercase tracking-[0.4em] text-lg text-[var(--gilt-bright)]">{s.mode === "quick" ? "The scene" : s.scenes[s.sceneIndex]?.kind === "climax" ? "Finale" : `Scene ${s.sceneIndex + 1}`}</p>
+          <p className="font-ui uppercase tracking-[0.4em] text-lg text-[var(--gilt-bright)]">The story</p>
           <h2 className="qt-title !text-[6.5rem]">{s.sceneTitle}</h2>
         </div>
       </div>
@@ -469,7 +470,7 @@ function Turn({ host, s }: { host: Stage; s: GameState }) {
         </div>
         <div className="flex flex-col gap-1">
           <h2 className="qt-question !text-[5rem]" style={{ color: owner.color }}>
-            {owner.hero?.name.split(" ")[0]}&apos;s turn
+            {shortName(owner.hero?.name)}&apos;s turn
           </h2>
         </div>
       </div>
@@ -482,7 +483,7 @@ function Turn({ host, s }: { host: Stage; s: GameState }) {
             <div key={pid} className="qt-glass qt-plan qt-pop !py-3 max-w-[30rem]" style={{ ["--pc" as string]: pl.color }}>
               <div className="flex items-center gap-2">
                 <Avatar host={host} p={pl} size={36} />
-                <span className="font-heading text-lg uppercase">{pl.hero?.name.split(" ")[0]} suggests</span>
+                <span className="font-heading text-lg uppercase">{shortName(pl.hero?.name)} suggests</span>
               </div>
               <p className="text-[1.4rem] leading-snug">“{mask(text)}”</p>
             </div>
@@ -571,10 +572,12 @@ function Ruling({ host, s }: { host: Stage; s: GameState }) {
             </span>
           </div>
         </div>
-        <p className="text-[2.2rem] leading-snug">“{planText(pitch)}”</p>
+        {/* What the DM actually judged: the one action, in plain words. */}
+        <p className="text-[2.2rem] leading-snug">{v && v.interpretation && !v.fallback ? v.interpretation : `“${planText(pitch)}”`}</p>
+        {firstAction(pitch.text).cut && <p className="font-ui text-base uppercase tracking-[0.2em] text-[var(--signal)] -mt-3">Only the first action counts</p>}
         {credit && (
           <p className="font-heading text-2xl uppercase -mt-2" style={{ color: credit.color }}>
-            + {credit.hero?.name.split(" ")[0]}&apos;s idea · +1
+            + {shortName(credit.hero?.name)}&apos;s idea · +1
           </p>
         )}
         <div className="min-h-[7.5rem] flex items-center gap-6">
@@ -582,7 +585,7 @@ function Ruling({ host, s }: { host: Stage; s: GameState }) {
             <>
               <Stamp text={stampText(v.tier)} size="lg" rotate={-4} tone={tierTone(v.tier)} />
               <span className="flex-1" />
-              {need ? <NeedBadge need={need} /> : null}
+              {need ? <NeedBadge need={need} mods={modsOf(s.rolls[0])} /> : null}
             </>
           ) : (
             <p className="font-heading text-2xl uppercase text-parchment/70 qt-throb">The DM is reading the plan…</p>
@@ -595,14 +598,18 @@ function Ruling({ host, s }: { host: Stage; s: GameState }) {
 
 // ---------- 5. the roll ----------
 /** "Needs 12+": what the die has to show, shown before every roll so the room knows what it's cheering for. */
-function NeedBadge({ need }: { need: number }) {
+function NeedBadge({ need, mods }: { need: number; mods: number }) {
+  const miracle = need > 20;
   return (
     <div className="gp-need gp-line">
       <span>Needs</span>
-      <b>{need >= 20 ? "20" : `${need}+`}</b>
+      <b>{miracle ? "a 20" : `${need}+`}</b>
+      <i>{miracle ? "a perfect roll" : `d20 ${mods >= 0 ? "+" : "−"} ${Math.abs(mods)}`}</i>
     </div>
   );
 }
+
+const modsOf = (r?: RollResult) => (r ? r.statBonus + (r.bonus ?? 0) : 0);
 
 function RollMath({ s, r }: { s: GameState; r: RollResult }) {
   const v = s.pitches.find((p) => p.playerId === r.playerId)?.verdict;
@@ -610,7 +617,7 @@ function RollMath({ s, r }: { s: GameState; r: RollResult }) {
     <p className="font-ui text-3xl tabular-nums text-parchment gp-line">
       {r.kept} <span className="text-parchment/70">{fmt(r.statBonus)} {v ? STAT_LABEL[v.stat] : ""}</span>
       {r.bonus ? <span className="text-parchment/70"> +{r.bonus} idea</span> : null} = <b className="text-5xl text-[var(--gilt-bright)]">{r.total}</b>
-      {v && <span className="text-parchment/60 text-2xl"> · {v.tier === "miracle" ? "needed a 20" : `needed ${TIER_DC[v.tier]}`}</span>}
+      {v && <span className="text-parchment/60 text-2xl"> · {v.tier === "miracle" ? "needed a 20" : `needed ${TIER_DC[v.tier]}+`}</span>}
     </p>
   );
 }
@@ -655,7 +662,7 @@ function Roll({ host, s }: { host: Stage; s: GameState }) {
         ) : (
           !shown && (
             <>
-              {r.need ? <NeedBadge need={r.need} /> : null}
+              {r.need ? <NeedBadge need={r.need} mods={modsOf(r)} /> : null}
               <p className="font-heading text-2xl uppercase text-parchment/80 qt-throb">Tap ROLL on your phone</p>
             </>
           )
@@ -753,7 +760,7 @@ function Final({ host, s }: { host: Stage; s: GameState }) {
           </>
         ) : (
           <div className="flex items-center gap-10">
-            {r?.need ? <NeedBadge need={r.need} /> : null}
+            {r?.need ? <NeedBadge need={r.need} mods={modsOf(r)} /> : null}
             <CrewRow host={host} s={s} done={(p) => (stage === "arm" ? !!f?.armed?.includes(p.id) || !!p.away : shook.includes(p.id))} />
           </div>
         )}

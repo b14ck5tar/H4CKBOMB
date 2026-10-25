@@ -25,7 +25,6 @@ import {
   d20,
   evenStats,
   judge,
-  needOnDie,
   endingFromBand,
   TITLE_BEAT_MS,
   narrationMs,
@@ -222,6 +221,14 @@ function personalSeed(id: string, pid: string, author: string, st: { title: stri
   };
 }
 
+/** "…and then…", "if that fails…": only the first action counts. Returns the first action and whether a chain was cut. */
+export function firstAction(text: string): { action: string; cut: boolean } {
+  const m = text.match(/(.+?)(?:\s*[,;.]?\s*(?:\b(?:and|or|but)\s+)?\b(?:then|after that|afterwards|if (?:that|it) (?:fails|doesn't work|does not work)|if not|otherwise|else)\b)/i);
+  const action = m ? m[1].trim().replace(/[,;.\s]+$/, "") : "";
+  if (action.split(/\s+/).length >= 2) return { action, cut: true };
+  return { action: text, cut: false };
+}
+
 /** One action, ~140 characters, one line. */
 function cleanPlan(text: unknown) {
   return String(text ?? "").replace(/[<>]/g, "").replace(/\s+/g, " ").trim().slice(0, PLAN_MAX);
@@ -313,9 +320,9 @@ export function loadShelf(): ShelfBook[] {
 const FALLBACK_OUTCOME: Record<Band, string> = {
   CATASTROPHE: "{name} tries it, and it goes wrong fast. Nobody is hurt, but the problem just got bigger.",
   FAIL: "{name} gives it a real try, but it doesn't work this time. The problem is still right there.",
-  YES_BUT: "{name}'s plan works, mostly. It costs something on the way, but the heroes are closer to the goal.",
-  SUCCESS: "{name}'s plan works the way it was meant to, and the heroes get what they came for.",
-  LEGENDARY: "{name}'s plan works better than anyone hoped. Someone nearby starts clapping and can't stop.",
+  YES_BUT: "{name}'s plan helps a little, but it costs something. The problem isn't solved yet.",
+  SUCCESS: "{name}'s plan works, and the heroes get one step closer. The problem isn't solved yet.",
+  LEGENDARY: "{name}'s plan works better than anyone hoped, and the heroes get a big step closer.",
 };
 const FALLBACK_ENDING: Record<Ending, string> = {
   TRIUMPHANT: "The die lands, and {name}'s plan works. The whole crew pulled it off, and the town will never know how close it was.",
@@ -813,7 +820,7 @@ export class GameHost {
     const name = this.heroName(pitch.playerId);
     // Safety: player text that never reached the AI's moderation is not printed.
     const plan = v.fallback ? "(plan hidden: not reviewed)" : v.moderation === "ok" ? `"${clip(mask(pitch.text), 90)}"` : `(${clip(v.interpretation, 80)})`;
-    const target = v.tier === "miracle" ? "only a natural 20" : `needs ${TIER_DC[v.tier]}+ in total`;
+    const target = v.tier === "miracle" ? "only a natural 20" : `needs ${TIER_DC[v.tier]}+ in total (d20 + bonuses)`;
     this.note("ruling", name, `${plan}${pitch.creditId ? ` (+ ${this.heroName(pitch.creditId)}'s idea, +1)` : ""} → ${TIER_LABEL[v.tier]}, ${target}, rolls ${STAT_LABEL[v.stat]}. ${end(v.reason || "No reason given")}`);
     if (v.moderation === "redirected") {
       this.bump("safety");
@@ -1136,7 +1143,8 @@ export class GameHost {
     const base = this.basePowers[pid] ?? (this.basePowers[pid] = { ability: p.hero.ability, flaw: p.hero.flaw });
     const hero: Hero = {
       ...p.hero,
-      ability: skill ? { name: "Weirdly Good At It", text: `Brings ${skill} to any problem, and it helps.` } : base.ability,
+      // Keep the hero's designed power (it matches their portrait); the player's knack joins it.
+      ability: skill ? { name: base.ability.name, text: `${base.ability.text.replace(/[.!\s]+$/, "")}, and weirdly good at ${skill}.` } : base.ability,
       flaw: fear ? `Has the worst luck with ${fear}, at the worst moments.` : base.flaw,
     };
     this.patchPlayer(pid, { hero });
@@ -1678,7 +1686,7 @@ export class GameHost {
         scene: { title: this.state.sceneTitle, goal: this.state.goal, situation: this.state.situation, who_is_there: this.sceneList[0]?.npc_line?.speaker ?? "" },
         finale: this.state.finale,
         hero: { name: h.name, best_stat: bestStat(h), stats: h.stats, power: h.ability?.text ?? "", weakness: h.flaw },
-        plan: pitch.text,
+        plan: firstAction(pitch.text).action,
         earlier: this.state.log.map((l) => `${l.hero} (${l.band}): ${l.narration}`).slice(-4),
       }),
       10_000,
@@ -1765,7 +1773,26 @@ export class GameHost {
       }),
     })
       .then((r) => (r.ok ? r.json() : null))
-      .then((res: { url?: string; fallback?: boolean } | null) => {
+      .then(async (res: { url?: string; fallback?: boolean; error?: string } | null) => {
+        if (res?.fallback && /policy|safety|moderation/i.test(res.error ?? "")) {
+          // The image filter refused (usually a hero's description): try once more with plain, generic looks.
+          res = await fetch("/api/scene-art", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              questId,
+              sceneIndex: this.quick ? "quick" : plate,
+              heroes: heroes.map((h) => ({ id: `${h.id}-plain`, name: "", visual: "a friendly cartoon hero in everyday clothes" })),
+              rating: this.state.rating,
+              sceneUrl: prev,
+              sceneText: this.state.situation,
+              moment: "the heroes try their plan",
+              style: this.state.cast?.art ?? "neon",
+            }),
+          })
+            .then((r) => (r.ok ? r.json() : null))
+            .catch(() => null);
+        }
         if (!res?.url || res.fallback || this.state.questId !== questId || this.state.phase === "lobby") return;
         // Paintings land in order; a slow older one never replaces a newer one.
         if (asked < this.lastArtAsked) return;
@@ -1978,7 +2005,7 @@ export class GameHost {
       statBonus,
       tierMod: 0,
       bonus,
-      need: needOnDie(v.tier, statBonus + bonus),
+      need: TIER_DC[v.tier],
       total,
       band: judge(die, total, v.tier),
       rescuerId: "",
@@ -2031,7 +2058,7 @@ export class GameHost {
         situation: this.state.situation,
         hero: { name: h.name, power: h.ability?.text ?? "", weakness: h.flaw },
         attempt: pitch.verdict?.interpretation ?? "",
-        plan: pitch.text,
+        plan: firstAction(pitch.text).action,
         helped_by: pitch.creditId ? this.heroName(pitch.creditId) : "",
         band: roll.band,
         natural: roll.kept === 1 || roll.kept === 20 ? roll.kept : null,
@@ -2192,6 +2219,7 @@ export class GameHost {
         band: roll.band,
         ending,
         heroes: heroes.map((h) => h.name),
+        situation: this.state.situation,
         earlier: this.state.log.map((l) => l.narration),
         finale_plan: pitch.verdict?.interpretation ?? "",
         quick_tale: this.quick || undefined,
@@ -2222,6 +2250,8 @@ export class GameHost {
         heroes,
         log,
         ending,
+        goal_reached: ending !== "GRIM_BUT_HILARIOUS",
+        goal: this.state.goal,
         available_images: images,
         long: FEATURES.longStorybook,
         real_story: this.seed?.the_real_story,
@@ -2249,7 +2279,7 @@ export class GameHost {
     this.patchFinal({ stage: "landed", dice: { [r.playerId]: r.kept }, rolled: [r.playerId], total: r.total, ending });
     this.set({ phase: "final_result", rolls: [r], revealed: [r.playerId], players: this.state.players.map((p) => ({ ...p, peril: "" })), ready: [] });
     this.recordWin(pitch, r, `The finale: ${ENDING_LABEL[ending].toLowerCase()}.`);
-    this.note("roll", "The ending", `${r.kept} ${fmtMod(r.statBonus)}${r.bonus ? ` +${r.bonus}` : ""} = ${r.total} → ${BAND_LABEL[r.band]} → ${ENDING_LABEL[ending]}. Reaching the target works, up to 3 short works with a cost.`);
+    this.note("roll", "The ending", `${r.kept} ${fmtMod(r.statBonus)}${r.bonus ? ` +${r.bonus}` : ""} = ${r.total} → ${BAND_LABEL[r.band]} → ${ENDING_LABEL[ending]}. Below the target fails; reaching it works with a cost; 3 over works cleanly.`);
     this.setTimer(FINAL_RESULT_MS, () => this.runEnding(this.endingPlan[this.state.mode] ?? ["epilogue"]));
   }
 

@@ -1,4 +1,5 @@
 "use client";
+import { shortName } from "@/lib/now";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import QRCode from "qrcode";
 import { type GameHost } from "@/lib/host";
@@ -128,7 +129,7 @@ function Crew({ host, s, mark }: { host: Stage; s: GameState; mark?: (p: Player)
           return (
             <div key={p.id} data-crew-pid={p.id} className={`flex flex-col items-center gap-1 w-28 text-center transition ${m === "…" ? "opacity-60" : ""}`}>
               <Avatar host={host} p={p} size={56} />
-              <span className="font-heading text-base leading-tight text-parchment">{p.hero!.name.split(" ")[0]}</span>
+              <span className="font-heading text-base leading-tight text-parchment">{shortName(p.hero!.name)}</span>
               {m && <span className="font-ui text-xs text-[var(--gilt-bright)]">{m}</span>}
               {p.away && <AutopilotTag />}
               {p.peril && <span className="font-ui text-xs font-bold text-[var(--crimson)]">STUCK</span>}
@@ -175,7 +176,7 @@ function Lobby({ host, s }: { host: Stage; s: GameState }) {
         : s.source === "ours"
           ? "Everyone's in. First, everyone writes a small true story."
           : s.mode === "quick"
-            ? "Everyone's in. One scene, about four minutes."
+            ? "Everyone's in. One turn each, about five minutes."
             : "Everyone's in. You'll vote on the story first.";
   return (
     <div className="grid grid-cols-[minmax(0,26rem)_minmax(0,1fr)] gap-10 px-10 pb-8 pt-2 flex-1 min-h-0">
@@ -198,7 +199,7 @@ function Lobby({ host, s }: { host: Stage; s: GameState }) {
               {s.players.map((p) => (
                 <div key={p.id} className="flex flex-col items-center gap-2 w-28 text-center fade-in">
                   {p.hero ? <Avatar host={host} p={p} size={88} /> : <WaxSeal initials={initials(p.name)} color={p.color} size={88} pulse />}
-                  <span className="font-heading text-xl uppercase leading-none">{p.hero ? p.hero.name.split(" ")[0] : mask(p.name)}</span>
+                  <span className="font-heading text-xl uppercase leading-none">{p.hero ? shortName(p.hero.name) : mask(p.name)}</span>
                   <span className="font-ui text-xs text-parchment/60">{p.hero ? mask(p.name) : p.status === "building" ? "drawing a hero…" : "picking a hero…"}</span>
                 </div>
               ))}
@@ -212,12 +213,12 @@ function Lobby({ host, s }: { host: Stage; s: GameState }) {
               <h2 className="font-heading text-2xl uppercase text-[var(--gilt-bright)]">How long?</h2>
               <div className="qt-mode">
                 <button aria-pressed={s.mode === "quick"} onClick={() => { sfx.unlock(); sfx.pageTurn(); host.setMode("quick"); }}>
-                  <span className="font-heading text-2xl font-bold uppercase block">Quick Tale · 3 min</span>
-                  <span className="text-sm text-ink-soft">One scene from a real headline.</span>
+                  <span className="font-heading text-2xl font-bold uppercase block">Quick Tale · ~5 min</span>
+                  <span className="text-sm text-ink-soft">One turn each, then a grand finale.</span>
                 </button>
                 <button aria-pressed={s.mode === "full"} onClick={() => { sfx.unlock(); sfx.pageTurn(); host.setMode("full"); }}>
-                  <span className="font-heading text-2xl font-bold uppercase block">Full Story · ~7 min</span>
-                  <span className="text-sm text-ink-soft">Three scenes. You pick the story.</span>
+                  <span className="font-heading text-2xl font-bold uppercase block">Full Story · ~10 min</span>
+                  <span className="text-sm text-ink-soft">Two turns each (one with 5+ players), then a grand finale.</span>
                 </button>
               </div>
             </section>
@@ -392,7 +393,7 @@ export function ThankHearts({ s }: { s: GameState }) {
         return r ? { x: r.left + r.width / 2, y: r.top + 28 } : null;
       };
       const from = center(save.savedId) ?? { x: window.innerWidth / 2, y: window.innerHeight * 0.75 };
-      const first = (pid: string) => s.players.find((p) => p.id === pid)?.hero?.name.split(" ")[0] ?? "";
+      const first = (pid: string) => shortName(s.players.find((p) => p.id === pid)?.hero?.name);
       save.byIds.forEach((by, i) => {
         const to = center(by) ?? { x: window.innerWidth / 2, y: window.innerHeight * 0.4 };
         const el = document.createElement("div");

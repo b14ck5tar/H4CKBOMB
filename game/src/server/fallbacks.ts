@@ -118,9 +118,9 @@ export function fallbackOutcome(name: string, band: Band) {
   const lines: Record<Band, string> = {
     CATASTROPHE: `${n} tries it, and it goes wrong fast. Nobody is hurt, but the problem is now a little bigger.`,
     FAIL: `${n} gives it a real try, but it doesn't work this time. The problem is still right there.`,
-    YES_BUT: `${n}'s plan works, mostly. It costs something on the way, but the heroes are closer to the goal.`,
-    SUCCESS: `${n}'s plan works the way it was meant to, and the heroes get what they came for.`,
-    LEGENDARY: `${n}'s plan works better than anyone hoped. Someone nearby starts clapping and can't stop.`,
+    YES_BUT: `${n}'s plan helps a little, but it costs something. The problem isn't solved yet.`,
+    SUCCESS: `${n}'s plan works, and the heroes get one step closer. The problem isn't solved yet.`,
+    LEGENDARY: `${n}'s plan works better than anyone hoped, and the heroes get a big step closer.`,
   };
   return { text: lines[band] ?? lines.YES_BUT, situation: "", why: "" };
 }
