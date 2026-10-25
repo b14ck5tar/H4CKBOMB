@@ -360,9 +360,10 @@ function hold(p: AudioParam, now: number) {
 
 /* ---------------- one TV at a time (no ghost narrator) ---------------- */
 
-// A tab becomes a TV when it plays music or narration (phones only play effects). TVs claim the "tv-active"
-// channel: the newest claim wins and every other TV tab goes silent (narration paused, master at 0, no pref
-// written). A TV tab that is hidden goes silent too, and claims again when it is shown.
+// A tab becomes a TV when it plays music or narration (phones only play effects). A new TV announces itself once on
+// the "tv-active" channel: the newest TV wins and every other TV tab goes silent (narration paused, master at 0, no
+// pref written). A silenced TV takes over again only when someone clicks or types in it, so an abandoned tab's own
+// lines never steal the room back. A hidden TV keeps playing (the CD tests with phone tabs on the same laptop).
 let isTv = false;
 let silenced = false;
 let tvChan: BroadcastChannel | null = null;
@@ -381,29 +382,31 @@ function setSilenced(on: boolean) {
   emitChange();
 }
 
-/** This tab is the TV now (called when it starts music or narration). */
-export function claimTv() {
-  if (isServer()) return;
-  if (!isTv) {
-    isTv = true;
-    try {
-      tvChan = new BroadcastChannel("tv-active");
-      tvChan.onmessage = (e) => {
-        if (e.data?.type === "claim" && e.data.id !== tabId) setSilenced(true);
-      };
-    } catch {
-      /* no BroadcastChannel: one TV per browser is then up to the people */
-    }
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "hidden") setSilenced(true);
-      else claimTv();
-    });
-  }
-  if (document.visibilityState === "hidden") return setSilenced(true);
+function announceTv() {
   try {
     tvChan?.postMessage({ type: "claim", id: tabId });
   } catch {}
   setSilenced(false);
+}
+
+/** This tab is a TV (called when it starts music or narration). Announces only the first time. */
+export function claimTv() {
+  if (isServer() || isTv) return;
+  isTv = true;
+  try {
+    tvChan = new BroadcastChannel("tv-active");
+    tvChan.onmessage = (e) => {
+      if (e.data?.type === "claim" && e.data.id !== tabId) setSilenced(true);
+    };
+  } catch {
+    /* no BroadcastChannel: one TV per browser is then up to the people */
+  }
+  const touched = () => {
+    if (silenced) announceTv();
+  };
+  window.addEventListener("pointerdown", touched, { capture: true, passive: true });
+  window.addEventListener("keydown", touched, { capture: true, passive: true });
+  announceTv();
 }
 
 /** Track a narrator line so a silenced TV never plays it. Returns an untrack. */
