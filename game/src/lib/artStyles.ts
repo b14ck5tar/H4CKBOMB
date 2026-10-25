@@ -1,45 +1,46 @@
 /**
- * One art style per story (design/24 P5b). The AI picks one at game start; every scene painting (and the heroes
- * painted into it) uses it. The pre-painted fallback plates stay Neon Uncanny.
- * Each style was test-painted once on the same scene before it went in this list (see the P5b commit).
+ * One art theme per story (design/24 P5b, design/31): the AI picks one at game start. Every theme is a VARIATION of
+ * the house style "Neon Ink" (server/art/style.ts INK_BASE): same hand-inked linework, flat matte cel color, solid
+ * black shadows and the same hero designs, so heroes stay recognizable; the theme changes only palette, light,
+ * texture and mood. `prompt` is appended to the ink base (neon uses the house STYLE + COLOR as is).
  */
 export type ArtStyleId = "neon" | "comic" | "watercolor" | "retro" | "noir" | "gouache";
 
 export const ART_STYLES: Record<ArtStyleId, { name: string; fits: string; prompt: string }> = {
   neon: {
-    name: "Neon Uncanny",
-    fits: "the default: strange news at night, glowing impossible things",
-    prompt: "", // the house style: prompts.ts STYLE + COLOR, already in every scene prompt
+    name: "Neon Ink",
+    fits: "the default: strange news at night in town, streets, shops, odd things after dark",
+    prompt: "", // the house style: server/art/style.ts STYLE + COLOR
   },
-  comic: {
-    name: "neon comic",
-    fits: "city weirdness, urban legends, tech gone strange",
+  noir: {
+    name: "noir night",
+    fits: "mysteries, disappearances, secrets, the unexplained, anything hidden",
     prompt:
-      "bold modern comic-book art: thick black ink outlines, flat saturated neon colors, Ben-Day halftone dots, dramatic speed lines and a punchy pop-art palette of hot pink, cyan and yellow",
+      "Theme, noir night: near-monochrome palette of ink black, cool slate gray and pale moonlight, with ONE flat acid-yellow spot color on the impossible thing only; one hard side light raking through blinds or a doorway, long cast shadows, a wet rain sheen on the ground; hushed, secretive mood",
   },
-  watercolor: {
-    name: "moody watercolor",
-    fits: "nature, animals, rivers, forests, weather",
+  gouache: {
+    name: "warm storybook",
+    fits: "gentle and kids' stories, festivals, farms, animals being born, happy news, small towns",
     prompt:
-      "moody loose watercolor painting on textured paper: soft wet-on-wet washes, gentle bleeding edges, muted greens, blues and warm ochres, delicate ink linework, misty atmosphere",
+      "Theme, warm storybook: limited palette of honey yellow, sage green, rose and sky blue on warm cream, flat matte colors with a faint dry-brush paper texture under the ink; one soft golden late-afternoon key light with warm shadows; cozy, friendly mood like a classic picture book",
   },
   retro: {
     name: "retro sci-fi poster",
-    fits: "space, signals, science, the sky, technology",
+    fits: "space, signals, science, the sky, technology, discoveries",
     prompt:
-      "1960s retro science-fiction poster art: bold simple shapes, grainy screen-print texture, limited palette of teal, orange, cream and deep navy, dramatic stars and rays, mid-century illustration",
+      "Theme, retro sci-fi poster: limited palette of teal, burnt orange, cream and deep navy, grainy screen-print texture with slight color misregistration, flat graphic stars and planets in a dark sky, a low dramatic horizon; one hard key light from the horizon; bold mid-century space-age mood",
   },
-  noir: {
-    name: "film noir",
-    fits: "mysteries, disappearances, secrets, the unexplained",
+  watercolor: {
+    name: "moody watercolor-ink",
+    fits: "nature, rivers, coasts, forests, weather, the sea",
     prompt:
-      "film noir illustration: high-contrast black and white with deep shadows and hard rim light, venetian-blind light stripes, rain sheen, one small accent of glowing color on the impossible element only",
+      "Theme, moody watercolor-ink: loose, transparent watercolor washes in muted moss green, slate blue and ochre inside the same confident ink lines, soft bleeding edges only in the background, mist and rain; one soft overcast key light; quiet, damp, wondering mood",
   },
-  gouache: {
-    name: "storybook gouache",
-    fits: "gentle and kids' stories, festivals, happy news, small towns",
+  comic: {
+    name: "sunny comic",
+    fits: "daytime silliness, contests, records, crowds, sports, town events",
     prompt:
-      "warm storybook gouache illustration: soft matte brushstrokes, rounded friendly shapes, cozy warm palette of honey, sage, rose and sky blue, gentle light, like a classic children's picture book",
+      "Theme, sunny comic: bright daylight palette of sunny yellow, sky blue, tomato red and mint on white, crisp solid-black shadows and bold Ben-Day dots in the sky; one hard noon sun key light; upbeat, slapstick mood like a Sunday comic cover",
   },
 };
 

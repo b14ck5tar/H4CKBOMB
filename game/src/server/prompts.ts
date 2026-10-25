@@ -161,13 +161,13 @@ Rules: a creepy story gets a hushed ghost-story telling (vesper); nature gets a 
 - voice: one id from the list.
 - style: 18 words max, starting "Read this as", how to read it (mood, tone). Never ask for slow reading or long pauses.
 - kind: 6 words max, lowercase, what kind of story this is, for a title card ("a spooky small-town mystery").
-- art: the ONE painting style for the whole story:
-  - neon: the house style, strange news at night with a glowing impossible thing (the default when unsure).
-  - comic: city weirdness, urban legends, tech gone strange.
-  - watercolor: nature, animals, rivers, forests, weather.
-  - retro: space, signals, science, the sky.
-  - noir: mysteries, disappearances, secrets, the unexplained.
-  - gouache: gentle and kids' stories, festivals, happy news, small towns.
+- art: the ONE art theme for the whole story (every theme is the same hand-inked comic look with its own palette and light):
+  - neon: Neon Ink, the house style: strange news at night in town, streets, shops (the default when unsure).
+  - noir: noir night: mysteries, disappearances, secrets, the unexplained.
+  - gouache: warm storybook: gentle and kids' stories, festivals, farms, baby animals, happy news, small towns.
+  - retro: retro sci-fi poster: space, signals, science, the sky, discoveries.
+  - watercolor: moody watercolor-ink: nature, rivers, coasts, forests, weather.
+  - comic: sunny comic: daytime silliness, contests, records, crowds, town events.
 - tone, when given, is the story writer's mood (silly, spooky, cozy, eerie, wondrous or tense): let it lead your voice, style, art and music picks.
 - problem_stakes: 12 words max, what's at stake if the problem (input problem) isn't solved, as one plain line a kid gets ("the new bridge can't open at sunrise"). Every complication comes from the problem.
 - problem_pronoun: if the problem is a creature or a person, the ONE pronoun for it for the whole story ("she", "he", "it" or "they"); otherwise "none".
@@ -410,35 +410,8 @@ export function storybookSchema(images: string[], long = false) {
   });
 }
 
-// ---------- Images ("Neon Uncanny", design/12-art-direction.md; prompt order matters: STYLE first) ----------
-// Art v3 (CD, Sun): "stray a bit from the Gravity Falls look". Indie graphic-novel poster energy: chunky geometric
-// shapes, brush ink, halftone, neon rim light. Still drawn and never realistic.
-export const STYLE =
-  "Bold graphic-novel illustration with a screen-printed poster feel: chunky geometric shapes, thick brush-ink outlines with varied line weight, flat poster colors with Ben-Day halftone dots and screentone in the shadows, slight CMYK misregistration on the edges, hard neon rim light, cinematic camera with a slight dutch tilt, high contrast. Like an alternate-universe animated movie poster, not a TV cartoon";
-export const COLOR =
-  "Color script: the ordinary real world is grounded and believable, deep indigo night and warm sodium-orange streetlight. The single impossible element keeps its own described materials but is the brightest, most saturated thing in the frame, edged and lit from within by hot magenta and electric cyan glow with acid-yellow sparks, so the eye goes straight to it. It feels awe-inspiring and a little menacing, never cute.";
-export const COMPOSITION =
-  "Composition: one clear focal point in the upper two-thirds, one big bold readable silhouette against a simpler background, at most three major shapes, generous negative space; the lower third darker, calm and uncluttered. Include two or three ordinary, specific modern details of this exact place so it feels like a real local-news location.";
-export const NEGATIVE =
-  "Original fictional characters only, no real people, no celebrities, no logos or brands. No text, no letters, no words, no numbers, no captions, no readable signs, all screens and labels blank, no speech bubbles, no sound-effect lettering, no comic panels or borders, no watermark, no signature. Family-friendly, no gore.";
-
-/** Heroes are CHARACTERS, never realistic people (creative directors' rule): cartoon design, exaggerated shapes. */
-export const CHARACTER_STYLE =
-  "Stylized graphic-novel character design with a screen-printed poster feel: one chunky geometric silhouette (tall rectangle, pear, triangle or bean), exaggerated proportions, a simple angular face with small graphic eyes (dots, slits or almonds, never big round shiny eyes), thick brush-ink outlines with varied line weight, flat poster colors with Ben-Day halftone shading and slight CMYK misregistration, a hard magenta and cyan neon rim light. An alternate-universe animated movie look, not a TV cartoon or a Disney character. Clearly a drawn character, NOT a realistic person: no realistic faces, skin texture, pores, or photographic anatomy.";
-
-export function portraitPrompt(v: { anchor: string; outfit: string; palette: string[]; prop: string; expression: string }, flaw: string, ability = "") {
-  return `${CHARACTER_STYLE} Character: ${v.anchor}, ${v.expression}, holding ${v.prop}, wearing ${v.outfit}, color accents ${v.palette.join(", ")}.${ability ? ` One small visible supernatural tell of their strange edge (${ability}), glowing faint magenta and cyan.` : ""} Their flaw is visible in a funny way: ${flaw}. Composition: bust portrait, head and shoulders fill the frame, face in the upper half, centered, strong readable silhouette with a bright magenta-cyan rim light, against a plain flat solid deep-indigo background with a few halftone streaks; the face must read clearly as a tiny circular avatar. ${NEGATIVE}`;
-}
-
-const SCENE_OPENERS: Record<string, string> = {
-  hook: "Wide establishing shot at eye level, hook scene, dusk",
-  twist: "Twist scene, midnight, low angle, the impossible element bigger and stranger than it seemed",
-  climax: "Climax scene, low heroic angle looking up, the impossible element at full scale erupting with light; the most saturated, most explosive image of the tale",
-};
-
-export function scenePrompt(s: { kind: string; location: string; description: string; realm: string; threat?: string }) {
-  return `${STYLE}. ${SCENE_OPENERS[s.kind] ?? SCENE_OPENERS.hook}: ${s.location} in ${s.realm}. ${s.description}${s.threat ? ` The impossible element: ${s.threat}` : ""} No people. ${COLOR} ${COMPOSITION} ${NEGATIVE}`;
-}
+// ---------- Images: house style "Neon Ink" + per-story themes (design/31). The strings live in server/art/style.ts. ----------
+export { CHARACTER_STYLE, COLOR, COMPOSITION, NEGATIVE, portraitPrompt, SCENE_RULE, scenePrompt, STYLE } from "@/server/art/style";
 
 // ---------- Test players (playtesting only) ----------
 export const BOT_SYSTEM = `You play ONE friend at a party game, typing a quick move on your phone for a group story. You are not the narrator.
