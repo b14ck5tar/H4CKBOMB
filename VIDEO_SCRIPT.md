@@ -83,20 +83,22 @@ Muse calls"; "Every number is its own outcome."
 
 ## Shot list (keyed to `pitch/CD_MORNING.md`)
 
-**The take (§2):** `/tv?judge=1&bots=1`, **Quick · Odd news · Teens**, 2 humans on real phones + 2 test players
-(press **B** twice in the lobby). Judge mode plays a saved, tested true story and gives each human 1 turn, then the
-finale: about 5 minutes of footage. Test players only suggest ideas; they never own a turn. Never call one "my
-friend".
+**The take (§2):** `/tv?judge=1`, **Quick · Odd news · Teens**, **3 real people on their own phones** (CD, partner,
+a friend), no test players. Human connection is 30% of the score, and only real people reacting to each other prove
+it. Judge mode plays a saved, tested true story and gives each person 1 turn, then the finale: about 5-6 minutes of
+footage. Plus a **5-10 s room clip** of the three of you laughing at the table (§2), used in Part 1 or Part 2.
+*Solo backup only* (no third person around): `/tv?judge=1&bots=1` with 2 people + 2 test players (press **B**
+twice). Test players only suggest ideas, never own a turn; never call one "my friend".
 
 | Time | VO beat | Shot | Source |
 |---|---|---|---|
 | **Part 1** | | | |
 | 0:00-0:09 | "everyone on their own phone" | Two friends on a couch, each scrolling, nobody talking. 2 s of silence first. | §2 couch shot (LIVE) |
 | 0:09-0:19 | "Tabletop games fix that…" | Hands rolling real dice, people leaning in. No dice? Use `deck-slide-3.png` with a slow push. | §2 dice shot / §4 B-roll |
-| 0:19-0:30 | "So we built Group Project…" | The TV lobby: neon title, big QR; two phones come up and scan. Title: **Group Project**, subtitle *the one group project where everyone actually shows up.* | §2 take: TV + room camera |
+| 0:19-0:30 | "So we built Group Project…" | The TV lobby: neon title, big QR; three phones come up and scan; then the 5-10 s room clip of the three of you laughing at the table. Title: **Group Project**, subtitle *the one group project where everyone actually shows up.* | §2 take: TV + room camera |
 | **Part 2** | | | |
 | 0:30-0:40 | "Scan the code…" | Phone A: type the hero, answer "What's your secret talent?" TV: the hero card pops in, the portrait paints in. | §2 take: phone A + TV |
-| 0:40-0:48 | "Muse turns a real, odd news story…" | TV: the opening painting with all four heroes; the narrator starts reading, text in sync. | §2 take: TV |
+| 0:40-0:48 | "Muse turns a real, odd news story…" | TV: the opening painting with all three heroes; the narrator starts reading, text in sync. | §2 take: TV |
 | 0:48-1:06 | "There's no script…" (**the money shot**) | TV: "{A}, tell the table your plan." Room: B pitches an idea out loud, A laughs. Phone A: friends' ideas; A taps B's. TV: the plan card with "+ B's idea +1". Hold 2 s on the credit. | §2 take: room camera + both phones + TV |
 | 1:06-1:16 | "Swipe up to throw…" | Phone A: the thumb flicks up. TV: the d20 flies onto the table, lands, the meter fills to its grade. Room: both react. Caption: *1 = DISASTER … 20 = LEGENDARY*. | §2 take: phone A + TV + room |
 | 1:16-1:32 | "Muse takes your plan literally…" | TV: the outcome uses A's own word, the new painting crossfades in, the progress meter moves, the last line names B. Room: B looks up. | §2 take: TV + room |
@@ -115,8 +117,8 @@ friend".
 **Keep the take that has:** a friend's idea picked, one low roll and one high roll, an outcome that uses the
 player's own word, a readable headline at the reveal. One good take is enough.
 
-**Plan the moves, not the words:** A's turn: B pitches out loud and A picks B's idea. B's turn: B reads the plan to
-the table first, then sends it. Plans with one clear noun (a ladder, a cinnamon roll, a marching band) read best.
+**Plan the moves, not the words:** A's turn: B and C both pitch out loud, A picks one (+1, their name on screen).
+B's turn: B reads the plan to the table first, then sends it. C's turn: play it straight. Plans with one clear noun (a ladder, a cinnamon roll, a marching band) read best.
 
 ---
 

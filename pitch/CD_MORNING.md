@@ -34,28 +34,34 @@ Open `https://groupproject-game.vercel.app/tv?bots=1` and play to the first turn
 
 ## 2. The live take (about 15 min for 2 takes)
 
-Setup (VIDEO_SCRIPT.md, "Shot list"): `/tv?judge=1&bots=1` (a saved, tested true story), **Quick · Odd news · Teens**,
-2 humans on real phones + 2 test players (press **B** twice). That's 2 turns (1 each) + the finale, about 5 minutes.
+Setup (VIDEO_SCRIPT.md, "Shot list"): `/tv?judge=1` (a saved, tested true story), **Quick · Odd news · Teens**,
+**3 real people on their own phones** (you, the partner, a friend), no test players. That's 3 turns (1 each) + the
+finale, about 5-6 minutes. Real faces reacting to each other are the human-connection score (30%); bots can't show it.
+*Solo backup only, if no third person is around:* `/tv?judge=1&bots=1`, 2 of you + 2 test players (press **B** twice).
 
 Start every recording first, then **clap once on camera** (it syncs the tracks):
 1. **TV:** OBS (1920x1080, 60 fps, desktop audio on, mic off), or Snipping Tool (Win+Shift+R, system audio on).
-2. **Phone A and phone B:** screen recording, mic off, "Show touches" on (Android).
-3. **Room camera:** a third phone, landscape, both faces + the TV glow.
+2. **Phone A (and B if you can):** screen recording, mic off, "Show touches" on (Android).
+3. **Room camera:** a 4th phone (borrow one) propped on books, landscape, all three faces + the TV glow. No 4th phone?
+   Film the reveal and the laughing clip with one player's phone once their turn is over.
 
 Play these moves (plan the moves, not the words):
-- [ ] Human A types a custom hero ("a night-shift baker who argues with her sourdough") and a real secret talent.
-      Human B grabs a ready-made hero, also with a real talent.
-- [ ] A's turn: B pitches an idea **out loud** and types it. A picks B's idea (+1 and B's name on screen).
-- [ ] B's turn: B reads the plan to the table first, then sends it.
+- [ ] A types a custom hero ("a night-shift baker who argues with her sourdough"); B and C grab ready-made heroes.
+      Everyone answers "What's your secret talent?" with something real.
+- [ ] A's turn: B and C both pitch ideas **out loud** and type them. A picks one (+1 and that name on screen).
+- [ ] B's turn: B reads the plan to the table first, then sends it. C's turn: play it straight.
 - [ ] Use plans with one clear noun (a ladder, a cinnamon roll, a marching band).
-- [ ] Finale: both shake the phones at the same moment, laughing.
+- [ ] Finale: all three shake at the same moment, laughing.
 - [ ] Reveal: someone says "wait, that's real?" out loud.
 
 Keep the take that has: a friend's idea picked, one low roll and one high roll, an outcome that uses the player's
 own word, a readable headline at the reveal. **One good take is enough.**
 
-Also record **the opening shot** (Part 1, 9 s): the two of you on a couch, each scrolling your own phone, nobody
-talking. Then 5 s of hands rolling real dice, if you have dice.
+Also record:
+- [ ] **The opening shot** (Part 1, 9 s): the three of you on a couch, each scrolling your own phone, nobody talking.
+- [ ] **The laughing clip** (5-10 s, phone camera): the three of you at the table reacting to a roll or the reveal, real
+      laughs, the TV glow in frame. If the take already caught one, that's it.
+- [ ] Optional: 5 s of hands rolling real dice.
 
 ## 3. Screen captures after the take (5 min)
 
