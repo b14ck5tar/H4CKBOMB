@@ -99,8 +99,15 @@ const t0 = Date.now();
 const news = await (await fetch(`${BASE}/api/news?rating=${RATING}&debug=1`)).json();
 const st = news.stats;
 line(`/api/news (${RATING}): ${news.quests.length} quests in ${Date.now() - t0} ms, generatedAt ${news.generatedAt}`);
-if (st) line(`  serpapi calls this run: ${st.serpCalls} (editions ${st.editions?.join(",")}), fetched ${st.fetched}, regex ok ${st.regexOk}, enriched ${st.enriched}, classified ${st.classified}, picked ${st.picked}`);
-for (const q of news.all ?? news.quests) line(`  - [${q.rating ?? "?"} ${q.oddness ?? ""}] ${q.headline} (${q.place || "?"}; ${q.source}, ${String(q.date).slice(0, 10)})`);
+if (st) line(`  serpapi calls this run: ${st.serpCalls} (editions ${st.editions?.join(",")}), fetched ${st.fetched}, regex ok ${st.regexOk}, enriched ${st.enriched}, gated ${st.gated}, kept ${st.picked}`);
+const fmt = (s) => (s ? Object.entries(s).map(([k, v]) => `${k.slice(0, 4)}${v}`).join(" ") : "");
+line("  KEPT (storyability, best first):");
+for (const q of news.all ?? news.quests) line(`  - ${q.storyability ?? "?"} [${fmt(q.scores)}] [${q.rating ?? "?"}] ${q.headline} (${q.place || "?"}; ${q.source}, ${String(q.date).slice(0, 10)})`);
+if (st?.rejected?.some((r) => r.scores)) {
+  line("  REJECTED by the gate:");
+  for (const r of st.rejected.filter((r) => r.scores).sort((a, b) => b.avg - a.avg)) line(`  x ${r.avg} [${fmt(r.scores)}] ${r.title.slice(0, 90)} (${r.reason})`);
+}
+if (process.argv.includes("--list-only")) process.exit(0);
 if (st?.rejected?.length) line(`  rejected sample: ${st.rejected.slice(0, 8).map((r) => `${r.title.slice(0, 50)} [${r.reason}]`).join("; ")}`);
 
 // --pick=fossil,elf,moon picks cached headlines by substring (no extra SerpApi calls).

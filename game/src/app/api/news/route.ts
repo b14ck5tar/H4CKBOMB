@@ -3,11 +3,13 @@ import { unstable_cache } from "next/cache";
 import { getNewsCandidates, lastStats, type NewsCandidate } from "@/server/news/candidates";
 import { DEFAULT_RATING, isRating, questAllowed } from "@/lib/rating";
 
-// GET /api/news?rating=kids|teens|adults → { quests: [{id, headline, snippet, source, url, date, place, rating}], generatedAt }
-// Up to 10 odd, harmless real stories for the "Odd news" story vote. Never errors; [] on failure (the client
-// falls back to the curated seeds).
+// GET /api/news?rating=kids|teens|adults
+//   → { quests: [{id, headline, snippet, source, url, date, place, rating, storyability, scores}], generatedAt }
+// Up to 10 real stories that passed the STORYABILITY gate (avg >= 4 of 7 scores, none below 3), sorted best first.
+// Every one can be dramatized, so the vote's 3 cards = quests[0..2] and the Quick Tale can pick from the list.
+// Never errors; [] on failure (the client falls back to the curated seeds).
 //
-// Credits: one refresh = 2 SerpApi calls. The full list (all ratings) is cached for 4 h in Next's Data Cache
+// Credits: one refresh = 3 SerpApi calls. The full list (all ratings) is cached for 4 h in Next's Data Cache
 // (survives dev restarts) and in memory; the rating filter runs AFTER the cache, so ratings never multiply calls.
 // Empty results throw inside the cached fn, so a bad run is never cached.
 
@@ -22,7 +24,7 @@ const cached = unstable_cache(
     if (!list.length) throw new Error("no candidates (not caching)");
     return { list, generatedAt: new Date().toISOString() };
   },
-  ["odd-news-candidates-v2"],
+  ["story-news-candidates-v4"],
   { revalidate: 14400, tags: ["news-candidates"] },
 );
 
@@ -35,6 +37,8 @@ const view = (c: NewsCandidate) => ({
   date: c.date,
   place: c.place,
   rating: c.rating,
+  storyability: c.storyability,
+  scores: c.scores,
 });
 
 export async function GET(req: NextRequest) {
@@ -56,6 +60,6 @@ export async function GET(req: NextRequest) {
   } catch (e) {
     console.warn(`[api/news] ${(e as Error).message}`);
     // Never re-run the pipeline here: an empty run isn't cached, so a retry would spend SerpApi credits again.
-    return NextResponse.json({ quests: [], generatedAt: new Date().toISOString(), ...(debug ? { error: (e as Error).message } : {}) }, { headers: { "Cache-Control": "no-store" } });
+    return NextResponse.json({ quests: [], generatedAt: new Date().toISOString(), ...(debug ? { error: (e as Error).message, stats: lastStats() } : {}) }, { headers: { "Cache-Control": "no-store" } });
   }
 }
