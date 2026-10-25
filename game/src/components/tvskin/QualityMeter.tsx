@@ -94,7 +94,8 @@ export function QualityMeter({ total, natural, parts, result, grade, label, dela
           })}
         </div>
         <div className="tvx-meter-marker" aria-hidden>
-          <D20Glyph label={String(g.total)} className="tvx-meter-d20" />
+          {/* the TOTAL rides a plain pin, never a die: the only die on screen is the d20 the code rolled */}
+          <span className="tvx-meter-pin">{g.total}</span>
         </div>
       </div>
       <div className="tvx-meter-zones" aria-hidden>
@@ -109,9 +110,17 @@ export function QualityMeter({ total, natural, parts, result, grade, label, dela
           {parts.map((p, i) => (
             <span key={i}>
               {i > 0 && " "}
-              <b>{i === 0 && !p.signed ? p.value : fmtSigned(p.value)}</b> {p.label}
+              {i === 0 && !p.signed ? (
+                <D20Glyph label={String(p.value)} className="tvx-meter-pd20" />
+              ) : (
+                <b>{fmtSigned(p.value)}</b>
+              )}{" "}
+              {p.label}
             </span>
           ))}
+          <span className="tvx-meter-eq">
+            {" "}= <b>{g.total}</b>
+          </span>
         </p>
       )}
       {nat === 20 && <span className="tvx-meter-burst" aria-hidden />}

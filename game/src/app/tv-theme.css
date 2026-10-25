@@ -2960,3 +2960,40 @@
   animation: tvx-take-pulse 1.4s ease-in-out infinite;
 }
 @keyframes tvx-take-pulse { 50% { opacity: 0.45; } }
+
+/* One die number on screen, the code's d20 (CD playtest: "we rolled 4 but got 18" read as two dice).
+   The meter's marker is a plain pin with the total; the math line starts from the rolled die and ends "= total". */
+.tvx-meter-pin {
+  position: absolute;
+  left: 0;
+  top: calc(var(--u) * -2.6);
+  min-width: calc(var(--u) * 4.4);
+  margin-left: calc(var(--u) * -2.2);
+  padding: calc(var(--u) * 0.35) calc(var(--u) * 0.5) calc(var(--u) * 0.2);
+  font-family: var(--font-display), Impact, sans-serif;
+  font-size: calc(var(--u) * 2.8);
+  line-height: 1;
+  text-align: center;
+  color: var(--ink, #0a0612);
+  background: var(--zc);
+  border: calc(var(--u) * 0.25) solid #000;
+  border-radius: calc(var(--u) * 0.7);
+  box-shadow: 0 0 calc(var(--u) * 1) var(--zc);
+}
+.tvx-meter-pin::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--u) * -1.1);
+  border: calc(var(--u) * 0.6) solid transparent;
+  border-top-color: #000;
+  transform: translateX(-50%);
+}
+.tvx-meter-parts { font-size: calc(var(--u) * 1.9); display: flex; align-items: center; justify-content: center; gap: calc(var(--u) * 0.5); flex-wrap: wrap; }
+.tvx-meter-parts > span { display: inline-flex; align-items: center; gap: calc(var(--u) * 0.3); }
+.tvx-meter-pd20 { width: calc(var(--u) * 3.2); height: calc(var(--u) * 3.2); }
+.tvx-meter-pd20 polygon,
+.tvx-meter-pd20 line { stroke: #3de7ff; }
+.tvx-meter-pd20 .tvx-d20-body { fill: rgba(10, 6, 18, 0.95); }
+.tvx-meter-pd20 text { font-size: 64px; }
+.tvx-meter-eq b { font-size: 1.25em; color: var(--zc); }
