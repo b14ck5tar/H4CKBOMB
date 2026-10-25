@@ -66,8 +66,9 @@ export interface EndingMontageProps {
 
 /** The reveal's beats in order: where the story came from (if known), what you did, what really happened, the bridge. */
 export function revealBeats(r: RevealData): Beat[] {
-  const grand = !!r.moves?.length;
-  return [...(r.originalProblem ? (["origin"] as Beat[]) : []), "did", "real", ...(grand && r.bridge ? (["bridge"] as Beat[]) : [])];
+  // The closing beat holds the take-home QR (the real article's QR has the newspaper beat); without a bridge line it
+  // just says "That was your story. Take it home."
+  return [...(r.originalProblem ? (["origin"] as Beat[]) : []), "did", "real", ...(r.articleUrl || r.bridge ? (["bridge"] as Beat[]) : [])];
 }
 
 /** "Because of you": 3-4 painted panels, one per big choice, then the "Based on a true story" reveal and the keepsake. */
@@ -276,7 +277,7 @@ function Reveal({ r, keepsake, keepsakeUrl, crew, beatIndex }: { r: RevealData; 
         </div>
       ) : beat === "bridge" ? (
         <>
-          <p className="tvx-bridge">{r.bridge}</p>
+          <p className="tvx-bridge">{r.bridge || "That was your story. Take it home."}</p>
           <aside className="tvx-take tvx-take-bridge">
             <p className="tvx-take-head">Take your tale home</p>
             {keepsake ?? (
@@ -330,24 +331,28 @@ function Reveal({ r, keepsake, keepsakeUrl, crew, beatIndex }: { r: RevealData; 
                 <b>How it really ended:</b> {r.realEnding || r.now}
               </p>
             )}
-            {article && (
-              <span className="tvx-clip-qr">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={article} alt="QR code to the real article" />
-                <small>Read it</small>
-              </span>
-            )}
           </article>
-          <aside className="tvx-take">
-            <p className="tvx-take-head">Take your tale home</p>
-            {keepsake ?? (
-              <span className="tvx-take-qr">
+          {article ? (
+            <aside className="tvx-take tvx-read">
+              <p className="tvx-take-head">Read the real article</p>
+              <span className="tvx-take-qr tvx-read-qr">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                {take ? <img src={take} alt="QR code: your storybook" /> : <span className="tvx-take-wait">Binding your storybook…</span>}
+                <img src={article} alt="QR code: the real article" />
               </span>
-            )}
-            <p className="tvx-take-sub">Scan for your storybook</p>
-          </aside>
+              <p className="tvx-take-sub">Scan with your phone camera</p>
+            </aside>
+          ) : (
+            <aside className="tvx-take">
+              <p className="tvx-take-head">Take your tale home</p>
+              {keepsake ?? (
+                <span className="tvx-take-qr">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  {take ? <img src={take} alt="QR code: your storybook" /> : <span className="tvx-take-wait">Binding your storybook…</span>}
+                </span>
+              )}
+              <p className="tvx-take-sub">Scan for your storybook</p>
+            </aside>
+          )}
         </>
       )}
     </section>

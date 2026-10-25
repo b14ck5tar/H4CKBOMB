@@ -474,8 +474,8 @@ export function Lobby(props: LobbyProps) {
         </h1>
 
         <p className="lb-tag">
-          <span className="lb-tag-a">Grab your phone.</span>
-          <span className="lb-tag-b">Tonight’s story is real.</span>
+          <span className="lb-tag-a">Real news. Dramatized.</span>
+          <span className="lb-tag-b">You’re the heroes.</span>
         </p>
 
         <ol className="lb-how" aria-label="How it works">

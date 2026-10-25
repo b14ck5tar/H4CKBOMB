@@ -51,6 +51,12 @@ export function SuggestScreen({
       <Kicker tone="pink">{showSent ? "Idea sent" : `${first}’s turn`}</Kicker>
       <Say text={showSent ? `Now *${first}* picks` : `Suggest a move for *${first}*`} small />
       {owner && <HeroRow player={owner} portrait={ownerPortrait} label="You’re helping" />}
+      {owner?.hero?.ability?.name && (
+        <p className="pk-power">
+          <b>{first}’s power:</b> {owner.hero.ability.name}
+          {owner.hero.ability.text ? ` · ${owner.hero.ability.text}` : ""}
+        </p>
+      )}
       <Goal goal={goal} nowGoal={nowGoal} ladder={ladder} step={step} />
       {showSent ? (
         <>

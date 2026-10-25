@@ -882,6 +882,7 @@ function SkinTurn({ host, s }: { host: Stage; s: GameState }) {
         // Talk-out-loud cue (design/35 rule 14): while the owner types, the TV invites them to tell the table.
         prompt={s.typing.includes(owner.id) ? `${speakableName(owner.name)}, tell the table your plan.` : "Everyone else: suggest a move on your phone"}
         k={`${owner.id}-${s.turnIndex}`}
+        power={owner.hero?.ability?.name ? `${owner.hero.ability.name}${owner.hero.ability.text ? ` · ${owner.hero.ability.text}` : ""}` : undefined}
       />
       <SuggestionBubbles items={items} />
     </>

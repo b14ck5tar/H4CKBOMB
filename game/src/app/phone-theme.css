@@ -2547,3 +2547,6 @@ textarea.pk-input {
 .pk-hint-bright { color: rgba(245, 241, 255, 0.92); font-size: 1.05rem; }
 .pk-again-hero { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 0; font-size: 1.15rem; color: #fff; }
 .pk-again-hero b { color: #c6ff2e; }
+/* The turn owner's power, shown where friends write suggestions (CD). */
+.pk-power { margin: 0; padding: 8px 12px; border-radius: 12px; background: rgba(198, 255, 46, 0.1); border: 1px solid rgba(198, 255, 46, 0.35); font-size: 0.98rem; line-height: 1.35; color: #f5f1ff; }
+.pk-power b { color: #c6ff2e; }
