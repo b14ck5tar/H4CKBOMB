@@ -1,6 +1,6 @@
 import "server-only";
 
-// News fetchers for the news → quest pipeline. Source: design/02-news-to-quest.md §1.
+// News fetchers for odd-news candidates (candidates.ts): SerpApi google_news, its saved fixture, and article facts.
 // Every fetcher normalizes to NewsItem and never throws (failures return []).
 
 export type NewsOrigin = "serpapi" | "serpapi_fixture" | "bbc_rss" | "gnews_rss";
@@ -17,13 +17,8 @@ export interface NewsItem {
   storyToken?: string;
 }
 
-const UA = "Mozilla/5.0 (compatible; OnceUponARoll/1.0; +https://hacktx.com)";
+const UA = "Mozilla/5.0 (compatible; GroupProject/1.0; +https://hacktx.com)";
 const FETCH_TIMEOUT = 8_000;
-
-/** Google News "Science" topic (en-US). Verified against news.google.com/rss/topics/<token>. */
-export const SCIENCE_TOPIC_TOKEN = "CAAqJggKIiBDQkFTRWdvSUwyMHZNRFp0Y1RjU0FtVnVHZ0pWVXlnQVAB";
-/** Upbeat discovery search from the design doc (§5). */
-export const HAPPY_QUERY = "bridge OR festival OR discovered OR restored OR record OR rescued when:1d";
 
 // ---------------------------------------------------------------- helpers
 
@@ -62,93 +57,12 @@ function toIso(d: string | undefined) {
 
 async function getText(url: string, timeoutMs = FETCH_TIMEOUT): Promise<string> {
   const res = await fetch(url, {
-    headers: { "User-Agent": UA, Accept: "application/rss+xml, application/xml, text/xml, text/html, */*" },
+    headers: { "User-Agent": UA, Accept: "text/html, */*" },
     signal: AbortSignal.timeout(timeoutMs),
     cache: "no-store",
   });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.text();
-}
-
-// ---------------------------------------------------------------- RSS
-
-function tag(block: string, name: string): string {
-  const m = block.match(new RegExp(`<${name}(?:\\s[^>]*)?>([\\s\\S]*?)</${name}>`, "i"));
-  if (!m) return "";
-  const raw = m[1].trim();
-  const cdata = raw.match(/^<!\[CDATA\[([\s\S]*?)\]\]>$/);
-  return cdata ? cdata[1].trim() : raw;
-}
-
-function attr(block: string, name: string, attribute: string): string {
-  const m = block.match(new RegExp(`<${name}\\s[^>]*${attribute}="([^"]*)"`, "i"));
-  return m ? decodeEntities(m[1]) : "";
-}
-
-function items(xml: string): string[] {
-  return xml.match(/<item>[\s\S]*?<\/item>/gi) ?? [];
-}
-
-/** Parse a BBC RSS feed. BBC gives a real one-sentence description and direct links. */
-export function parseBbcRss(xml: string): NewsItem[] {
-  return items(xml)
-    .map((b) => ({
-      title: stripTags(tag(b, "title")),
-      source: "BBC News",
-      link: decodeEntities(tag(b, "link")).replace(/\?at_medium=RSS.*$/, ""),
-      date: toIso(tag(b, "pubDate")),
-      snippet: stripTags(tag(b, "description")),
-      thumbnail: attr(b, "media:thumbnail", "url"),
-      origin: "bbc_rss" as const,
-    }))
-    .filter((i) => i.title && i.link && !/\/(videos|live|sounds)\//.test(i.link));
-}
-
-/** Parse a Google News RSS feed. Title is "Headline - Publisher"; description is a cluster of related headlines. */
-export function parseGoogleNewsRss(xml: string): NewsItem[] {
-  return items(xml)
-    .map((b) => {
-      const source = stripTags(tag(b, "source"));
-      let title = stripTags(tag(b, "title"));
-      if (source && title.endsWith(` - ${source}`)) title = title.slice(0, -(source.length + 3)).trim();
-      // The description is an <ol> of the cluster's headlines; the first one repeats the title.
-      const desc = decodeEntities(tag(b, "description"));
-      const related = [...desc.matchAll(/<a [^>]*>([\s\S]*?)<\/a>/gi)]
-        .map((m) => stripTags(m[1]))
-        .filter((t) => t && normalizeTitle(t) !== normalizeTitle(title))
-        .slice(0, 3);
-      return {
-        title,
-        source: source || "Google News",
-        link: decodeEntities(tag(b, "link")),
-        date: toIso(tag(b, "pubDate")),
-        snippet: related.length ? `Related coverage: ${related.join("; ")}` : "",
-        thumbnail: "",
-        origin: "gnews_rss" as const,
-      };
-    })
-    .filter((i) => i.title && i.link);
-}
-
-const GN = "https://news.google.com/rss";
-const GN_PARAMS = "hl=en-US&gl=US&ceid=US:en";
-
-export const RSS_FEEDS: { name: string; url: string; kind: "bbc" | "gnews" }[] = [
-  { name: "bbc-science", url: "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml", kind: "bbc" },
-  { name: "bbc-world", url: "https://feeds.bbci.co.uk/news/world/rss.xml", kind: "bbc" },
-  { name: "gnews-science", url: `${GN}/topics/${SCIENCE_TOPIC_TOKEN}?${GN_PARAMS}`, kind: "gnews" },
-  { name: "gnews-search", url: `${GN}/search?q=${encodeURIComponent(HAPPY_QUERY)}&${GN_PARAMS}`, kind: "gnews" },
-  { name: "gnews-top", url: `${GN}?${GN_PARAMS}`, kind: "gnews" },
-];
-
-export async function fetchRss(feed: (typeof RSS_FEEDS)[number]): Promise<NewsItem[]> {
-  try {
-    const xml = await getText(feed.url);
-    return feed.kind === "bbc" ? parseBbcRss(xml) : parseGoogleNewsRss(xml);
-  } catch (e) {
-    console.warn(`[news] rss ${feed.name} failed: ${(e as Error).message}`);
-    return [];
-  }
 }
 
 // ---------------------------------------------------------------- SerpApi google_news
@@ -196,23 +110,13 @@ export function parseSerpApiGoogleNews(json: Any): NewsItem[] {
   return out;
 }
 
-export const SERPAPI_QUERIES: Record<string, Record<string, string>> = {
-  science: { engine: "google_news", topic_token: SCIENCE_TOPIC_TOKEN, gl: "us", hl: "en" },
-  search: { engine: "google_news", q: HAPPY_QUERY, gl: "us", hl: "en" },
-};
-
-/**
- * Live SerpApi call. Costs 1 search credit per call (250/month on the free plan) unless SerpApi's
- * own 1-hour cache absorbs it. Callers must gate this (see pipeline.ts). Never sends no_cache.
- */
-export async function fetchSerpApi(name: keyof typeof SERPAPI_QUERIES): Promise<NewsItem[]> {
-  return fetchSerpApiParams(String(name), SERPAPI_QUERIES[name]);
-}
-
 /** Live SerpApi calls made by this server instance (for debug stats). */
 export const serpApiCalls = { count: 0 };
 
-/** Any google_news query. Same credit rules as fetchSerpApi. Never throws. */
+/**
+ * Any google_news query. Costs 1 search credit per call (250/month on the free plan) unless SerpApi's own 1-hour
+ * cache absorbs it; callers gate it (candidates.ts). Never sends no_cache. Never throws.
+ */
 export async function fetchSerpApiParams(label: string, params: Record<string, string>): Promise<NewsItem[]> {
   const key = process.env.SERPAPI_KEY;
   if (!key) return [];
