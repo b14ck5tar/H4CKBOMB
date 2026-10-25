@@ -22,7 +22,9 @@ export type Grade = "DISASTER" | "SETBACK" | "PARTIAL" | "PROGRESS" | "GREAT" | 
 export type Branch = "worse" | "mixed" | "better" | "legendary";
 
 /** The tier shift the AI's ruling adds to the roll (a miracle needs a perfect roll in practice). */
-export const TIER_SHIFT: Record<Tier, number> = { clever: 3, solid: 0, risky: -3, wild: -5, miracle: -8 };
+// Sim (design/38): wild -5 made a die of 2-6 a DISASTER (21% of turns) and off-script plans missed 10 of 11, which
+// breaks "the story follows you". The penalty for a far-fetched plan is capped at -3 (a miracle -4).
+export const TIER_SHIFT: Record<Tier, number> = { clever: 3, solid: 0, risky: -2, wild: -3, miracle: -4 };
 
 export type GradeResult = {
   grade: Grade;
@@ -60,8 +62,10 @@ export function finalTotal(o: { die: number; stat: number; bonus?: number; tier:
 /** The outcome for a final total. Pass the natural die to apply the natural 1 / natural 20 rule. */
 export function gradeRoll(totalIn: number, natural?: number): GradeResult {
   let total = Math.max(1, Math.round(Number.isFinite(totalIn) ? totalIn : 1));
-  if (natural === 1) total = 1;
   if (natural === 20) total = Math.max(20, total);
+  // DISASTER only on a natural 1 (sim, design/38): a low total from modifiers is a SETBACK at worst.
+  if (natural === 1) total = 1;
+  else if (total <= 1) total = 2;
   const row = ROWS.find((r) => total >= r.min && total <= r.max) ?? ROWS[ROWS.length - 1];
   const span = Number.isFinite(row.max) ? row.max - row.min : 0;
   const depth = span ? (total - row.min) / span : 1;

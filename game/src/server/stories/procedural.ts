@@ -132,7 +132,7 @@ const V3_SWAPS: [string, string][] = [
     "11. HAND-OFF: scene (1 sentence, 24 words max) says where things stand now and addresses next_player by name with the new obstacle",
     "11. HAND-OFF: scene (2 short sentences, 30 words max: the pressure, then the hand-off) says where things stand now and addresses next_player by name with the new obstacle",
   ],
-  ["WRITE: outcome, scene, right_now,", "WRITE: outcome, scene, problem_now, right_now,"],
+  ["WRITE: outcome, scene, right_now,", "REPEAT CHECK: repeat_of = the item in goals_done that right_now is the same goal as, even reworded (\"Free the bus\" and \"Unstick the bus\" are the same goal), or \"\" if it is a new goal. Be honest: a repeat gets rewritten.\nAFTER A MISS: the next right_now is never cleaning up the mess the hero's own plan just made (no \"free the mayor from the dough\" after a dough plan backfires); a pressure gets worse or a NEW problem starts.\nWRITE: outcome, scene, problem_now, repeat_of, right_now,"],
 ];
 
 function v3(base: string) {
@@ -173,7 +173,7 @@ export const TURN_SCHEMA = obj({
   step_solved: { type: "boolean" },
   sfx: { type: "array", items: obj({ id: str, word: { type: "integer" } }) },
   ...(FEATURES.castVoices ? { quotes: QUOTES_FIELD } : {}),
-  ...(FEATURES.storyV3 ? { problem_now: str } : {}),
+  ...(FEATURES.storyV3 ? { problem_now: str, repeat_of: str } : {}),
 });
 
 const GRADES: Grade[] = ["DISASTER", "SETBACK", "PARTIAL", "PROGRESS", "GREAT", "LEGENDARY"];

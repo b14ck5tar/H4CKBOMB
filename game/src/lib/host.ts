@@ -122,7 +122,12 @@ export const MONTAGE_PANEL_MS = 3600; // one ending-montage panel on the TV (was
 const JUDGE_TOP = 3; // judge mode (/tv?judge=1) rotates through the first 3 FEATURED stories only
 // galactic-signal is last: its premise ("radio glow", "the catalog stays wrong") made 2 of 3 unfollowable lines in the Sun eval.
 // The judge top 3 (CD, Sun): the canal shark, the gold in the wall, the Norwich Batman; then the opera snake and the old three.
-const FEATURED = ["canal-shark", "wall-gold", "norwich-batman", "opera-snake","rust-wyrm", "hanging-boulder", "cornfield-dome", "billion-pearls", "idle-island", "returned-otter", "littlest-gardener", "galactic-signal"];
+// Judge top 3 (CD, Sun 10:50): the opera snake replaces Batman (the 8-box gate: a one-person chase, no group dilemma).
+// Swap back = move "norwich-batman" into the top 3.
+/** Manual ending: the safety timer behind the TV's own slide steps (it never fires in a normal game). */
+const MANUAL_SAFETY_MS = 10 * 60_000;
+
+const FEATURED = ["canal-shark", "wall-gold", "opera-snake", "norwich-batman", "rust-wyrm", "hanging-boulder", "cornfield-dome", "billion-pearls", "idle-island", "returned-otter", "littlest-gardener", "galactic-signal"];
 const PRESENCE_ONLY = new Set(["hello", "ping", "away"]); // these don't count as "I'm back"
 /** Every phone silent this long = the table pauses ("Reconnecting phones…"). Phones ping every 3 s. */
 const ALL_QUIET_MS = 8000;
@@ -151,7 +156,8 @@ function voiceText(text: string) {
 
 function openerText(sc: SeedScene) {
   const npc = sc.npc_line?.speaker && sc.npc_line?.line ? ` And ${speakerRef(sc.npc_line.speaker)}? Very calmly: "${sc.npc_line.line}"` : "";
-  return `Okay, everyone… gather in. ${sc.narration}${npc}`;
+  // v3 (CD): the story comes from a REAL article, said up front; the narration's first line is the real problem.
+  return FEATURES.storyV3 ? `This really happened… mostly. Tonight, you're in it. ${sc.narration}${npc}` : `Okay, everyone… gather in. ${sc.narration}${npc}`;
 }
 
 /** The narrator's sign-off after the ending (the same text wherever it's voiced, so the early clip is the one that plays). */
@@ -3354,6 +3360,9 @@ export class GameHost {
     // its panel, and the reveal follows once it's been said.
     const lead = Math.max(0, this.montage().length - 1) * MONTAGE_PANEL_MS;
     const spoken = this.play(clip, lead);
+    // Manual ending (look, design/37 §4): the TV's slides move only on a key press; it calls skip() to go on. A long
+    // safety timer keeps a pending step for skip() to run.
+    if (FEATURES.manualEnding) return this.setTimer(MANUAL_SAFETY_MS, done);
     this.setTimer(lead + (spoken ? Math.max(spoken + 1200, MONTAGE_PANEL_MS) : Math.min(11_000, Math.max(7000, ending.split(/\s+/).length * 320 + 3000))), done);
   }
 
@@ -3421,10 +3430,11 @@ export class GameHost {
       // The bridge links the table's ending to the real one, after a beat of breathing room (CD: the grand ending).
       const bridge = this.state.revealData?.bridge ?? "";
       // It starts on the real-story beat (look: ~5 s of WHAT YOU DID first), so the result lands before she speaks.
-      this.voiceBy(bridge ? `${said} ... ${bridge}` : said, Date.now() + 2500).then((clip) => this.state.phase === "reveal" && this.play(clip, 5000));
+      this.voiceBy(bridge ? `${said} ... ${bridge}` : said, Date.now() + 2500).then((clip) => this.state.phase === "reveal" && this.play(clip, FEATURES.manualEnding ? 600 : 5000));
     }
     const text = `${this.seed?.the_real_story.headline ?? ""} ${this.seed?.the_real_story.summary ?? ""}`;
     // Room to breathe: the headline plus the bridge line (CD's grand ending); Continue still skips.
+    if (FEATURES.manualEnding) return this.setTimer(MANUAL_SAFETY_MS, () => this.showStorybook());
     if (this.quick) return this.reading(text, () => this.showStorybook(), Math.max(QUICK.revealMs, 20_000), Math.max(QUICK.revealMs, 20_000));
     this.reading(text, () => this.showStorybook(), 15000);
   }

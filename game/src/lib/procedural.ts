@@ -86,6 +86,8 @@ export type TurnProposal = {
   sfx?: { id: string; word: number }[];
   /** v3: the NEW situation this turn created, in one plain sentence (what's wrong now). */
   problem_now?: string;
+  /** v3: the model's own check: the earlier goal right_now is the same goal as (even reworded), or "". */
+  repeat_of?: string;
   /** Lines said out loud in the outcome (FEATURES.castVoices): who says them, and the words inside the quote marks. */
   quotes?: { speaker: string; text: string }[];
 };
@@ -553,6 +555,14 @@ export function checkTurn(p: TurnProposal, ctx: { state: StoryState; hero: strin
       // v3 (design/37): never the same objective twice, success or miss: the story is always somewhere new.
       const was = repeatsEarlier(rn, earlierSituations(ctx.state));
       if (was || /\bagain\b/i.test(rn)) out.push(`repeats an earlier moment: right_now "${rn}" is an earlier goal ("${was || rn}") reworded; give the NEW situation's next step`);
+      // Rewording hides most repeats from a word check (sim: 40% repeats, 9% caught): the model's own answer counts too.
+      if (String(p.repeat_of ?? "").trim() && !was) out.push(`repeats an earlier moment: right_now "${rn}" is the same goal as "${String(p.repeat_of).trim()}"; give a NEW goal`);
+      // After a miss, the next step is never cleaning up the plan's own mess (sim: "free the bus from the dough").
+      if (!WON(ctx.grade) && ctx.plan) {
+        const names = new Set(Object.keys(ctx.state.pronouns).flatMap((n) => planWords(n)));
+        const own = planWords(rn).filter((w) => !names.has(w) && planWords(ctx.plan!).includes(w));
+        if (own.length) out.push(`repeats an earlier moment: after a miss, right_now "${rn}" is about the plan's own mess ("${own.join(", ")}"); make a pressure worse or start a NEW problem instead`);
+      }
       const c = circles(rn, ctx.state);
       if (c && !was) out.push(`repeats an earlier moment: the story has circled "${c}" for three turns; the next situation is about something ELSE (a pressure, a person, a new problem)`);
     } else {
