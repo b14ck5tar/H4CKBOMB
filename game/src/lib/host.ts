@@ -127,11 +127,26 @@ const ALL_QUIET_MS = 8000;
 const CLIMAX = new Set(["final_roll", "final_result", "epilogue", "reveal", "storybook"]);
 const BAND_RANK: Record<Band, number> = { LEGENDARY: 0, SUCCESS: 1, YES_BUT: 2, FAIL: 3, CATASTROPHE: 4 };
 
-/** What the narrator reads for the opener: the narration, then the character's line. */
-function openerText(sc: SeedScene) {
-  const npc = sc.npc_line?.speaker && sc.npc_line?.line ? ` ${sc.npc_line.speaker} says: "${sc.npc_line.line}"` : "";
-  return `${sc.narration}${npc}`;
+/** "Bridge inspector" -> "the bridge inspector", "The sheriff" -> "the sheriff", "TV reporter" -> "the TV reporter", "Grandpa" stays. */
+function speakerRef(s: string) {
+  const t = s.trim();
+  if (/^the\s/i.test(t)) return `the ${t.slice(4)}`;
+  const w = t.split(/\s+/);
+  if (w.length === 1) return t;
+  return `the ${[/^[A-Z]{2,}$/.test(w[0]) ? w[0] : w[0].toLowerCase(), ...w.slice(1)].join(" ")}`;
 }
+
+/**
+ * What the narrator reads for the opener: a storyteller's lead-in, the narration, then the character's line (CD: a
+ * storyteller talking to the table). The judge openers are pre-voiced from exactly this text (game/voice-cache).
+ */
+function openerText(sc: SeedScene) {
+  const npc = sc.npc_line?.speaker && sc.npc_line?.line ? ` And ${speakerRef(sc.npc_line.speaker)}? Very calmly: "${sc.npc_line.line}"` : "";
+  return `Okay, everyone… gather in. ${sc.narration}${npc}`;
+}
+
+/** The narrator's sign-off after the ending (the same text wherever it's voiced, so the early clip is the one that plays). */
+const signOff = (ending: string) => `${ending} And that, friends, is how the story goes.`;
 
 type OutcomeData = { progress_hint?: "low" | "mid" | "high"; step_solved?: boolean; text: string; situation?: string; why?: string; now_goal?: string; where?: string; changed?: string; new_fact?: string; new_prop?: string; memorable?: string; scene?: string; open_thread?: string };
 
@@ -1904,7 +1919,7 @@ export class GameHost {
     this.verdicts.clear();
     this.set({ phase: "pitch", finale: true, nowGoal: this.state.goal, pitches: [], votes: {}, winnerId: "", outcome: "", rolls: [], revealed: [], ready: [], busy: "", typing: [] });
     this.note("turn", "Grand finale", "Everyone proposes the final move, everyone backs a friend's plan (never their own), and the winning plan gets one shared die.");
-    const line = `The grand finale. ${this.state.situation} Everyone, what's the final move?`;
+    const line = `Alright, everyone… time for the grand finale. ${this.state.situation} So. What's the final move?`;
     this.voiceBy(line, Date.now() + 4000).then((clip) => this.state.phase === "pitch" && this.play(clip));
     this.setTimer(this.turnMs(), () => this.endPitch(true));
   }
@@ -2048,7 +2063,7 @@ export class GameHost {
       // A new painting every turn (CD, Sun): what just happened, in the place the story has moved to. A new act or
       // the finale frames the whole party; any other turn frames the hero and the friend whose idea it was.
       this.paintDecision(judged, v, d.outcome, d.scene || this.state.situation, d.finale ? "finale" : d.act_changed ? "act" : "win");
-      if (d.scene) this.voiceFor(d.finale || !this.nextOwner() ? `The grand finale. ${d.scene} Everyone, what's the final move?` : d.scene);
+      if (d.scene) this.voiceFor(d.finale || !this.nextOwner() ? `Alright, everyone… time for the grand finale. ${d.scene} So. What's the final move?` : d.scene);
     });
     this.setTimer(this.quick ? 2200 : RULING_MS, () => this.startRoll());
   }
@@ -2746,7 +2761,7 @@ export class GameHost {
     this.endingAt = 0;
     this.epilogueP.then((e) => {
       this.endingAt = Date.now();
-      this.voiceFor(e.ending);
+      this.voiceFor(signOff(e.ending));
       if (pitch.verdict) this.paintDecision(pitch, pitch.verdict, e.ending, e.line || this.state.situation);
     });
     const images = this.artCount().map((i) => `scene_${i + 1}`);
@@ -3031,7 +3046,7 @@ export class GameHost {
     const { ending, line, recap, skills } = await this.epilogueP!;
     this.cleanSkills = skills;
     if (this.state.phase !== "epilogue") return;
-    const clip = await this.voiceBy(ending, (this.endingAt || Date.now()) + 8000);
+    const clip = await this.voiceBy(signOff(ending), (this.endingAt || Date.now()) + 8000);
     if (this.state.phase !== "epilogue") return;
     this.set({ epilogue: ending, endingLine: line, recap: recap || this.state.log.map((l) => l.narration).slice(0, 1).join(" "), busy: "" });
     // The finale's log line becomes the real ending, for the keepsake.
@@ -3080,7 +3095,8 @@ export class GameHost {
     this.set({ phase: "reveal", solvedBy });
     const rsr = this.seed?.the_real_story;
     if (rsr) {
-      const said = this.seed?.author ? `Based on ${speakableName(this.seed.author.name)}'s true story. ${rsr.summary}` : `Based on a true story. ${rsr.headline}.`;
+      // "true story / really happened" is said ONCE in the game, here (the on-screen banner stays)
+      const said = this.seed?.author ? `Here's the twist… it was ${speakableName(this.seed.author.name)}'s. ${rsr.summary}` : `Now, here's the strange part… this really happened. ${rsr.headline}.`;
       this.voiceBy(said, Date.now() + 2500).then((clip) => this.state.phase === "reveal" && this.play(clip));
     }
     const text = `${this.seed?.the_real_story.headline ?? ""} ${this.seed?.the_real_story.summary ?? ""}`;
