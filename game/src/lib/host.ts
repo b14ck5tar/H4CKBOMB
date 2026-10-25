@@ -960,7 +960,59 @@ export class GameHost {
   setMode(mode: GameMode) {
     if (this.state.phase !== "lobby") return;
     this.set({ mode });
-    if (mode === "quick" && !this.seed) this.useQuest(QUICK.defaultQuest);
+    this.prepareQuick();
+  }
+
+  // ---------- Quick Tale: a fresh live story, made while people join ----------
+  private quickPrep: { seed: QuestSeed | null; ready: boolean } | null = null;
+
+  /** Stories this TV played lately (localStorage), so Quick Tale doesn't repeat them. */
+  private recentStories(): string[] {
+    try {
+      return JSON.parse(localStorage.getItem("gp-recent-stories") ?? "[]");
+    } catch {
+      return [];
+    }
+  }
+
+  private rememberStory(seed: QuestSeed) {
+    try {
+      const key = seed.the_real_story.headline || seed.id;
+      const list = [key, ...this.recentStories().filter((k) => k !== key)].slice(0, 6);
+      localStorage.setItem("gp-recent-stories", JSON.stringify(list));
+    } catch {}
+  }
+
+  /**
+   * Quick Tale picks a random live odd-news story (not one played lately) and writes its opener + paints its scene
+   * during the lobby. If it isn't ready by Start, a curated story (also not played lately) stands in.
+   */
+  private prepareQuick() {
+    if (!FEATURES.liveNews || !this.quick || this.state.source !== "news" || this.pinned || this.quickPrep || this.state.phase !== "lobby") return;
+    const recent = new Set(this.recentStories());
+    const pool = this.newsCands.filter((c) => !recent.has(c.headline));
+    if (!pool.length) return;
+    const c = pool[randInt(pool.length)];
+    const optionId = `news-${c.id}`;
+    const prep: { seed: QuestSeed | null; ready: boolean } = { seed: null, ready: false };
+    this.quickPrep = prep;
+    this.prepareStory(optionId, { mode: "news", source: { headline: c.headline, snippet: c.snippet, source: c.source, url: c.url, date: c.date } }, (o) => newsSeed(optionId, c, o))
+      .then(async (seed) => {
+        if (!seed) return;
+        prep.seed = seed;
+        prep.ready = !!(await (this.plateP.get(seed.id) ?? Promise.resolve(null)));
+        if (prep.ready) this.note("source", "Quick Tale", `Tonight's live story is ready: "${c.headline}".`);
+      })
+      .catch(() => {});
+  }
+
+  /** A curated story this TV hasn't played lately. */
+  private freshCurated() {
+    const recent = new Set(this.recentStories());
+    const allowed = this.state.questOptions;
+    const fresh = allowed.filter((q) => !recent.has(SEEDS.find((s) => s.id === q.id)?.the_real_story.headline ?? q.id));
+    const pool = fresh.length ? fresh : allowed;
+    return pool[randInt(pool.length)].id;
   }
 
   /** Swap in a new ending module (see EndingStep). */
@@ -1088,6 +1140,7 @@ export class GameHost {
   setSource(source: "news" | "ours") {
     if (this.state.phase !== "lobby") return;
     this.set({ source });
+    this.prepareQuick();
   }
 
   /** Live odd-news candidates for this rating (GET /api/news, cached server-side for 4 h). Never throws. */
@@ -1099,7 +1152,8 @@ export class GameHost {
         if (this.state.rating !== rating) return;
         const raw: unknown[] = Array.isArray(j?.candidates) ? j.candidates : Array.isArray(j?.quests) ? j.quests : [];
         this.newsCands = raw.map(toCandidate).filter((c): c is NewsCand => !!c);
-        if (this.newsCands.length) this.note("source", "Odd news", `${this.newsCands.length} live headlines ready for the story vote.`);
+        if (this.newsCands.length) this.note("source", "Odd news", `${this.newsCands.length} live headlines ready.`);
+        this.prepareQuick();
       })
       .catch(() => {});
   }
@@ -1110,6 +1164,7 @@ export class GameHost {
     const questOptions = questOptionsFor(r);
     this.set({ rating: r, questOptions });
     this.newsCands = [];
+    this.quickPrep = null;
     this.loadNews();
     if (this.seed && !questAllowed(this.seed.rating, r)) {
       this.seed = undefined;
@@ -1319,10 +1374,15 @@ export class GameHost {
       rescue: null,
       notes: { ...this.state.notes, source: null, canon: [], open: [] },
     });
-    // Quick Tale: the demo story (or a random allowed one). Full Story: the table votes, unless one was picked by link.
-    if (this.quick && !this.seed) {
-      const allowed = this.state.questOptions;
-      this.useQuest(allowed.find((q) => q.id === QUICK.defaultQuest)?.id ?? allowed[randInt(allowed.length)].id);
+    // Quick Tale: the live story made during the lobby, if it's ready; else a curated one not played lately.
+    // Full Story: the table votes, unless one was picked by link.
+    if (this.quick && !this.pinned && this.state.source !== "ours") {
+      const prep = this.quickPrep;
+      if (prep?.ready && prep.seed) this.useQuest(prep.seed.id);
+      else {
+        if (prep) this.note("source", "Quick Tale", "The live story wasn't ready in time, so a curated story stands in.");
+        this.useQuest(this.freshCurated());
+      }
     }
     if (this.state.source === "ours") return this.startStoryWrite();
     if (!this.quick && !this.pinned) return this.startStoryVote();
@@ -1419,6 +1479,7 @@ export class GameHost {
     const opener = scenes[0];
     const goal = scenes[scenes.length - 1].goal;
     this.sceneList = [{ ...opener, goal }];
+    this.rememberStory(seed);
     this.set({
       scenes: [{ kind: "hook", location: opener.location, description: opener.situation, twist: "", hasImage: !!this.sceneImages[this.plateFor(0)] }],
       turnOrder: this.makeTurnOrder(),
@@ -2665,12 +2726,10 @@ export class GameHost {
     this.notesStart = Date.now();
     this.mirrorP.clear();
     this.mirrorFate.clear();
-    // Quick Tale: the next story is already on the table, so the next group just hits Start.
-    if (this.quick) {
-      const allowed = this.state.questOptions;
-      const next = SEEDS.slice(prev + 1).concat(SEEDS.slice(0, prev + 1)).find((q) => allowed.some((o) => o.id === q.id));
-      if (next) this.useQuest(next.id);
-    }
+    // Quick Tale: the next live story starts being made right away, so the next group just hits Start.
+    void prev;
+    this.quickPrep = null;
+    this.prepareQuick();
   }
 
   close() {
