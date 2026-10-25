@@ -1655,6 +1655,7 @@ export class GameHost {
     this.sceneList = [{ ...opener, goal }];
     this.rememberStory(seed);
     this.turnArt.clear();
+    this.seenArt.clear();
     this.quipsSaid = [];
     // Where the heroes are: the real kind of place (never a real place name, which would leak into story_so_far).
     const placeType = typeof seed.real_event?.place_type === "string" ? (seed.real_event.place_type as string) : "";
@@ -1849,9 +1850,19 @@ export class GameHost {
     this.set({ ideas: { ...this.state.ideas, [pid]: clean }, typing: this.state.typing.filter((x) => x !== pid) });
     // Generate ahead: rule the idea now, as the owner's plan with this friend's credit, so if the owner takes it as
     // written the plan card shows the moment they press Go (the "DM is reading" wait was 5-15 s in the CD playtest).
+    // Guards (fresh-eyes review): edits are debounced (1.5 s of quiet), and at most 2 ideas a turn are ruled ahead,
+    // so a busy table never floods Muse at judging hour.
     const owner = this.owner();
-    if (owner && !this.preRuled.has(norm(clean))) this.preRuled.set(norm(clean), this.askRuling({ id: `pre-${pid}`, playerId: owner, text: clean, useAbility: false, embraceFlaw: false, creditId: pid, idea: clean }));
+    const turn = this.state.turnIndex;
+    clearTimeout(this.preRuleTimers[pid]);
+    this.preRuleTimers[pid] = setTimeout(() => {
+      if (this.state.phase !== "turn" || this.state.turnIndex !== turn || this.state.ideas[pid] !== clean) return;
+      if (!owner || this.preRuled.has(norm(clean)) || this.preRuled.size >= 2) return;
+      this.preRuled.set(norm(clean), this.askRuling({ id: `pre-${pid}`, playerId: owner, text: clean, useAbility: false, embraceFlaw: false, creditId: pid, idea: clean }));
+    }, 1500);
   }
+
+  private preRuleTimers: Record<string, ReturnType<typeof setTimeout>> = {};
 
   /** The storyteller's quips spoken this game (sent to the ruling so it varies them). */
   private quipsSaid: string[] = [];
@@ -2159,7 +2170,11 @@ export class GameHost {
         const key = this.artSeq++;
         this.sceneImages[key] = res.url;
         this.turnArt.set(forTurn, res.url);
+        // Landed while its own turn's result is still up: that's the picture the table saw for this move.
+        if (forTurn >= 0 && this.state.turnIndex === forTurn && this.state.phase === "outcome") this.seenArt.set(forTurn, res.url);
+        // Phones' "live on the TV" thumbnail: a small copy (the full painting is too big to broadcast).
         if (!res.url.startsWith("data:")) this.set({ sceneArt: res.url });
+        else thumbnail(res.url, 240, 0.6).then((t) => this.state.questId === questId && t && this.set({ sceneArt: t }));
         this.note("scene", "Scene art", `Painted by Muse Image, a new shot (${Math.round((Date.now() - t0) / 1000)}s): ${clip(where, 90)}`);
         this.set({ artKey: key });
       })
@@ -2171,6 +2186,8 @@ export class GameHost {
 
   /** The painting of each turn's decision (turn index; -1 = the finale), for the ending montage. */
   private turnArt = new Map<number, string>();
+  /** The picture on screen while each turn's result was shown (CD: the montage card must match what they saw). */
+  private seenArt = new Map<number, string>();
 
   /**
    * The ending montage ("Because of you"): up to 3 turn moments plus the ending, each with its painting, its line and
@@ -2181,7 +2198,7 @@ export class GameHost {
     const turns = log.slice(0, -1).map((l, i) => ({ l, i }));
     const pick = turns.length <= 3 ? turns : [turns[0], turns[Math.floor(turns.length / 2)], turns[turns.length - 1]];
     const fallback = this.sceneImages[this.state.artKey] ?? this.sceneImages[2] ?? this.sceneImages[0] ?? "";
-    const panels = pick.map(({ l, i }) => ({ image: this.turnArt.get(i) ?? this.sceneImages[Math.min(2, i)] ?? fallback, line: l.narration, heroIds: [l.heroId] }));
+    const panels = pick.map(({ l, i }) => ({ image: this.seenArt.get(i) || this.turnArt.get(i) || this.sceneImages[Math.min(2, i)] || fallback, line: l.narration, heroIds: [l.heroId] }));
     const winner = log[log.length - 1]?.heroId ?? "";
     if (this.state.epilogue)
       panels.push({
@@ -2604,21 +2621,26 @@ export class GameHost {
     this.clearTimer();
     const roll = this.state.rolls[0];
     const pitch = this.state.pitches.find((p) => p.playerId === roll.playerId)!;
-    this.set({ phase: "outcome", outcome: "", ready: [], voice: null });
+    // The die, its math and the plan stay on screen until the result is ready (fresh-eyes review: never a bare
+    // "writing it down" screen); usually it was written before the die even landed.
     let settled = false;
     const tp = this.turnP ?? Promise.resolve(this.localTurn(pitch, roll));
     tp.then(() => (settled = true));
-    setTimeout(() => !settled && this.state.phase === "outcome" && this.set({ busy: "The DM is writing it down…" }), 600);
+    setTimeout(() => !settled && this.state.phase === "roll" && this.set({ busy: "The DM is writing it down…" }), 1200);
     // The call started at the ruling; a late answer is kept as long as nothing is on screen yet (design/33).
     const landed = Date.now();
     const d = (await withTimeout(tp, 9000, () => null)) ?? this.localTurn(pitch, roll);
-    if ((this.state.phase as string) !== "outcome") return;
+    if ((this.state.phase as string) !== "roll") return;
+    // The outcome's audio was asked for the moment its text arrived; give it until 5 s after that, else text only.
+    const clip = await this.voiceBy(d.outcome, (this.outcomeAt || Date.now()) + 5000);
+    if ((this.state.phase as string) !== "roll") return;
+    this.set({ phase: "outcome", outcome: "", ready: [], voice: null });
+    // The picture on screen now is the one the table sees with this result (the montage reuses it).
+    const onScreen = this.sceneImages[this.state.artKey] ?? this.sceneImages[this.plateFor(this.state.turnIndex)];
+    if (onScreen) this.seenArt.set(this.state.turnIndex, onScreen);
     const g = gradeRoll(roll.total, roll.kept);
     this.story = d.state;
     this.finaleNext = d.finale;
-    // The outcome's audio was asked for the moment its text arrived; give it until 5 s after that, else text only.
-    const clip = await this.voiceBy(d.outcome, (this.outcomeAt || Date.now()) + 5000);
-    if ((this.state.phase as string) !== "outcome") return;
     this.recordWin(pitch, roll, d.outcome);
     this.note("scene", "Progress", `${d.progress_delta >= 0 ? "+" : ""}${d.progress_delta} progress (${d.progress}/100)${d.progress_why ? `: ${d.progress_why}` : ""}.`);
     if (d.act_changed) this.note("scene", `Act ${d.act}`, d.scene || "A new situation.");
