@@ -968,15 +968,18 @@ function RevealCard({ host, s }: { host: Stage; s: GameState }) {
         {personal ? (
           // Our stories: it really happened to someone at this table. Their real ending, finally.
           <div className="qt-paper qt-slide-l">
-            <p className="qt-paper-kicker">This really happened to {seed.author!.name}</p>
+            <p className="qt-paper-kicker">Based on {seed.author!.name}&apos;s true story</p>
             <h2 className="qt-paper-head">{rs.headline}</h2>
             <p className="text-[1.15rem] leading-snug mt-3 text-[#333] line-clamp-3">{seed.the_threat.mapped_from}</p>
             <p className="qt-paper-meta mt-4">How it really ended</p>
-            <p className="text-[1.5rem] leading-snug mt-1 line-clamp-5">{rs.summary}</p>
+            {/* The real ending, in full: smaller type for a long one, and it scrolls rather than clip. */}
+            <p className="leading-snug mt-1 overflow-y-auto min-h-0 shrink" style={{ fontSize: rs.summary.length > 260 ? "1.05rem" : rs.summary.length > 160 ? "1.25rem" : "1.5rem" }}>
+              {rs.summary}
+            </p>
           </div>
         ) : (
         <div className="qt-paper qt-slide-l">
-          <p className="qt-paper-kicker">This really happened</p>
+          <p className="qt-paper-kicker">Based on a true story</p>
           <h2 className="qt-paper-head" style={{ fontSize: rs.headline.length > 90 ? "1.85rem" : undefined }}>
             <span className="invisible">{rs.headline}</span>
             <span className="absolute inset-0">

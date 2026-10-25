@@ -53,6 +53,8 @@ export interface BotHost {
   owner(): string;
   freeHeroIds(): string[];
   storySoFar(): object;
+  deadline(): number; // when the current phase's timer runs out (ms since epoch), 0 if none
+  turnMs(): number;
   ask(input: object): Promise<string>;
 }
 
@@ -71,10 +73,27 @@ function typo(text: string) {
   return words.join(" ");
 }
 
+/** Two moves are "the same idea" when most of their words match. */
+function similar(a: string, b: string) {
+  const w = (x: string) => new Set(String(x ?? "").toLowerCase().replace(/[^a-z ]/g, " ").split(/\s+/).filter((t) => t.length > 2));
+  const A = w(a);
+  const B = w(b);
+  if (!A.size || !B.size) return false;
+  let both = 0;
+  A.forEach((t) => B.has(t) && both++);
+  return both / Math.min(A.size, B.size) >= 0.6;
+}
+
 export class Bots {
   private list: { pid: string; who: BotPersona; done: Set<string>; lastPing: number }[] = [];
   private iv: ReturnType<typeof setInterval> | null = null;
   private timers = new Set<ReturnType<typeof setTimeout>>();
+  /** Every move a bot has suggested tonight, so they don't repeat themselves. */
+  private said: string[] = [];
+
+  private isBot(pid: string) {
+    return this.list.some((b) => b.pid === pid);
+  }
 
   constructor(private host: BotHost) {}
 
@@ -184,16 +203,30 @@ export class Bots {
     const owner = this.host.owner();
     const still = () => this.host.state().phase === "turn" && this.host.state().turnIndex === s.turnIndex;
     if (owner === b.pid) {
-      this.once(b, `own-${tag}`, rnd(9000, 16000), still, async () => {
-        const st = this.host.state();
-        const friends = Object.entries(st.ideas).filter(([id]) => id !== b.pid);
-        if (friends.length && Math.random() < b.who.friendIdea) {
-          const [creditId, text] = pick(friends);
+      // Like a polite person: wait for every human's suggestion (or ~70% of the timer), never while one is typing.
+      const key = `own-${tag}`;
+      if (b.done.has(key)) return;
+      const st = this.host.state();
+      const humans = st.players.filter((p) => p.hero && !p.away && p.id !== b.pid && !this.isBot(p.id));
+      const left = this.host.deadline() ? this.host.deadline() - Date.now() : 0;
+      const used = left > 0 ? 1 - left / this.host.turnMs() : 1;
+      const typing = st.typing.some((id) => !this.isBot(id));
+      const allIn = humans.every((h) => st.ideas[h.id]);
+      const ideasIn = Object.keys(st.ideas).length > 0;
+      const go = (allIn && ideasIn && used > 0.2 && !typing) || (used >= 0.7 && !typing) || used >= 0.9;
+      if (!go) return;
+      this.once(b, key, rnd(1500, 3500), still, async () => {
+        const now = this.host.state();
+        const friends = Object.entries(now.ideas).filter(([id]) => id !== b.pid);
+        // A human's idea is the friendlier pick; bots still sometimes go with their own.
+        const human = friends.filter(([id]) => !this.isBot(id));
+        if (friends.length && Math.random() < Math.max(b.who.friendIdea, human.length ? 0.6 : 0)) {
+          const [creditId, text] = pick(human.length ? human : friends);
           this.host.inject({ type: "pitch", pid: b.pid, text, creditId });
           return;
         }
         this.host.inject({ type: "typing", pid: b.pid });
-        const me = st.players.find((p) => p.id === b.pid)!;
+        const me = now.players.find((p) => p.id === b.pid)!;
         const text = await this.idea(b, "own", me.hero!.name, me.hero!.ability?.text ?? "");
         if (still()) this.host.inject({ type: "pitch", pid: b.pid, text });
       });
@@ -217,13 +250,20 @@ export class Bots {
         persona: b.who.persona,
         role,
         hero: { name: hero, power },
-        story: { ...this.host.storySoFar(), right_now: s.nowGoal || s.goal, situation: s.situation, just_happened: s.outcome || "" },
+        story: { ...this.host.storySoFar(), right_now: s.nowGoal || s.goal, situation: s.situation, just_happened: s.outcome || "", already_happened: s.log.slice(-3).map((l) => l.narration) },
+        already_suggested_do_not_repeat: [...this.said.slice(-8), ...Object.values(s.ideas)],
       });
     } catch {
       text = "";
     }
     text = String(text ?? "").replace(/["“”]/g, "").replace(/\s+/g, " ").trim().split(" ").slice(0, 12).join(" ");
-    if (!text) text = pick(b.who.canned);
+    // Never the same idea twice (or one somebody already tried): fall back to an unused canned move.
+    const seen = [...this.said, ...Object.values(s.ideas), ...s.log.map((l) => l.pitch)];
+    if (!text || seen.some((x) => similar(x, text))) {
+      const fresh = b.who.canned.filter((c) => !seen.some((x) => similar(x, c)));
+      text = pick(fresh.length ? fresh : b.who.canned);
+    }
+    this.said = [...this.said, text].slice(-20);
     return Math.random() < b.who.typo ? typo(text) : text;
   }
 }

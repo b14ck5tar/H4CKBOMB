@@ -11,6 +11,20 @@ export function shortName(name?: string, max = 16) {
   return n.length > max ? `${n.slice(0, max - 1).trimEnd()}…` : n;
 }
 
+/**
+ * A handle as a name people can read and say: "BL4CK5TAR" -> "Blackstar", "xX_gamer_Xx" -> "Gamer". Plain names
+ * ("Ava", "Mr. Pruitt") come back unchanged.
+ */
+export function speakableName(name?: string) {
+  let n = (name ?? "").trim();
+  if (!n) return "";
+  const leet: Record<string, string> = { "4": "a", "@": "a", "3": "e", "1": "i", "0": "o", "5": "s", "$": "s", "7": "t" };
+  if (/[a-z]/i.test(n) && /[4@3105$7]/.test(n)) n = n.replace(/[4@3105$7]/g, (c) => leet[c] ?? c);
+  n = n.replace(/[_.\-]+/g, " ").replace(/\b[xX]{1,2}\b/g, "").replace(/\s+/g, " ").trim();
+  if (n.length > 3 && n === n.toUpperCase()) n = n.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+  return n || (name ?? "").trim();
+}
+
 export function heroFirst(s: GameState, pid: string) {
   return shortName(s.players.find((p) => p.id === pid)?.hero?.name) || "Someone";
 }
@@ -29,7 +43,7 @@ export function nowText(s: GameState, me?: string): string {
     case "story_vote":
       return me && s.votes[me] ? "Story picked. Waiting for the others" : "Pick tonight's story on your phone";
     case "quest":
-      return s.mode === "quick" ? "Eyes on the TV. This really happened" : "Here's tonight's story";
+      return s.mode === "quick" ? "Eyes on the TV. Based on a true story" : "Here's tonight's story";
     case "narrating":
       return "Listen up. Plans in a moment";
     case "turn": {
@@ -63,7 +77,7 @@ export function nowText(s: GameState, me?: string): string {
     case "epilogue":
       return "How it ended";
     case "reveal":
-      return "This really happened. Look at the TV";
+      return "Based on a true story. Look at the TV";
     case "storybook":
       return me ? "Your keepsake" : "Scan to take your tale home";
     default:

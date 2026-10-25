@@ -35,6 +35,7 @@ import { mask } from "./mask";
 import { QUICK, coldOpenTimeline } from "./quick";
 import { FEATURES } from "./features";
 import { Bots } from "./bots";
+import { speakableName } from "./now";
 import { DEFAULT_CAST, VOICES, isVoice } from "./voices";
 import { ART_STYLES, isArtStyle } from "./artStyles";
 import { DEFAULT_RATING, isRating, questAllowed } from "./rating";
@@ -2118,7 +2119,7 @@ export class GameHost {
       this.prepareStory(
         optionId,
         { mode: "personal", source: { author_id: pid, title: st.title, setup: st.setup, steps: st.steps, real_ending: st.ending } },
-        (o) => personalSeed(optionId, pid, author, st, o),
+        (o) => personalSeed(optionId, pid, speakableName(author), st, o),
         () => localOpener(st),
       );
       return { id: optionId, title: st.title, teaser: "A true story from someone at this table." };
@@ -2140,6 +2141,8 @@ export class GameHost {
     owner: () => this.owner(),
     freeHeroIds: () => QUICK_HEROES.filter((h) => !this.state.players.some((p) => p.pick === h.id)).map((h) => h.id),
     storySoFar: () => this.storySoFar(),
+    deadline: () => this.deadlineAt,
+    turnMs: () => this.turnMs(),
     ask: (input) => this.ask<{ text?: string }>("bot", input).then((r) => (r.fallback ? "" : String(r.data?.text ?? ""))),
   });
 
@@ -2898,7 +2901,7 @@ export class GameHost {
     this.set({ phase: "reveal", solvedBy });
     const rsr = this.seed?.the_real_story;
     if (rsr) {
-      const said = this.seed?.author ? `This really happened to ${this.seed.author.name}. ${rsr.summary}` : `This really happened. ${rsr.headline}.`;
+      const said = this.seed?.author ? `Based on ${speakableName(this.seed.author.name)}'s true story. ${rsr.summary}` : `Based on a true story. ${rsr.headline}.`;
       this.voiceBy(said, Date.now() + 2500).then((clip) => this.state.phase === "reveal" && this.play(clip));
     }
     const text = `${this.seed?.the_real_story.headline ?? ""} ${this.seed?.the_real_story.summary ?? ""}`;
