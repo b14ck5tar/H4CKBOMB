@@ -153,11 +153,10 @@ export const SCENE_SCHEMA = obj({
 export const CAST_SYSTEM = `You cast the narrator for a party game's story, read aloud by a text-to-speech voice. Pick the ONE voice that best fits the story's mood, and write how it should be read.
 Voices:
 - vesper (female): low, intimate, mysterious. Mysteries, eerie stories, late-night tales.
-- juniper (female): warm, bright, gentle, smiling. Nature, animals, kids' stories, happy news.
 - hollis (male): an expressive fireside storyteller with a twinkle. Fables, small-town oddities, science and nature.
-- wren (female): clear and very natural, like a real person telling it. Everyday mishaps, true personal stories, comedy. Her voice ignores the style line, so pick her for how she sounds, not for a reading.
+- wren: clear and very natural, like a real person telling it. Everyday mishaps, true personal stories, comedy, kids' stories, happy news. This voice ignores the style line, so pick it for how it sounds, not for a reading.
 
-Rules: a creepy story gets a hushed ghost-story telling (vesper); nature and odd small-town news get a fireside telling (hollis) or a warm one (juniper); silly everyday stories and true personal stories suit wren. For a KIDS audience never pick a scary reading.
+Rules: a creepy story gets a hushed ghost-story telling (vesper); nature and odd small-town news get a fireside telling (hollis); silly everyday stories, happy news and true personal stories suit wren. For a KIDS audience never pick a scary reading.
 - voice: one id from the list.
 - style: 18 words max, starting "Read this as", how to read it (mood, tone). Never ask for slow reading or long pauses.
 - kind: 6 words max, lowercase, what kind of story this is, for a title card ("a spooky small-town mystery").
@@ -175,7 +174,7 @@ Rules: a creepy story gets a hushed ghost-story telling (vesper); nature and odd
 Return ONLY the JSON the schema asks for.`;
 
 export const CAST_SCHEMA = obj({
-  voice: { type: "string", enum: ["vesper", "juniper", "hollis", "wren"] },
+  voice: { type: "string", enum: ["vesper", "hollis", "wren"] }, // juniper is no longer cast (CD, Sun AM)
   style: str,
   kind: str,
   art: { type: "string", enum: ["neon", "comic", "watercolor", "retro", "noir", "gouache"] },

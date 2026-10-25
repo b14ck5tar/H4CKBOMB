@@ -104,16 +104,17 @@ async function openai(voice: VoiceId, style: string, text: string, timeoutMs: nu
 // ElevenLabs (TTS_PROVIDER=elevenlabs). The CD found OpenAI "robotic" with harsh S sounds; bake-off in
 // devpost-media/voice-bakeoff. Flash v2.5 reads live lines (~180 ms to first byte); v3 is more expressive but had a
 // 10.7 s cold start, so it only reads text made ahead of time (`ahead`, e.g. openers during the vote).
-// Voice per persona = the CD's pick from the bake-off (until then, the bake-off's first candidate).
+// Voice per persona = the CD's picks from the bake-off (Sun AM): Sarah, George, Charlie. Juniper is no longer cast;
+// it reads with George if an old cast still names it.
 type ElevenModel = "eleven_flash_v2_5" | "eleven_v3";
 type ElevenSettings = { stability: number; similarity_boost: number; style: number; use_speaker_boost: boolean; speed?: number };
 const FLASH: ElevenSettings = { stability: 0.35, similarity_boost: 0.8, style: 0, use_speaker_boost: true, speed: 1.1 };
 const V3: ElevenSettings = { stability: 0, similarity_boost: 0.8, style: 0.45, use_speaker_boost: true }; // v3 takes stability 0 / 0.5 / 1
 export const ELEVEN: Record<VoiceId, { voiceId: string; voice: string; live: ElevenModel; ahead: ElevenModel; settings: Partial<Record<ElevenModel, ElevenSettings>> }> = {
-  vesper: { voiceId: "pFZP5JQG7iQjIQuC4Bku", voice: "Lily", live: "eleven_flash_v2_5", ahead: "eleven_v3", settings: { eleven_flash_v2_5: FLASH, eleven_v3: V3 } },
-  juniper: { voiceId: "XrExE9yKIg1WjnnlVkGX", voice: "Matilda", live: "eleven_flash_v2_5", ahead: "eleven_v3", settings: { eleven_flash_v2_5: FLASH, eleven_v3: V3 } },
+  vesper: { voiceId: "EXAVITQu4vr4xnSDxMaL", voice: "Sarah", live: "eleven_flash_v2_5", ahead: "eleven_v3", settings: { eleven_flash_v2_5: FLASH, eleven_v3: V3 } },
   hollis: { voiceId: "JBFqnCBsd6RMkjVDRZzb", voice: "George", live: "eleven_flash_v2_5", ahead: "eleven_v3", settings: { eleven_flash_v2_5: FLASH, eleven_v3: V3 } },
-  wren: { voiceId: "SAz9YHcvj6GT2YYXdXww", voice: "River", live: "eleven_flash_v2_5", ahead: "eleven_v3", settings: { eleven_flash_v2_5: FLASH, eleven_v3: V3 } },
+  wren: { voiceId: "IKne3meq5aSn9XLyUdCD", voice: "Charlie", live: "eleven_flash_v2_5", ahead: "eleven_v3", settings: { eleven_flash_v2_5: FLASH, eleven_v3: V3 } },
+  juniper: { voiceId: "JBFqnCBsd6RMkjVDRZzb", voice: "George", live: "eleven_flash_v2_5", ahead: "eleven_v3", settings: { eleven_flash_v2_5: FLASH, eleven_v3: V3 } }, // not cast
 };
 const ELEVEN_FIRST_BYTE_MS = 4_000; // slower than this to start = fall back to OpenAI
 let elevenOffUntil = 0; // out of characters / bad key: skip ElevenLabs for a while instead of paying the wait every line

@@ -1,5 +1,6 @@
 /**
- * The narrator cast (the CD's final four): OpenAI voices first, Gemini as the fallback. Persona names are placeholders.
+ * The narrator cast: vesper, hollis and wren are cast (the CD dropped juniper on Sun AM; it stays a valid id so old
+ * data still reads). ElevenLabs voices live in server/tts.ts; these are the OpenAI and Gemini fallbacks.
  * At game start the AI casts one voice for the story's mood and writes a one-line style prompt.
  */
 export type VoiceId = "vesper" | "juniper" | "hollis" | "wren";
