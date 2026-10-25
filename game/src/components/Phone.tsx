@@ -686,7 +686,8 @@ export function Phone({ code }: { code: string }) {
     return <Shell><JoinForm onJoin={(name) => send("join", { name })} /></Shell>;
   }
 
-  const inStory = state.phase !== "lobby" && state.phase !== "storybook";
+  // Never cover the climax (final roll, ending, reveal) with the away screen.
+  const inStory = !["lobby", "story_write", "story_vote", "final_roll", "final_result", "epilogue", "reveal", "storybook"].includes(state.phase);
   if (inStory && me.away) {
     return (
       <Shell me={me} portrait={portrait} state={state}>

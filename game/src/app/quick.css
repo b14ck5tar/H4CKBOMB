@@ -648,3 +648,6 @@
 .gp-out-portrait { flex-shrink: 0; width: 10rem; height: 12.5rem; border-radius: 6px; overflow: hidden; box-shadow: 0 0 0 4px var(--pc), 0 20px 50px -10px rgba(0, 0, 0, 0.9); background: #1b122b; display: flex; align-items: center; justify-content: center; }
 .gp-out-portrait img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 20%; }
 .gp-lowerthird .qt-stamp, .gp-lowerthird [class*="stamp"] { align-self: flex-start; }
+
+/* Wi-Fi drop: a calm pause card, never a blank */
+.gp-paused { position: absolute; inset: 0; z-index: 60; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; background: rgba(5, 3, 9, 0.72); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); animation: qt-rise 0.6s ease both; }

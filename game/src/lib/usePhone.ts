@@ -38,7 +38,7 @@ export function usePhone(code: string | null) {
     // Autopilot presence: a quiet "still here" every few seconds (the table marks a silent phone away after ~25 s).
     // Also sent from the message handler, because background tabs throttle timers but still get events.
     const ping = () => {
-      if (Date.now() - lastPing < 8000) return;
+      if (Date.now() - lastPing < 3000) return; // the table pauses if every phone is quiet for 8 s
       lastPing = Date.now();
       t.send({ type: "ping", pid });
     };

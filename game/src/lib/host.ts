@@ -110,6 +110,10 @@ const outcomeMs = (text: string) => Math.min(12_000, Math.max(6500, text.split(/
 const AWAY_SILENCE_MS = 25_000;
 const AWAY_AFTER_TIMEOUTS = 2;
 const PRESENCE_ONLY = new Set(["hello", "ping", "away"]); // these don't count as "I'm back"
+/** Every phone silent this long = the table pauses ("Reconnecting phones…"). Phones ping every 3 s. */
+const ALL_QUIET_MS = 8000;
+/** The climax: nobody is put on autopilot here, and the phone never covers it with "I'm back". */
+const CLIMAX = new Set(["final_roll", "final_result", "epilogue", "reveal", "storybook"]);
 const BAND_RANK: Record<Band, number> = { LEGENDARY: 0, SUCCESS: 1, YES_BUT: 2, FAIL: 3, CATASTROPHE: 4 };
 
 /** What the narrator reads for the opener: the narration, then the character's line. */
@@ -433,6 +437,8 @@ export class GameHost {
       finale: false,
       cast: null,
       voice: null,
+      narrated: false,
+      paused: false,
       artKey: -1,
       boosts: {},
       rolls: [],
@@ -522,6 +528,12 @@ export class GameHost {
 
   private setTimer(ms: number, fn: () => void) {
     this.clearTimer();
+    if (this.paused) {
+      // Frozen while every phone is offline: it starts when one is back.
+      this.pending = fn;
+      this.pausedLeft = ms;
+      return;
+    }
     this.deadlineAt = Date.now() + ms;
     this.pending = fn;
     this.timer = setTimeout(() => {
@@ -623,6 +635,7 @@ export class GameHost {
     const pid = m.pid as string;
     if (!pid || !this.player(pid)) return;
     this.lastSeen[pid] = Date.now();
+    if (this.paused) this.resume();
     if (m.type === "away") {
       if (this.inStory()) this.setAway(pid, "stepped");
       return;
@@ -633,6 +646,7 @@ export class GameHost {
   /** A phase ran out on these players. Two in a row and their hero goes on autopilot. */
   private timedOut(pids: string[]) {
     if (this.skipping) return; // the presenter cut the timer short; nobody walked away
+    if (this.state.finale || CLIMAX.has(this.state.phase)) return; // nobody goes on autopilot at the climax
     pids.forEach((pid) => {
       const p = this.player(pid);
       if (!p?.hero || p.away) return;
@@ -644,9 +658,44 @@ export class GameHost {
   private checkPresence() {
     if (!this.inStory()) return;
     const now = Date.now();
+    const here = this.heroes().filter((p) => !p.away);
+    const alive = here.filter((p) => now - (this.lastSeen[p.id] ?? now) < ALL_QUIET_MS);
+    // Every phone silent at once is a Wi-Fi drop, not a walk-away: freeze the table instead of marking anyone away.
+    if (here.length && !alive.length) return this.pause();
+    if (this.paused) return;
+    if (!alive.length || CLIMAX.has(this.state.phase)) return;
     this.heroes().forEach((p) => {
       if (!p.away && now - (this.lastSeen[p.id] ?? now) > AWAY_SILENCE_MS) this.setAway(p.id, "silent");
     });
+  }
+
+  private paused = false;
+  private pausedLeft = 0;
+
+  /** "Reconnecting phones…": the timer stops where it is; no auto-rolls, no autopilot, until a phone is back. */
+  private pause() {
+    if (this.paused) return;
+    this.paused = true;
+    if (this.timer) {
+      clearTimeout(this.timer);
+      this.timer = null;
+      this.pausedLeft = Math.max(0, this.deadlineAt - Date.now());
+    }
+    this.deadlineAt = 0;
+    this.set({ paused: true });
+    this.note("hero", "The table", "Every phone went quiet at once (Wi-Fi?), so the table paused instead of moving on without anyone.");
+  }
+
+  private resume() {
+    if (!this.paused) return;
+    this.paused = false;
+    const now = Date.now();
+    this.heroes().forEach((p) => (this.lastSeen[p.id] = Math.max(this.lastSeen[p.id] ?? 0, now)));
+    this.set({ paused: false });
+    const fn = this.pending;
+    if (fn) this.setTimer(Math.max(this.pausedLeft, 4000), fn);
+    this.broadcastNow();
+    this.note("hero", "The table", "Phones are back, so the table picked up where it stopped.");
   }
 
   /** Someone just went away: if everyone still here has already acted, don't make them wait. */
@@ -1250,6 +1299,8 @@ export class GameHost {
       finale: false,
       cast: null,
       voice: null,
+      narrated: false,
+      paused: false,
       artKey: -1,
       solvedBy: "",
       round: null,
@@ -1368,6 +1419,8 @@ export class GameHost {
       finale: false,
       cast: null,
       voice: null,
+      narrated: false,
+      paused: false,
       artKey: -1,
     });
     this.note("safety", "Why it's safe", SAFETY_NOTES[seed.id] ?? SAFETY_GENERIC);
@@ -1906,7 +1959,7 @@ export class GameHost {
     }
     const id = ++this.voiceSeq;
     this.voiceUrls[id] = clip.url;
-    this.set({ voice: { id, ms: clip.ms, delay, rate: clip.rate } });
+    this.set({ voice: { id, ms: clip.ms, delay, rate: clip.rate }, narrated: true });
     return clip.ms;
   }
 

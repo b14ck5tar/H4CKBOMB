@@ -160,6 +160,7 @@ function QTopBar({ host, s, onNotes, notesOpen }: { host: Stage; s: GameState; o
       {s.mode === "quick" && <span className="on-air">Quick Tale</span>}
       {s.quest && s.phase !== "story_vote" && <span className="font-heading text-xl uppercase truncate text-parchment/85">{s.quest.title}</span>}
       <span className="flex-1" />
+      {s.narrated && s.cast && <span className="font-ui text-sm uppercase tracking-[0.2em] text-parchment/50">Narrated by {s.cast.name}</span>}
       {FEATURES.hopeDisplay && <Hope hope={s.hope} max={s.hopeMax} />}
       {left > 0 && !reading && <span className="qt-secs tabular-nums">{Math.ceil(left / 1000)}</span>}
       {host.deadlineAt > 0 && reading && !host.readOnly && (
@@ -346,7 +347,7 @@ function ColdOpen({ host, s }: { host: Stage; s: GameState }) {
           </h1>
         </div>
       )}
-      {title && <TitleCard s={s} kicker={s.cast ? `Tonight: ${s.cast.kind}` : "Tonight we find out why"} sub={s.cast ? `Narrated by ${s.cast.name} · painted in ${s.cast.artName}` : "A quick tale · about four minutes"} />}
+      {title && <TitleCard s={s} kicker={s.cast ? `Tonight: ${s.cast.kind}` : "Tonight we find out why"} sub={s.cast ? `Painted in ${s.cast.artName}` : "A quick tale"} />}
     </div>
   );
 }
@@ -1020,7 +1021,7 @@ export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameS
           <ColdOpen host={host} s={s} />
         ) : (
           <div className="qt-stage qt-cold">
-            <TitleCard s={s} kicker={s.cast ? `Tonight: ${s.cast.kind}` : "Tonight's story"} sub={s.cast ? `Narrated by ${s.cast.name} · painted in ${s.cast.artName}` : "\u00a0"} />
+            <TitleCard s={s} kicker={s.cast ? `Tonight: ${s.cast.kind}` : "Tonight's story"} sub={s.cast ? `Painted in ${s.cast.artName}` : "\u00a0"} />
           </div>
         );
       break;
@@ -1083,6 +1084,12 @@ export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameS
       </div>
       {inScene && !(title && s.phase === "narrating") && <GoalBar s={s} />}
       {s.phase !== "quest" && !(title && s.phase === "narrating") && <NowBanner s={s} />}
+      {s.paused && (
+        <div className="gp-paused" role="status">
+          <p className="font-heading text-5xl uppercase">Reconnecting phones…</p>
+          <p className="font-ui text-xl text-parchment/80">The game is paused. It picks up the moment a phone is back.</p>
+        </div>
+      )}
       <Reactions items={reactions} />
       <ThankHearts s={s} />
     </div>
