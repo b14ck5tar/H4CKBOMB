@@ -122,15 +122,11 @@ const V3_SWAPS: [string, string][] = [
   ],
   [
     "15. A SUCCESS CAN FINISH THE STEP: if this plan solved right_now, set step_solved true; it is solved, it stays solved (it becomes a fact), and the next twist arrives BECAUSE of it: the problem escalates into something NEW and bigger, never the same step again (\"corner the pig again\" is banned). Nothing achieved is ever undone, not even by a later miss: every fact that starts with \"Done:\" stays true, so a backfire hurts something else.\nTHE FINISH LINE STAYS OPEN until the grand finale (CD: \"it's already off the bridge, so what's the final move?\"): a success solves the current STEP, never finish_line itself. Unless finale_next is true, the outcome and scene never say or imply that finish_line is done; the big problem is still there, bigger or closer, for the finale to settle.",
-    "15. A SUCCESS IS FOR GOOD: on a success set step_solved true. What it solved stays solved (it becomes a fact), and the next situation arrives BECAUSE of it, never the same thing again (\"get the bag\" four turns in a row is the failure we are fixing). Nothing achieved is ever undone, not even by a later miss: every fact that starts with \"Done:\" stays true, so a backfire hurts something else.\nPRESSURE (momentum whatever happens): pressure_now is one thing getting worse on its own this turn. The scene says it first, in one short plain sentence (use its name, e.g. \"The reporters are at the door.\"), then hands off to next_player.",
+    "15. A SUCCESS IS FOR GOOD: on a success set step_solved true. What it solved stays solved (it becomes a fact), and the next situation arrives BECAUSE of it, never the same thing again (\"get the bag\" four turns in a row is the failure we are fixing). Nothing achieved is ever undone, not even by a later miss: every fact that starts with \"Done:\" stays true, so a backfire hurts something else.\nPRESSURE (momentum whatever happens): pressure_now is one thing getting worse on its own this turn; the TV shows it on screen. A miss makes pressure_now bite (it causes the new problem). Mention it only if it fits in a few words; every line stays short.",
   ],
   [
     "7. CLARITY: outcome is 2 sentences at most, 30 words at most,",
     "7. CLARITY (FOLLOWABLE: someone who just walked up to the table gets every line): outcome is 2 short sentences, what happened, then what is different now, 30 words at most,",
-  ],
-  [
-    "11. HAND-OFF: scene (1 sentence, 24 words max) says where things stand now and addresses next_player by name with the new obstacle",
-    "11. HAND-OFF: scene (2 short sentences, 30 words max: the pressure, then the hand-off) says where things stand now and addresses next_player by name with the new obstacle",
   ],
   ["WRITE: outcome, scene, right_now,", "REPEAT CHECK: repeat_of = the item in goals_done that right_now is the same goal as, even reworded (\"Free the bus\" and \"Unstick the bus\" are the same goal), or \"\" if it is a new goal. Be honest: a repeat gets rewritten.\nAFTER A MISS: the next right_now is never cleaning up the mess the hero's own plan just made (no \"free the mayor from the dough\" after a dough plan backfires); a pressure gets worse or a NEW problem starts.\nWRITE: outcome, scene, problem_now, repeat_of, right_now,"],
 ];
@@ -292,7 +288,7 @@ export async function runTurn(i: TurnInput, rating: Rating): Promise<TurnResult>
       task: "story-editor",
       model: TURN_MODEL,
       effort: "minimal",
-      system: FEATURES.storyV3 ? EDITOR_SYSTEM.replace("Scene: 1 sentence.", "Scene: at most 2 short sentences (keep the line about what is getting worse, then the hand-off).") : EDITOR_SYSTEM,
+      system: EDITOR_SYSTEM,
       schema: EDITOR_SCHEMA,
       user: JSON.stringify({ outcome: p.outcome, scene: p.scene, plan: i.plan, concept: clip(i.hero?.concept, 140), hero, grade, idea_from: idea, next_player: nextPlayer, known }),
       timeoutMs: EDIT_TIMEOUT_MS,
@@ -312,7 +308,7 @@ export async function runTurn(i: TurnInput, rating: Rating): Promise<TurnResult>
   p.outcome = clampOutcome(p.outcome);
   if (nextPlayer && !new RegExp(`\\b${nextPlayer.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`).test(p.scene)) p.scene = p.scene ? `${nextPlayer}, ${p.scene.charAt(0).toLowerCase()}${p.scene.slice(1)}` : `${nextPlayer}, you're up.`;
   // v3: the scene is the pressure, then the hand-off (2 sentences); before, the hand-off alone.
-  p.scene = FEATURES.storyV3 ? sentences(p.scene).slice(0, 2).join(" ") || p.scene : sentences(p.scene)[0] ?? p.scene;
+  p.scene = sentences(p.scene)[0] ?? p.scene;
   p.right_now = trimPile(p.right_now);
   const applied = applyTurn(state, p, { hero, attempt: i.attempt, grade, depth: i.depth });
   console.log(`[turn] ${grade} ${hero} ${Date.now() - t0}ms progress ${state.progress}->${applied.state.progress}${fallback ? " FALLBACK" : ""}${edited ? " EDITED" : ""}${probs.length ? ` problems: ${probs.join(" | ")}` : ""}`);

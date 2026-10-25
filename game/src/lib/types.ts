@@ -400,6 +400,8 @@ export interface GameState {
   kicked?: string[];
   /** Story v3: the REAL problem the story started from, one plain sentence (the reveal says it really happened). */
   originalProblem?: string;
+  /** Story v3: the pressure that just got worse (one short line), shown as a small chip under Right now. */
+  pressureNow?: string;
   /** Which game this is in the room (0 = the first). Play again (FEATURES.playAgain) adds 1. */
   game?: number;
 }

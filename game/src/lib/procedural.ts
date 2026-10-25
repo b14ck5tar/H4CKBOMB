@@ -582,13 +582,9 @@ export function checkTurn(p: TurnProposal, ctx: { state: StoryState; hero: strin
       const was = repeatsEarlier(pn, [...(ctx.state.problems_seen ?? []), ctx.state.problem]);
       if (was) out.push(`repeats an earlier moment: problem_now is the old situation ("${was}") again; a success resolved it for good, a miss made something NEW go wrong`);
     }
-    const pr = pressureNow(ctx.state);
-    if (pr && !usesPlan(`${o} ${p.scene}`, pr.name)) out.push(`the pressure (${pr.name}) must get worse in the scene, in plain words: "${pr.stage}"`);
   }
   if (ctx.next_player && p.scene && !new RegExp(`\\b${esc(ctx.next_player)}\\b`).test(p.scene)) out.push(`scene must hand the moment to ${ctx.next_player} by name`);
-  if (FEATURES.storyV3) {
-    if (sentences(p.scene).length > 2 || words(p.scene) > 32) out.push("scene is 2 short sentences at most (the pressure, then the hand-off), 30 words max");
-  } else if (sentences(p.scene).length > 1 || words(p.scene) > 24) out.push("scene is 1 sentence, 24 words max");
+  if (sentences(p.scene).length > 1 || words(p.scene) > 24) out.push("scene is 1 sentence, 24 words max");
   if (p.new_character?.name && ctx.state.cast.length >= 3 && !ctx.state.cast.some((c) => norm(c.name) === norm(p.new_character.name))) out.push("no new named characters: the cast is full (3)");
   const newThings = [p.new_fact, p.new_character?.name].filter((x) => x && x.trim()).length;
   if (newThings > 1) out.push("one new thing per turn at most (a fact OR a character)");
@@ -687,6 +683,12 @@ function applyTurnV3(state: StoryState, p: TurnProposal, ctx: { hero: string; at
     problem = pr.stage;
     rn = pr.fix;
   } else if (stale && !rn) rn = state.right_now;
+  // The finale (coordinator): the original problem plus the biggest pressure, never the latest mess.
+  if (turn >= T && state.finish_line) {
+    const big = [...(state.pressures ?? [])].sort((a, b) => b.level - a.level)[0];
+    rn = state.finish_line;
+    problem = [state.original_problem || problem, big ? big.stages[Math.min(big.level + (pr?.name === big.name ? 1 : 0), big.stages.length - 1)] : ""].filter(Boolean).join(" ");
+  }
   const pressures = (state.pressures ?? []).map((x, i) => (pr && i === pr.i ? { ...x, level: Math.min(x.level + 1, x.stages.length - 1) } : x));
   const cast = [...state.cast];
   if (p.new_character?.name && cast.length < 3 && !cast.some((c) => norm(c.name) === norm(p.new_character.name)) && !p.new_fact?.trim()) cast.push({ name: clip(p.new_character.name, 30), role: clip(p.new_character.role, 50) });
@@ -746,7 +748,7 @@ export function fallbackProposal(state: StoryState, o: { hero: string; attempt?:
     const v3how: Record<Grade, string> = { ...how, SETBACK: "but it backfires.", DISASTER: "but it backfires spectacularly." };
     return {
       outcome: `${o.hero} ${action}${credit} ${v3how[o.grade]}`.replace(/\s+/g, " ").trim(),
-      scene: o.next_player ? `${pr.stage} ${o.next_player}, what now?` : `${pr.stage} Everyone, the grand finale is next.`,
+      scene: o.next_player ? `${o.next_player}, ${pr.stage.charAt(0).toLowerCase()}${pr.stage.slice(1).replace(/[.!]+$/, "")}, so what now?` : `Everyone, the grand finale is next.`,
       right_now: pr.fix,
       problem_now: pr.stage,
       progress_gain: Number.NaN,
