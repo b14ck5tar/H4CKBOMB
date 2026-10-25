@@ -76,3 +76,18 @@ Full history and train of thought: `design/00-where-we-are.md`.
 - ✅ Models: muse-wonder-1.0 for story creation (ahead of time); muse-spark-1.3 minimal for live rulings; research the best model per job (images, narration incl. voice, judging, story creation), and a non-Meta model is allowed.
 - ✅ CD rebuild priorities: flow first; simple gameplay; uncluttered screens; smooth, slick transitions and story effects; execute the core VERY well; polish and fix only, no cool new features; stories easy to follow and logical, especially when weaving in each hero's quirks. Base the work on the Meta judge's feedback.
 - ⏳ Voice narration: wanted, but it must be "smooth, not obviously AI". Voice samples to be compared by ear before choosing.
+
+## Sat ~8 PM: core loop FINAL (from the mechanics picker, CD + partner) → design/24-core-loop-final.md
+- ✅ Turn-based: everyone suggests, the owner picks; +1 for working in a friend's suggestion; one action only; cycles by lobby size; a grand finale vote (not your own) + a shared shake die.
+- ✅ No Convince the DM; literal judging; "Needs N+"; d20 per action.
+- ✅ Two story modes: live odd news (worldwide, past week/month, 3-headline vote) and "Our stories" (personal, with the real ending revealed).
+- ✅ Branching AI writing from a fixed start and goal; 8-year-old clarity; logical.
+- ✅ New scene art per decision with heroes; never wait.
+- ✅ Voice + synced text; 2 narrator voices (Sulafat + Charon, mysterious and alluring; names TBD).
+- ✅ Ending: real story + what's happening now + keepsake.
+- ✅ Join: describe + one question (good at); equal stat budget; ready-made backup.
+- ✅ Timers ~60 s; absent players skipped; one room for the demo.
+- ✅ Cut for good: Catch, Boost, Mirror, clues.
+- ✅ Narrator cast: 4-5 voices (at least one male and one female); the AI casts one voice and tone per story mood (creepy → ghost-story telling). "Not super in depth, but very important."
+- ✅ Art style per story: option a. The AI picks one style per game from a tested set of 5-6.
+- ✅ No forced "reason" lines. The outcome narration is the explanation (cause → effect in-story). The deeper "How the AI decided" is an optional view at the end.
