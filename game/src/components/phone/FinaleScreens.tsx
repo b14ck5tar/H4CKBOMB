@@ -10,6 +10,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { FinalRoll, Pitch, Player } from "@/lib/types";
 import { shortName } from "@/lib/now";
+import { sfx } from "@/lib/sfx";
 import { Face, Fuse, GameButton, Goal, Kicker, PlanBox, Say, TvGlyph, heroImg, vibrate, type TimerSpec } from "./kit";
 
 const PLAN_EXAMPLES = ["I use my knack for this, of course", "We all pull at once on three", "I ask it nicely, one last time"];
@@ -271,6 +272,18 @@ export function ShakeScreen({
     return () => window.removeEventListener("devicemotion", onMotion);
   }, [shakeTime, shook]);
 
+  // One clear state at every step (CD: "the buttons needed work for the final roll").
+  const Step = ({ n, children, tone }: { n: string; children: React.ReactNode; tone: "amber" | "lime" | "pink" }) => (
+    <span className={`pk-step is-${tone}`}>
+      <b>{n}</b>
+      {children}
+    </span>
+  );
+  const press = () => {
+    vibrate(25);
+    sfx.pop();
+  };
+
   if (stage === "landed" || phase === "final_result")
     return (
       <div className="pk-choices pk-center" style={{ flex: 1, justifyContent: "center", gap: 14 }}>
@@ -281,70 +294,76 @@ export function ShakeScreen({
     );
   if (stage === "tumble" || (shook && stage === "shake"))
     return (
-      <div className="pk-choices pk-center" style={{ flex: 1, justifyContent: "center", gap: 14 }}>
+      <div className="pk-choices pk-center" style={{ flex: 1, justifyContent: "center", gap: 16 }}>
+        <Step n="✓" tone="lime">
+          Done
+        </Step>
         <TvGlyph />
-        <Kicker tone="lime">{auto ? "Rolled for you" : "Nice shake"}</Kicker>
-        <Say text={auto ? "The table rolled for you. *Watch the TV*" : "In the air! *Watch the TV*"} small />
+        <Say text={auto ? "The table rolled for you. *Watch the TV*" : "In the air! *Watch the TV*"} />
+        <p className="pk-hint">Waiting for the others…</p>
       </div>
     );
   if (shakeTime)
     return (
       <div className="pk-choices pk-center" style={{ flex: 1, justifyContent: "center", gap: 18 }}>
+        <Step n="3" tone="amber">
+          Shake or tap!
+        </Step>
         <PhoneShakeIcon />
         <Say text="*SHAKE* your phone!" />
-        <button className="pk-arcade is-shake" data-tone="amber" onClick={() => roll.current()} aria-label="Shake: roll the die">
-          <span className="pk-arcade-halo" />
-          <span className="pk-arcade-ring" />
-          <span className="pk-arcade-base" />
-          <span className="pk-arcade-cap">
-            Shake!
-            <small>or tap here</small>
-          </span>
-        </button>
+        <GameButton
+          tone="amber"
+          xl
+          className="pk-roll-btn"
+          onClick={() => {
+            press();
+            roll.current();
+          }}
+        >
+          Or tap here to roll
+        </GameButton>
       </div>
     );
   if (stage === "count")
     return (
       <div className="pk-choices pk-center" style={{ flex: 1, justifyContent: "center", gap: 6 }}>
-        <Kicker tone="pink">Get ready</Kicker>
+        <Step n="2" tone="lime">
+          Armed: get ready
+        </Step>
         <div className="pk-countdown">
           <span key={beat}>{beat}</span>
         </div>
-        <Say text="Get ready to *shake*. Battle cry on SHAKE!" small />
+        <Say text="On *SHAKE*: shake your phone or tap the button" small />
       </div>
     );
   return (
     <div className="pk-choices pk-center" style={{ flex: 1, justifyContent: "center", gap: 18 }}>
+      <Step n={armed ? "2" : "1"} tone={armed ? "lime" : "pink"}>
+        {armed ? "Armed: wait for SHAKE" : "Tap to arm"}
+      </Step>
       <Kicker tone="amber">The final roll · one die, all of you</Kicker>
-      <Say text={armed ? "Armed. Wait for *SHAKE*" : "Tap *ARM*"} small />
-      <button
-        className="pk-arcade"
-        data-tone={armed ? "lime" : undefined}
-        disabled={armed}
-        onClick={() => {
-          if (armed) return;
-          onUnlock?.();
-          vibrate(30);
-          setArmedAt(Date.now());
-          // Ask for motion inside the tap (iOS), then tell the table we're ready.
-          askMotion().then(() => onArm());
-        }}
-        aria-label={armed ? "Armed" : "Arm the die"}
-      >
-        {!armed && <span className="pk-arcade-halo" />}
-        {!armed && <span className="pk-arcade-ring" />}
-        <span className="pk-arcade-base" />
-        <span className="pk-arcade-cap">
-          {armed ? "Armed" : "Arm"}
-          <small>{armed ? "locked in" : "tap to arm"}</small>
-        </span>
-      </button>
       {armed ? (
-        <span className="pk-armed">
-          <i /> When the TV says SHAKE, shake your phone
-        </span>
+        <>
+          <span className="pk-armed-big" role="status">
+            Armed ✓
+          </span>
+          <p className="pk-hint">When the TV says SHAKE: shake your phone or tap the big button.</p>
+        </>
       ) : (
-        <p className="pk-hint">Then everyone shakes at once.</p>
+        <GameButton
+          tone="pink"
+          xl
+          className="pk-roll-btn"
+          onClick={() => {
+            press();
+            onUnlock?.();
+            setArmedAt(Date.now());
+            // Ask for motion inside the tap (iOS), then tell the table we're ready.
+            askMotion().then(() => onArm());
+          }}
+        >
+          Tap to arm
+        </GameButton>
       )}
     </div>
   );
