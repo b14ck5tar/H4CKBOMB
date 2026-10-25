@@ -23,7 +23,8 @@ import { Avatar, Hope, ThankHearts, useFastNow } from "./TV";
 import { KeepsakeQR } from "./Keepsake";
 import { FEATURES } from "@/lib/features";
 import { dice, music, playSfx, useMusic } from "@/lib/sound";
-import { EndingMontage, HudStrip, OutcomeCaption, Particles, PhaseSwap, PlanCard, QualityMeter, SuggestionBubbles, TurnCard, TvStage, TIER_LOOK } from "@/components/tvskin";
+import { EndingMontage, FinalePitch, FinaleShake, FinaleVote, HudStrip, OutcomeCaption, Particles, PhaseSwap, PlanCard, QualityMeter, SuggestionBubbles, TurnCard, TvStage, TIER_LOOK } from "@/components/tvskin";
+import { QUICK_TURN_MS, TURN_MS, VOTE_MS } from "@/lib/rules";
 import type { CardHero, MontagePanel } from "@/components/tvskin";
 import { TIER_SHIFT, gradeRoll } from "@/lib/grade";
 import { speakableName } from "@/lib/now";
@@ -1010,6 +1011,58 @@ function SkinEnding({ host, s }: { host: Stage; s: GameState }) {
   );
 }
 
+/** The finale in the TV skin: WRITE (sealed plans fly in), BACK (vote), ARM → 3-2-1 → SHAKE → ROLLING. */
+const finaleHeroes = (host: Stage, s: GameState) =>
+  s.players.filter((p) => p.hero).map((p) => ({ id: p.id, name: shortName(p.hero?.name ?? p.name), color: p.color, portrait: portraitOf(host, p) }));
+
+function SkinFinalePitch({ host, s }: { host: Stage; s: GameState }) {
+  return (
+    <FinalePitch
+      heroes={finaleHeroes(host, s)}
+      plans={s.pitches.map((p) => ({ id: p.id, playerId: p.playerId }))}
+      typing={s.typing}
+      situation={s.situation}
+      deadlineAt={host.deadlineAt || undefined}
+      totalSeconds={(s.mode === "quick" ? QUICK_TURN_MS : TURN_MS) / 1000}
+    />
+  );
+}
+
+function SkinFinaleVote({ host, s }: { host: Stage; s: GameState }) {
+  const el = eligibleIds(s);
+  return (
+    <FinaleVote
+      heroes={finaleHeroes(host, s)}
+      plans={s.pitches.map((p) => ({ id: p.id, playerId: p.playerId, text: p.auto ? "…" : p.verdict?.interpretation && !p.verdict.fallback ? p.verdict.interpretation : planText(p), eligible: el.has(p.id) }))}
+      votes={s.votes}
+      deadlineAt={host.deadlineAt || undefined}
+      totalSeconds={VOTE_MS / 1000}
+    />
+  );
+}
+
+function SkinFinaleShake({ host, s }: { host: Stage; s: GameState }) {
+  const f = s.final;
+  const stage = (f?.stage ?? "arm") as "arm" | "count" | "shake" | "tumble";
+  const now = useFastNow(stage === "count");
+  const left = host.deadlineAt ? Math.max(0, host.deadlineAt - now) : 0;
+  const beat = stage === "count" ? Math.max(1, Math.min(3, Math.ceil(left / 1000))) : undefined;
+  const heroes = finaleHeroes(host, s);
+  const w = winnerPid(s) || f?.best || "";
+  const pitch = s.pitches.find((p) => p.playerId === w);
+  return (
+    <FinaleShake
+      stage={stage}
+      heroes={heroes}
+      armed={f?.armed}
+      shook={f?.shook}
+      beat={beat}
+      planBy={heroes.find((h) => h.id === w)}
+      plan={pitch ? (pitch.verdict?.interpretation && !pitch.verdict.fallback ? pitch.verdict.interpretation : planText(pitch)) : undefined}
+    />
+  );
+}
+
 // ---------- 6. what happened ----------
 function Outcome({ host, s }: { host: Stage; s: GameState }) {
   const r = s.rolls[0];
@@ -1438,10 +1491,8 @@ export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameS
       main = null; // the tvskin TurnCard + SuggestionBubbles (below)
       break;
     case "pitch":
-      main = <Planning host={host} s={s} />;
-      break;
     case "vote":
-      main = <Vote host={host} s={s} />;
+      main = null; // the tvskin FinalePitch / FinaleVote (below)
       break;
     case "ruling":
       main = null; // the tvskin PlanCard (below)
@@ -1454,7 +1505,8 @@ export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameS
       break;
     case "final_roll":
     case "final_result":
-      main = <Final host={host} s={s} />;
+      // ARM, 3-2-1, SHAKE, ROLLING are the tvskin FinaleShake (below); the landing keeps the die + quality meter.
+      main = s.phase === "final_result" || s.final?.stage === "landed" ? <Final host={host} s={s} /> : null;
       break;
     case "epilogue":
     case "reveal":
@@ -1472,6 +1524,7 @@ export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameS
   const inScene = SCENE_PHASES.includes(s.phase);
   // One key per skin "beat": the plan card stays the same beat from the ruling until the throw.
   const skinKey =
+    s.phase === "final_roll" ? "finale-shake" :
     s.phase === "turn" ? `turn-${s.turnIndex}` : s.phase === "ruling" || (s.phase === "roll" && !s.revealed.length) ? `plan-${s.turnIndex}-${s.finale}` : s.phase === "outcome" ? `out-${s.turnIndex}` : s.phase;
   return (
     <div className="qt-root" onPointerDown={() => sfx.unlock()}>
@@ -1491,17 +1544,20 @@ export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameS
       {/* The in-game TV skin over the scene: HUD, turn card + suggestions, the plan, the caption. */}
       {(inScene || s.phase === "final_roll" || s.phase === "final_result") && !(title && s.phase === "narrating") && (
         <TvStage>
-          <SkinHud s={s} />
+          {s.phase !== "vote" && <SkinHud s={s} />}
           <PhaseSwap k={skinKey}>
             {s.phase === "turn" && <SkinTurn host={host} s={s} />}
             {(s.phase === "ruling" || (s.phase === "roll" && !s.revealed.length)) && <SkinPlan host={host} s={s} />}
             {s.phase === "outcome" && <SkinOutcome s={s} />}
+            {s.phase === "pitch" && <SkinFinalePitch host={host} s={s} />}
+            {s.phase === "vote" && <SkinFinaleVote host={host} s={s} />}
+            {s.phase === "final_roll" && s.final?.stage !== "landed" && <SkinFinaleShake host={host} s={s} />}
           </PhaseSwap>
         </TvStage>
       )}
       {["epilogue", "reveal", "storybook"].includes(s.phase) && <SkinEnding host={host} s={s} />}
       {/* One instruction pill, only where no skin piece already says what to do. */}
-      {["story_write", "story_vote", "pitch", "vote", "final_roll"].includes(s.phase) ? <NowBanner s={s} /> : null}
+      {["story_write", "story_vote"].includes(s.phase) ? <NowBanner s={s} /> : null}
       {s.paused && (
         <div className="gp-paused" role="status">
           <p className="font-heading text-5xl uppercase">Reconnecting phones…</p>
