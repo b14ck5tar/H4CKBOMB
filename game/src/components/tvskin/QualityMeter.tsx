@@ -52,7 +52,9 @@ export function QualityMeter({ total, natural, parts, result, grade, label, dela
   // a jump from the die's face straight to a bigger total read as a bug). Natural 1/20 skip the steps (they override).
   const die = parts?.[0] && !parts[0].signed ? parts[0].value : undefined;
   const adds = die != null && !nat ? parts!.slice(1) : [];
-  const running = die != null && !nat ? adds.reduce<number[]>((acc, p) => [...acc, acc[acc.length - 1] + p.value], [die]) : [];
+  // Clamped at 1 like lib/grade (a total never goes below 1), so the steps never show 0 or a negative number.
+  const running = die != null && !nat ? adds.reduce<number[]>((acc, p) => [...acc, Math.max(1, acc[acc.length - 1] + p.value)], [die]) : [];
+  const floored = die != null && !nat && die + adds.reduce((a, p) => a + p.value, 0) < 1;
   const FILL_S = die != null && !nat ? Math.max(0.7, FIRST_S + adds.length * STEP_S) : 0.8;
   const [step, setStep] = useState(0);
   const done = step > adds.length || die == null || !!nat;
@@ -151,6 +153,7 @@ export function QualityMeter({ total, natural, parts, result, grade, label, dela
           ))}
           <span className={`tvx-meter-eq ${done ? "on" : ""}`}>
             {" "}= <b>{g.total}</b>
+            {floored ? " (lowest)" : ""}
           </span>
         </p>
       )}
