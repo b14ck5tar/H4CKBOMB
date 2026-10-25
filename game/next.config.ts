@@ -20,7 +20,7 @@ try {
 // settings, so only the public (browser-safe) values are passed here and secrets are never baked into a build.
 const KEYS = process.env.VERCEL
   ? ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY"]
-  : ["MODEL_API_KEY", "SERPAPI_KEY", "GEMINI_API_KEY", "NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY", "MCP_TOKEN"];
+  : ["MODEL_API_KEY", "SERPAPI_KEY", "GEMINI_API_KEY", "OPENAI_API_KEY", "NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY", "MCP_TOKEN"];
 const env: Record<string, string> = {};
 for (const k of KEYS) {
   // Defense in depth: never let an admin/secret key ride along in a NEXT_PUBLIC_ variable.

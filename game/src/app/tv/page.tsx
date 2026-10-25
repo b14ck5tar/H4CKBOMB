@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { GameHost } from "@/lib/host";
 import { newCode } from "@/lib/transport";
 import { TV } from "@/components/TV";
+import { Narrator } from "@/components/Narrator";
 
 export default function TVPage() {
   const [host, setHost] = useState<GameHost | null>(null);
@@ -33,5 +34,10 @@ export default function TVPage() {
     return () => h.close();
   }, []);
   if (!host) return null;
-  return <TV host={host} />;
+  return (
+    <>
+      <TV host={host} />
+      <Narrator host={host} />
+    </>
+  );
 }

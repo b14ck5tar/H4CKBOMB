@@ -2,6 +2,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Phone } from "@/components/Phone";
+import { Narrator } from "@/components/Narrator";
 import { GameHost } from "@/lib/host";
 import { newCode } from "@/lib/transport";
 
@@ -24,7 +25,12 @@ function HostedPhone({ code }: { code: string }) {
     return () => h.close();
   }, [code]);
   if (!host) return null;
-  return <Phone code={code} host={host} />;
+  return (
+    <>
+      <Phone code={code} host={host} />
+      <Narrator host={host} />
+    </>
+  );
 }
 
 function PlayInner() {
