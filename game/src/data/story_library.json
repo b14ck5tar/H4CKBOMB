@@ -314,7 +314,7 @@
     "quest_title": "The Boulder on the Edge",
     "teaser": "A huge boulder hangs over a busy trail, and a tiny tired troll is holding it up.",
     "mood": "tense",
-    "narration": "At a stone trail, staff lead families under a hanging boulder. A tiny tired troll holds the boulder up, and his arms are getting very tired. If it drops on the wood path, the trail stays closed.",
+    "narration": "At a stone trail, staff lead families under a hanging boulder. A tiny troll holds the boulder up, and his arms are getting very tired. If it drops on the wood path, the trail stays closed.",
     "goal": "Help the troll set the boulder down gently",
     "situation": "A dusty boulder, a cracked path, and a tiny troll.",
     "problem": {
@@ -519,7 +519,7 @@
    "opener": {
     "title": "Crab Lost His Ring",
     "quest_title": "Crab Lost His Ring",
-    "teaser": "A lonely crab keeps losing his ring during beach games.",
+    "teaser": "A lonely crab lost his ring on a pretend island, and nobody can rest until it turns up.",
     "mood": "silly",
     "narration": "On a pretend desert island, idle helpers wait for watchers. A small lonely crab lost his ring in the sand and will not let anyone rest. If the ring stays lost, no helper gets a job done before the watchers come back.",
     "goal": "Help the crab find his lost ring",
