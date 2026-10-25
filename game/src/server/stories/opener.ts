@@ -663,7 +663,8 @@ function finish(d: Draft): Opener {
   };
   o.threat = { name: o.problem.name, pronoun: pron ?? "it", want: o.problem.stakes }; // alias for one release
   if (d.npc_speaker.trim() && d.npc_line.trim()) o.npc_line = { speaker: sanitize(d.npc_speaker), line: sanitize(d.npc_line) };
-  o.original_problem = sanitize(d.problem_line ?? "");
+  // The REAL starting problem (the scene line: the real place and situation, no twist): the reveal says it really happened.
+  o.original_problem = sanitize(d.scene_line ?? "");
   o.pressures = (Array.isArray(d.pressures) ? d.pressures : [])
     .map((x) => ({ name: sanitize(String(x?.name ?? "")), stages: (Array.isArray(x?.stages) ? x.stages : []).map((y) => sanitize(String(y ?? ""))).filter(Boolean).slice(0, 4), fix: sanitize(String(x?.fix ?? "")).replace(/[.!]+$/, "") }))
     .filter((x) => x.name && x.stages.length && x.fix)

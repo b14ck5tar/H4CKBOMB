@@ -1783,7 +1783,7 @@ export class GameHost {
       this.heroes().map((p) => ({ name: p.hero!.name, pronouns: p.hero!.pronouns })),
       this.state.turnOrder.length,
     );
-    this.set({ ladder: [], step: 0, progress: 0, act: 1 });
+    this.set({ ladder: [], step: 0, progress: 0, act: 1, originalProblem: FEATURES.storyV3 ? this.story.original_problem || "" : undefined });
     if (FEATURES.storyV3)
       this.note(
         "scene",
@@ -3411,7 +3411,13 @@ export class GameHost {
     if (rsr) {
       // "based on a true story" is said ONCE in the game, here (the on-screen banner stays). Never "this really happened":
       // the game's story is based on it, it didn't happen (CD).
-      const said = this.seed?.author ? `Here's the twist… it's based on ${speakableName(this.seed.author.name)}'s true story. ${rsr.summary}` : `Now, here's the strange part… it's based on a true story. ${rsr.headline}.`;
+      // v3 (design/37 §4): the story started from a real article, and the problem at the start really happened.
+      const orig = FEATURES.storyV3 ? this.state.originalProblem?.replace(/[.!]+$/, "") ?? "" : "";
+      const said = this.seed?.author
+        ? `Here's the twist… it's based on ${speakableName(this.seed.author.name)}'s true story. ${rsr.summary}`
+        : orig
+        ? `Here's the twist… your story started from a real article. That first problem really happened: ${orig.charAt(0).toLowerCase()}${orig.slice(1)}. ${rsr.headline}.`
+        : `Now, here's the strange part… it's based on a true story. ${rsr.headline}.`;
       // The bridge links the table's ending to the real one, after a beat of breathing room (CD: the grand ending).
       const bridge = this.state.revealData?.bridge ?? "";
       // It starts on the real-story beat (look: ~5 s of WHAT YOU DID first), so the result lands before she speaks.

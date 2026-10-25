@@ -398,6 +398,8 @@ export interface GameState {
   busy: string;
   /** Players the host removed from the lobby (FEATURES.kick): their phone shows Rejoin. */
   kicked?: string[];
+  /** Story v3: the REAL problem the story started from, one plain sentence (the reveal says it really happened). */
+  originalProblem?: string;
   /** Which game this is in the room (0 = the first). Play again (FEATURES.playAgain) adds 1. */
   game?: number;
 }

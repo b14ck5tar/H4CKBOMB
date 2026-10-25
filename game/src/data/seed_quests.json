@@ -149,7 +149,7 @@
    ]
   },
   "art_style_hint": "A narrow concrete canal between apartment towers at night, crowds with glowing phones on low bridges, a giant shark fin in neon-lit green water.",
-  "original_problem": "A shark is stuck in a city canal, and it gets bigger every time someone takes its photo.",
+  "original_problem": "A shark swam into a narrow city canal and would not leave.",
   "pressures": [
    {
     "name": "the crowds",
@@ -331,7 +331,7 @@
    ]
   },
   "art_style_hint": "A damp cellar under an old Belgian brick house at night, a broken wall glowing with stacked gold bars, a sewer crew's work lamp, neon gold light.",
-  "original_problem": "A sewer crew found a wall full of talking gold, and every bar is begging to be kept.",
+  "original_problem": "A sewer crew broke into a bricked-up cellar wall and found it full of gold.",
   "pressures": [
    {
     "name": "the treasure hunters",
@@ -513,7 +513,7 @@
    ]
   },
   "art_style_hint": "Old English cathedral city at night, crooked cobbled lanes, a man in a homemade bat costume and cape climbing a tall flint wall toward a handbag, a streamer of toilet paper, neon street light.",
-  "original_problem": "A thief stole a woman's handbag, and the bag climbs to the highest place it can find.",
+  "original_problem": "A thief snatched a woman's handbag on a night out, right in front of a man dressed as Batman.",
   "pressures": [
    {
     "name": "the cathedral bells",
@@ -522,7 +522,7 @@
      "The bag is climbing toward the bells, and they ring at midnight.",
      "The big bells start to swing."
     ],
-    "fix": "Get to the bag before the bells ring"
+    "fix": "Get off the roof before the bells ring"
    },
    {
     "name": "the thief",
@@ -694,7 +694,7 @@
    ]
   },
   "art_style_hint": "Inside a grand opera house at night, red velvet curtain and gold balconies, a huge boa coiled in a spotlight, neon magenta stage light.",
-  "original_problem": "The opera's star snake, Princess, is lost in the air vents on opening night.",
+  "original_problem": "An opera house held auditions to find a real snake for its new show.",
   "pressures": [
    {
     "name": "the curtain",
