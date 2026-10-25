@@ -1047,7 +1047,20 @@ export class GameHost {
       const key = seed.the_real_story.headline || seed.id;
       const list = [key, ...this.recentStories().filter((k) => k !== key)].slice(0, 6);
       localStorage.setItem("gp-recent-stories", JSON.stringify(list));
+      // The story ids this table has played, so /api/news can skip them (?played=).
+      const id = seed.id.replace(/^news-/, "");
+      const ids = [id, ...this.playedIds().filter((x) => x !== id)].slice(0, 30);
+      localStorage.setItem("gp-played-ids", JSON.stringify(ids));
     } catch {}
+  }
+
+  private playedIds(): string[] {
+    try {
+      const v = JSON.parse(localStorage.getItem("gp-played-ids") ?? "[]");
+      return Array.isArray(v) ? v.map(String) : [];
+    } catch {
+      return [];
+    }
   }
 
   /**
@@ -1260,7 +1273,8 @@ export class GameHost {
   /** Live odd-news candidates for this rating (GET /api/news, cached server-side for 4 h). Never throws. */
   loadNews() {
     const rating = this.state.rating;
-    fetch(`/api/news?rating=${rating}`)
+    const played = this.playedIds().slice(0, 30).map(encodeURIComponent).join(",");
+    fetch(`/api/news?rating=${rating}${played ? `&played=${played}` : ""}`)
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => {
         if (this.state.rating !== rating) return;
