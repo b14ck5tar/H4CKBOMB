@@ -39,7 +39,7 @@ Setup (VIDEO_SCRIPT.md, "Shot list"): `/tv?judge=1` (a saved, tested true story)
 finale, about 5-6 minutes. Real faces reacting to each other are the human-connection score (30%); bots can't show it.
 *Solo backup only, if no third person is around:* `/tv?judge=1&bots=1`, 2 of you + 2 test players (press **B** twice).
 
-Start every recording first, then **clap once on camera** (it syncs the tracks):
+Start every recording before the lobby (in the edit, line the tracks up on the first die-landing sound):
 1. **TV:** OBS (1920x1080, 60 fps, desktop audio on, mic off), or Snipping Tool (Win+Shift+R, system audio on).
 2. **Phone A (and B if you can):** screen recording, mic off, "Show touches" on (Android).
 
