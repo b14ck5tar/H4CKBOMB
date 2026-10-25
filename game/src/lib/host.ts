@@ -445,6 +445,7 @@ export class GameHost {
       cast: null,
       voice: null,
       narrated: false,
+      typing: [],
       paused: false,
       artKey: -1,
       boosts: {},
@@ -663,6 +664,7 @@ export class GameHost {
   }
 
   private checkPresence() {
+    this.pruneTyping();
     if (!this.inStory()) return;
     const now = Date.now();
     const here = this.heroes().filter((p) => !p.away);
@@ -880,6 +882,8 @@ export class GameHost {
         return this.onPitch(m.pid, m.text, String(m.creditId ?? ""));
       case "idea":
         return this.onIdea(m.pid, m.text);
+      case "typing":
+        return this.onTyping(m.pid);
       case "story":
         return this.onStory(m.pid, m.title, m.setup, m.steps, m.ending);
       case "vote":
@@ -1363,6 +1367,7 @@ export class GameHost {
       cast: null,
       voice: null,
       narrated: false,
+      typing: [],
       paused: false,
       artKey: -1,
       solvedBy: "",
@@ -1489,6 +1494,7 @@ export class GameHost {
       cast: null,
       voice: null,
       narrated: false,
+      typing: [],
       paused: false,
       artKey: -1,
     });
@@ -1514,6 +1520,11 @@ export class GameHost {
   }
 
   private openerAsked = 0;
+
+  /** What the narrator says when a turn starts: the owner's name, then where things stand. */
+  private turnLine(owner: string) {
+    return `${this.heroName(owner)}, ${this.state.situation.charAt(0).toLowerCase()}${this.state.situation.slice(1)}`;
+  }
 
   /** Turn order: everyone in join order, repeated. 2-4 players get 2 turns each, 5-8 get 1, Quick Tale 1. */
   private makeTurnOrder() {
@@ -1578,9 +1589,11 @@ export class GameHost {
     if (k >= order.length) return this.startFinale();
     this.verdicts.clear();
     const owner = order[k];
-    this.set({ phase: "turn", turnIndex: k, ideas: {}, pitches: [], votes: {}, winnerId: "", outcome: "", rolls: [], revealed: [], ready: [], busy: "" });
+    this.set({ phase: "turn", turnIndex: k, ideas: {}, pitches: [], votes: {}, winnerId: "", outcome: "", rolls: [], revealed: [], ready: [], busy: "", typing: [] });
     this.setTimer(this.turnMs(), () => this.endTurn(true));
-    this.getSceneArt(this.plateFor(k + 1));
+    // "Jay, the lodger is…": the narrator reads the turn start if the clip is ready (it was asked for with the outcome).
+    const line = this.turnLine(owner);
+    this.voiceBy(line, Date.now() + 1200).then((clip) => this.state.phase === "turn" && this.state.turnIndex === k && this.play(clip));
     this.note("turn", this.heroName(owner), `Turn ${k + 1} of ${order.length}. Everyone else can suggest one action; ${this.heroName(owner)} picks.`);
   }
 
@@ -1588,12 +1601,27 @@ export class GameHost {
     return this.state.turnOrder[this.state.turnIndex] ?? "";
   }
 
+  private typingAt: Record<string, number> = {};
+
+  /** "Marvin is typing…": phones say so while someone writes a plan or an idea, so the TV is never just a clock. */
+  private onTyping(pid: string) {
+    if (!["turn", "pitch"].includes(this.state.phase) || !this.player(pid)?.hero) return;
+    this.typingAt[pid] = Date.now();
+    if (!this.state.typing.includes(pid)) this.set({ typing: [...this.state.typing, pid] });
+  }
+
+  private pruneTyping() {
+    const now = Date.now();
+    const typing = this.state.typing.filter((pid) => now - (this.typingAt[pid] ?? 0) < 4000);
+    if (typing.length !== this.state.typing.length) this.set({ typing });
+  }
+
   /** A friend's suggestion for the turn owner (one action, ~140 characters). They can change it until the owner picks. */
   private onIdea(pid: string, text: string) {
     if (this.state.phase !== "turn" || pid === this.owner() || !this.player(pid)?.hero) return;
     const clean = cleanPlan(text);
     if (!clean) return;
-    this.set({ ideas: { ...this.state.ideas, [pid]: clean } });
+    this.set({ ideas: { ...this.state.ideas, [pid]: clean }, typing: this.state.typing.filter((x) => x !== pid) });
   }
 
   /** The owner picks: their own words, or a friend's suggestion (maybe edited). Using a friend's idea is +1 and credited. */
@@ -1613,7 +1641,9 @@ export class GameHost {
     const pitch: Pitch = { id: `f-${pid}`, playerId: pid, text: clean, useAbility: false, embraceFlaw: false };
     this.set({ pitches: [...s.pitches, pitch] });
     // No visible loading: every finale plan is ruled the moment it's sent, so the winner's ruling is ready when the vote ends.
-    this.verdicts.set(pitch.id, this.askRuling(pitch));
+    const vp = this.askRuling(pitch);
+    this.verdicts.set(pitch.id, vp);
+    vp.then((v) => this.set({ pitches: this.state.pitches.map((x) => (x.id === pitch.id ? { ...x, verdict: v } : x)) }));
     if (this.allPresent((id) => this.state.pitches.some((x) => x.playerId === id))) this.endPitch();
   }
 
@@ -1665,9 +1695,10 @@ export class GameHost {
   private startFinale() {
     this.clearTimer();
     this.verdicts.clear();
-    this.set({ phase: "pitch", finale: true, pitches: [], votes: {}, winnerId: "", outcome: "", rolls: [], revealed: [], ready: [], busy: "" });
+    this.set({ phase: "pitch", finale: true, pitches: [], votes: {}, winnerId: "", outcome: "", rolls: [], revealed: [], ready: [], busy: "", typing: [] });
     this.note("turn", "Grand finale", "Everyone proposes the final move, everyone backs a friend's plan (never their own), and the winning plan gets one shared die.");
-    this.getSceneArt(this.plateFor(this.state.turnOrder.length));
+    const line = `The grand finale. ${this.state.situation} Everyone, what's the final move?`;
+    this.voiceBy(line, Date.now() + 1200).then((clip) => this.state.phase === "pitch" && this.play(clip));
     this.setTimer(this.turnMs(), () => this.endPitch(true));
   }
 
@@ -1800,6 +1831,10 @@ export class GameHost {
       this.voiceFor(o.text);
       // The new picture shows what just happened, in the place the story has moved to.
       this.paintDecision(judged, v, o.text, o.situation || this.state.situation);
+      const next = this.state.turnOrder[this.state.turnIndex + 1];
+      const where = o.situation || this.state.situation;
+      if (next) this.voiceFor(`${this.heroName(next)}, ${where.charAt(0).toLowerCase()}${where.slice(1)}`);
+      else this.voiceFor(`The grand finale. ${where} Everyone, what's the final move?`);
     });
     this.setTimer(this.quick ? 3000 : RULING_MS, () => this.startRoll());
   }
@@ -2009,7 +2044,8 @@ export class GameHost {
    * failure, and callers never wait more than 5 s for it: the story falls back to text alone.
    */
   private voiceFor(text: string) {
-    const clean = text.replace(/\s+/g, " ").trim();
+    // "door door", "through through": a doubled word reads badly aloud.
+    const clean = text.replace(/\s+/g, " ").trim().replace(/\b(\w+)(\s+\1\b)+/gi, "$1");
     if (!clean || !FEATURES.voice) return Promise.resolve(null);
     const hit = this.voiceClips.get(clean);
     if (hit) return hit;
@@ -2064,7 +2100,9 @@ export class GameHost {
     const p = this.player(pitch.playerId)!;
     const v = pitch.verdict ?? this.verdictFallback(pitch);
     const statBonus = p.hero!.stats[v.stat] ?? 0;
-    const bonus = pitch.creditId ? 1 : 0;
+    // +1 for working in a friend's idea; in the finale, +1 per friend who backed the plan (max +2).
+    const backed = this.state.finale ? Math.min(2, Object.values(this.state.votes).filter((id) => id === pitch.id).length) : 0;
+    const bonus = (pitch.creditId ? 1 : 0) + backed;
     const total = die + statBonus + bonus;
     return {
       playerId: p.id,
@@ -2074,6 +2112,7 @@ export class GameHost {
       statBonus,
       tierMod: 0,
       bonus,
+      bonusWhy: backed ? "backed" : bonus ? "idea" : "",
       need: TIER_DC[v.tier],
       total,
       band: judge(die, total, v.tier),
@@ -2623,6 +2662,11 @@ export class GameHost {
     const solvedBy = solvedByLine(this.heroes().map((p) => ({ name: p.name, real: this.reals[p.id], hero: p.hero?.name })), won);
     if (solvedBy) this.note("reveal", "Solved by", `${solvedBy} (built from the join answers, in code)`);
     this.set({ phase: "reveal", solvedBy });
+    const rsr = this.seed?.the_real_story;
+    if (rsr) {
+      const said = this.seed?.author ? `This really happened to ${this.seed.author.name}. ${rsr.summary}` : `This really happened. ${rsr.headline}.`;
+      this.voiceBy(said, Date.now() + 2500).then((clip) => this.state.phase === "reveal" && this.play(clip));
+    }
     const text = `${this.seed?.the_real_story.headline ?? ""} ${this.seed?.the_real_story.summary ?? ""}`;
     if (this.quick) return this.reading(text, () => this.showStorybook(), QUICK.revealMs, QUICK.revealMs);
     this.reading(text, () => this.showStorybook(), 15000);

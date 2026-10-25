@@ -583,7 +583,14 @@
 @keyframes gp-line { 0% { opacity: 0; transform: translateY(12px); filter: blur(4px); } 100% { opacity: 1; transform: none; filter: none; } }
 .gp-line-old { opacity: 0.62; transition: opacity 0.8s ease; animation: none; }
 
-.gp-card { display: flex; flex-direction: column; gap: 1.4rem; padding: 2.2rem 2.6rem; width: min(70rem, 90vw); border-left: 6px solid var(--pc, var(--crimson)); }
+.gp-card { display: flex; flex-direction: column; gap: 1.4rem; padding: 2.2rem 2.6rem; width: min(70rem, 90vw); min-height: 24rem; justify-content: center; border-left: 6px solid var(--pc, var(--crimson)); }
+/* live typing */
+.gp-typing { display: inline-flex; align-items: center; gap: 0.7rem; font-family: var(--font-ui), monospace; font-size: 1.15rem; color: rgba(245, 241, 255, 0.85); padding: 0.45rem 0.9rem; border-radius: 999px; background: rgba(5, 3, 9, 0.6); animation: qt-rise 0.4s ease both; }
+.gp-dots { display: inline-flex; gap: 0.25rem; }
+.gp-dots i { width: 0.45rem; height: 0.45rem; border-radius: 50%; background: var(--signal); animation: gp-dot 1s ease-in-out infinite; }
+.gp-dots i:nth-child(2) { animation-delay: 0.15s; }
+.gp-dots i:nth-child(3) { animation-delay: 0.3s; }
+@keyframes gp-dot { 0%, 100% { opacity: 0.3; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-3px); } }
 
 /* ==================================================================
    Phone: one instruction + timer + the scene's art blurred behind it

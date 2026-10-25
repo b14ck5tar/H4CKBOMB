@@ -219,6 +219,7 @@ Input: the story (title, goal = where the whole story is heading), situation (wh
   - Say plainly whether the scene's goal is done. Every outcome is about the goal: no side stories, no non-sequiturs.
   - Make it logical: the result follows from what they tried, step by step, so a listener could retell it. If the plan uses the hero's power, show the power helping. Mention the hero's weakness only on a FAIL or CATASTROPHE, and only if this exact plan walks into it. Otherwise leave the power and weakness out. Never add a second action or a side detail that wasn't in the plan or the scene.
   - Use only people, places and things named in the scene or the plan.
+  - Things behave the way a kid expects: heat melts, cold freezes, heavy things fall, noise wakes things up. No nonsense pairings ("a skating rink on lava", "the warm door warms because he knows"). Every "because" must be a real reason.
   - If finale is false, the threat is never beaten for good here. Even a LEGENDARY wins only this scene's goal, and the threat slips away or something bigger shows up.
   - Mention a natural 1 or 20 only if natural is set. Never other numbers.
   - A natural 20 always works, even for a silly plan, in the funniest way that still makes sense. A natural 1 always flops, harmlessly.

@@ -53,6 +53,37 @@ function useElapsed(active = true, step = 40) {
   return t;
 }
 
+/** "The giant squash weighs… The giant squash weighs…": a snippet that repeats itself, said once. */
+function dedupeSentences(text: string) {
+  const seen = new Set<string>();
+  return (text ?? "")
+    .split(/(?<=[.!?])\s+/)
+    .filter((x) => {
+      const k = x.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim().slice(0, 60);
+      if (!k || seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    })
+    .join(" ");
+}
+
+/** "What's happening now", minus anything that only says what we don't know. Empty = the line is left out. */
+function knownNow(text?: string) {
+  return (text ?? "")
+    .split(/(?<=[.!?])\s+/)
+    .filter((x) => x.trim() && !/(does not|doesn't|do not|don't|did not) (say|mention|state|specify|report)|no (information|details)|not (known|clear|stated|reported)|unclear|unknown|the (text|article|source|story) (says|does)/i.test(x))
+    .join(" ")
+    .trim();
+}
+
+/** "2026-10-23T21:46:39Z" -> "Oct 23, 2026". Anything unparseable is shown as it came. */
+function niceDate(d?: string) {
+  if (!d) return "";
+  const t = Date.parse(d);
+  if (Number.isNaN(t)) return d;
+  return new Date(t).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+}
+
 function bandTone(b: RollResult["band"]): "gilt" | "forest" | "crimson" {
   return b === "LEGENDARY" ? "gilt" : isFailure(b) ? "crimson" : "forest";
 }
@@ -145,6 +176,7 @@ function RunClock({ host }: { host: Stage }) {
   const sec = Math.max(0, Math.floor(ms / 1000));
   return (
     <span className="font-ui tabular-nums text-lg text-parchment/50" title="Time since the tale started">
+      <span className="text-xs uppercase tracking-[0.2em] mr-1.5">played</span>
       {Math.floor(sec / 60)}:{String(sec % 60).padStart(2, "0")}
     </span>
   );
@@ -163,7 +195,12 @@ function QTopBar({ host, s, onNotes, notesOpen }: { host: Stage; s: GameState; o
       <span className="flex-1" />
       {s.narrated && s.cast && <span className="font-ui text-sm uppercase tracking-[0.2em] text-parchment/50">Narrated by {s.cast.name}</span>}
       {FEATURES.hopeDisplay && <Hope hope={s.hope} max={s.hopeMax} />}
-      {left > 0 && !reading && <span className="qt-secs tabular-nums">{Math.ceil(left / 1000)}</span>}
+      {left > 0 && !reading && (
+        <span className="flex items-baseline gap-1.5">
+          <span className="qt-secs tabular-nums">{Math.ceil(left / 1000)}</span>
+          <span className="font-ui text-xs uppercase tracking-[0.2em] text-parchment/50">sec left</span>
+        </span>
+      )}
       {host.deadlineAt > 0 && reading && !host.readOnly && (
         <button className="gp-tb" onClick={() => host.skip()} title="Spacebar works too">
           Skip ▸
@@ -465,35 +502,53 @@ function Turn({ host, s }: { host: Stage; s: GameState }) {
     sfx.whoosh();
   }, [s.turnIndex]);
   if (!owner) return null;
+  const typing = s.typing.map((pid) => s.players.find((p) => p.id === pid)).filter((p): p is Player => !!p);
   return (
-    <div className="qt-stage qt-center !gap-7">
-      <div className="flex items-center gap-6 qt-pop">
-        <div className="gp-owner" style={{ ["--pc" as string]: owner.color }}>
-          <Avatar host={host} p={owner} size={140} />
-        </div>
-        <div className="flex flex-col gap-1">
-          <h2 className="qt-question !text-[5rem]" style={{ color: owner.color }}>
+    <div className="qt-stage">
+      <div className="gp-lowerthird !max-w-[110rem] !gap-4">
+        <div className="flex items-center gap-5 qt-pop">
+          <div className="gp-owner" style={{ ["--pc" as string]: owner.color }}>
+            <Avatar host={host} p={owner} size={96} />
+          </div>
+          <h2 className="qt-question !text-[4rem]" style={{ color: owner.color }}>
             {shortName(owner.hero?.name)}&apos;s turn
           </h2>
         </div>
-      </div>
-      <p className="text-[1.7rem] leading-snug text-parchment/90 text-center max-w-[72rem] qt-rise">{s.situation}</p>
-      <div className="flex gap-4 justify-center flex-wrap max-w-[100rem] min-h-[7rem]">
-        {ideas.map(([pid, text]) => {
-          const pl = s.players.find((p) => p.id === pid);
-          if (!pl) return null;
-          return (
-            <div key={pid} className="qt-glass qt-plan qt-pop !py-3 max-w-[30rem]" style={{ ["--pc" as string]: pl.color }}>
-              <div className="flex items-center gap-2">
-                <Avatar host={host} p={pl} size={36} />
-                <span className="font-heading text-lg uppercase">{shortName(pl.hero?.name)} suggests</span>
+        <p className="qt-narration !text-[2rem] max-w-[80rem]">{s.situation}</p>
+        <div className="flex gap-4 flex-wrap items-stretch min-h-[5.5rem]">
+          {ideas.map(([pid, text]) => {
+            const pl = s.players.find((p) => p.id === pid);
+            if (!pl) return null;
+            return (
+              <div key={pid} className="qt-glass qt-plan qt-pop !py-3 max-w-[30rem]" style={{ ["--pc" as string]: pl.color }}>
+                <div className="flex items-center gap-2">
+                  <Avatar host={host} p={pl} size={32} />
+                  <span className="font-heading text-lg uppercase">{shortName(pl.hero?.name)} suggests</span>
+                </div>
+                <p className="text-[1.35rem] leading-snug">“{mask(text)}”</p>
               </div>
-              <p className="text-[1.4rem] leading-snug">“{mask(text)}”</p>
-            </div>
-          );
-        })}
+            );
+          })}
+          <TypingLine s={s} players={typing} />
+        </div>
       </div>
     </div>
+  );
+}
+
+/** "Marvin is typing…": live, so a suggestion phase is never just a clock. */
+function TypingLine({ s, players }: { s: GameState; players: Player[] }) {
+  if (!players.length) return null;
+  const names = players.map((p) => shortName(p.hero?.name)).join(", ");
+  return (
+    <p className="gp-typing self-center" key={players.map((p) => p.id).join(",")}>
+      <span className="gp-dots" aria-hidden>
+        <i />
+        <i />
+        <i />
+      </span>
+      {names} {players.length > 1 ? "are" : "is"} typing{s.phase === "pitch" ? " a final move" : ""}…
+    </p>
   );
 }
 
@@ -513,6 +568,7 @@ function Planning({ host, s }: { host: Stage; s: GameState }) {
         <p className="text-[1.7rem] leading-snug text-parchment/85">{s.situation}</p>
       </div>
       <CrewRow host={host} s={s} done={(p) => s.pitches.some((x) => x.playerId === p.id)} label={heroes.length > 1 ? "plans in" : undefined} />
+      <TypingLine s={s} players={s.typing.filter((pid) => !s.pitches.some((x) => x.playerId === pid)).map((pid) => s.players.find((p) => p.id === pid)).filter((p): p is Player => !!p)} />
     </div>
   );
 }
@@ -536,7 +592,7 @@ function Vote({ host, s }: { host: Stage; s: GameState }) {
                 <span className="font-heading text-2xl uppercase flex-1">{pl.hero?.name}</span>
                 {!ok && <span className="font-ui text-sm uppercase tracking-widest text-parchment/70">hung back</span>}
               </div>
-              <p className="text-[1.7rem] leading-snug">{p.auto ? "…" : `“${planText(p)}”`}</p>
+              <p className="text-[1.7rem] leading-snug">{p.auto ? "…" : p.verdict?.interpretation && !p.verdict.fallback ? p.verdict.interpretation : `“${planText(p)}”`}</p>
             </div>
           );
         })}
@@ -586,7 +642,7 @@ function Ruling({ host, s }: { host: Stage; s: GameState }) {
         <div className="min-h-[7.5rem] flex items-center gap-6">
           {v ? (
             <>
-              <Stamp text={stampText(v.tier)} size="lg" rotate={-4} tone={tierTone(v.tier)} />
+              <Stamp text={stampText(v.tier)} size="xl" rotate={-4} tone={tierTone(v.tier)} />
               <span className="flex-1" />
               {need ? <NeedBadge need={need} mods={modsOf(s.rolls[0])} /> : null}
             </>
@@ -619,7 +675,7 @@ function RollMath({ s, r }: { s: GameState; r: RollResult }) {
   return (
     <p className="font-ui text-3xl tabular-nums text-parchment gp-line">
       {r.kept} <span className="text-parchment/70">{fmt(r.statBonus)} {v ? STAT_LABEL[v.stat] : ""}</span>
-      {r.bonus ? <span className="text-parchment/70"> +{r.bonus} idea</span> : null} = <b className="text-5xl text-[var(--gilt-bright)]">{r.total}</b>
+      {r.bonus ? <span className="text-parchment/70"> +{r.bonus} {r.bonusWhy === "backed" ? "backed" : "idea"}</span> : null} = <b className="text-5xl text-[var(--gilt-bright)]">{r.total}</b>
       {v && <span className="text-parchment/60 text-2xl"> · {v.tier === "miracle" ? "needed a 20" : `needed ${TIER_DC[v.tier]}+`}</span>}
     </p>
   );
@@ -656,7 +712,7 @@ function Roll({ host, s }: { host: Stage; s: GameState }) {
         <Avatar host={host} p={pl} size={56} />
         <span className="font-heading text-3xl uppercase">{pl.hero?.name}</span>
       </div>
-      <div className="min-h-[9rem] flex flex-col items-center gap-3">
+      <div className="min-h-[9rem] flex flex-col items-center gap-3 relative z-[70]">
         {settled ? (
           <>
             <RollMath s={s} r={r} />
@@ -838,16 +894,16 @@ function RevealCard({ host, s }: { host: Stage; s: GameState }) {
           </h2>
           <div className="flex items-center gap-4 mt-1">
             <p className="qt-paper-meta flex-1">
-              {rs.source} · {rs.date}
+              {rs.source} · {niceDate(rs.date)}
               <span className="block mt-1">Scan to read the real article</span>
             </p>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             {qr ? <img src={qr} alt="QR code to the real article" className="w-24 h-24 shrink-0" /> : <div className="w-24 h-24 shrink-0" />}
           </div>
-          <p className="text-[1.2rem] leading-snug mt-3 line-clamp-3">{rs.summary}</p>
-          {rs.now ? (
+          <p className="text-[1.2rem] leading-snug mt-3 line-clamp-3">{dedupeSentences(rs.summary)}</p>
+          {knownNow(rs.now) ? (
             <p className="text-[1.05rem] leading-snug mt-3 line-clamp-3">
-              <b>What&apos;s happening now:</b> {rs.now}
+              <b>What&apos;s happening now:</b> {knownNow(rs.now)}
             </p>
           ) : (
             <p className="text-[1rem] leading-snug mt-2 text-[#444] line-clamp-2">
@@ -965,7 +1021,8 @@ function moodFor(s: GameState, title: boolean): Mood {
   if (s.phase === "quest") return "push";
   if (s.phase === "narrating" && title) return "title";
   if (s.phase === "final_roll" || s.phase === "final_result") return "final";
-  if (["turn", "pitch", "vote", "ruling", "roll"].includes(s.phase)) return "action";
+  if (["vote", "ruling"].includes(s.phase)) return "action";
+  if (["turn", "pitch", "roll"].includes(s.phase)) return "scene"; // keep the art bright while people type and roll
   if (["epilogue", "reveal", "storybook", "story_vote", "story_write"].includes(s.phase)) return "end";
   return "scene";
 }

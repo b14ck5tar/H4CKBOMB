@@ -57,7 +57,8 @@ const poss = (name: string) => `${name}'s`;
 export function solvedByLine(players: (Pick<Player, "name" | "real"> & { hero?: string })[], won = true) {
   const parts = players
     .map((p) => {
-      const s = skillPhrase(p.real?.skill ?? "");
+      // Short, clean knacks only (4 words max); an answer that isn't a usable skill is skipped.
+      const s = skillPhrase(p.real?.skill ?? "", 4);
       // The real player's name and knack, then their hero, so the room can connect the two.
       return s ? `${poss(p.name)} ${s}${p.hero ? ` (${p.hero})` : ""}` : "";
     })

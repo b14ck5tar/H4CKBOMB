@@ -391,10 +391,24 @@ function BackPlan({ state, me, send, deadlineAt }: { state: GameState; me: Playe
 }
 
 /** One action, ~140 characters: the DM takes the first concrete action literally. */
-function PlanBox({ text, setText, placeholder }: { text: string; setText: (t: string) => void; placeholder: string }) {
+function PlanBox({ text, setText, placeholder, send }: { text: string; setText: (t: string) => void; placeholder: string; send?: Send }) {
+  const last = useRef(0);
   return (
     <label className="flex flex-col gap-1">
-      <textarea className="input min-h-28 text-lg" value={text} onChange={(e) => setText(e.target.value.slice(0, PLAN_MAX))} maxLength={PLAN_MAX} placeholder={placeholder} />
+      <textarea
+        className="input min-h-28 text-lg"
+        value={text}
+        onChange={(e) => {
+          setText(e.target.value.slice(0, PLAN_MAX));
+          // The TV shows "… is typing" (at most every 1.5 s).
+          if (send && Date.now() - last.current > 1500) {
+            last.current = Date.now();
+            send("typing");
+          }
+        }}
+        maxLength={PLAN_MAX}
+        placeholder={placeholder}
+      />
       <span className="flex justify-between font-ui text-xs text-parchment/70">
         <span>One action. The DM takes it literally.</span>
         <span className="tabular-nums">
@@ -430,6 +444,7 @@ function OwnerTurn({ state, send, deadlineAt }: { state: GameState; send: Send; 
           if (!t.trim()) setCredit("");
         }}
         placeholder={`e.g. ${ex}`}
+        send={send}
       />
       {ideas.length > 0 && (
         <div className="flex flex-col gap-2">
@@ -502,7 +517,7 @@ function IdeaForm({ state, me, send, deadlineAt }: { state: GameState; me: Playe
     >
       <Timer deadlineAt={deadlineAt} total={state.mode === "quick" ? QUICK_TURN_MS : TURN_MS} />
       <Say text={`Suggest a move for ${first}`} goal={state.goal} />
-      <PlanBox text={text} setText={setText} placeholder={`What should ${first} do?`} />
+      <PlanBox text={text} setText={setText} placeholder={`What should ${first} do?`} send={send} />
       <button className="btn btn-crimson text-xl" type="submit" disabled={!text.trim()}>
         Send my idea
       </button>
@@ -525,7 +540,7 @@ function PitchForm({ state, send, deadlineAt }: { state: GameState; send: Send; 
     >
       <Timer deadlineAt={deadlineAt} total={state.mode === "quick" ? QUICK_TURN_MS : TURN_MS} />
       <Say text={state.finale ? "What's the final move?" : "What does your hero do?"} goal={state.goal} />
-      <PlanBox text={text} setText={setText} placeholder={`e.g. ${ex}`} />
+      <PlanBox text={text} setText={setText} placeholder={`e.g. ${ex}`} send={send} />
       <MicButton onTranscript={(t) => setText(t)} />
       <button className="btn btn-crimson text-xl" type="submit" disabled={!text.trim()}>
         Send my plan

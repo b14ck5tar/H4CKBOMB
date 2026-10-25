@@ -86,6 +86,7 @@ export interface RollResult {
   noRoll: boolean; // "That works": a clever plan, no dice needed
   boosted: boolean;
   bonus?: number; // +1 for working in a friend's suggestion
+  bonusWhy?: string; // what the bonus was for ("idea", "backed")
   need?: number; // the TOTAL the roll needs ("Needs 13+"); 21 = only a natural 20 (a miracle)
 }
 
@@ -337,6 +338,7 @@ export interface GameState {
   /** The line being read aloud right now (TV only plays it; phones ignore it). ms = its length at play speed. */
   voice: { id: number; ms: number; delay: number; rate: number } | null;
   narrated: boolean; // a narrator clip has actually played this story (only then does the TV credit the narrator)
+  typing: string[]; // who is typing a plan or an idea right now (the TV shows "Marvin is typing…")
   paused: boolean; // every phone went quiet (Wi-Fi drop): timers are frozen until one is back
   artKey: number; // the latest painting of what the heroes just did (a key into the TV's sceneImages), -1 = the plate
   boosts: Record<string, string>; // booster id -> pitch id
