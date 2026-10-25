@@ -91,3 +91,8 @@ Full history and train of thought: `design/00-where-we-are.md`.
 - ✅ Narrator cast: 4-5 voices (at least one male and one female); the AI casts one voice and tone per story mood (creepy → ghost-story telling). "Not super in depth, but very important."
 - ✅ Art style per story: option a. The AI picks one style per game from a tested set of 5-6.
 - ✅ No forced "reason" lines. The outcome narration is the explanation (cause → effect in-story). The deeper "How the AI decided" is an optional view at the end.
+- ✅ Narrator cast (OpenAI gpt-4o-mini-tts, speed 1.2, mysterious/alluring, never cheerful): Vesper (sage), Wren (ballad), Juniper (coral), Hollis (ash). Gemini TTS is the backup.
+- ✅ Live link: groupproject-game.vercel.app (old once-upon-a-roll link still works).
+- ✅ Logo/thumbnail: the CD's neon paint logo, with the J fixed (devpost-media/logo-v4-J-*.jpg).
+- ✅ Music + SFX: option a, original music generated in code (Web Audio): lobby loop + 5 story moods (AI-picked), ducks under the narrator; SFX on every press; always something playing on the TV.
+- ✅ Quick Tale turn timer stays 30 s (advances early when everyone's done); about 4 min with 3 real players.

@@ -4,7 +4,7 @@ You built the vision, and the vision is what makes this work. These answers are 
 
 ## 1. How it works in 30 seconds
 
-1. Open `once-upon-a-roll.vercel.app/tv` on a laptop (URL unchanged for now). That is the table. It shows a QR code.
+1. Open `groupproject-game.vercel.app/tv` on a laptop (URL unchanged for now). That is the table. It shows a QR code.
 2. Phones scan the QR and become controllers. Each phone gets a private secret clue, so the group has to talk to solve the case. Players type or hold-to-talk their plans.
 3. The laptop runs the game: rounds, timers, dice, Ready buttons. Phones only send "here's my plan," "boost," "catch," or "ready."
 4. Every plan goes to Meta's Muse. It rules on each one (Clever, Solid, Risky, Absurd or Miracle). Players can use **Convince the DM**: one argument, by voice or text, that can upgrade a plan.

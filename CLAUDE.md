@@ -46,6 +46,15 @@ Read `SPEC.md` first (the source of truth), then `design/` for the details behin
 - Heavy/real-world news is a pitched future mode with guardrails, not tonight's build. Tonight: eerie, harmless news.
 - Judging demo is ~4 minutes, and judges should feel free to leave and want to come back.
 
+## Meta alignment check (required for every feature, fix and demo decision)
+Winning Meta's track is the #1 goal. Before calling anything done, check it against Meta's brief and judges:
+- **Human connection (30%)**: does it make people turn to each other, visibly, within a 2-minute demo?
+- **AI essential + well integrated (25%)**: is Muse doing real work in the core loop (not decoration)? Is it "a magical experience"?
+- **Originality (20%)** and **working demo (20%)**: does the flow "just work really well"? Fewer features, executed well.
+- Prefer Meta models where they fit (Muse Spark, Muse Image, Muse Voice Transcribe, the Muse connector); non-Meta only where Meta has no model or a test showed a clear win, and say why.
+- Submission: a 2-3 min video (~30 s problem/connection, ~90 s demo, ~30 s AI role, ~30 s tools/harnesses and how they helped the build).
+Scorecard and gaps: `design/25-meta-alignment.md`.
+
 ## How we work
 - Commit after every working step and push to `origin main` (b14ck5tar/H4CKBOMB). End messages with the
   Co-Authored-By line.

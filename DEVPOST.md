@@ -13,12 +13,12 @@ People rarely stay quiet at a party because they dislike each other. They're jus
 A laptop or TV is the table. Phones scan a QR code and become controllers. No accounts, no prep.
 
 1. **Make a hero.** Describe them in one line and answer "What are you weirdly good at?" Muse paints a cartoon hero.
-2. **Pick a story.** *Odd news:* three strange, harmless headlines from around the world this week, and the table votes. *Our stories (in progress):* each player privately writes a small real story, including how it really ended, and the table picks one.
+2. **Pick a story.** *Odd news:* three strange, harmless headlines from around the world this week, and the table votes. *Our stories:* each player privately writes a small real story, including how it really ended, and the table picks one.
 3. **Take turns.** On your turn, everyone else suggests an action from their phone. You choose your own plan or a friend's. Working in a friend's idea gives +1 and puts their name on screen ("+ Sam's idea").
 4. **Roll.** Muse judges the one action at face value, and the TV shows "Needs 12+" before you roll a d20. Code rolls the dice; the AI never picks numbers.
-5. **The story branches.** Fixed start, fixed goal, open middle. After each roll Muse writes what happened in short, plain sentences. *In progress:* a new scene painted with your group's heroes in it for every decision, a narrator voice the AI casts to fit the story, and an art style picked per story.
+5. **The story branches.** Fixed start, fixed goal, open middle. After each roll Muse writes what happened in short, plain sentences, and paints a new scene with your group's heroes in it for every decision. A narrator voice, cast by the AI to fit the story, reads it aloud, and the AI picks one art style per story.
 6. **Grand finale.** Everyone proposes a last plan, everyone votes (not for their own), and the whole table shakes their phones together to roll one shared die.
-7. **The real ending.** The TV shows what really happened: the article, or the author's real ending. *In progress:* "what's happening now" in the real world, and a keepsake QR to take the story home.
+7. **The real ending.** The TV shows what really happened: the article plus what's happening now in the real world, or the author's real ending. A keepsake QR lets everyone take the story home.
 
 ## How we built it
 
@@ -26,7 +26,7 @@ A laptop or TV is the table. Phones scan a QR code and become controllers. No ac
 - **muse-spark-1.3** judges plans live (about 1.7 s per plan) and writes each outcome.
 - **muse-image-1.0 edits** paint the heroes into each scene, using a hero lineup sheet and the previous scene as references so the characters stay consistent.
 - **muse-voice-transcribe-1.0** handles optional voice input. Typing is the default, so the room talks to each other instead of at a machine.
-- **Gemini TTS** narrates (in progress), because Meta has no text-to-speech model.
+- **OpenAI gpt-4o-mini-tts** narrates (Gemini TTS as backup), because Meta has no text-to-speech model. The AI casts one of five voices and a reading style per story.
 - **SerpApi Google News** supplies live odd news, filtered by a keyword block list and a Muse classifier, then cached so a game never waits on a search.
 - **Next.js on Vercel and Supabase Realtime.** The TV runs the game and phones send inputs. Every AI call has a fallback, so a slow response never freezes the table.
 
@@ -78,7 +78,7 @@ A laptop or TV is the table. Phones scan a QR code and become controllers. No ac
 
 ## Try it
 
-- Table (open on a laptop or TV): https://once-upon-a-roll.vercel.app/tv
-- Phones: https://once-upon-a-roll.vercel.app/play
+- Table (open on a laptop or TV): https://groupproject-game.vercel.app/tv
+- Phones: https://groupproject-game.vercel.app/play
 
 *Status: submitted Saturday night. The parts marked "in progress" are being finished for the final version, due Sunday 11:30 AM.*
