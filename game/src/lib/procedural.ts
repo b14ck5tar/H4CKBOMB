@@ -378,7 +378,7 @@ export function checkTurn(p: TurnProposal, ctx: { state: StoryState; hero: strin
   if (ctx.hook_due && ctx.state.hook && !usesPlan(`${o} ${p.scene}`, ctx.state.hook)) out.push("keep the opener's hook in play (state.hook) in this act");
   // A forward grade must change something: "plan happens, but the old obstacle still holds" stalls the story.
   const second = sentences(o)[1] ?? "";
-  if (!["SETBACK", "DISASTER"].includes(ctx.grade) && /\b(still|tighter|closer|anyway)\b/i.test(second)) out.push("the plan must change something for good: sentence 2 is one NEW snag the plan caused, never the old obstacle still holding on");
+  if (!["SETBACK", "DISASTER"].includes(ctx.grade) && /\b(?<!(hold|holds|held|stand|stands|stay|stays|sit|sits|keep|keeps|lie|lies|lay|lays) )(still|tighter|closer|anyway)\b/i.test(second)) out.push("the plan must change something for good: sentence 2 is one NEW snag the plan caused, never the old obstacle still holding on");
   const retold = repeatsMoment(o, [...ctx.state.last_moments, ...ctx.state.facts.filter((f) => !f.startsWith("Done:")), ...ctx.state.memorable], ctx.plan);
   const undone = undoesDone(o, ctx.state);
   if (undone) out.push(`undoes an earlier win ("${undone}"): nothing achieved is ever undone, so the snag must be something new`);
