@@ -339,7 +339,7 @@ function wrapPlayerText(task: string, input: Any) {
       moments: ((input.moments as Any[]) ?? []).slice(0, 4).map((m, i) => ({ pitch: wrap(`m${i}`, m?.pitch, 200), what_happened: String(m?.what_happened ?? "").slice(0, 240) })),
     };
   }
-  if (task === "turn") input.plan_raw = String(input.plan ?? "").slice(0, 200);
+  if (task === "turn" || task === "story_end") input.plan_raw = String(input.plan ?? "").slice(0, 200);
   if (task === "verdict" || task === "outcome" || task === "outcome_branches" || task === "tailor" || task === "turn" || task === "story_end") input.plan = wrap("plan", input.plan, 200);
   // The real event behind the story (opener.real_setting, spoiler-free): only its known fields, clipped.
   if (["verdict", "outcome", "outcome_branches", "epilogue", "tailor", "story_bible"].includes(task)) input.real_event = realEvent(input.real_event ?? input.story_so_far?.real_event);

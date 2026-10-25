@@ -857,8 +857,8 @@ function SkinHud({ s }: { s: GameState }) {
   if (!s.goal) return null;
   return (
     <HudStrip
-      // 3 acts plus the finale crown, driven by progress (0-100): no fixed beats (design/35).
-      ladder={{ steps: 4, at: s.finale || (s.progress ?? 0) >= 100 ? 3 : (s.progress ?? 0) >= 67 ? 2 : (s.progress ?? 0) >= 34 ? 1 : 0, now: s.nowGoal || s.goal, goal: s.goal }}
+      // 3 acts plus the finale crown, driven by progress (0-100) and the act clock: no fixed beats (design/35).
+      ladder={{ steps: 4, at: s.finale || (s.progress ?? 0) >= 100 ? 3 : Math.max((s.progress ?? 0) >= 67 ? 2 : (s.progress ?? 0) >= 34 ? 1 : 0, (s.act ?? 1) - 1), now: s.nowGoal || s.goal, goal: s.goal }}
     />
   );
 }

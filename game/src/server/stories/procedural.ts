@@ -4,12 +4,14 @@ import { museJSON, MODELS, type Effort } from "@/server/muse";
 import { DM_CORE, withRating } from "@/server/prompts";
 import { badExamplesPrompt, callbackExamplesPrompt, outcomeExamplesPrompt } from "@/server/story-examples";
 import {
+  actClock,
   applyTurn,
   progressRange,
   checkTurn,
   clampOutcome,
   fallbackProposal,
   fixPronouns,
+  plainProblems,
   sentences,
   usesPlan,
   type Grade,
@@ -58,6 +60,15 @@ POWERS HELP, NEVER WIN: a hero's power makes their plan a little easier when it 
 5. PLAYERS CAN DO ANYTHING: whatever a player brings in (a kazoo, a chess set, a cousin) is real now. Only what YOU invent is limited: at most one new thing of your own per turn (new_fact OR new_character, the cast holds 3), and props of your own matter only if a player uses them.
 6. CONTINUITY: never contradict facts, where, or pronouns. Use each hero's pronouns exactly; a they/them hero is always "they". If unsure, stay with what is known.
 PLAIN WORDS (hard rule): everyday words only. Call every person, animal and thing by its plain everyday name ("the crab", never "the current crab"; "the ice hand", never "the cone juggling ice hand"), even if the input uses an odd name. No stacked modifiers, no odd word pairs ("calf soft", "drops soft"), no similes ("like popcorn"), no sounds or feelings for things ("the wire hums its snore"). One idea per sentence. Every it, he, she or they points to ONE clear person or thing; if two could match, use the name ("Bev calls the dog by her name", not "calls the name").
+READ-ALOUD TEST (hard rule): the narrator reads your lines ONCE to a noisy room. Every line must make sense the first time, with no second read. Say it the way a kid tells a friend what happened: who did what, then what happened because of it. Never count or measure things, never name a thing by a part or a material, never pair words that fight each other, never describe a look or a feeling in an odd way. Reuse the story's own odd terms only in their plain form ("the old tapes", not "the tape rail").
+  Bad: "Juno blinks wide and holds it." Good: "Juno stares at the turtle without blinking."
+  Bad: "The blink fits zero past cases in the tapes." Good: "Nobody on the old tapes ever saw the turtle blink."
+  Bad: "The crab shows empty pockets full of sand." Good: "The crab turns out its pockets. Only sand falls out."
+  Bad: "Gus slides it down the tape rail." Good: "Gus slides it down the railing."
+  Bad: "Juno hears a slow wet blink." Good: "Juno hears a slow beep in the wire." (you hear sounds and see lights: only say what someone could really see, hear or do)
+  Bad: "The turtle pauses mid doze and lifts one lid." Good: "The sleepy turtle opens one eye."
+  If the story calls something by an odd name (a radio signal called "the blink"), say what it really is: "the signal", "the light".
+  Bad right_now: "Calm the cone juggling ice hand". Good: "Calm down the ice hand".
 7. CLARITY: outcome is 2 sentences at most, 30 words at most, plain and simple, that an 8-year-old follows the first time: concrete nouns, cause then effect. Even when the player did something odd, say it in plain words. No made-up terms, no oddly phrased lines, no kennings ("pale fliers" is banned: say "owls"). No game words (roll, dice, needs, natural, points, luck).
 8. VOICE: dry, witty, unexpected but it makes sense. The humor comes from the situation and the plan, never random props.
 9. RIGHT NOW: the next obstacle in plain words a kid gets on first read (a verb, then one plain thing: "Tuck the ice hand into the snow", never "Calm the cone juggling ice hand"), one concrete step, 8 words max, verb first, that follows from what just happened and leads toward finish_line. Never a repeat of right_now or anything already done, never "again". If finale_next is true, it is the final push toward finish_line.
@@ -136,7 +147,7 @@ export async function runTurn(i: TurnInput, rating: Rating): Promise<TurnResult>
   const ctx = { state, hero, idea_from: clip(i.idea_from, 40), grade, next_player: nextPlayer, plan: planRaw, hook_due: state.act >= 2 || finaleNext };
   // Will the act clock move after this turn? (applyTurn also moves it when a success solves the step.)
   const t1 = state.turn + 1;
-  const clockNext = t1 >= Math.ceil((state.turns_total * 2) / 3) ? 3 : t1 >= Math.ceil(state.turns_total / 3) ? 2 : 1;
+  const clockNext = actClock(t1, state.turns_total);
   const user = {
     state: { ...state, credits: undefined, goals_done: state.goals_done.slice(-6) },
     hero: { name: hero, power: clip(i.hero?.power, 140), pronouns: clip(i.hero?.pronouns || state.pronouns[hero], 20) },
@@ -160,13 +171,17 @@ export async function runTurn(i: TurnInput, rating: Rating): Promise<TurnResult>
   let probs: string[] = [];
   let fallback = false;
   try {
-    p = await call();
-    probs = checkTurn(p, ctx);
+    // Two drafts at once (generate ahead, CD): the first one that passes every check wins right away; if the first
+    // back has problems, the other gets a short grace. Cheaper on the clock than a sequential retry (that was the
+    // whole p90 tail), and the better of two drafts is more often followable on first hearing.
+    const best = await draftRace(call, (x) => checkTurn(x, ctx), TURN_PARALLEL);
+    if (!best) throw new Error("no draft came back");
+    [p, probs] = [best.p, best.probs];
     const left = TURN_TOTAL_MS - (Date.now() - t0);
-    // Retries made the latency tail (p90 14 s server side). A hard problem (the plan, the hero, a friend, game words)
-    // is worth a retry if 7 s are left; a soft one (a wordy Right now, a long scene) only if the first answer was fast.
-    const hardNow = probs.some((x) => /must name the acting hero|game words|never name|outcome is empty|the plan is the cause|banned filler/.test(x));
-    if (probs.length && left > (hardNow ? 7_000 : 10_000)) {
+    // A hard problem (the plan, the hero, a friend, game words) is worth one retry if 6 s are left; soft ones are
+    // fixed in code or let go (the better draft already won).
+    const hardNow = probs.some((x) => HARD.test(x));
+    if (hardNow && left > 6_000) {
       try {
         const again = await call(`\n\nYour last answer had problems. Fix ALL of them and keep what worked.\nLAST ANSWER: ${JSON.stringify(p)}\nPROBLEMS:\n${probs.map((x) => `- ${x}`).join("\n")}`, left);
         const p2 = checkTurn(again, ctx);
@@ -184,7 +199,7 @@ export async function runTurn(i: TurnInput, rating: Rating): Promise<TurnResult>
     p.outcome = fixPronouns(p.outcome, state.pronouns);
     p.scene = fixPronouns(p.scene, state.pronouns);
   }
-  const hard = probs.filter((x) => /must name the acting hero|game words|never name|outcome is empty|the plan is the cause|banned filler/.test(x));
+  const hard = probs.filter((x) => HARD.test(x));
   if (!p || hard.length) {
     if (p) console.warn(`[turn] using fallback: ${hard.join(" | ")}`);
     p = fallbackProposal(state, { hero, attempt: i.attempt, idea_from: idea, grade, next_player: nextPlayer });
@@ -197,6 +212,38 @@ export async function runTurn(i: TurnInput, rating: Rating): Promise<TurnResult>
   const applied = applyTurn(state, p, { hero, attempt: i.attempt, grade, depth: i.depth });
   console.log(`[turn] ${grade} ${hero} ${Date.now() - t0}ms progress ${state.progress}->${applied.state.progress}${fallback ? " FALLBACK" : ""}${probs.length ? ` problems: ${probs.join(" | ")}` : ""}`);
   return { outcome: p.outcome, scene: p.scene, right_now: applied.state.right_now, progress: applied.state.progress, progress_delta: applied.delta, progress_why: String(p.progress_why ?? "").slice(0, 140), finale: applied.finale, act: applied.state.act, act_changed: applied.act_changed, state: applied.state, problems: probs, fallback };
+}
+
+const HARD = /must name the acting hero|game words|never name|outcome is empty|the plan is the cause|banned filler/;
+const TURN_PARALLEL = Math.max(1, Math.min(3, Number(process.env.TURN_PARALLEL) || 2));
+const GRACE_MS = 2_500;
+const score = (probs: string[]) => probs.filter((x) => HARD.test(x)).length * 10 + probs.length;
+
+/**
+ * Run `n` drafts in parallel. Resolves with the first draft that has no problems; otherwise, once a draft with only
+ * soft problems is in, waits GRACE_MS for a cleaner one; a draft with hard problems waits for the rest. Null if all fail.
+ */
+function draftRace(call: () => Promise<TurnProposal>, check: (p: TurnProposal) => string[], n: number): Promise<{ p: TurnProposal; probs: string[] } | null> {
+  return new Promise((resolve) => {
+    let best: { p: TurnProposal; probs: string[] } | null = null;
+    let done = 0;
+    let settled = false;
+    const finish = () => {
+      if (settled) return;
+      settled = true;
+      resolve(best);
+    };
+    for (let k = 0; k < n; k++)
+      call()
+        .then((p) => {
+          const probs = check(p);
+          if (!best || score(probs) < score(best.probs)) best = { p, probs };
+          if (!probs.length) return finish();
+          if (!probs.some((x) => HARD.test(x))) setTimeout(finish, GRACE_MS);
+        })
+        .catch((e) => console.warn(`[turn] draft failed: ${(e as Error).message}`))
+        .finally(() => ++done === n && finish());
+  });
 }
 
 function WONISH(g: Grade) {
@@ -229,7 +276,7 @@ export async function runEnding(input: Any, rating: Rating) {
   const s: StoryState = input.state;
   const user = {
     state: { where: s?.where, problem: s?.problem, finish_line: s?.finish_line, progress: s?.progress, cast: s?.cast, facts: s?.facts, memorable: s?.memorable, credits: s?.credits, pronouns: s?.pronouns, real_event: s?.real_event },
-    winner: { name: clip(input.winner?.name ?? input.winner, 40), pronouns: clip(input.winner?.pronouns, 20) },
+    winner: { name: clip(input.winner?.name ?? input.winner_hero?.name ?? input.winner, 40), pronouns: clip(input.winner?.pronouns ?? input.winner_hero?.pronouns, 20) },
     attempt: clip(input.attempt, 160),
     plan: input.plan,
     grade: gradeOf(input.grade),
@@ -244,6 +291,7 @@ export async function runEnding(input: Any, rating: Rating) {
     const out: string[] = [];
     if (!usesPlan(e, planRaw)) out.push("the ending must use the final plan's own key word");
     if (sentences(e).length > 2 || e.split(/\s+/).length > 32) out.push("exactly 2 short sentences, 30 words max");
+    out.push(...plainProblems(e, `${planRaw} ${user.winner.name}`));
     return out;
   };
   const t0 = Date.now();

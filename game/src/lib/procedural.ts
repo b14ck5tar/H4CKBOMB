@@ -263,6 +263,65 @@ export function longestStack(s: string, skipFirst = false) {
   return best;
 }
 
+// ---------------------------------------------------------------- followable on first hearing (CD: simple beats clever)
+
+const DETERMINERS = new Set("the a an his her their its my your our this that every".split(" "));
+// Size, color and feeling words a kid uses every day never count as "odd describers".
+const PLAIN_ADJ = new Set(
+  "big little small tiny huge giant old new red blue green yellow black white pink orange purple gold silver brown gray grey long short tall wet dry hot cold warm soft hard loud quiet lost sleepy angry happy sad scared baby mom dad good bad last first next whole same other only real empty full".split(" "),
+);
+const TAIL = new Set("away back home out off down up over around now here there too fast slowly".split(" "));
+
+/**
+ * The most odd describing words piled onto one thing after "the/a/his…": "the cone juggling ice hand" = 3 (cone,
+ * juggling, ice before "hand"). Plain size/color/feeling words don't count, and a verb ("the sky turtle snores")
+ * ends the phrase.
+ */
+export function modifierPile(s: string) {
+  const w = s.replace(/[^A-Za-z' -]/g, " ").split(/[\s-]+/).filter(Boolean);
+  let best = 0;
+  for (let i = 0; i < w.length; i++) {
+    if (!DETERMINERS.has(w[i].toLowerCase())) continue;
+    const run: string[] = [];
+    for (let j = i + 1; j < w.length; j++) {
+      const x = w[j].toLowerCase();
+      if (FUNCTION_WORDS.has(x) || DETERMINERS.has(x) || TAIL.has(x) || /^[A-Z]/.test(w[j])) break;
+      if (run.length >= 1 && /([^s]s|ed)$/.test(x)) break; // "turtle snores", "dog trotted": the verb ends the phrase
+      run.push(x);
+    }
+    best = Math.max(best, run.slice(0, -1).filter((x) => !PLAIN_ADJ.has(x)).length);
+  }
+  return best;
+}
+
+const syl = (word: string) => {
+  let w = word.toLowerCase().replace(/[^a-z]/g, "");
+  if (w.length <= 3) return w ? 1 : 0;
+  w = w.replace(/(?:[^laeiouy]es|[^laeiouy]ed|[^laeiouy]e)$/, (m) => m[0]).replace(/^y/, "");
+  return Math.max(1, (w.match(/[aeiouy]+/g) ?? []).length);
+};
+
+/**
+ * What code can catch about a line that needs a second read (the misses: "the cone juggling ice hand", "blinks wide
+ * and holds it", "the blink fits zero past cases in the tapes"). `known` = words the table already knows (the plan,
+ * names), which never count as hard words.
+ */
+export function plainProblems(text: string, known = ""): string[] {
+  const out: string[] = [];
+  const t = String(text ?? "");
+  if (!t.trim()) return out;
+  if (modifierPile(t) >= 3) out.push("too many describing words on one thing: call it by its plain name (\"the ice hand\", not \"the cone juggling ice hand\")");
+  const long = sentences(t).find((s) => words(s) > 18);
+  if (long) out.push(`a sentence is ${words(long)} words: 18 max, one idea each`);
+  if (/\b(as if|as though)\b/i.test(t) || /(?<!\b(look|looks|looked|looking|feel|feels|felt|sound|sounds|smell|smells|just|would|not|nothing|anything|something))\s+like (a|an|the|some)\b/i.test(t)) out.push("no similes (\"like popcorn\"): say what happens");
+  if (/\b(zero|percent|cases|data|statistics|records show|in theory|technically|officially|literally)\b/i.test(t)) out.push("no counting, measuring or official talk (\"fits zero past cases\"): say what someone sees or does");
+  if (/hear(s|d)?[^.]{0,24}(blink|glow|light|color|colour|flash)|see(s)?[^.]{0,24}(hum|sound|noise|song|beep)|mid [a-z]+/i.test(t)) out.push("say only what someone could really see, hear or do (you hear a sound, you see a light), in plain words");
+  const knownSet = new Set(String(known).toLowerCase().split(/[^a-z]+/).filter(Boolean));
+  const hard = t.split(/[^A-Za-z']+/).filter((w) => w && !/^[A-Z]/.test(w) && syl(w) >= 4 && !knownSet.has(w.toLowerCase()));
+  if (hard.length >= 2) out.push(`hard words (${hard.slice(0, 3).join(", ")}): use short everyday words`);
+  return out;
+}
+
 /** Everything code can check about a proposal. Each string is a problem the retry is told to fix. */
 export function checkTurn(p: TurnProposal, ctx: { state: StoryState; hero: string; idea_from?: string; grade: Grade; next_player?: string; plan?: string; hook_due?: boolean }): string[] {
   const out: string[] = [];
@@ -279,11 +338,14 @@ export function checkTurn(p: TurnProposal, ctx: { state: StoryState; hero: strin
   const g = `${o} ${p.scene}`.match(GAME_WORDS);
   if (g) out.push(`no game words ("${g[0]}")`);
   out.push(...pronounProblems(`${o} ${p.scene}`, ctx.state.pronouns));
+  const known = `${ctx.plan ?? ""} ${ctx.hero} ${ctx.state.finish_line}`;
+  out.push(...plainProblems(o, known).map((x) => `outcome: ${x}`));
+  out.push(...plainProblems(p.scene, known).map((x) => `scene: ${x}`));
   const rn = p.right_now.trim().replace(/[.!]+$/, "");
   if (!rn) out.push("right_now is empty");
   else {
     if (words(rn) > 8) out.push(`right_now is ${words(rn)} words (8 max)`);
-    if (longestStack(rn, true) >= 4) out.push(`right_now "${rn}" stacks too many words: a verb, then one plain thing ("Tuck the ice hand into the snow")`);
+    if (longestStack(rn, true) >= 4 || modifierPile(rn) >= 2) out.push(`right_now "${rn}" stacks too many words: a verb, then one plain thing ("Tuck the ice hand into the snow")`);
     if (NOT_VERB_START.test(rn) || VAGUE.test(rn)) out.push(`right_now "${rn}" must start with a concrete verb (no vague verbs)`);
     if (/\bagain\b/i.test(rn) || ctx.state.goals_done.some((x) => norm(x) === norm(rn))) out.push(`right_now "${rn}" repeats an earlier goal: give the NEXT step`);
   }
@@ -310,6 +372,17 @@ export function actOf(progress: number) {
 }
 
 
+/**
+ * The act after `turn` turns of `turns`: the turns split as evenly as they can over 3 acts, act 1 never longer than
+ * the others (4 turns: 1 / 2 / 1; 6 turns: 2 / 2 / 2; 3 turns: 1 / 1 / 1).
+ */
+export function actClock(turn: number, turns: number) {
+  const T = Math.max(1, turns || 1);
+  const a2 = Math.max(1, Math.round(T / 3));
+  const a3 = Math.max(a2 + 1, Math.round((2 * T) / 3));
+  return turn >= a3 ? 3 : turn >= a2 ? 2 : 1;
+}
+
 export function applyTurn(
   state: StoryState,
   p: TurnProposal,
@@ -322,8 +395,7 @@ export function applyTurn(
   // Nothing achieved is undone (wins become facts); a backfire only dips the meter a little (its range).
   let progress = paceProgress(state.progress, delta, turn, state.turns_total, ctx.grade);
   // The act clock moves the act dots on time (it never adds progress by itself).
-  const clockAct = turn >= Math.ceil((state.turns_total * 2) / 3) ? 3 : turn >= Math.ceil(state.turns_total / 3) ? 2 : 1;
-  const act = Math.max(state.act, actOf(progress), Math.min(3, clockAct));
+  const act = Math.max(state.act, actOf(progress), actClock(turn, state.turns_total));
   progress = Math.min(100, progress);
   delta = progress - state.progress;
   let rn = clip(p.right_now, 80).replace(/[.!]+$/, "");

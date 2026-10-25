@@ -326,6 +326,7 @@ export interface GameState {
   fling: { power: number; angle: number } | null; // how the die was thrown (flight only; the number is decided in code)
   sceneArt: string; // the current painting's URL (phones show it as a live thumbnail); "" if it's a data URL
   progress: number; // 0-100 toward the finish line (procedural stories, design/35); 3 act dots on the TV
+  act?: number; // 1-3, the story's act (the act clock or a solved step can move it ahead of progress)
   narration: string;
   situation: string;
   banner: string;
