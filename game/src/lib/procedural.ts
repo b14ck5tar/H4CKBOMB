@@ -182,7 +182,8 @@ const VAGUE = /\b(deal with|figure out|try to|keep|continue|handle|investigate|l
 const esc = (x: string) => x.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 export function sentences(s: string) {
-  return s.split(/(?<=[.!?])\s+/).filter((x) => x.trim());
+  // "Mr. Han" and "Mrs. Tanaka" are ready-made heroes: a title's period never ends a sentence.
+  return s.split(/(?<!\b(?:Mr|Mrs|Ms|Dr|St|Jr|Sr)\.)(?<=[.!?])\s+/).filter((x) => x.trim());
 }
 
 /** A they/them hero next to he/she in a sentence where nobody else is named. */
