@@ -208,3 +208,9 @@ Full history and train of thought: `design/00-where-we-are.md`.
 - ✅ Story SFX: 1-3 per slide on actions, may overlap each other, never interrupt/duck the narrator.
 - ✅ Finale ties announced on screen. Judge-mode waits: auto-throw at 3 s, GO→outcome target <8 s.
 - After the freeze / later: a separate voice for side characters.
+
+## Sun ~7:05 AM: 4 approved exceptions to the freeze (CD), due 8:15, OFF behind a flag if not solid
+1. The finale "Convince each other": a 60 s talk phase with all plans on the TV, "ready to vote" on phones, then the vote; ties announced.
+2. Narrator time warnings at ~10 s left (pre-voiced variants, never over another line).
+3. An editor pass on every outcome (code checks + one fast Muse editor call only if it fits the hidden window; never adds wait).
+4. A grand ending: a big final event + a music swell + build-up/payoff SFX + a visual punch; expanded "What you did → What really happened" (a panel per hero, the real story in 2-3 beats, a closing line linking them).
