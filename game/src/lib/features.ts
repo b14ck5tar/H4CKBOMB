@@ -42,6 +42,8 @@ export const FEATURES = {
   kick: true,
   /** CD (Sun AM): after the ending, "Back to lobby" keeps the room, the players and their heroes (host.playAgain). */
   playAgain: true,
+  /** CD after Meta (design/37 §4): the ending never auto-advances; ←/→, Space or ‹ › move the slides (look). */
+  manualEnding: true,
   /** CD (Sun AM): cast dialogue in its own voice (outcome `lines`, speaker "" = the narrator). Voice owns /api/tts. */
   castVoices: process.env.NEXT_PUBLIC_CAST_VOICES === "1", // off unless a build sets NEXT_PUBLIC_CAST_VOICES=1 (test builds)
 } as const;

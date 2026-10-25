@@ -3238,3 +3238,83 @@
   12%, 85% { opacity: 1; transform: none; }
   100% { opacity: 0; transform: translateY(-20%); }
 }
+
+/* Manual ending (CD after Meta): the slides move only on ←/→ / Space or these buttons. Bottom center, out of the art's way. */
+.tvx-end-nav {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--u, 1vw) * 1.4);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u, 1vw) * 1.2);
+  transform: translateX(-50%);
+}
+.tvx-end-btn {
+  width: calc(var(--u, 1vw) * 4.2);
+  height: calc(var(--u, 1vw) * 4.2);
+  display: grid;
+  place-items: center;
+  border: calc(var(--u, 1vw) * 0.22) solid #c6ff2e;
+  border-radius: 50%;
+  background: rgba(10, 6, 18, 0.8);
+  color: #c6ff2e;
+  font-size: calc(var(--u, 1vw) * 3);
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: calc(var(--u, 1vw) * 0.3) calc(var(--u, 1vw) * 0.3) 0 #000;
+}
+.tvx-end-btn:hover:not(:disabled),
+.tvx-end-btn:focus-visible { background: #c6ff2e; color: #0a0612; outline: none; }
+.tvx-end-btn:disabled { opacity: 0.25; cursor: default; }
+.tvx-end-count {
+  min-width: calc(var(--u, 1vw) * 5);
+  text-align: center;
+  font-family: var(--font-heading), sans-serif;
+  font-weight: 800;
+  font-size: calc(var(--u, 1vw) * 1.5);
+  color: #f2ecff;
+  text-shadow: 0 0 calc(var(--u, 1vw) * 0.6) #000;
+}
+/* The origin slide: where the story came from, before "What you did". */
+.tvx-origin {
+  position: absolute;
+  left: calc(var(--u) * 8);
+  right: calc(var(--u) * 8);
+  top: calc(var(--u) * 13);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--u) * 2);
+  text-align: center;
+  animation: tvx-rise 0.7s cubic-bezier(0.25, 1.4, 0.45, 1) both 0.2s;
+}
+.tvx-origin-lead {
+  margin: 0;
+  font-family: var(--font-display), Impact, sans-serif;
+  font-size: calc(var(--u) * 4.4);
+  line-height: 1.05;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: calc(var(--u) * 0.35) calc(var(--u) * 0.35) 0 #000;
+}
+.tvx-origin-line {
+  margin: 0;
+  max-width: calc(var(--u) * 70);
+  font-family: var(--font-heading), sans-serif;
+  font-weight: 700;
+  font-size: calc(var(--u) * 2.8);
+  line-height: 1.3;
+  color: #f2ecff;
+  text-shadow: 0 0 calc(var(--u) * 1) #000;
+}
+.tvx-origin-line b { color: var(--gold); }
+.tvx-origin-src {
+  margin: 0;
+  font-family: var(--font-heading), sans-serif;
+  font-weight: 800;
+  font-size: calc(var(--u) * 1.6);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #c6ff2e;
+}

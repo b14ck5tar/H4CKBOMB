@@ -44,6 +44,7 @@ const GRAND = {
     { name: "Mr. Han", move: "I hum it a slow lullaby, really loud" },
     { name: "Bea", move: "I give it a giant pillow to hug" },
   ],
+  originalProblem: "a strange metal dome that landed in a cornfield overnight",
   realEnding: "The dome turned out to be a piece of a Chinese rocket. It was hauled away safely and nobody was hurt.",
   bridge: "You sent the hatchling home before sunrise. The real one went home too: on a flatbed truck.",
 };
@@ -264,7 +265,7 @@ export default function TvPreview() {
   if (piece === "montage" || piece === "reveal")
     return (
       <div key={run} style={{ position: "fixed", inset: 0, background: "#07040d" }}>
-        <EndingMontage panels={PANELS} reveal={{ ...(q.get("author") ? { ...REVEAL, author: q.get("author")! } : REVEAL), ...(q.has("grand") ? GRAND : {}) }} keepsakeUrl="https://groupproject-game.vercel.app/tale#demo" start={piece === "reveal" ? PANELS.length : Number(q.get("at") ?? 0)} />
+        <EndingMontage panels={PANELS} reveal={{ ...(q.get("author") ? { ...REVEAL, author: q.get("author")! } : REVEAL), ...(q.has("grand") ? GRAND : {}) }} keepsakeUrl="https://groupproject-game.vercel.app/tale#demo" start={piece === "reveal" ? PANELS.length : Number(q.get("at") ?? 0)} manual={q.has("manual")} />
       </div>
     );
 

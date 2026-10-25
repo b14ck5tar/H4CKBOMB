@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Stage } from "./TV";
 import type { GameState } from "@/lib/types";
 import { saveToHall } from "@/lib/keepsake";
+import { FEATURES } from "@/lib/features";
 
 const READING = ["quest", "narrating", "outcome", "mirror_reveal", "epilogue", "reveal"];
 const KEYS: [string, string][] = [
@@ -63,6 +64,8 @@ export function Presenter({ host, s, onNotes, onCloseNotes }: { host: Stage; s: 
         return;
       }
       const st = host.getState();
+      // The manual ending owns ←/→/Space (its slides drive the host); never skip a beat out from under it.
+      if (FEATURES.manualEnding && ["epilogue", "reveal", "storybook"].includes(st.phase) && [" ", "PageDown", "PageUp", "ArrowRight", "ArrowLeft"].includes(k)) return;
       if (k === " " || k === "PageDown" || k === "ArrowRight") {
         e.preventDefault();
         if (READING.includes(st.phase)) host.skip();

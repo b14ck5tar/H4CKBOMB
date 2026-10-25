@@ -960,6 +960,13 @@ function SkinOutcome({ s }: { s: GameState }) {
 /** The ending montage ("Because of you"), then "Based on a true story" and the keepsake QR. One instance across the
  *  epilogue, reveal and keepsake phases, so it never restarts. */
 function SkinEnding({ host, s }: { host: Stage; s: GameState }) {
+  // Manual ending: the viewer's slides drive the host (epilogue -> reveal -> storybook), only ever forward, and only
+  // once the host has a step waiting (deadlineAt), so an early key press is never lost.
+  const [want, setWant] = useState(0);
+  useEffect(() => {
+    if (!FEATURES.manualEnding || host.readOnly || !host.deadlineAt) return;
+    if ((want >= 1 && s.phase === "epilogue") || (want >= 2 && s.phase === "reveal")) host.skip();
+  }, [want, s.phase, host, host.deadlineAt]);
   const rs = host.realStory;
   const seed = host.questSeed;
   const data = host.montage();
@@ -988,7 +995,12 @@ function SkinEnding({ host, s }: { host: Stage; s: GameState }) {
       panels={panels}
       start={start}
       panelMs={MONTAGE_PANEL_MS}
+      manual={FEATURES.manualEnding}
+      onEnterReveal={() => setWant((w) => Math.max(w, 1))}
+      onReachEnd={() => setWant(2)}
       reveal={{
+        // Where the story came from (design/37 §4): the start's problem really happened.
+        originalProblem: (s as GameState & { original_problem?: string }).original_problem || s.goal || undefined,
         headline: real.headline,
         source: real.source,
         date: real.date,
@@ -1618,7 +1630,7 @@ export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameS
         </button>
       )}
       {/* The ending stretch (montage + reveal) runs on timers; the table can always move on (CD playtest). */}
-      {["epilogue", "reveal"].includes(s.phase) && host.deadlineAt > 0 && !s.busy && !host.readOnly && (
+      {!FEATURES.manualEnding && ["epilogue", "reveal"].includes(s.phase) && host.deadlineAt > 0 && !s.busy && !host.readOnly && (
         <button className="qt-continue" onClick={() => host.skip()} title="Spacebar works too">
           Continue ▸
         </button>

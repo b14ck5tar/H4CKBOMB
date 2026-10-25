@@ -41,6 +41,8 @@ export interface RevealData {
   realEnding?: string;
   /** ...and one line linking ours to the real one, shown big at the end. */
   bridge?: string;
+  /** The problem the table faced at the start, which really happened (state.original_problem, else the opener's goal). */
+  originalProblem?: string;
 }
 
 export interface EndingMontageProps {
@@ -55,24 +57,63 @@ export interface EndingMontageProps {
   start?: number;
   /** Called when the reveal is up (e.g. to show the keepsake on phones). */
   onReveal?: () => void;
+  /** CD (Meta feedback): no auto-advance anywhere; arrow keys, Space or the on-screen buttons move between slides. */
+  manual?: boolean;
+  /** Manual mode: the viewer stepped past the montage (host epilogue -> reveal) / onto the last slide (-> storybook). */
+  onEnterReveal?: () => void;
+  onReachEnd?: () => void;
+}
+
+/** The reveal's beats in order: where the story came from (if known), what you did, what really happened, the bridge. */
+export function revealBeats(r: RevealData): Beat[] {
+  const grand = !!r.moves?.length;
+  return [...(r.originalProblem ? (["origin"] as Beat[]) : []), "did", "real", ...(grand && r.bridge ? (["bridge"] as Beat[]) : [])];
 }
 
 /** "Because of you": 3-4 painted panels, one per big choice, then the "Based on a true story" reveal and the keepsake. */
-export function EndingMontage({ panels, reveal, keepsake, keepsakeUrl, panelMs = 5200, start = 0, onReveal }: EndingMontageProps) {
+export function EndingMontage({ panels, reveal, keepsake, keepsakeUrl, panelMs = 5200, start = 0, onReveal, manual = false, onEnterReveal, onReachEnd }: EndingMontageProps) {
   const [i, setI] = useState(start);
   const atReveal = i >= panels.length;
-  useEffect(() => setI(start), [start]);
+  const beats = revealBeats(reveal);
+  const total = panels.length + beats.length;
+  // Timed mode follows the host's phase; manual mode moves only on a key or button (a phase change never jumps it).
+  useEffect(() => {
+    if (!manual) setI(start);
+  }, [start, manual]);
   useEffect(() => {
     if (atReveal) {
       playSfx("reveal");
       onReveal?.();
+      if (manual) onEnterReveal?.();
       return;
     }
     playSfx(i === 0 ? "turnStart" : "pick", { volume: 0.7 });
+    if (manual) return;
     const t = setTimeout(() => setI((n) => n + 1), panelMs);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [i, atReveal, panelMs]);
+  }, [atReveal, manual, manual ? 0 : i, panelMs]);
+  useEffect(() => {
+    if (manual && i === total - 1) onReachEnd?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [i, manual, total]);
+  const go = (d: number) => setI((n) => Math.max(0, Math.min(total - 1, n + d)));
+  useEffect(() => {
+    if (!manual) return;
+    const onKey = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") {
+        e.preventDefault();
+        setI((n) => Math.min(total - 1, n + 1));
+      } else if (e.key === "ArrowLeft" || e.key === "PageUp") {
+        e.preventDefault();
+        setI((n) => Math.max(0, n - 1));
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [manual, total]);
   const last = panels[panels.length - 1];
   return (
     <div className="tvx tvx-layer tvx-end is-live" role="region" aria-label={atReveal ? (reveal.author ? `Based on ${possessive(reveal.author)} true story` : "Based on a true story") : "Because of you"}>
@@ -90,8 +131,25 @@ export function EndingMontage({ panels, reveal, keepsake, keepsakeUrl, panelMs =
         <div className="tvx-grain" />
       </div>
       <div className="tvx-stage">
-        {!atReveal ? <Panel key={i} p={panels[i]} n={i} of={panels.length} ms={panelMs} /> : <Reveal r={reveal} keepsake={keepsake} keepsakeUrl={keepsakeUrl} crew={crewOf(panels)} />}
+        {!atReveal ? (
+          <Panel key={i} p={panels[i]} n={i} of={panels.length} ms={panelMs} />
+        ) : (
+          <Reveal r={reveal} keepsake={keepsake} keepsakeUrl={keepsakeUrl} crew={crewOf(panels)} beatIndex={manual ? i - panels.length : undefined} />
+        )}
       </div>
+      {manual && (
+        <nav className="tvx-end-nav" aria-label="Ending slides">
+          <button type="button" className="tvx-end-btn" onClick={() => go(-1)} disabled={i === 0} aria-label="Previous slide">
+            ‹
+          </button>
+          <span className="tvx-end-count">
+            {i + 1} / {total}
+          </span>
+          <button type="button" className="tvx-end-btn" onClick={() => go(1)} disabled={i === total - 1} aria-label="Next slide">
+            ›
+          </button>
+        </nav>
+      )}
     </div>
   );
 }
@@ -150,7 +208,7 @@ function crewOf(panels: MontagePanel[]) {
   return [...seen.values()].slice(0, 6);
 }
 
-type Beat = "did" | "real" | "bridge";
+type Beat = "origin" | "did" | "real" | "bridge";
 
 /** How long "WHAT YOU DID" holds before "WHAT REALLY HAPPENED" (the reveal reads 10-20 s; the second beat stays). */
 const DID_MS = 5000;
@@ -159,29 +217,44 @@ const DID_MS = 5000;
  * The ending in two clear beats (CD: "here's what y'all did, here's what actually happened"): first YOUR story,
  * full screen, with its heroes; then the REAL story (the clipping, its real ending) and the take-home QR.
  */
-function Reveal({ r, keepsake, keepsakeUrl, crew }: { r: RevealData; keepsake?: React.ReactNode; keepsakeUrl?: string; crew: MontagePanel["who"] }) {
+function Reveal({ r, keepsake, keepsakeUrl, crew, beatIndex }: { r: RevealData; keepsake?: React.ReactNode; keepsakeUrl?: string; crew: MontagePanel["who"]; beatIndex?: number }) {
   const article = useQr(r.articleUrl, "#16110a", "#f3ecdc");
   const take = useQr(keepsake ? undefined : keepsakeUrl);
   const grand = !!r.moves?.length;
-  const order: Beat[] = grand && r.bridge ? ["did", "real", "bridge"] : ["did", "real"];
-  const [k, setK] = useState(0);
-  const beat = order[Math.min(k, order.length - 1)];
+  const order = revealBeats(r);
+  const controlled = beatIndex != null;
+  const [kSelf, setK] = useState(0);
+  const k = controlled ? beatIndex : kSelf;
+  const beat = order[Math.max(0, Math.min(k, order.length - 1))];
   // Paced to breathe: your moves get time per hero, the real story 7 s, the bridge stays. A click moves on.
   const holdMs = beat === "did" ? (grand ? Math.min(9000, 3500 + 1300 * r.moves!.length) : DID_MS) : 7000;
   useEffect(() => {
-    if (k >= order.length - 1) return;
+    if (controlled || k >= order.length - 1) return;
     const t = setTimeout(() => setK((n) => n + 1), holdMs);
     return () => clearTimeout(t);
-  }, [k, holdMs, order.length]);
+  }, [k, holdMs, order.length, controlled]);
   const crewByName = new Map(crew.map((w) => [w.name, w]));
   const headSize = r.headline.length > 95 ? 2.6 : r.headline.length > 65 ? 3 : 3.6;
   return (
-    <section className={`tvx-reveal is-${beat}`} onClick={() => setK((n) => Math.min(order.length - 1, n + 1))}>
+    <section className={`tvx-reveal is-${beat}`} onClick={controlled ? undefined : () => setK((n) => Math.min(order.length - 1, n + 1))}>
       <p key={beat} className="tvx-beat-label">
         {beat === "did" ? "What you did" : beat === "real" ? "What really happened" : "Based on a true story"}
       </p>
 
-      {beat === "did" && grand ? (
+      {beat === "origin" ? (
+        <div className="tvx-origin">
+          <p className="tvx-origin-lead">Your story started from a real article.</p>
+          <p className="tvx-origin-line">
+            The problem you faced at the start, <b>{r.originalProblem}</b>, really happened.
+          </p>
+          {r.source && (
+            <p className="tvx-origin-src">
+              {r.source}
+              {r.date ? ` · ${niceDate(r.date)}` : ""}
+            </p>
+          )}
+        </div>
+      ) : beat === "did" && grand ? (
         <div className={`tvx-moves n-${Math.min(6, r.moves!.length)}`}>
           {r.moves!.slice(0, 6).map((m, i) => {
             const w = crewByName.get(m.name);
