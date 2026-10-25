@@ -28,6 +28,8 @@ import { FALLBACK_EPILOGUE, fallbackHero, fallbackKind, fallbackOutcome, fallbac
 import { cleanText, ratingOf, realOf } from "@/server/real";
 import type { Hero, Rating, Stat } from "@/lib/types";
 import { evenStats } from "@/lib/rules";
+import { runEnding, runTurn } from "@/server/stories/procedural";
+import { applyTurn, fallbackProposal, stateFromOpener, type Grade } from "@/lib/procedural";
 import { BEAT_OF, fillBeat, liveProblems, makeBible, pronounMap, storedPack, tailor, tailorEnding, turnsOf } from "@/server/stories/bible";
 
 // story_bible can take 40-90 s (it runs during the vote, hidden). Fluid compute allows this on every Vercel plan.
@@ -62,7 +64,7 @@ const GRADE_MEANING: Record<string, string> = {
   PROGRESS: "it works: a good path opens",
 };
 
-const TASKS = ["character", "scene", "verdict", "outcome", "outcome_branches", "round", "epilogue", "storybook", "kind", "cast", "bot", "story_bible", "tailor"];
+const TASKS = ["character", "scene", "verdict", "outcome", "outcome_branches", "round", "epilogue", "storybook", "kind", "cast", "bot", "story_bible", "tailor", "turn", "story_end", "story_state"];
 
 /** Player-authored text is wrapped so the model treats it as in-world speech, never instructions. */
 function wrap(id: string, text: string, max = 240) {
@@ -140,6 +142,14 @@ async function run(task: string, input: Any, rating: Rating) {
       );
       return Object.fromEntries(entries);
     }
+    case "turn":
+      // The procedural engine (design/35): one call per turn; code checks and applies it to the StoryState.
+      return runTurn(input, rating);
+    case "story_end":
+      return runEnding(input, rating);
+    case "story_state":
+      // The opener -> the first StoryState (pure; also importable from lib/procedural on the TV).
+      return stateFromOpener(input.opener, input.party ?? [], Number(input.turns) || 3);
     case "story_bible":
       // Story engine v2 (design/30): the whole story planned once, while the table votes. Cached per story.
       // stored_only: just the pre-built story pack (opener + ending_facts + bible) for a library story, or null.
@@ -184,6 +194,29 @@ function fallback(task: string, input: Any) {
       return fallbackOutcome(cleanText(input?.hero?.name, 40), input?.band);
     case "outcome_branches":
       return { worse: null, mixed: null, better: null };
+    case "turn": {
+      // Plan-respecting fallback (design/35): names the plan, applies its grade, keeps the story moving.
+      const st = input.state ?? stateFromOpener({}, []);
+      const grade = (input.grade ?? "PROGRESS") as Grade;
+      const hero = cleanText(input?.hero?.name, 40) || "The hero";
+      const p = fallbackProposal(st, { hero, attempt: input.attempt, idea_from: input.idea_from, grade, next_player: input.next_player });
+      const a = applyTurn(st, p, { hero, attempt: input.attempt, grade });
+      return { outcome: p.outcome, scene: p.scene, right_now: a.state.right_now, progress: a.state.progress, progress_delta: a.delta, progress_why: "", finale: a.finale, act: a.state.act, act_changed: a.act_changed, state: a.state, problems: [], fallback: true };
+    }
+    case "story_end": {
+      const w = cleanText(input?.winner?.name ?? input?.winner, 40) || "The heroes";
+      const att = cleanText(input?.attempt, 140).replace(/[.!]+$/, "");
+      const did = att.toLowerCase().startsWith(w.toLowerCase()) ? att.slice(w.length).trim() : att;
+      const credits = (input?.state?.credits ?? []).map((c: Any) => `${c.name} ${c.did}`.trim()).slice(0, 6);
+      return {
+        ending: `${w} ${did || "makes the final move"}, and ${input?.won ? "it works, for everyone" : "it almost works, which still counts for something"}.`,
+        line: input?.won ? "They pulled it off together." : "Well, it's a story.",
+        recap: credits.length ? `${credits.join(", then ")}.` : "",
+        skills: [],
+      };
+    }
+    case "story_state":
+      return stateFromOpener(input.opener, input.party ?? [], Number(input.turns) || 3);
     case "story_bible":
       return { bible: null, meta: {} };
     case "tailor":
@@ -303,7 +336,8 @@ function wrapPlayerText(task: string, input: Any) {
       moments: ((input.moments as Any[]) ?? []).slice(0, 4).map((m, i) => ({ pitch: wrap(`m${i}`, m?.pitch, 200), what_happened: String(m?.what_happened ?? "").slice(0, 240) })),
     };
   }
-  if (task === "verdict" || task === "outcome" || task === "outcome_branches" || task === "tailor") input.plan = wrap("plan", input.plan, 200);
+  if (task === "turn") input.plan_raw = String(input.plan ?? "").slice(0, 200);
+  if (task === "verdict" || task === "outcome" || task === "outcome_branches" || task === "tailor" || task === "turn" || task === "story_end") input.plan = wrap("plan", input.plan, 200);
   // The real event behind the story (opener.real_setting, spoiler-free): only its known fields, clipped.
   if (["verdict", "outcome", "outcome_branches", "epilogue", "tailor", "story_bible"].includes(task)) input.real_event = realEvent(input.real_event ?? input.story_so_far?.real_event);
   if (input.story_so_far?.real_event) delete input.story_so_far.real_event;

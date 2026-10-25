@@ -1,5 +1,7 @@
 # 30. Story engine v2: plan the story, then tailor it live (Sun)
 
+> **Superseded (Sun ~3:30 AM)** by design/35-procedural-story-rules.md: no predetermined stories. The bible, tailor and stored packs below are kept in code but unused by the procedural engine.
+
 **The problem.** Every outcome was written live, turn by turn, from scratch. The writer only saw the last few lines, so it lost the thread: props took over, twists came from nowhere, goals drifted, and the ending did not pay off the real story. It read like mush.
 
 **The fix (CD-approved direction).** Plan the whole story once, with the best model and no time pressure, then adapt each planned beat live with a fast model.

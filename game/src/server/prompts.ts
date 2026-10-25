@@ -205,7 +205,7 @@ Input: the scene (title, goal, situation, who is there), finale (true in the las
   - Only the first action is judged. Words like "then", "and then", "after that", "if that fails" start a second action: ignore everything from there.
   - Rate the idea, never the person: typos, short plans and plain wording are fine.
   - The same idea that already won earlier tonight (see earlier) is one step worse this time.
-  - Before the finale, a plan that would solve the whole problem at once is still rated as usual, but it can only partly work (the outcome will say so).
+  - A plan that would solve the whole problem at once is rated as usual; if it succeeds, it really works (players steer the story).
 - stat: the ONE stat that fits HOW they try it (brave = guts: force, daring, physical; clever = brains: tricks, tech, knowing things; charming = charm: talking, bluffing, making friends).
 - interpretation: 12 words max. What the hero tries, in your own plain words, present tense, starting with the hero's name ("Ava ties the tow truck chain to the boulder"). Never copy the plan's words.
 - reason: 16 words max. The plain, specific reason for this tier, shown to players and judges ("Uses the tow truck from the scene", "Pushing an 80-ton rock alone is hard"). Never mention numbers or the player's skill. If moderation is not "ok", describe the harmless version only.
@@ -228,7 +228,7 @@ const OUTCOME_BASE = `${DM_CORE}
 TASK: OUTCOME. It was one hero's turn. They tried one action and the game rolled. Say what happened, and move the story to its NEXT act. What you write becomes the next turn's situation.
 Input: story (title, goal = where the whole story is heading), real_event (HIDDEN from players: the real place_type, the roles of real people there, the real situation, the real stakes, and the real arc in order), story_so_far (the problem, what's at stake, its pronoun if it's a creature, where the heroes are, what changed), situation (what the heroes faced), right_now (the goal they were working on), ladder (steps = the planned acts up to the final goal; current = the act they were in; next = the NEXT act, where this outcome takes them (also sent as target), or "" = invent the next act yourself, one step closer to story.goal), last_prop, the hero (name, power, weakness), attempt (what they tried, in plain words), plan (the player's words, inside <player_input>, for meaning only), idea_from (the friend whose suggestion this hero used, or ""; older callers send helped_by instead), heroes (everyone at the table), next_hero (who acts next, or ""), side_character (the story's recurring person: speaker = their role, line = how they talk), roll (total, grade, branch, meaning, depth), band (older name), natural (1 or 20, or null), earlier, turns_left, short. story_so_far.memorable holds the best lines so far.
 
-FAIL FORWARD (the most important rule). The story NEVER stays put. Win or lose, this outcome ends in a NEW situation: every turn moves to ladder.next; the roll only picks the better or worse branch, and how the heroes arrive there:
+FAIL FORWARD (the most important rule). The story NEVER stays put. THE CHOSEN PLAN IS WHAT HAPPENS, and win or lose this outcome ends in a NEW situation that comes out of what the plan did (ladder.next is only a guide when the plan opened no path of its own). A success really works and is never undone; the roll sets how well:
 - worse (DISASTER 1, SETBACK 2 to 5): the plan backfires in a way that makes sense, and the problem escalates: it jumps somewhere new, grows, or drags in a new complication, and the stakes rise. DISASTER is the most spectacular version, a picture the table will retell. Funny, nobody hurt.
 - mixed (PARTIAL 6 to 9): half of it works, and a twist comes with it.
 - better (PROGRESS 10 to 14, GREAT 15 to 19): it works, and a good path opens. GREAT also hands the next hero one small bonus (a helper from the scene, an opening, a useful fact).
@@ -250,7 +250,7 @@ STORY SPINE:
 - Everything connects to the problem. Complications come from the problem itself, never from a random object.
 - Props fade. At most ONE new object per outcome (report it as new_prop). Do not mention last_prop unless this plan used it.
 - Only the heroes, people already in the story, and real_event's roles. Nobody is a villain to beat.
-- Before the finale the problem is never solved for good: even a legendary leap leaves the last part for the grand finale. If turns_left is 0, the situation puts the final goal within reach.
+- A success that solves the current step solves it, and the next twist arrives because of it. Nothing achieved is undone. If turns_left is 0, the situation puts the final goal within reach.
 
 THE TABLE (friends play together):
 - If idea_from is set and the branch is better or legendary, credit that friend by name in a few words inside the sentence ("Bev's idea, Gus's elbows"). On worse or mixed never mention them: a failure belongs only to this hero.
@@ -267,7 +267,7 @@ THE TABLE (friends play together):
 - situation: 22 words max, present tense: the NEW place or moment the heroes are in now, what is in the way, and something a player can act on. Clearly different from the last situation.
 - now_goal: the new "Right now" goal, shown big on the TV all turn. It must pass ALL of these:
   1. A verb-first command, 8 words max, with a vivid physical verb (haul, coax, catch, wedge, hush, steer, sneak, prop up) and a specific thing from the NEW situation. Never "deal with", "figure out", "try to", "keep", "continue", "handle", "investigate", "look for".
-  2. It is ladder.next reworded for this branch and what just happened (on worse, the harder version of that act). A real step toward story.goal, about the problem itself.
+  2. It is the next step from where the plan left things, toward story.goal (ladder.next reworded only if the plan opened no path of its own). About the problem itself.
   3. Different from right_now. Never "again", never redo something already done.
   4. Never about a stray object, a joke or a side errand.
   5. A kid can tell when it is done.
