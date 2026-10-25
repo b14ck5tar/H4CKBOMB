@@ -1,0 +1,398 @@
+[
+  {
+    "id": "night-baker",
+    "pitch": "A night-shift baker whose dough knows things",
+    "hero": {
+      "name": "Rosa",
+      "epithet": "of the 3 AM Ovens",
+      "pronouns": "she/her",
+      "concept_status": "ok",
+      "concept_note": "",
+      "stats": {
+        "brave": 1,
+        "clever": -1,
+        "charming": 3
+      },
+      "ability": {
+        "name": "Knead to Know",
+        "text": "Knead any dough and it rises into the shape of whatever is hiding nearby."
+      },
+      "flaw": "Feeds everyone, including the thing she is supposed to be fighting.",
+      "roast": "Rosa has solved three mysteries with bread. She has never once slept.",
+      "visual": {
+        "anchor": "a round pear-shaped cartoon Latina baker woman in her fifties, flour smudged on her cheeks and forearms, a tall paper baker's hat, rolled-up sleeves, strong round arms",
+        "outfit": "a white baker's jacket dusted with flour and a faded red apron",
+        "palette": [
+          "flour white",
+          "brick red",
+          "golden crust"
+        ],
+        "prop": "a huge wooden rolling pin and a glowing lump of dough",
+        "expression": "warm grin, one eyebrow raised like she already knows"
+      }
+    }
+  },
+  {
+    "id": "crosswalk",
+    "pitch": "A crossing guard whose stop sign actually stops things",
+    "hero": {
+      "name": "Mr. Okafor",
+      "epithet": "Keeper of the Crosswalk",
+      "pronouns": "he/him",
+      "concept_status": "ok",
+      "concept_note": "",
+      "stats": {
+        "brave": 3,
+        "clever": -1,
+        "charming": 1
+      },
+      "ability": {
+        "name": "Everybody Stop",
+        "text": "Raise the sign and anything moving freezes for three seconds."
+      },
+      "flaw": "Cannot let anyone cross anything, including a room, without escorting them.",
+      "roast": "Mr. Okafor has stopped a runaway shopping cart, a tornado and his own retirement party.",
+      "visual": {
+        "anchor": "a very tall rectangle-shaped cartoon Nigerian-American man in his sixties, long arms, neat grey beard, a reflective cap, perfect posture",
+        "outfit": "a fluorescent yellow safety vest over a crisp white shirt and a bow tie",
+        "palette": [
+          "safety yellow",
+          "stop-sign red",
+          "charcoal"
+        ],
+        "prop": "a big octagonal stop sign held high (blank, no letters)",
+        "expression": "calm, dignified, absolutely immovable"
+      }
+    }
+  },
+  {
+    "id": "skater-grandma",
+    "pitch": "A grandma who skates on anything",
+    "hero": {
+      "name": "Bea",
+      "epithet": "the Skater Grandma",
+      "pronouns": "she/her",
+      "concept_status": "ok",
+      "concept_note": "",
+      "stats": {
+        "brave": 3,
+        "clever": 1,
+        "charming": -1
+      },
+      "ability": {
+        "name": "Grind Anything",
+        "text": "Skate on any surface: walls, railings, power lines, rooftops."
+      },
+      "flaw": "Has never once taken the stairs, even inside a library.",
+      "roast": "Bea is 78 and has broken four bones. None of them hers.",
+      "visual": {
+        "anchor": "a tiny wiry triangle-shaped cartoon grandma in her late seventies, short silver pixie hair, big round glasses, knobbly knees in knee pads, sneakers",
+        "outfit": "a sticker-covered helmet, an oversized purple windbreaker and striped tube socks",
+        "palette": [
+          "grape purple",
+          "mint",
+          "sticker orange"
+        ],
+        "prop": "a battered skateboard tucked under one arm",
+        "expression": "fearless smirk, ready to drop in"
+      }
+    }
+  },
+  {
+    "id": "mail-carrier",
+    "pitch": "A mail carrier who knows where everything belongs",
+    "hero": {
+      "name": "Dmitri",
+      "epithet": "Neither Rain Nor Sleet",
+      "pronouns": "he/him",
+      "concept_status": "ok",
+      "concept_note": "",
+      "stats": {
+        "brave": 1,
+        "clever": 3,
+        "charming": -1
+      },
+      "ability": {
+        "name": "Return to Sender",
+        "text": "Knows where any lost object belongs, and can send it back there."
+      },
+      "flaw": "Reads every postcard out loud, with feeling.",
+      "roast": "Dmitri has delivered mail through a blizzard and a haunting. Your package is still late.",
+      "visual": {
+        "anchor": "a stocky square-shaped cartoon Russian-American mail carrier in his forties, huge bushy mustache, thick calves, a pith-style mail helmet",
+        "outfit": "a blue-grey postal uniform with shorts in all weather and a stuffed leather satchel",
+        "palette": [
+          "postal blue",
+          "leather brown",
+          "envelope cream"
+        ],
+        "prop": "a glowing envelope with no address",
+        "expression": "squinting, determined, slightly out of breath"
+      }
+    }
+  },
+  {
+    "id": "dj",
+    "pitch": "A DJ whose bass drop shakes things loose",
+    "hero": {
+      "name": "DJ Kiko",
+      "epithet": "the Bass Drop",
+      "pronouns": "they/them",
+      "concept_status": "ok",
+      "concept_note": "",
+      "stats": {
+        "brave": -1,
+        "clever": 1,
+        "charming": 3
+      },
+      "ability": {
+        "name": "Drop the Beat",
+        "text": "One bass drop makes walls, floors and stubborn things wobble loose."
+      },
+      "flaw": "Narrates every dramatic moment with an air horn noise.",
+      "roast": "Kiko has opened a locked vault with one song. It was a remix of the vault's alarm.",
+      "visual": {
+        "anchor": "a lanky bean-shaped cartoon Filipino DJ in their twenties, a two-tone buzz cut, giant headphones around the neck, tiny round sunglasses",
+        "outfit": "a cropped silver bomber jacket over a baggy tee and chunky platform sneakers",
+        "palette": [
+          "chrome silver",
+          "hot pink",
+          "teal"
+        ],
+        "prop": "a small glowing turntable controller",
+        "expression": "eyes closed, head bobbing, totally in the zone"
+      }
+    }
+  },
+  {
+    "id": "nurse",
+    "pitch": "A night nurse who can calm anything down",
+    "hero": {
+      "name": "Tamika",
+      "epithet": "the Third-Shift Nurse",
+      "pronouns": "she/her",
+      "concept_status": "ok",
+      "concept_note": "",
+      "stats": {
+        "brave": 1,
+        "clever": -1,
+        "charming": 3
+      },
+      "ability": {
+        "name": "Bedside Manner",
+        "text": "One calm sentence and anything panicking, from toddlers to poltergeists, settles down."
+      },
+      "flaw": "Takes everyone's temperature, constantly, without asking.",
+      "roast": "Tamika has calmed a screaming ghost in under a minute. Her group chat, never.",
+      "visual": {
+        "anchor": "a sturdy round-shouldered cartoon Black nurse in her forties, a big puff of natural hair tied up with a scrunchie, reading glasses on her head, comfy clogs",
+        "outfit": "scrubs printed with tiny cartoon bandages and a stethoscope around her neck",
+        "palette": [
+          "scrub teal",
+          "bandage peach",
+          "plum"
+        ],
+        "prop": "a travel mug and a penlight",
+        "expression": "unbothered, kind, seen it all"
+      }
+    }
+  },
+  {
+    "id": "street-magician",
+    "pitch": "A street magician whose tricks are only 90% fake",
+    "hero": {
+      "name": "The Great Sal",
+      "epithet": "Street Magician",
+      "pronouns": "he/him",
+      "concept_status": "ok",
+      "concept_note": "",
+      "stats": {
+        "brave": -1,
+        "clever": 3,
+        "charming": 1
+      },
+      "ability": {
+        "name": "Pick a Card",
+        "text": "Whatever card someone picks shows the truth about them."
+      },
+      "flaw": "Every trick goes about 90 percent right.",
+      "roast": "Sal pulled a real rabbit out of a real hat once. He has been apologizing to it since.",
+      "visual": {
+        "anchor": "a chubby egg-shaped cartoon Italian-American street magician in his fifties, slicked-back black hair with a grey streak, a pencil mustache, a short cape over a hoodie",
+        "outfit": "a moth-eaten velvet cape, a hoodie and a dented top hat",
+        "palette": [
+          "velvet red",
+          "midnight black",
+          "gold"
+        ],
+        "prop": "a fanned deck of playing cards (plain backs, no symbols)",
+        "expression": "dramatic wink, one hand flourishing"
+      }
+    }
+  },
+  {
+    "id": "bus-driver",
+    "pitch": "A bus driver whose bus stops anywhere",
+    "hero": {
+      "name": "Marisol",
+      "epithet": "of Route 9",
+      "pronouns": "she/her",
+      "concept_status": "ok",
+      "concept_note": "",
+      "stats": {
+        "brave": 3,
+        "clever": 1,
+        "charming": -1
+      },
+      "ability": {
+        "name": "Next Stop",
+        "text": "Her bus can stop anywhere she says, even places that aren't on any map."
+      },
+      "flaw": "Will not move until everyone is seated, even during a chase.",
+      "roast": "Marisol has never been late. Time is late to Marisol.",
+      "visual": {
+        "anchor": "a big broad rectangle-shaped cartoon Puerto Rican bus driver in her fifties, strong arms, a thick braid, aviator sunglasses pushed up on her head",
+        "outfit": "a transit uniform shirt with rolled sleeves and a lanyard of keys",
+        "palette": [
+          "transit orange",
+          "navy",
+          "chrome"
+        ],
+        "prop": "a giant ring of keys and a coin changer",
+        "expression": "eyebrow raised, arms crossed, nobody messes with her bus"
+      }
+    }
+  },
+  {
+    "id": "librarian",
+    "pitch": "A librarian whose shush silences anything",
+    "hero": {
+      "name": "Mr. Han",
+      "epithet": "Head Librarian",
+      "pronouns": "he/him",
+      "concept_status": "ok",
+      "concept_note": "",
+      "stats": {
+        "brave": 1,
+        "clever": 3,
+        "charming": -1
+      },
+      "ability": {
+        "name": "Shh",
+        "text": "One shush silences any sound within a block, even ones that shouldn't exist."
+      },
+      "flaw": "Fines monsters for anything overdue, mid-fight.",
+      "roast": "Mr. Han has shushed a thunderstorm. It apologized.",
+      "visual": {
+        "anchor": "a thin tall-triangle-shaped cartoon Korean librarian in his seventies, neat white hair, round glasses on a beaded chain, very straight posture",
+        "outfit": "a mustard cardigan with elbow patches over a tie",
+        "palette": [
+          "mustard",
+          "library green",
+          "paper cream"
+        ],
+        "prop": "a tall stack of old books and a rubber date stamp",
+        "expression": "one finger to his lips, eyes narrowed"
+      }
+    }
+  },
+  {
+    "id": "food-truck-chef",
+    "pitch": "A food truck chef whose hot sauce makes you tell the truth",
+    "hero": {
+      "name": "Nadia",
+      "epithet": "of the Midnight Food Truck",
+      "pronouns": "she/her",
+      "concept_status": "ok",
+      "concept_note": "",
+      "stats": {
+        "brave": -1,
+        "clever": 1,
+        "charming": 3
+      },
+      "ability": {
+        "name": "Secret Sauce",
+        "text": "Anyone, or anything, that tastes her hot sauce has to tell the truth."
+      },
+      "flaw": "Rates everything anyone cooks, out loud, out of ten.",
+      "roast": "Nadia's sauce has cracked four cover-ups. It has also cracked two molars.",
+      "visual": {
+        "anchor": "an energetic pear-shaped cartoon Lebanese-Mexican food truck chef in her thirties, a bandana over curly hair, gold hoop earrings, a burn-scarred oven mitt on one hand",
+        "outfit": "a black chef's coat with sleeves rolled up and a stained apron",
+        "palette": [
+          "chili red",
+          "lime green",
+          "black"
+        ],
+        "prop": "a squeeze bottle of glowing hot sauce and a giant spatula",
+        "expression": "confident grin, daring you to try it"
+      }
+    }
+  },
+  {
+    "id": "park-ranger",
+    "pitch": "A park ranger who can track anything, even the invisible",
+    "hero": {
+      "name": "Ranger Wren",
+      "epithet": "of the Night Trails",
+      "pronouns": "she/her",
+      "concept_status": "ok",
+      "concept_note": "",
+      "stats": {
+        "brave": 3,
+        "clever": -1,
+        "charming": 1
+      },
+      "ability": {
+        "name": "Track Anything",
+        "text": "Reads footprints, even invisible ones, and knows exactly what left them."
+      },
+      "flaw": "Gives a full nature talk at the worst possible moment.",
+      "roast": "Wren once tracked a ghost for nine miles. The ghost filed a complaint.",
+      "visual": {
+        "anchor": "a tall lean cartoon Native American park ranger woman in her twenties, a long black braid, freckles, a plain flat-brimmed ranger hat with no feathers or decorations, hiking boots",
+        "outfit": "an olive ranger shirt with a blank patch and cargo shorts",
+        "palette": [
+          "olive green",
+          "khaki",
+          "campfire orange"
+        ],
+        "prop": "binoculars and a lantern",
+        "expression": "crouched, focused, pointing at something only she can see"
+      }
+    }
+  },
+  {
+    "id": "chess-champ",
+    "pitch": "A teen chess champ who sees seven moves ahead",
+    "hero": {
+      "name": "Theo",
+      "epithet": "Age 13, Grandmaster (Pending)",
+      "pronouns": "he/him",
+      "concept_status": "ok",
+      "concept_note": "",
+      "stats": {
+        "brave": -1,
+        "clever": 3,
+        "charming": 1
+      },
+      "ability": {
+        "name": "Seven Moves Ahead",
+        "text": "Sees how the next minute plays out if nobody changes anything."
+      },
+      "flaw": "Says \"checkmate\" about things that are not checkmate.",
+      "roast": "Theo has predicted every move of a haunted chess set. He still loses rock-paper-scissors to his little sister.",
+      "visual": {
+        "anchor": "a skinny bean-shaped cartoon Black teen chess prodigy, age thirteen, short neat twists, a small confident closed-mouth smirk, an oversized school blazer with sleeves too long",
+        "outfit": "an oversized navy blazer over a hoodie, a lanyard tournament badge (blank)",
+        "palette": [
+          "navy",
+          "chessboard black and white",
+          "trophy gold"
+        ],
+        "prop": "a chess knight piece and a chess clock",
+        "expression": "calm and smug, one eyebrow up, already three steps ahead"
+      }
+    }
+  }
+]
