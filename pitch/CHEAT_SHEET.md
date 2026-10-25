@@ -38,7 +38,7 @@ the TV runs."
    typed." "Take it home."
 8. Close: "Your friends' ideas were your best move. Muse wrote, judged and painted every decision; code rolled the
    dice. It was based on a true story. And you just played it."
-9. For Meta judges, last: "Every brain in this game is Meta's Muse: it writes, judges every plan, paints you in, and listens. The only thing it borrowed is a voice."
+9. For Meta judges, last: "Every brain in this game is Meta's Muse: it writes, judges every plan, paints you in, listens, and even picks the sound effects. All it borrowed is a voice and a box of sounds."
 
 ## 3 lines to memorize
 1. "The one group project where everyone actually shows up."

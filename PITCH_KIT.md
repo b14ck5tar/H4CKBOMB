@@ -113,9 +113,10 @@ argue about an idea, stop talking. Nobody types for a judge.
 **The close (one breath):** "Your friends' ideas were your best move. Muse wrote, judged and painted every decision;
 code rolled the dice. It was based on a true story. And you just played it."
 
-**The Meta reveal line (last, for Meta judges):** "Every brain in this game is Meta's Muse: it writes, judges every plan, paints you in, and listens. The only thing it borrowed is a voice."
-(True: Muse Spark writes and judges, Muse Image paints, Muse Voice Transcribe listens, plus the Muse connector; the
-narrator is ElevenLabs because Meta has no text-to-speech.)
+**The Meta reveal line (last, for Meta judges):** "Every brain in this game is Meta's Muse: it writes, judges every plan, paints you in, listens, and even picks the sound effects. All it borrowed is a voice and a box of sounds."
+(True: Muse Spark writes, judges and picks each line's sound effects from our library, Muse Image paints, Muse Voice
+Transcribe listens, plus the Muse connector. The narrator's voice is ElevenLabs because Meta has no text-to-speech, and
+the sound-effect library was made with ElevenLabs ahead of time.)
 
 **The hook to come back:** "Every table gets a different true story. Come back with a friend and play another."
 
