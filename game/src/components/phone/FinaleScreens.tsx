@@ -283,7 +283,7 @@ export function ShakeScreen({
   return (
     <div className="pk-choices pk-center" style={{ flex: 1, justifyContent: "center", gap: 18 }}>
       <Kicker tone="amber">The final roll · one die, all of you</Kicker>
-      <Say text={armed ? "Armed. Wait for *SHAKE*" : "Tap *ARM* on your phone"} small />
+      <Say text={armed ? "Armed. Wait for *SHAKE*" : "Tap *ARM*"} small />
       <button
         className="pk-arcade"
         data-tone={armed ? "lime" : undefined}

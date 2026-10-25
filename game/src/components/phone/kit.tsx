@@ -139,7 +139,7 @@ export function PrivacyLine({ children }: { children?: React.ReactNode }) {
 }
 
 /** The picture the TV is showing right now, small, in a glowing frame (so the phone never goes dark). */
-export function SceneThumb({ art, live = "On the TV" }: { art?: string; live?: string }) {
+export function SceneThumb({ art, live = "Live on the TV" }: { art?: string; live?: string }) {
   if (!art) return <TvGlyph />;
   return (
     <div className="pk-thumb" aria-hidden>

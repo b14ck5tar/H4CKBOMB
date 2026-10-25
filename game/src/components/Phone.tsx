@@ -52,6 +52,17 @@ function artFor(s: GameState | null) {
   return plates[plateFor(s)] ?? plates[0] ?? s.storyOptions.find((o) => o.id === s.questId)?.art ?? "";
 }
 
+/** The small label over the big line while the TV has the floor. */
+const KICKER: Record<string, string> = {
+  quest: "The story",
+  narrating: "The story",
+  ruling: "The DM rules",
+  roll: "The throw",
+  outcome: "What happened",
+  final_result: "The final roll",
+  epilogue: "The ending",
+};
+
 /** Every message from this phone gets its sound: send = submit, back = vote, pick = pick, the rest a tap. */
 const SEND_SFX: Record<string, string> = { pitch: "submit", idea: "submit", story: "submit", concept: "submit", real: "submit", join: "submit", vote: "vote", pick: "pick", arm: "tap", react: "tap", redraw: "tap" };
 
@@ -121,7 +132,7 @@ export function Phone({ code }: { code: string }) {
   const watching = (text = nowText(state, me.id)) => (
     <WatchingScreen
       text={state.phase === "outcome" && state.outcome ? state.outcome : text}
-      kicker={state.phase === "outcome" ? "What happened" : state.phase === "epilogue" ? "The ending" : "On the TV"}
+      kicker={KICKER[state.phase] ?? "Eyes up"}
       art={art}
       plan={showPlan && tablePitch && planText ? { who: heroFirst(state, tablePitch.playerId), color: state.players.find((p) => p.id === tablePitch.playerId)?.color, text: planText, idea: tablePitch.creditId ? heroFirst(state, tablePitch.creditId) : undefined } : undefined}
       latest={latest}
