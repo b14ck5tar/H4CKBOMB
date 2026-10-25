@@ -35,6 +35,7 @@ import { openRoom, type Msg, type Transport } from "./transport";
 import { mask } from "./mask";
 import { QUICK, coldOpenTimeline } from "./quick";
 import { FEATURES } from "./features";
+import { pickStorySfx, pickStorySfxCues, type StorySfxCue } from "./storySfx";
 import { Bots } from "./bots";
 import { TIER_SHIFT, gradeRoll } from "./grade";
 import { applyTurn, fallbackProposal, quipOk, stateFromOpener, type StoryState, type TurnResult } from "./procedural";
@@ -106,6 +107,7 @@ const FINAL_SHAKE_MS = 5000;
 const FINAL_TUMBLE_MS = 2000;
 const FINAL_LAND_MS = 1400;
 const FINAL_RESULT_MS = 3500;
+const CONVINCE_MS = 60_000; // the finale talk (CD): one minute to convince each other
 const FULL_READ_CAP_MS = 20_000; // a reading screen never holds the table longer (Space or every phone skips sooner)
 const TITLE_CARD_MS = 5200; // Full Story: the title card before scene 1
 const ROLL_HOLD_MS = 2200; // after the die lands: the quality meter fills and its grade reads (was 3.4 s of dead air)
@@ -437,7 +439,7 @@ export class GameHost {
   private finalPitch: Pitch | null = null;
   private artP = new Map<string, Promise<void>>(); // `${questId}:${scene}` -> hero-painted scene art in flight
   private artSeq = 10; // keys for per-decision paintings in sceneImages (0-2 are the plates)
-  private epilogueP: Promise<{ ending: string; line: string; recap: string; skills: Record<string, string> | null }> | null = null;
+  private epilogueP: Promise<{ ending: string; line: string; recap: string; skills: Record<string, string> | null; sfx?: StorySfxCue[]; buildup?: string; payoff?: string; bridge?: string }> | null = null;
   private endingAt = 0;
   private storybookP: Promise<Storybook> | null = null;
   private reactionId = 0;
@@ -658,6 +660,14 @@ export class GameHost {
   }
 
   private onReady(pid: string) {
+    // The finale talk: "ready to vote" (everyone here ready = the vote starts).
+    if (this.state.phase === "convince") {
+      if (!this.player(pid)?.hero || this.state.ready.includes(pid)) return;
+      const ready = [...this.state.ready, pid];
+      this.set({ ready });
+      if (this.allPresent((id) => ready.includes(id))) this.endConvince();
+      return;
+    }
     if (!READING.has(this.state.phase) || this.state.busy || !this.pending) return;
     if (this.quick && this.state.phase === "quest") return; // the cold open plays out (the TV can still skip)
     if (!this.player(pid)?.hero || this.state.ready.includes(pid)) return;
@@ -987,7 +997,7 @@ export class GameHost {
   }
 
   private onJoin(pid: string, rawName: string) {
-    const name = String(rawName ?? "").replace(/[<>]/g, "").trim().slice(0, 16) || "Player";
+    const name = String(rawName ?? "").replace(/[<>]/g, "").trim().slice(0, 20) || "Player"; // the character's name (join asks for it, CD)
     const existing = this.player(pid);
     if (existing) return this.patchPlayer(pid, { name });
     if (this.state.phase !== "lobby" || this.state.players.length >= 6) return;
@@ -1367,7 +1377,7 @@ export class GameHost {
     const hero: Hero = {
       ...p.hero,
       // Keep the hero's designed power (it matches their portrait); the player's knack joins it.
-      ability: skill ? { name: base.ability.name, text: `${base.ability.text.replace(/[.!\s]+$/, "")}, with a secret talent for ${skill}.` } : base.ability,
+      ability: skill ? { name: base.ability.name, text: `${base.ability.text.replace(/[.!\s]+$/, "")}, with a secret strength: ${skill}.` } : base.ability,
       flaw: fear ? `Has the worst luck with ${fear}, at the worst moments.` : base.flaw,
     };
     this.patchPlayer(pid, { hero });
@@ -1756,6 +1766,22 @@ export class GameHost {
   }
 
   /** The hand-written opener: read aloud (if the voice is ready) while it reveals line by line. Space skips. */
+  /** The finale's build-up or payoff sound (one id from the ending call). Off unless FEATURES.storySfx. */
+  private cueFinale(kind: "buildup" | "payoff", id?: string) {
+    const ok = pickStorySfx(id);
+    if (!FEATURES.storySfx || !ok) return;
+    this.set({ sfx: { id: ok, cues: [{ id: ok, word: 0 }], at: Date.now(), kind } });
+    this.note("scene", "Sound", `Muse picked the finale ${kind === "buildup" ? "build-up" : "payoff"}: ${ok}`);
+  }
+
+  /** The slide's sound cues (CD): Muse picked 1-3 in the turn or ending call; the TV plays them in order. Off unless FEATURES.storySfx. */
+  private playStorySfx(x?: unknown) {
+    const cues = pickStorySfxCues(x);
+    if (!FEATURES.storySfx || !cues.length) return;
+    this.set({ sfx: { id: cues[0].id, cues, at: Date.now(), kind: "line" } });
+    this.note("scene", "Sound", `Muse picked: ${cues.map((c) => c.id).join(", then ")}`);
+  }
+
   private async openStory() {
     this.clearTimer();
     const sc = this.sceneList[0];
@@ -1784,6 +1810,8 @@ export class GameHost {
       busy: "",
     });
     this.note("scene", "The opener", `"${sc.title}". Goal for the whole story: ${end(sc.goal)}`);
+    // The judge stories carry their opener's sound effect in the seed (quick_scene.sfx).
+    this.playStorySfx((sc as { sfx?: string }).sfx);
     const first = this.state.turnOrder[0];
     if (first) void this.voiceFor(this.turnLine(first));
     const spoken = this.play(clip, TITLE_BEAT_MS);
@@ -1817,6 +1845,7 @@ export class GameHost {
     const owner = order[k];
     this.set({ phase: "turn", turnIndex: k, ideas: {}, pitches: [], votes: {}, winnerId: "", outcome: "", rolls: [], revealed: [], ready: [], busy: "", typing: [] });
     this.setTimer(this.turnMs(), () => this.endTurn(true));
+    this.armNudge("turn", this.turnMs(), () => [owner]);
     // "Jay, the lodger is…": the narrator reads the turn start if the clip is ready (it was asked for with the outcome).
     const line = this.turnLine(owner);
     // The clock restarts once the narrator has finished the line (CD playtest: "is it my turn?" while it was still
@@ -1824,7 +1853,10 @@ export class GameHost {
     this.voiceBy(line, Date.now() + 4000).then((clip) => {
       if (this.state.phase !== "turn" || this.state.turnIndex !== k) return;
       const ms = this.play(clip);
-      if (ms) this.setTimer(this.turnMs() + ms, () => this.endTurn(true));
+      if (ms) {
+        this.setTimer(this.turnMs() + ms, () => this.endTurn(true));
+        this.armNudge("turn", this.turnMs() + ms, () => [owner]);
+      }
     });
     this.note("turn", this.heroName(owner), `Turn ${k + 1} of ${order.length}. Everyone else can suggest one action; ${this.heroName(owner)} picks.`);
   }
@@ -1961,6 +1993,7 @@ export class GameHost {
     const line = `Alright, everyone… time for the grand finale. ${this.state.situation} So. What's the final move?`;
     this.voiceBy(line, Date.now() + 4000).then((clip) => this.state.phase === "pitch" && this.play(clip));
     this.setTimer(this.turnMs(), () => this.endPitch(true));
+    this.armNudge("pitch", this.turnMs(), () => this.present().filter((h) => !this.state.pitches.some((x) => x.playerId === h.id)).map((h) => h.id));
   }
 
   private endPitch(timedOut = false) {
@@ -1983,8 +2016,58 @@ export class GameHost {
       this.note("ruling", "The vote", el.length === 1 ? "Only one final plan, so no vote." : "Nobody else could back a plan, so no vote.");
       return this.startRuling(el[0]);
     }
-    this.set({ phase: "vote", votes: {} });
+    if (FEATURES.finaleTalk) return this.startConvince();
+    this.startVote();
+  }
+
+  private startVote() {
+    this.set({ phase: "vote", votes: {}, ready: [] });
     this.setTimer(this.quick ? 12_000 : VOTE_MS, () => this.endVote(true));
+    this.armNudge("vote", this.quick ? 12_000 : VOTE_MS, () => this.planVoters().filter((p) => !this.state.votes[p.id]).map((p) => p.id));
+  }
+
+  /**
+   * "Convince each other" (CD, Sun): before the final vote, 60 s for the table to argue for their plans out loud.
+   * Everyone's plan is on screen (state.pitches); phones send "ready"; everyone ready = straight to the vote.
+   */
+  private startConvince() {
+    this.set({ phase: "convince", ready: [] });
+    const talkMs = this.judge ? 30_000 : CONVINCE_MS; // judge mode keeps the demo short
+    this.setTimer(talkMs, () => this.endConvince());
+    this.armNudge("convince", talkMs, () => this.present().filter((p) => !this.state.ready.includes(p.id)).map((p) => p.id));
+    // Pre-voiced by the voice session (exact text = a cache hit).
+    const said = this.judge ? "Alright. You've got thirty seconds. Convince each other." : "Alright. You've got one minute. Convince each other.";
+    this.voiceBy(said, Date.now() + 3000).then((clip) => this.state.phase === "convince" && this.play(clip));
+    this.note("ruling", "Convince each other", "One minute to talk the table into your plan. Everyone taps Ready to vote, or the minute runs out.");
+  }
+
+  private nudgeTimer: ReturnType<typeof setTimeout> | null = null;
+
+  /**
+   * Time warning (CD): ~10 s before an input deadline, if someone still hasn't sent, state.nudge names the slow player
+   * (only when it's exactly one) and the voice session plays a pre-voiced nudge, never twice in a row, never over the
+   * narrator. Re-arming replaces the last one; a phase change cancels it.
+   */
+  private armNudge(kind: "turn" | "idea" | "pitch" | "vote" | "convince", totalMs: number, slow: () => string[]) {
+    if (this.nudgeTimer) clearTimeout(this.nudgeTimer);
+    this.nudgeTimer = null;
+    if (totalMs < 15_000) return;
+    const phase = this.state.phase;
+    const turn = this.state.turnIndex;
+    this.nudgeTimer = setTimeout(() => {
+      if (this.state.phase !== phase || this.state.turnIndex !== turn || this.state.paused) return;
+      const who = slow().filter((id) => this.player(id) && !this.player(id)!.away);
+      if (!who.length) return;
+      const name = who.length === 1 ? this.heroName(who[0]) : "";
+      // nudge = look's "10 s!" chip; timeWarn = voice's spoken warning (a live "<Name>, ten seconds." when one person).
+      this.set({ nudge: { at: Date.now(), kind, name }, timeWarn: { at: Date.now(), ...(name ? { name } : {}) } });
+    }, totalMs - 10_000);
+  }
+
+  private endConvince() {
+    if (this.state.phase !== "convince") return;
+    this.clearTimer();
+    this.startVote();
   }
 
   /** Finale plans that can win: every plan someone actually made. */
@@ -2025,6 +2108,12 @@ export class GameHost {
     const winner = best[randInt(best.length)];
     const tally = el.map((p) => `${this.heroName(p.playerId)} ${count(p.id)}`).join(", ");
     this.note("ruling", "The vote", `Backs: ${tally}.${best.length > 1 ? " Tie, broken at random." : ""} ${this.heroName(winner.playerId)}'s plan is the final move.`);
+    // A tie is announced, never silent (CD: "how is it randomly choosing?").
+    if (best.length > 1) {
+      const said = `Tie! ${this.heroName(winner.playerId)}'s plan wins the coin flip.`;
+      this.set({ banner: said });
+      this.voiceBy(said, Date.now() + 2500).then((clip) => this.play(clip));
+    }
     this.startRuling(winner);
   }
 
@@ -2100,7 +2189,7 @@ export class GameHost {
       this.quipsSaid.push(quip);
       this.voiceBy(quip, Date.now() + 2500).then((clip) => ["ruling", "roll"].includes(this.state.phase) && this.state.turnIndex === turn && this.play(clip));
     }
-    if (finale) return this.setTimer(this.quick ? 2800 : RULING_MS, () => this.startFinalRoll(judged, roll));
+    if (finale) return this.setTimer(this.judge ? 1800 : this.quick ? 2800 : RULING_MS, () => this.startFinalRoll(judged, roll));
     this.pendingRoll = roll;
     this.outcomeAt = 0;
     // design/35: ONE turn call, started the moment the plan is ruled (hidden behind the plan card, the throw and
@@ -2114,7 +2203,7 @@ export class GameHost {
       this.paintDecision(judged, v, d.outcome, d.scene || this.state.situation, d.finale ? "finale" : d.act_changed ? "act" : "win");
       if (d.scene) this.voiceFor(d.finale || !this.nextOwner() ? `Alright, everyone… time for the grand finale. ${d.scene} So. What's the final move?` : d.scene);
     });
-    this.setTimer(this.quick ? 2200 : RULING_MS, () => this.startRoll());
+    this.setTimer(this.judge ? 1800 : this.quick ? 2200 : RULING_MS, () => this.startRoll());
   }
 
   /**
@@ -2555,7 +2644,7 @@ export class GameHost {
     this.set({ phase: "roll", rolls: [roll], revealed: [], fling: null });
     // Their phone shows a big ROLL button; after 10 s the table rolls for them (and their phone buzzes).
     if (this.player(roll.playerId)?.away) return this.setTimer(1500, () => this.revealRoll());
-    this.setTimer(this.quick ? 6000 : ROLL_MS, () => this.revealRoll(true));
+    this.setTimer(this.judge ? 3000 : this.quick ? 6000 : ROLL_MS, () => this.revealRoll(true)); // judge mode: auto-throw at 3 s (CD: waits)
   }
 
   /** The roller swiped (or tapped). The swipe only shapes the throw on the TV; the number was decided in code. */
@@ -2613,7 +2702,7 @@ export class GameHost {
     const won = g.branch === "better" || g.branch === "legendary";
     return this.ask<TurnResult>("turn", {
       state: this.story,
-      hero: { name: h.name, power: h.ability?.text ?? "", pronouns: h.pronouns || "they/them" },
+      hero: { name: h.name, power: h.ability?.text ?? "", pronouns: h.pronouns || "they/them", concept: this.player(pitch.playerId)?.concept ?? "" },
       plan: pitch.text, // the player's own words (own + the friend's idea), never shortened
       own: pitch.own,
       idea: pitch.idea,
@@ -2661,6 +2750,7 @@ export class GameHost {
     if (d.problems?.length) this.note("fallback", "Checks", d.problems.slice(0, 3).join("; "));
     if (d.right_now && d.right_now !== this.state.nowGoal) this.note("scene", "Right now", d.right_now);
     this.set({ outcome: d.outcome, busy: "", situation: d.scene || this.state.situation, nowGoal: d.right_now || this.state.nowGoal, progress: d.progress, act: d.act });
+    this.playStorySfx(d.sfx);
     console.info(`[wait] outcome ${Date.now() - landed}ms after the die landed (turn ${this.state.turnIndex + 1}${d.fallback ? ", fallback" : ""})`);
     const spoken = this.play(clip);
     this.setTimer(spoken ? Math.max(spoken + 1000, 4500) : outcomeMs(d.outcome), () => this.startTurn(this.state.turnIndex + 1));
@@ -2699,12 +2789,13 @@ export class GameHost {
     const ending = this.finalRoll.ending ?? endingFromBand(this.finalRoll.band);
     this.set({
       phase: "final_roll",
+      banner: "",
       rolls: [],
       revealed: [],
       finalMoves: { [pitch.playerId]: pitch.text },
       final: { dice: {}, rolled: [], best: pitch.playerId, hopeBonus: 0, total: 0, ending, stage: "arm", armed: [], shook: [], auto: [] },
     });
-    this.setTimer(FINAL_ARM_MS, () => this.startCountdown());
+    this.setTimer(this.judge ? 3000 : FINAL_ARM_MS, () => this.startCountdown());
     // The die is already decided (crypto, in code), so the ending is written while everyone shakes.
     this.askEnding(this.finalRoll, pitch);
     if (this.finalSafety) clearTimeout(this.finalSafety);
@@ -2735,7 +2826,9 @@ export class GameHost {
   private startShake() {
     if (this.state.phase !== "final_roll" || this.state.final?.stage !== "count") return;
     this.patchFinal({ stage: "shake" });
-    this.setTimer(FINAL_SHAKE_MS, () => this.startTumble(true));
+    // The finale's build-up sound under everyone shaking (CD), picked by Muse with the ending.
+    this.epilogueP?.then((e) => ["final_roll"].includes(this.state.phase) && this.cueFinale("buildup", e.buildup));
+    this.setTimer(this.judge ? 3500 : FINAL_SHAKE_MS, () => this.startTumble(true));
     this.broadcastNow();
   }
 
@@ -2780,12 +2873,13 @@ export class GameHost {
     const sc = this.sceneList[this.state.sceneIndex];
     const heroes = this.heroes().map((p) => ({ id: p.id, name: p.hero!.name }));
     const winner = this.heroName(pitch.playerId);
-    const fb = () => ({ ending: fallbackEnding(ending, winner, pitch.verdict && !pitch.verdict.fallback ? pitch.verdict.interpretation : "", this.story?.finish_line ?? ""), line: FALLBACK_LINE[ending], recap: "", skills: null as Record<string, string> | null });
+    const fb = () => ({ ending: fallbackEnding(ending, winner, pitch.verdict && !pitch.verdict.fallback ? pitch.verdict.interpretation : "", this.story?.finish_line ?? ""), line: FALLBACK_LINE[ending], recap: "", skills: null as Record<string, string> | null, sfx: [] as StorySfxCue[], buildup: "", payoff: "", bridge: "" });
     this.epilogueP = this.viaAI(
       "The ending",
-      this.ask<{ ending: string; line: string; recap: string; skills?: { id: string; phrase: string }[] }>("story_end", {
+      this.ask<{ ending: string; line: string; recap: string; skills?: { id: string; phrase: string }[]; sfx?: unknown; sfx_buildup?: string; sfx_payoff?: string; bridge?: string }>("story_end", {
         state: this.story,
         winner_hero: { name: winner, pronouns: this.player(pitch.playerId)?.hero?.pronouns || "they/them" },
+        real_story: this.seed?.the_real_story ? { headline: this.seed.the_real_story.headline, summary: this.seed.the_real_story.summary, now: this.seed.the_real_story.now ?? "" } : undefined,
         plan: pitch.text,
         grade: gradeRoll(roll.total, roll.kept).grade,
         scene: { title: sc?.title, goal: sc?.goal },
@@ -2814,6 +2908,10 @@ export class GameHost {
               line: (d.line ?? "").trim() || fb().line,
               recap: (d.recap ?? "").trim(),
               skills: Array.isArray(d.skills) ? Object.fromEntries(d.skills.filter((x) => x && typeof x.id === "string").map((x) => [x.id, String(x.phrase ?? "").trim()])) : null,
+              sfx: pickStorySfxCues(d.sfx),
+              buildup: pickStorySfx(d.sfx_buildup),
+              bridge: String(d.bridge ?? "").trim().slice(0, 200),
+              payoff: pickStorySfx(d.sfx_payoff),
             }
           : null,
       fb,
@@ -2873,8 +2971,10 @@ export class GameHost {
     this.patchFinal({ stage: "landed", dice: { [r.playerId]: r.kept }, rolled: [r.playerId], total: r.total, ending });
     this.set({ phase: "final_result", rolls: [r], revealed: [r.playerId], players: this.state.players.map((p) => ({ ...p, peril: "" })), ready: [] });
     this.recordWin(pitch, r, `The finale: ${ENDING_LABEL[ending].toLowerCase()}.`);
+    // The payoff sound hits the moment the result lands (CD: "a LOUD clink when we strike gold"); look adds a visual punch on kind "payoff".
+    this.epilogueP?.then((e) => this.state.phase === "final_result" && this.cueFinale("payoff", e.payoff));
     this.note("roll", "The ending", `${r.kept} ${fmtMod(r.statBonus)}${r.bonus ? ` +${r.bonus}` : ""} = ${r.total} → ${BAND_LABEL[r.band]} → ${ENDING_LABEL[ending]}. Below the target fails; reaching it works with a cost; 3 over works cleanly.`);
-    this.setTimer(FINAL_RESULT_MS, () => this.startFinalScene());
+    this.setTimer(this.judge ? 2000 : FINAL_RESULT_MS, () => this.startFinalScene());
   }
 
   /**
@@ -2891,6 +2991,7 @@ export class GameHost {
     const clip = await this.voiceBy(e.ending, (this.endingAt || Date.now()) + 3000);
     if (this.state.phase !== "final_result") return;
     this.set({ phase: "outcome", outcome: e.ending, busy: "", ready: [] });
+    this.playStorySfx(e.sfx);
     const spoken = this.play(clip);
     this.setTimer(spoken ? Math.max(spoken + 1200, 4500) : outcomeMs(e.ending), () => this.runEnding(plan));
   }
@@ -2905,7 +3006,10 @@ export class GameHost {
   private nextEnding(): void {
     this.clearTimer();
     const id = this.endingQueue.shift();
-    if (id === undefined) return this.startReveal();
+    if (id === undefined) {
+      void this.startReveal();
+      return;
+    }
     const step = this.endingSteps[id];
     if (!step) return this.nextEnding();
     let called = false;
@@ -3140,7 +3244,23 @@ export class GameHost {
     this.setTimer(lead + (spoken ? Math.max(spoken + 1200, MONTAGE_PANEL_MS) : Math.min(11_000, Math.max(7000, ending.split(/\s+/).length * 320 + 3000))), done);
   }
 
-  private startReveal() {
+  /** The grand ending's reveal data (CD): each hero's key move in their own words, the real story in beats, the bridge. */
+  private async revealData() {
+    const rs = this.seed?.the_real_story;
+    const e = await withTimeout(this.epilogueP ?? Promise.resolve(null), 1500, () => null);
+    const moves = this.heroes().map((p) => {
+      const mine = this.state.log.filter((l) => l.heroId === p.id && l.pitch);
+      const best = mine.slice().sort((a, b) => BAND_RANK[a.band] - BAND_RANK[b.band])[0];
+      // No turn of their own (judge mode, 4+ players): their finale plan is their move.
+      const finalePlan = this.state.pitches.find((x) => x.playerId === p.id && !x.auto)?.text ?? "";
+      return { heroId: p.id, name: p.hero!.name, move: cleanText(best?.pitch || finalePlan, 140) };
+    });
+    return { moves, real: { what: rs?.headline ?? "", ending: [rs?.summary, rs?.now].filter(Boolean).join(" "), source: rs?.source ?? "", date: rs?.date ?? "" }, bridge: e?.bridge ?? "" };
+  }
+
+  private async startReveal() {
+    const revealData = await this.revealData();
+    this.set({ revealData });
     const seed = this.seed;
     if (seed) {
       const rs = seed.the_real_story;
@@ -3179,10 +3299,14 @@ export class GameHost {
       // "based on a true story" is said ONCE in the game, here (the on-screen banner stays). Never "this really happened":
       // the game's story is based on it, it didn't happen (CD).
       const said = this.seed?.author ? `Here's the twist… it's based on ${speakableName(this.seed.author.name)}'s true story. ${rsr.summary}` : `Now, here's the strange part… it's based on a true story. ${rsr.headline}.`;
-      this.voiceBy(said, Date.now() + 2500).then((clip) => this.state.phase === "reveal" && this.play(clip));
+      // The bridge links the table's ending to the real one, after a beat of breathing room (CD: the grand ending).
+      const bridge = this.state.revealData?.bridge ?? "";
+      // It starts on the real-story beat (look: ~5 s of WHAT YOU DID first), so the result lands before she speaks.
+      this.voiceBy(bridge ? `${said} ... ${bridge}` : said, Date.now() + 2500).then((clip) => this.state.phase === "reveal" && this.play(clip, 5000));
     }
     const text = `${this.seed?.the_real_story.headline ?? ""} ${this.seed?.the_real_story.summary ?? ""}`;
-    if (this.quick) return this.reading(text, () => this.showStorybook(), QUICK.revealMs, QUICK.revealMs);
+    // Room to breathe: the headline plus the bridge line (CD's grand ending); Continue still skips.
+    if (this.quick) return this.reading(text, () => this.showStorybook(), Math.max(QUICK.revealMs, 20_000), Math.max(QUICK.revealMs, 20_000));
     this.reading(text, () => this.showStorybook(), 15000);
   }
 

@@ -409,6 +409,12 @@ export function claimTv() {
   announceTv();
 }
 
+/** True while a narrator line is playing on this TV (time warnings never talk over her). */
+export function isNarrating() {
+  for (const a of narrators) if (!a.paused && !a.ended) return true;
+  return false;
+}
+
 /** Track a narrator line so a silenced TV never plays it. Returns an untrack. */
 export function trackNarration(a: HTMLAudioElement): () => void {
   narrators.add(a);

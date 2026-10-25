@@ -200,3 +200,25 @@ Full history and train of thought: `design/00-where-we-are.md`.
 - Pitch framing for the Adults tier: "grown-up stories, with hard limits the AI can't cross."
 - Update (Sun ~6:30 AM): the CD leaves ~10:20, not 8:30. New plan: features stay frozen from 7:20; playtest → fix cycles (crash / hard-to-follow / feel) until 9:00; video 9:00-9:45; Devpost submitted by ~10:15, before the CD leaves (⏳ who presses Submit: ⭐ the CD, with the partner as backup).
 - ✅ CD voice pick: the Combo delivery (expressive Flash, instant) for every live line; the finale's "Alright, everyone…" in the party-host (B) style as a pre-voiced clip.
+
+## Sun ~7 AM: the CD's judge game ("The Wall That Made an Offer", scored 72/100)
+- ✅ The hero IS what the player typed (literal concept; the AI adds detail only). Join asks for the character's name.
+- ✅ Stats visible when they matter (the ruling names the stat; a one-line legend: Guts = force · Brains = tricks · Charm = talk).
+- ✅ The ending in 2 beats: "What you did" → "What really happened"; a bigger concrete finale event; story-specific build-up + payoff SFX with a visual punch (behind FEATURES.storySfx).
+- ✅ Story SFX: 1-3 per slide on actions, may overlap each other, never interrupt/duck the narrator.
+- ✅ Finale ties announced on screen. Judge-mode waits: auto-throw at 3 s, GO→outcome target <8 s.
+- After the freeze / later: a separate voice for side characters.
+
+## Sun ~7:05 AM: 4 approved exceptions to the freeze (CD), due 8:15, OFF behind a flag if not solid
+1. The finale "Convince each other": a 60 s talk phase with all plans on the TV, "ready to vote" on phones, then the vote; ties announced.
+2. Narrator time warnings at ~10 s left (pre-voiced variants, never over another line).
+3. An editor pass on every outcome (code checks + one fast Muse editor call only if it fits the hidden window; never adds wait).
+4. A grand ending: a big final event + a music swell + build-up/payoff SFX + a visual punch; expanded "What you did → What really happened" (a panel per hero, the real story in 2-3 beats, a closing line linking them).
+- ✅ (Sun ~7 AM) CD: no personal judge story; the judge 3 stay shark/gold/Batman.
+- ✅ CD: the ending is PLAYER-LED. The real event gives only the setup (place, problem, stakes); the middle and end follow the players with no steering to the real outcome (reverses 74cec6d's arc steering). The reveal contrasts or matches "What you did" vs "What really happened" with a bridge line.
+- Optional pitch opener from the CD's real HackTX journey (denied application, walk-in line, the chess tournament win): pitch drafts it as Opener A/B.
+- ✅ CD: the finale talk phase is 30 s in judge mode, 60 s in normal games. The partner is awake and will run a judge game on the final build before the CD leaves.
+- Rollback point: git tag judge-safe-1 = prod once-upon-a-roll-ggknns93n (`npx vercel promote <that url>` from the export folder). Deploy once, after a full local production test.
+- ✅ (Sun ~7:20 AM) CD: the hero question is "What's your secret strength?" everywhere (was "secret talent"): game copy + prompts (story), docs/Devpost/hub (pitch), video (video session).
+- ✅ CD: the final-roll phone buttons get bigger and clearer, with obvious states and instant feedback (look).
+- A new "video" session (local_e5d8a79d) owns the video rework; the hook is the real-headline cold open.

@@ -1,6 +1,6 @@
 # Devpost submit (the CD by ~10:15; the partner is the backup, by 11:30)
 
-The CD plans to press Submit before leaving at ~10:20. Use this page if they couldn't, or to add the video link
+**The project is already submitted (7:17); `DEVPOST_SUBMIT.md` is the field-by-field update, and it's the source of truth.** The CD plans to finish it before leaving at ~10:20. Use this page if they couldn't, or to add the video link
 after. One page, in order. Everything you paste is already written. Never paste a key, and close Discord, DMs and key files
 before sharing your screen with anyone.
 
@@ -21,19 +21,19 @@ If you can't see the project, the CD has to add you as a teammate first (message
 | Devpost field | Paste this (from `DEVPOST.md`) |
 |---|---|
 | Project name | `Group Project` |
-| Elevator pitch | `The one group project where everyone actually shows up.` |
-| Thumbnail | `devpost-media/thumbnail-final.jpg` |
+| Elevator pitch | the 181-character line in `DEVPOST_SUBMIT.md` §2 |
+| Thumbnail | keep the current logo |
 | About the project (the big text box) | Everything from **## Inspiration** down to the end of **## What's next for Group Project** (stop at the `---` line). Keep the `##` headings; Devpost reads Markdown. |
-| Built with | Type each tag and press Enter: next.js, typescript, react, tailwindcss, vercel, supabase, meta-muse-spark, meta-muse-image, meta-muse-voice-transcribe, elevenlabs, openai-tts, web-audio-api, serpapi, google-news, mcp, claude-code |
+| Built with | The 19 tags in `DEVPOST_SUBMIT.md` §3 |
 | "Try it out" links | `https://groupproject-game.vercel.app/tv` and `https://groupproject-game.vercel.app/tv?judge=1` |
 | Image gallery | Upload `devpost-media/gallery-final/` **in number order, 1 to 6** (1 is the cover). |
 | Video demo link | The YouTube link from step 1 |
 
-Don't paste the "Paste from Name down" line, the **## Built with / Tracks / Try it** sections into the text box, or
+The full field-by-field list is `DEVPOST_SUBMIT.md` (top level). Don't paste the **## Built with / Try it** sections into the text box, or
 anything in *italics with brackets*.
 
 ## 3. Submit
-- [ ] Prizes / tracks, tick exactly these: **Meta: Bringing People Closer Together with AI**, **Most Entertaining**,
+- [ ] **Additional info → Sponsor / Special Prizes (was EMPTY at 7:17)**, tick exactly these: **Meta: Bringing People Closer Together with AI**, **Most Entertaining**,
       **Best Use of SerpApi**. (Best Novice applies by itself if we're eligible. Gemini: off, the CD's call.)
 - [ ] Both teammates listed on the project.
 - [ ] Press **Submit**. Wait for the "submitted" page.
@@ -41,6 +41,9 @@ anything in *italics with brackets*.
       https://claude.ai/artifact/Aehk1tVCwhGP9ydNnXxFD3
 
 ## If something goes wrong
+- **Rollback** (only if a deploy misbehaves): the known-good build is `once-upon-a-roll-ggknns93n` (tag `judge-safe-1`).
+  Away from judges, in a terminal at `C:\Users\oclab\AppData\Local\Temp\gpd\game`:
+  `npx vercel promote https://once-upon-a-roll-ggknns93n-bl4ck-b0mb.vercel.app` (or `npx vercel rollback`). Then F5.
 - **Video not ready by 11:15:** submit without it, then edit the project to add the link before 11:30 (edits are
   allowed until the deadline).
 - **An image won't upload:** skip it; 5 images are plenty. Devpost takes JPG/PNG up to 5 MB.

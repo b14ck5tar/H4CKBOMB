@@ -54,6 +54,8 @@ export function stampText(tier: Tier): string {
 }
 
 /** Stats keep their schema keys; players see modern names. */
+/** One line that explains the three stats (CD: "didn't understand the stats"). */
+export const STAT_LEGEND = "Guts = force · Brains = tricks · Charm = talk";
 export const STAT_LABEL: Record<Stat, string> = { brave: "Guts", clever: "Brains", charming: "Charm" };
 
 export const BAND_LABEL: Record<Band, string> = {

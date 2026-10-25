@@ -11,15 +11,17 @@
  *                               the "because of you" montage and the reveal, with paint-smear wipes between phases
  *                               (&from=meter2 starts at a step)
  *   /tv-preview?piece=finale-pitch   WRITE: sealed plan cards fly in, "2 of 4 in" (live)
+ *   /tv-preview?piece=finale-talk    TALK: every plan big, "N of M ready", the clock
  *   /tv-preview?piece=finale-vote    BACK: plans face up, vote dots land live, countdown
  *   /tv-preview?piece=finale-shake   ARM -> 3,2,1 -> SHAKE! -> ROLLING, cycling (&stage=arm|count|shake|tumble holds one)
+ *   /tv-preview?piece=payoff    the finale's payoff punch, every 2.5 s (&tone=up|mixed|down)
  *   &t=600                      freeze every animation at 600 ms (for review frames), e.g. ?piece=wipe&t=560
  *                               (&fz=4000 waits 4 s before freezing, to catch later events like the picked idea)
  * Keys: Space replays the current piece.
  */
 import { useEffect, useState } from "react";
 import type { Tier } from "@/lib/types";
-import { EndingMontage, FinalePitch, FinaleShake, FinaleVote, HudStrip, InkWipe, OutcomeCaption, PhaseSwap, PlanCard, QualityMeter, SceneArt, SuggestionBubbles, TurnCard, TvStage } from "@/components/tvskin";
+import { EndingMontage, FinalePitch, FinaleShake, FinaleTalk, FinaleVote, HudStrip, InkWipe, OutcomeCaption, PayoffPunch, PhaseSwap, PlanCard, QualityMeter, SceneArt, SuggestionBubbles, TurnCard, TvStage, type PayoffTone } from "@/components/tvskin";
 import type { MontagePanel, RevealData } from "@/components/tvskin";
 
 const ART = ["/quests/cornfield-dome/scene_1.webp", "/quests/cornfield-dome/scene_2.webp", "/quests/cornfield-dome/scene_3.webp", "/lobby/boulder_114b3c8fbac1bd2a55054597.webp"];
@@ -35,6 +37,16 @@ const PANELS: MontagePanel[] = [
   { image: ART[1], line: "Mr. Han's lullaby echoed up the elevator shaft and woke the whole county.", who: [{ name: "Mr. Han", color: "#ffad3b", portrait: "/heroes/v2/librarian.webp" }] },
   { image: ART[2], line: "Bea hugged the giant pillow, fell asleep, and accidentally hit the off switch.", who: [{ name: "Bea", color: "#ff2e7e", portrait: "/heroes/v2/skater-grandma.webp" }, { name: "Rosa", color: "#3de7ff" }] },
 ];
+/** The grand ending's extra data (state.revealData), for &grand=1. */
+const GRAND = {
+  moves: [
+    { name: "Rosa", move: "I ask the park ranger what it wants" },
+    { name: "Mr. Han", move: "I hum it a slow lullaby, really loud" },
+    { name: "Bea", move: "I give it a giant pillow to hug" },
+  ],
+  realEnding: "The dome turned out to be a piece of a Chinese rocket. It was hauled away safely and nobody was hurt.",
+  bridge: "You sent the hatchling home before sunrise. The real one went home too: on a flatbed truck.",
+};
 const REVEAL: RevealData = {
   headline: "'Space object' found in rural Minnesota cornfield came from Chinese rocket, experts say",
   source: "Bring Me The News",
@@ -170,6 +182,10 @@ function FinalePreview({ piece, stageParam }: { piece: string; stageParam?: stri
       />
     );
   }
+  if (piece === "finale-talk") {
+    const ready = FIN_HEROES.slice(0, n % (FIN_HEROES.length + 1)).map((h) => h.id);
+    return <FinaleTalk heroes={FIN_HEROES} plans={FIN_PLANS} ready={ready} deadlineAt={deadline} />;
+  }
   if (piece === "finale-vote") {
     const votes = Object.fromEntries(VOTE_ORDER.slice(0, Math.max(0, n - 1)));
     return <FinaleVote heroes={FIN_HEROES} plans={FIN_PLANS} votes={votes} deadlineAt={deadline} totalSeconds={30} />;
@@ -232,7 +248,7 @@ export default function TvPreview() {
       <div key={run} style={{ position: "fixed", inset: 0, background: "#07040d", overflow: "hidden" }}>
         <SceneArt src={ART[2]} dim={0.6} />
         <TvStage>
-          {piece !== "finale-vote" && <HudStrip ladder={{ steps: 4, at: 3, now: "Send the hatchling home", goal: LADDER.goal }} />}
+          {!["finale-vote", "finale-talk"].includes(piece) && <HudStrip ladder={{ steps: 4, at: 3, now: "Send the hatchling home", goal: LADDER.goal }} />}
           <FinalePreview piece={piece} stageParam={q.get("stage") ?? undefined} />
         </TvStage>
       </div>
@@ -243,10 +259,12 @@ export default function TvPreview() {
   const total = Number(q.get("total") ?? 14);
   const nat = q.get("nat") ? Number(q.get("nat")) : undefined;
 
+  if (piece === "payoff") return <PayoffPreview key={run} tone={(q.get("tone") ?? "up") as PayoffTone} />;
+
   if (piece === "montage" || piece === "reveal")
     return (
       <div key={run} style={{ position: "fixed", inset: 0, background: "#07040d" }}>
-        <EndingMontage panels={PANELS} reveal={q.get("author") ? { ...REVEAL, author: q.get("author")! } : REVEAL} keepsakeUrl="https://groupproject-game.vercel.app/tale#demo" start={piece === "reveal" ? PANELS.length : Number(q.get("at") ?? 0)} />
+        <EndingMontage panels={PANELS} reveal={{ ...(q.get("author") ? { ...REVEAL, author: q.get("author")! } : REVEAL), ...(q.has("grand") ? GRAND : {}) }} keepsakeUrl="https://groupproject-game.vercel.app/tale#demo" start={piece === "reveal" ? PANELS.length : Number(q.get("at") ?? 0)} />
       </div>
     );
 
@@ -306,6 +324,30 @@ export default function TvPreview() {
             />
           </>
         )}
+      </TvStage>
+    </div>
+  );
+}
+
+/** The payoff punch on a loop, as the host would stamp it at each payoff hit. */
+function PayoffPreview({ tone }: { tone: PayoffTone }) {
+  const [at, setAt] = useState(0);
+  useEffect(() => {
+    const fire = () => setAt(Date.now());
+    const t0 = setTimeout(fire, 600);
+    const iv = setInterval(fire, 2500);
+    return () => {
+      clearTimeout(t0);
+      clearInterval(iv);
+    };
+  }, []);
+  const word = tone === "up" ? "Triumphant" : tone === "mixed" ? "Bittersweet" : "Hilarious disaster";
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "#07040d", overflow: "hidden" }}>
+      <SceneArt src={ART[2]} />
+      <TvStage>
+        <OutcomeCaption tag="GREAT" hero={{ name: "Rosa", color: "#3de7ff" }} text="Rosa hums the lullaby, and the hatchling curls up and switches off its red light." />
+        <PayoffPunch at={at} tone={tone} word={word} />
       </TvStage>
     </div>
   );

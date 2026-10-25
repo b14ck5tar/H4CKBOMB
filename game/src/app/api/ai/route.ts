@@ -30,7 +30,7 @@ import type { Hero, Rating, Stat } from "@/lib/types";
 import { evenStats } from "@/lib/rules";
 import { storeCast, storedCast } from "@/server/castCache";
 import { runEnding, runTurn } from "@/server/stories/procedural";
-import { applyTurn, fallbackProposal, stateFromOpener, type Grade } from "@/lib/procedural";
+import { applyTurn, fallbackProposal, stateFromOpener, usesPlan, type Grade } from "@/lib/procedural";
 import { BEAT_OF, fillBeat, liveProblems, makeBible, pronounMap, storedPack, tailor, tailorEnding, turnsOf } from "@/server/stories/bible";
 
 // story_bible can take 40-90 s (it runs during the vote, hidden). Fluid compute allows this on every Vercel plan.
@@ -97,12 +97,13 @@ async function run(task: string, input: Any, rating: Rating) {
   switch (task) {
     case "character": {
       const real = realOf(input.real);
-      const hero = await museJSON<Hero>({
+      const concept = cleanText(input.concept, 200);
+      const build = (extra = "") => museJSON<Hero>({
         task: t("character"),
         system: withRating(CHARACTER_SYSTEM, rating),
         schema: CHARACTER_SCHEMA,
         effort: "low",
-        user: JSON.stringify({
+        user: extra + JSON.stringify({
           concept: wrapOpt("p", cleanText(input.concept, 200), 200),
           // The player's chosen hero name (kept exactly; host.ts also forces it onto the card).
           chosen_name: cleanText(input.chosen_name, 20) || undefined,
@@ -111,6 +112,14 @@ async function run(task: string, input: Any, rating: Rating) {
           avoid_names: input.avoidNames ?? [],
         }),
       });
+      let hero = await build();
+      // The hero is what they typed (CD): a concept word must survive into the card, else one retry that says so.
+      // Skipped when the DM had to steer it (a real person, an IP, something inappropriate).
+      const card = (h: Hero) => JSON.stringify([h.name, h.epithet, h.visual?.anchor, h.ability?.text, h.roast]);
+      if (concept && hero.concept_status === "ok" && !usesPlan(card(hero), concept)) {
+        const again = await build(`The last card turned the concept into something else. The hero must BE "${concept.slice(0, 80)}", literally.\n`).catch(() => null);
+        if (again && usesPlan(card(again), concept)) hero = again;
+      }
       return fixStats(hero);
     }
     case "scene":

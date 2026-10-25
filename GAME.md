@@ -27,7 +27,7 @@ loop before any new feature.
 ## 2. The night, screen by screen
 
 1. **Lobby (TV):** Jackbox-style title crossed with a neon nightclub poster. Big QR + 4-letter code, hero cards pop in with sound, a few big setting buttons (Quick or Full; Odd news or Our stories; Kids, Teens or Adults). Start appears at 2+ players.
-2. **Hero (phone):** one line about your hero plus the optional "What's your secret talent?", or grab a ready-made hero. The portrait paints in the background.
+2. **Hero (phone):** one line about your hero plus the optional "What's your secret strength?", or grab a ready-made hero. The portrait paints in the background.
 3. **Story pick:** Odd news shows 3 headlines as fantasy quest cards (no spoilers); everyone taps one, ties break at random. Our stories: everyone privately writes a small true story, then the table votes.
 4. **Opener:** the scene art appears and the narrator reads while the text appears in sync. The finish line and the "Right now" step stay on screen.
 5. **Turns:** "Sal, tell the table your plan" → friends suggest → the owner picks or writes one plan → Muse labels it → the owner swipes up to throw the die onto the TV → the outcome is narrated over a new painting → the next player is handed the turn by name. One meter: progress, with 3 act dots.
@@ -39,7 +39,7 @@ loop before any new feature.
 
 | # | Question | Final answer |
 |---|---|---|
-| 1 | Becoming a hero | One line + "What's your secret talent?" (optional). Ready-made heroes as backup (18, Neon Ink). Power scaling: nobody massively out- or underperforms. |
+| 1 | Becoming a hero | One line + "What's your secret strength?" (optional). Ready-made heroes as backup (18, Neon Ink). Power scaling: nobody massively out- or underperforms. |
 | 2 | Whose action | One owner per turn; everyone else suggests, the owner picks. Full: 2-4 players get 2 turns each, 5+ get 1. Quick: 1 each. Humans only (bots never own turns). Then the grand finale. |
 | 3 | Dice | One d20 per action plus modifiers; one shared shake die for the finale. No pass line: every total is its own outcome. Wild plans need big rolls. |
 | 4 | Who judges a plan | Muse, literally and at face value, as a playful label (CLEVER … ONLY A MIRACLE). No "Convince the DM". No pass-line numbers shown. |
@@ -74,7 +74,7 @@ loop before any new feature.
 
 ## 5. The pieces
 
-- **Heroes:** cartoon characters, never realistic people. Equal stat budget in code (+2/+1/0 across Guts, Brains, Charm). The secret talent is the power, stays private, and returns at the reveal ("Solved by…"). Kids/Teens/Adults filters stories and tone.
+- **Heroes:** cartoon characters, never realistic people. Equal stat budget in code (+2/+1/0 across Guts, Brains, Charm). The secret strength is the power, stays private, and returns at the reveal ("Solved by…"). Kids/Teens/Adults filters stories and tone.
 - **Dice:** all numbers from code (crypto); the AI picks labels and words, never numbers. Total = d20 + stat + 1 (friend's idea) + plan shift (CLEVER +3, SOLID 0, BOLD −3, LONG SHOT −5, ONLY A MIRACLE −8). Grades: natural 1 DISASTER · 2-5 UH OH · 6-9 SORT OF · 10-14 IT WORKS · 15-19 GREAT · 20+ LEGENDARY. Fails are funny and set you back a little. No roll in time = auto-roll with a buzz.
 - **Story sources:** live odd news (SerpApi, cached 4 h; 250 searches/month) → gated library → curated. The gate keeps clear, playable, interesting stories. Adults also allows non-violent crime (heists, scams), weird court cases, scandals and dark-funny topics; every mode blocks deaths, serious injuries, violence, sexual content, children, hate, war/tragedy, partisan politics and mocking private people. A problem, never a villain. **Quick Tale** writes a live opener from fresh news during the lobby, with a stored backup ready instantly; `?judge=1` forces a stored story.
 - **Narrator:** one ElevenLabs voice for everything (the CD's pick, Eleven v3; the same voice on Flash for instant turn lines). Synced text; text-only fallback if audio is slow; never switches voice mid-game.

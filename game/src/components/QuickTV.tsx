@@ -22,8 +22,8 @@ import { Reactions } from "./Reactions";
 import { Avatar, Hope, ThankHearts, useFastNow } from "./TV";
 import { KeepsakeQR } from "./Keepsake";
 import { FEATURES } from "@/lib/features";
-import { dice, music, playSfx, useMusic } from "@/lib/sound";
-import { EndingMontage, FinalePitch, FinaleShake, FinaleVote, HudStrip, OutcomeCaption, Particles, PhaseSwap, PlanCard, QualityMeter, SuggestionBubbles, TurnCard, TvStage, TIER_LOOK } from "@/components/tvskin";
+import { dice, music, playSfx, playStoryBuildup, playStoryPayoff, playStorySfxCues, playTimeWarning, stopStoryBuildup, useMusic } from "@/lib/sound";
+import { Banner, NudgeChip, EndingMontage, FinalePitch, FinaleShake, FinaleTalk, FinaleVote, HudStrip, OutcomeCaption, Particles, PayoffPunch, PhaseSwap, PlanCard, QualityMeter, SuggestionBubbles, TurnCard, TvStage, TIER_LOOK } from "@/components/tvskin";
 import { QUICK_TURN_MS, TURN_MS, VOTE_MS } from "@/lib/rules";
 import type { CardHero, MontagePanel } from "@/components/tvskin";
 import { TIER_SHIFT, gradeRoll } from "@/lib/grade";
@@ -31,7 +31,7 @@ import { speakableName } from "@/lib/now";
 import { MONTAGE_PANEL_MS } from "@/lib/host";
 
 const READING = ["quest", "narrating", "ruling", "outcome", "epilogue", "reveal"];
-const SCENE_PHASES = ["narrating", "turn", "pitch", "vote", "ruling", "roll", "outcome"];
+const SCENE_PHASES = ["narrating", "turn", "pitch", "convince", "vote", "ruling", "roll", "outcome"];
 type Mood = "push" | "title" | "scene" | "action" | "final" | "end";
 const fmt = (n: number) => (n >= 0 ? `+${n}` : `−${-n}`);
 
@@ -1001,8 +1001,22 @@ function SkinEnding({ host, s }: { host: Stage; s: GameState }) {
         solvedBy: s.solvedBy || undefined,
         ending: f ? ENDING_LABEL[f.ending] : undefined,
         endingColor: f?.ending === "TRIUMPHANT" ? "#ffd23f" : f?.ending === "BITTERSWEET" ? "#2cf5c0" : "#ff2e7e",
+        // The grand ending (story's state.revealData): each hero's move, the real ending, the bridge line.
+        ...(s.revealData
+          ? {
+              moves: s.revealData.moves.map((m) => {
+                const p = s.players.find((x) => x.id === m.heroId);
+                return { name: shortName(p?.hero?.name ?? m.name), move: m.move };
+              }),
+              realEnding: s.revealData.real.ending || undefined,
+              bridge: s.revealData.bridge || undefined,
+              headline: s.revealData.real.what || real.headline,
+              source: s.revealData.real.source || real.source,
+              date: s.revealData.real.date || real.date,
+            }
+          : {}),
       }}
-      keepsake={s.storybook ? <KeepsakeQR host={host} s={s} size={260} bare /> : undefined}
+      keepsake={s.storybook || s.recap || s.epilogue ? <KeepsakeQR host={host} s={s} size={260} bare /> : undefined}
     />
   );
 }
@@ -1033,6 +1047,18 @@ function SkinFinaleVote({ host, s }: { host: Stage; s: GameState }) {
       votes={s.votes}
       deadlineAt={host.deadlineAt || undefined}
       totalSeconds={VOTE_MS / 1000}
+    />
+  );
+}
+
+/** The finale talk (CD): every plan big, a minute to convince each other; phones tap "ready to vote". */
+function SkinFinaleTalk({ host, s }: { host: Stage; s: GameState }) {
+  return (
+    <FinaleTalk
+      heroes={finaleHeroes(host, s)}
+      plans={s.pitches.filter((p) => !p.auto).map((p) => ({ id: p.id, playerId: p.playerId, text: p.verdict?.interpretation && !p.verdict.fallback ? p.verdict.interpretation : planText(p) }))}
+      ready={s.ready}
+      deadlineAt={host.deadlineAt || undefined}
     />
   );
 }
@@ -1143,6 +1169,9 @@ function Final({ host, s }: { host: Stage; s: GameState }) {
         {result && r && f ? (
           <TvStage>
             <SkinMeter s={s} r={r} />
+            {FEATURES.storySfx && s.sfx?.kind === "payoff" && (
+              <PayoffPunch at={s.sfx.at} tone={f.ending === "TRIUMPHANT" ? "up" : f.ending === "GRIM_BUT_HILARIOUS" ? "down" : "mixed"} word={ENDING_LABEL[f.ending]} />
+            )}
           </TvStage>
         ) : (
           <div className="flex items-center gap-10">
@@ -1353,10 +1382,36 @@ function moodFor(s: GameState, title: boolean): Mood {
   if (s.phase === "quest") return "push";
   if (s.phase === "narrating" && title) return "title";
   if (s.phase === "final_roll" || s.phase === "final_result") return "final";
-  if (["vote", "ruling"].includes(s.phase)) return "action";
+  if (["convince", "vote", "ruling"].includes(s.phase)) return "action";
   if (["turn", "pitch", "roll"].includes(s.phase)) return "scene"; // keep the art bright while people type and roll
   if (["epilogue", "reveal", "storybook", "story_vote", "story_write"].includes(s.phase)) return "end";
   return "scene";
+}
+
+/** ~10 s left (state.timeWarn, set by the host): the narrator nudges the table, unless she's already talking. */
+function useTimeWarning(s: GameState) {
+  const at = s.timeWarn?.at ?? 0;
+  useEffect(() => {
+    if (at && Date.now() - at < 4000) void playTimeWarning(s.timeWarn?.name);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [at]);
+}
+
+/** The slide's story sounds (Muse's 1-3 cues, state.sfx), each near its word in the narration. Silent unless FEATURES.storySfx. */
+function useStorySfx(s: GameState) {
+  const at = s.sfx?.at ?? 0;
+  useEffect(() => {
+    if (!at || !s.sfx) return;
+    if (s.sfx.kind === "buildup") void playStoryBuildup(s.sfx.id);
+    else if (s.sfx.kind === "payoff") void playStoryPayoff(s.sfx.id);
+    else void playStorySfxCues(s.sfx.cues?.length ? s.sfx.cues : [{ id: s.sfx.id, word: 0 }]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [at]);
+  // leaving the finale: a build-up still going fades out
+  const inFinale = s.phase === "final_roll" || s.phase === "final_result";
+  useEffect(() => {
+    if (!inFinale) stopStoryBuildup();
+  }, [inFinale]);
 }
 
 /** Plays the narrator's current line on the TV (respects mute). Text never waits for it. */
@@ -1418,7 +1473,10 @@ function useStorySound(s: GameState) {
   useEffect(() => {
     if (s.phase === "final_roll" && (s.final?.stage === "arm" || s.final?.stage === "count")) music.cue("finale", { ms: 9000 });
     if (s.phase === "final_roll" && s.final?.stage === "shake") playSfx("finaleShake", { ms: 2000 });
-    if (s.phase === "final_result") music.cue("hit", { grade: hitGrade(r) });
+    if (s.phase === "final_result") {
+      music.cue("hit", { grade: hitGrade(r) });
+      music.swell(1, 7000); // the grand ending: the music lifts under the finale outcome (still ducked under her voice)
+    }
     if (s.phase === "reveal") music.cue("resolve");
     if (s.phase === "storybook") playSfx("keepsake");
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1436,6 +1494,8 @@ function useTimerTicks(host: Stage) {
 
 export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameState; onNotes?: () => void; notesOpen?: boolean }) {
   useNarrator(host, s);
+  useStorySfx(s);
+  useTimeWarning(s);
   useStorySound(s);
   useTimerTicks(host);
   const [reactions, setReactions] = useState<{ id: number; emoji: string; color?: string }[]>([]);
@@ -1502,8 +1562,9 @@ export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameS
       main = null; // the tvskin TurnCard + SuggestionBubbles (below)
       break;
     case "pitch":
+    case "convince":
     case "vote":
-      main = null; // the tvskin FinalePitch / FinaleVote (below)
+      main = null; // the tvskin FinalePitch / FinaleTalk / FinaleVote (below)
       break;
     case "ruling":
       main = null; // the tvskin PlanCard (below)
@@ -1541,6 +1602,8 @@ export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameS
     <div className="qt-root" onPointerDown={() => sfx.unlock()}>
       <Backdrop url={art} mood={mood} onNew={onNewArt} />
       <Particles count={28} seed={s.turnIndex + 1} />
+      <Banner text={s.banner} />
+      <NudgeChip at={s.nudge?.at} name={s.nudge?.name} />
       <div key={shot} className="qt-dip" aria-hidden />
       {s.phase !== "quest" && !["epilogue", "reveal", "storybook"].includes(s.phase) && <QTopBar host={host} s={s} onNotes={onNotes} notesOpen={notesOpen} />}
       {s.phase === "quest" && !host.readOnly && (
@@ -1554,19 +1617,20 @@ export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameS
           Continue ▸
         </button>
       )}
-      {["story_write", "story_vote", "turn", "pitch", "vote", "roll"].includes(s.phase) && <Fuse host={host} phase={shot} />}
+      {["story_write", "story_vote", "turn", "pitch", "convince", "vote", "roll"].includes(s.phase) && <Fuse host={host} phase={shot} />}
       <div key={shot + "-c"} className="qt-shot">
         {main}
       </div>
       {/* The in-game TV skin over the scene: HUD, turn card + suggestions, the plan, the caption. */}
       {(inScene || s.phase === "final_roll" || s.phase === "final_result") && !(title && s.phase === "narrating") && (
         <TvStage className={peek ? "is-peek" : ""}>
-          {s.phase !== "vote" && <SkinHud s={s} />}
+          {!["vote", "convince"].includes(s.phase) && <SkinHud s={s} />}
           <PhaseSwap k={skinKey}>
             {s.phase === "turn" && <SkinTurn host={host} s={s} />}
             {(s.phase === "ruling" || (s.phase === "roll" && !s.revealed.length)) && <SkinPlan host={host} s={s} />}
             {s.phase === "outcome" && <SkinOutcome s={s} />}
             {s.phase === "pitch" && <SkinFinalePitch host={host} s={s} />}
+            {s.phase === "convince" && <SkinFinaleTalk host={host} s={s} />}
             {s.phase === "vote" && <SkinFinaleVote host={host} s={s} />}
             {s.phase === "final_roll" && s.final?.stage !== "landed" && <SkinFinaleShake host={host} s={s} />}
           </PhaseSwap>

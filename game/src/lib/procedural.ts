@@ -67,6 +67,8 @@ export type TurnProposal = {
   memorable: string;
   /** true when this plan solved the current step (only counts on a success): the act moves on. */
   step_solved: boolean;
+  /** 1-3 sound cues for this slide (lib/storySfx.ts): { id, word }, in order. */
+  sfx?: { id: string; word: number }[];
 };
 
 /** What the TV shows for one turn, plus the next state. */
@@ -83,6 +85,8 @@ export type TurnResult = {
   state: StoryState;
   problems: string[];
   fallback: boolean;
+  /** The slide's sound cues (valid ids, in word order). */
+  sfx?: { id: string; word: number }[];
 };
 
 const clip = (s: unknown, n: number) => String(s ?? "").replace(/[<>{}]/g, "").replace(/\s+/g, " ").trim().slice(0, n);
@@ -271,7 +275,7 @@ const DETERMINERS = new Set("the a an his her their its my your our this that ev
 const PLAIN_ADJ = new Set(
   "big little small tiny huge giant old new red blue green yellow black white pink orange purple gold silver brown gray grey long short tall wet dry hot cold warm soft hard loud quiet lost sleepy angry happy sad scared baby mom dad good bad last first next whole same other only real empty full".split(" "),
 );
-const TAIL = new Set("away back home out off down up over around now here there too fast slowly till asleep awake still safe free inside outside together alone".split(" "));
+const TAIL = new Set("away back home out off down up over around now here there too fast slowly till asleep awake still safe free inside outside together alone without toward towards behind beneath beside across along".split(" "));
 
 /**
  * The most odd describing words piled onto one thing after "the/a/his…": "the cone juggling ice hand" = 3 (cone,
@@ -388,6 +392,8 @@ export function checkTurn(p: TurnProposal, ctx: { state: StoryState; hero: strin
   // A forward grade must change something: "plan happens, but the old obstacle still holds" stalls the story.
   const second = sentences(o)[1] ?? "";
   if (!["SETBACK", "DISASTER"].includes(ctx.grade) && /\b(?<!(hold|holds|held|stand|stands|stay|stays|sit|sits|keep|keeps|lie|lies|lay|lays) )(still|tighter|closer|anyway)\b/i.test(second)) out.push("the plan must change something for good: sentence 2 is one NEW snag the plan caused, never the old obstacle still holding on");
+  // The "...and nobody mentions X" tic (reviewer: 5 of 18 turns): the joke must be the consequence itself.
+  if (/\b(nobody|no one) (mentions?|pays|asks|says|notices|talks)\b|\bfor once\b/i.test(o)) out.push("nobody-tag: drop the '...and nobody mentions X' tag; let the consequence be the joke");
   const retold = repeatsMoment(o, [...ctx.state.last_moments, ...ctx.state.facts.filter((f) => !f.startsWith("Done:")), ...ctx.state.memorable], ctx.plan);
   const undone = undoesDone(o, ctx.state);
   if (undone) out.push(`undoes an earlier win ("${undone}"): nothing achieved is ever undone, so the snag must be something new`);

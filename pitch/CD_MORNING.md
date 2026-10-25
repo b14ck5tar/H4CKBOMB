@@ -38,6 +38,16 @@ Open `https://groupproject-game.vercel.app/tv?bots=1` and play to the first turn
       isn't bought yet)? Then in the voiceover say "The narrator is OpenAI", and tell Claude so DEVPOST and the deck
       get switched back.
 
+## Rollback
+
+**Rollback** (only if a deploy misbehaves): the known-good build is `once-upon-a-roll-ggknns93n` (tag `judge-safe-1`).
+Away from judges, in a terminal at `C:\Users\oclab\AppData\Local\Temp\gpd\game`:
+`npx vercel promote https://once-upon-a-roll-ggknns93n-bl4ck-b0mb.vercel.app` (or `npx vercel rollback`). Then F5.
+
+- [ ] **Before you leave, check the rollback works:** in a terminal at `C:\Users\oclab\AppData\Local\Temp\gpd\game`, run `npx vercel whoami`
+      (it should print the team's Vercel account), then close the terminal. The rollback only works on THIS laptop
+      (the export folder and the CLI login live here). Judging from another machine? Run `npx vercel login` there first.
+
 ## 2. The live take (about 15 min for 2 takes)
 
 Setup (VIDEO_SCRIPT.md, "Shot list"): `/tv?judge=1&bots=1` (a saved, tested true story), **Quick · Odd news · Adults** (judge mode sets these),
@@ -49,7 +59,7 @@ Start every recording before the lobby (in the edit, line the tracks up on the f
 2. **Phone A (and B if you can):** screen recording, mic off, "Show touches" on (Android).
 
 Play these moves (plan the moves, not the words):
-- [ ] Type a custom hero ("a night-shift baker who argues with her sourdough") and a real secret talent.
+- [ ] Type a custom hero ("a night-shift baker who argues with her sourdough") and a real secret strength.
 - [ ] Your turn: pick a test player's (or a friend's) idea, so "+1" and their name show on screen.
 - [ ] With a second real player: they read their plan to the table first, then send it.
 - [ ] Use plans with one clear noun (a ladder, a cinnamon roll, a marching band).
@@ -106,7 +116,7 @@ Never on screen: hotkeys, the "?" help, "Local mode", the address bar, any key, 
 - [ ] YouTube, **Unlisted**. Open the link in a private window: it plays without a login.
 - [ ] Copy the MP4 to your phone: it's the backup video for the judge table.
 
-## 8. Devpost: submit by ~10:15 (follow `pitch/PARTNER_SUBMIT.md` §2-3; it works for you too)
+## 8. Devpost: submit by ~10:15 (follow `DEVPOST_SUBMIT.md`, field by field)
 
 Everything is paste-ready: the text (DEVPOST.md, your Accomplishments line is filled in), the gallery
 (`devpost-media/gallery-final/`, upload 1-6 in order), tracks (Meta, Most Entertaining, SerpApi).

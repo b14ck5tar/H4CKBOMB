@@ -11,6 +11,7 @@ import { sfx } from "@/lib/sfx";
 import { playSfx } from "@/lib/sound";
 import {
   BackPlanScreen,
+  TalkScreen,
   FinalePitchScreen,
   GameButton,
   JoinScreen,
@@ -231,6 +232,9 @@ export function Phone({ code }: { code: string }) {
             timer={timer(turnMs)}
           />
         );
+        break;
+      case "convince":
+        body = <TalkScreen ready={state.ready.includes(me.id)} onReady={() => send("ready")} goal={state.goal} deadlineAt={deadlineAt || undefined} />;
         break;
       case "vote":
         body = (

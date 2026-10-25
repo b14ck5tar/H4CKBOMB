@@ -18,7 +18,7 @@ export function fallbackHero(real: RealAnswers = { skill: "", fear: "" }): Hero 
     concept_note: heavy ? "The notes got a little smudged, so the DM filled in the gaps." : "",
     stats: { brave: 1, clever: 3, charming: -1 },
     ability: skill
-      ? { name: "Secret Talent", text: `Bring your ${skill} to any problem, and it helps.` }
+      ? { name: "Secret Strength", text: `Bring your ${skill} to any problem, and it helps.` }
       : { name: "Pocket Full of Stuff", text: "Pull exactly the right odd object from a pocket." },
     // Comedy in the fiction only: the hero has bad luck with it. Nobody is asked to do anything for real.
     flaw: fear ? `Has the worst luck with ${fear}, at the worst moments.` : "Narrates their own actions out loud, badly.",

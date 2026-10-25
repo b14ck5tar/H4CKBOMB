@@ -1,6 +1,8 @@
 import "server-only";
 import type { Rating } from "@/lib/types";
 import { museJSON, MODELS, type Effort } from "@/server/muse";
+import { FEATURES } from "@/lib/features";
+import { STORY_SFX_IDS, pickStorySfxCues } from "@/lib/storySfx";
 import { DM_CORE, withRating } from "@/server/prompts";
 import { badExamplesPrompt, callbackExamplesPrompt, outcomeExamplesPrompt } from "@/server/story-examples";
 import {
@@ -57,6 +59,9 @@ RULES (every one, every time):
 PAYOFF, BUT SIMPLE (hard rule, the creative director's top rule: simple, playable and followable beats complex and confusing). The plan happens the way the player meant it, then ONE clear consequence: one plain cause, then its effect, that a tired adult at a party gets on first hearing. No wordplay, no double meanings, no inside jokes, no clever phrasing. The funny comes from the situation, not the words.
   Bad: "The bison mom eats a rook and lets the calf go as a sore winner." (a pun on chess, two ideas at once, and you have to know what a rook is)
   Good: "Gus sets up a chessboard in the mud. The bison mom stares at it so long that the little dog trots away."
+STRENGTH ON SHOW: hero.power is the hero's secret strength. When the plan uses it, name it plainly in the outcome doing the work ("Bea's skates", "Theo's seven-moves-ahead brain"), so the table hears it matter.
+TWO-PART PLANS: if the plan has two parts ("bribe the guard and then grab the keys"), the outcome mentions both, or says plainly why the second did not happen.
+NO OMINOUS TAILS: never end a line on a vague ominous clause ("...which never lasts", "...for now", "...or so they think", "...but not for long"). End on something concrete.
 POWERS HELP, NEVER WIN: a hero's power makes their plan a little easier when it truly applies, and shows doing the work, but it never solves the whole problem by itself and never makes a far-fetched plan work without a big result. Everyone at the table matters the same.
 5. PLAYERS CAN DO ANYTHING: whatever a player brings in (a kazoo, a chess set, a cousin) is real now. Only what YOU invent is limited: at most one new thing of your own per turn (new_fact OR new_character, the cast holds 3), and props of your own matter only if a player uses them.
 6. CONTINUITY: never contradict facts, where, or pronouns. Use each hero's pronouns exactly; a they/them hero is always "they". If unsure, stay with what is known.
@@ -75,20 +80,20 @@ READ-ALOUD TEST (hard rule): the narrator reads your lines ONCE to a noisy room.
   If the story calls something by an odd name (a radio signal called "the blink"), say what it really is: "the signal", "the light".
   Bad right_now: "Calm the cone juggling ice hand". Good: "Calm down the ice hand".
 7. CLARITY: outcome is 2 sentences at most, 30 words at most, plain and simple, that a tired adult at a party follows the first time: concrete nouns, cause then effect. Even when the player did something odd, say it in plain words. No made-up terms, no oddly phrased lines, no kennings ("pale fliers" is banned: say "owls"). No game words (roll, dice, needs, natural, points, luck).
-8. VOICE: grown-up, dry, deadpan, a little dark, unexpected but it makes sense (never a picture book: adult stakes, adult reactions, wry understatement). The humor comes from the situation and the plan, never random props. The recipe: the effect is the most specific, visible reaction a real person or animal here would have to this exact plan, something you could act out for a friend. A sensible plan gets a sensible result plus ONE surprising human or animal detail (the inspector writes it up as routine, the ranger stops asking questions, the bison follows the snacks).
+8. VOICE: no tag clauses about what nobody did, said or noticed ("...and nobody mentions X", "...for once"): the joke is the consequence itself. Grown-up, dry, deadpan, a little dark, unexpected but it makes sense (never a picture book: adult stakes, adult reactions, wry understatement). The humor comes from the situation and the plan, never random props. The recipe: the effect is the most specific, visible reaction a real person or animal here would have to this exact plan, something you could act out for a friend. A sensible plan gets a sensible result plus ONE surprising human or animal detail (the inspector writes it up as routine, the ranger stops asking questions, the bison follows the snacks).
 9. RIGHT NOW: the next obstacle in plain words anyone gets on first read (a verb, then one plain thing: "Tuck the ice hand into the snow", never "Calm the cone juggling ice hand"), one concrete step, 8 words max, verb first, that follows from what just happened and leads toward finish_line. Never a repeat of right_now or anything already done, never "again". If finale_next is true, it is the final push toward finish_line.
 10. SPOTLIGHT: the outcome makes the acting hero look cool or hilariously human, by name (start with their name).
-STORYTELLER: you are a storyteller talking to the table, with a little mystery. When table_aside is true, end sentence 2 with a short, dry aside, as a storyteller would, in your own words and fitted to this moment (the KIND of thing, never copy these: "...and nobody mentions the goat again." / "...and the mayor pretends not to see."). Never "and that, friends" (the ending owns it), and never start it the way an earlier line in last_moments ended. Keep the whole outcome plain, followable and inside 30 words. When table_aside is false, no aside.
+STORYTELLER: you are a storyteller talking to the table, with a little mystery. When table_aside is true, end sentence 2 with a short, dry aside, as a storyteller would, in your own words and fitted to this moment (the KIND of thing, never copy these: "...and the mayor pretends not to see." / "...and the inspector files it under routine."). Never "and that, friends" (the ending owns it), and never start it the way an earlier line in last_moments ended. Keep the whole outcome plain, followable and inside 30 words. When table_aside is false, no aside.
 11. HAND-OFF: scene (1 sentence, 24 words max) says where things stand now and addresses next_player by name with the new obstacle ("Juno, the bison is staring at the hay."). If next_player is "", address the whole group. The scene uses only people and things already in state, the plan or this outcome: nobody new arrives, nobody waves.
 12. CALLBACKS: at most once before the ending, when it fits, pay off a line from memorable in a new way.
-13. Stay inside real_event: its kind of place, its real roles (as cast), its everyday objects, its real stakes. The fantasy problem is the one twist on top.
+13. real_event is the SETUP only: its kind of place, its real roles (as cast), its everyday objects, its real stakes. The fantasy problem is the one twist on top. The middle and the ending follow the PLAYERS' choices; never steer toward how the real event turned out (the reveal handles that).
 NEVER RETELL: read last_moments. Never repeat a moment that already happened (a secret told stays told, a thing found stays found); build on it instead.
 14. THE PLAN IS THE CAUSE: the outcome uses the player's own key word or idea from plan (their noun, their joke: chess stays chess, a kazoo stays a kazoo). Never wash the idea into something safer or smarter.
 15. A SUCCESS CAN FINISH THE STEP: if this plan solved right_now, set step_solved true; it is solved, it stays solved (it becomes a fact), and the next twist arrives BECAUSE of it: the problem escalates into something NEW and bigger, never the same step again ("corner the pig again" is banned). Nothing achieved is ever undone, not even by a later miss: every fact that starts with "Done:" stays true, so a backfire hurts something else.
 THE FINISH LINE STAYS OPEN until the grand finale (CD: "it's already off the bridge, so what's the final move?"): a success solves the current STEP, never finish_line itself. Unless finale_next is true, the outcome and scene never say or imply that finish_line is done; the big problem is still there, bigger or closer, for the finale to settle.
-FOLLOW THE REAL EVENT: when real_event.arc is given, each act moves the story toward the NEXT step of that arc, in order, told through the fantasy problem, so the ending lands near where the real story landed and the reveal clicks.
 16. THREE ACTS: act 1, act 2, act 3, then the finale, each a different situation. When act_changes_next is true, the scene opens the next act: a new place or a new turn of the problem, caused by what just happened. Keep hook (the opener's twist) in play: it must show up in act 2 and in the finale push.
 
+SFX: if sfx_ids is given, sfx = 1 to 3 sound cues for the outcome, one per action you can hear, in the order they happen ("Sam throws the net" = a whoosh on "throws", then a splash on "net"): each cue is { id: one of sfx_ids, word: the 0-based index of the word in outcome where that action happens }. At least one when anything audible happens; [] if sfx_ids is missing.
 WRITE: outcome, scene, right_now, progress_gain, progress_why (12 words max), step_solved, new_fact (12 words max, or ""), new_character (name + role, or both ""), where (8 words max if the heroes moved, else ""), open_thread (12 words max, a loose end, or ""), memorable (10 words max, the funniest detail of this turn, or "").
 
 ${outcomeExamplesPrompt({ games: 1 })}
@@ -114,6 +119,7 @@ export const TURN_SCHEMA = obj({
   open_thread: str,
   memorable: str,
   step_solved: { type: "boolean" },
+  sfx: { type: "array", items: obj({ id: str, word: { type: "integer" } }) },
 });
 
 const GRADES: Grade[] = ["DISASTER", "SETBACK", "PARTIAL", "PROGRESS", "GREAT", "LEGENDARY"];
@@ -124,7 +130,7 @@ type Any = any;
 
 export type TurnInput = {
   state: StoryState;
-  hero: { name: string; power?: string; pronouns?: string };
+  hero: { name: string; power?: string; pronouns?: string; concept?: string };
   plan: string; // already wrapped in <player_input> by the route
   /** The player's plan as typed (for the "plan is the cause" check in code; never sent to the model raw). */
   plan_raw?: string;
@@ -170,6 +176,7 @@ export async function runTurn(i: TurnInput, rating: Rating): Promise<TurnResult>
     tier: clip(i.tier, 10),
     progress_range: progressRange(grade, state.turns_total),
     act_changes_next: clockNext > state.act && !finaleNext,
+    ...(FEATURES.storySfx && STORY_SFX_IDS.length ? { sfx_ids: STORY_SFX_IDS } : {}),
     // The storyteller's dry aside (CD): at most 2 per game, on turns 2 and 5.
     table_aside: state.turn === 1 || state.turn === 4,
     ...(state.turn === 1 || state.turn === 4 ? { storyteller_note: "This turn only: end sentence 2 with a short, dry aside to the table, in your own words." } : {}),
@@ -217,21 +224,62 @@ export async function runTurn(i: TurnInput, rating: Rating): Promise<TurnResult>
     p = fallbackProposal(state, { hero, attempt: i.attempt, idea_from: idea, grade, next_player: nextPlayer });
     fallback = true;
   }
+  // EDITOR PASS (CD, Sun): one minimal-effort Muse call fixes the draft's clarity, ONLY inside the hidden window (the
+  // die is still being thrown), never as a visible wait. Code checks decide whether the edit is kept.
+  let edited = false;
+  if (p && !fallback && Date.now() - t0 >= EDIT_BY_MS) console.log(`[turn] editor skipped: draft took ${Date.now() - t0}ms`);
+  if (p && !fallback && Date.now() - t0 < EDIT_BY_MS) {
+    const known = { where: state.where, cast: state.cast, facts: state.facts, last_moments: state.last_moments, finish_line: state.finish_line };
+    const e = await museJSON<{ outcome: string; scene: string; changed: boolean }>({
+      task: "story-editor",
+      model: TURN_MODEL,
+      effort: "minimal",
+      system: EDITOR_SYSTEM,
+      schema: EDITOR_SCHEMA,
+      user: JSON.stringify({ outcome: p.outcome, scene: p.scene, plan: i.plan, concept: clip(i.hero?.concept, 140), hero, grade, idea_from: idea, next_player: nextPlayer, known }),
+      timeoutMs: EDIT_TIMEOUT_MS,
+      maxTokens: 700,
+    }).catch((err) => (console.warn(`[turn] editor skipped: ${(err as Error).message}`), null));
+    if (e?.changed && e.outcome?.trim()) {
+      const cand = { ...p, outcome: e.outcome.trim(), scene: e.scene?.trim() || p.scene };
+      const after = checkTurn(cand, ctx);
+      const heavy = (x: string[]) => x.filter((y) => HARD.test(y) || REDO.test(y)).length;
+      if (heavy(after) <= heavy(probs) && after.length <= probs.length) {
+        console.log(`[turn] editor: "${p.outcome}" -> "${cand.outcome}"`);
+        [p, probs, edited] = [cand, after, true];
+      }
+    }
+  }
   // Soft problems are fixed in code: clamp the outcome, hand the scene to the next player.
   p.outcome = clampOutcome(p.outcome);
   if (nextPlayer && !new RegExp(`\\b${nextPlayer.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`).test(p.scene)) p.scene = p.scene ? `${nextPlayer}, ${p.scene.charAt(0).toLowerCase()}${p.scene.slice(1)}` : `${nextPlayer}, you're up.`;
   p.scene = sentences(p.scene)[0] ?? p.scene;
   p.right_now = trimPile(p.right_now);
   const applied = applyTurn(state, p, { hero, attempt: i.attempt, grade, depth: i.depth });
-  console.log(`[turn] ${grade} ${hero} ${Date.now() - t0}ms progress ${state.progress}->${applied.state.progress}${fallback ? " FALLBACK" : ""}${probs.length ? ` problems: ${probs.join(" | ")}` : ""}`);
-  return { outcome: p.outcome, scene: p.scene, right_now: applied.state.right_now, progress: applied.state.progress, progress_delta: applied.delta, progress_why: String(p.progress_why ?? "").slice(0, 140), finale: applied.finale, act: applied.state.act, act_changed: applied.act_changed, state: applied.state, problems: probs, fallback };
+  console.log(`[turn] ${grade} ${hero} ${Date.now() - t0}ms progress ${state.progress}->${applied.state.progress}${fallback ? " FALLBACK" : ""}${edited ? " EDITED" : ""}${probs.length ? ` problems: ${probs.join(" | ")}` : ""}`);
+  return { sfx: pickStorySfxCues(p.sfx), outcome: p.outcome, scene: p.scene, right_now: applied.state.right_now, progress: applied.state.progress, progress_delta: applied.delta, progress_why: String(p.progress_why ?? "").slice(0, 140), finale: applied.finale, act: applied.state.act, act_changed: applied.act_changed, state: applied.state, problems: probs, fallback };
 }
+
+// The editor pass: only if the draft is in by EDIT_BY_MS (the die lands ~8-12 s after the ruling), capped at
+// EDIT_TIMEOUT_MS, so the edited line is still ready before the result shows.
+const EDIT_BY_MS = 5_000;
+const EDIT_TIMEOUT_MS = 2_500;
+const EDITOR_SYSTEM = `You are the copy editor for a party game's narrator. The narrator reads the outcome and the scene ONCE to a room of tired adults. Fix them ONLY where they break a rule below; if nothing breaks, return them unchanged with changed false.
+RULES:
+1. Followable on first hearing: plain everyday words, one idea per sentence, no odd or stacked phrases, no similes, cause then effect.
+2. Only people, places and things already named in known, the plan or the outcome itself. Never a new room, hall, person or prop.
+3. If the plan has two parts, the outcome mentions both, or says plainly why the second did not happen.
+4. No ominous tail clause ("...which never lasts", "...for now", "...or so they think").
+5. The hero is exactly what the player typed (concept): if the concept says a can, a raccoon or a ghost, the hero is that.
+6. KEEP: the result the grade gives (do not make a miss a win or a win a miss), the hero's name first, the player's own key word, a friend's credit (idea_from) on a success, and next_player's name in the scene, and a short dry aside at the end of the outcome if there is one ("...and the mayor pretends not to see"). Outcome: at most 2 sentences and 30 words. Scene: 1 sentence. Dry, grown-up tone.
+Return outcome, scene, changed.`;
+const EDITOR_SCHEMA = obj({ outcome: str, scene: str, changed: { type: "boolean" } });
 
 const HARD = /must name the acting hero|game words|never name|outcome is empty|the plan is the cause|banned filler/;
 const TURN_PARALLEL = Math.max(1, Math.min(3, Number(process.env.TURN_PARALLEL) || 2));
 const GRACE_MS = 2_500;
 // A retold moment isn't worth the plan-aware fallback, but it is worth waiting for the other draft or one retry.
-const REDO = /repeats an earlier moment|undoes an earlier win/;
+const REDO = /repeats an earlier moment|undoes an earlier win|nobody-tag/;
 const score = (probs: string[]) => probs.filter((x) => HARD.test(x) || REDO.test(x)).length * 10 + probs.length;
 
 /**
@@ -270,32 +318,37 @@ function WONISH(g: Grade) {
 export const STORY_END_SYSTEM = `${DM_CORE}
 
 TASK: THE ENDING. The table backed one hero's final plan, everyone shook their phones, and one shared die decided how it went. The real news story is revealed right after you.
-Input: state (where, problem, finish_line, progress, cast, facts, memorable = the funniest moments, credits = what each hero did on their turns, in order, pronouns, real_event = HIDDEN: the real kind of place, roles and the real order of events, ending with where the real story landed), winner (name, pronouns), attempt (the final plan in plain words), plan (inside <player_input>), grade, won (true = they reached the finish line), players (id + what each player said their secret talent is, inside <player_input>).
-- The final plan is what happens, at the grade's strength. The ending lands where the real story landed (the last step of real_event.arc), told through the fantasy problem. Never say real names, places, numbers or dates.
+Input: state (where, problem, finish_line, progress, cast, facts, memorable = the funniest moments, credits = what each hero did on their turns, in order, pronouns, real_event = HIDDEN: the real kind of place, roles and the real order of events, ending with where the real story landed), winner (name, pronouns), attempt (the final plan in plain words), plan (inside <player_input>), grade, won (true = they reached the finish line), players (id + what each player said their secret strength is, inside <player_input>).
+- The final plan is what happens, at the grade's strength. The ending follows the players' final plan and the grade, never how the real story turned out (the players lead; the reveal compares). Never say real names, places, numbers or dates.
 - PLAIN WORDS (hard rule): everyday words only. Call every person, animal and thing by its plain everyday name ("the crab", never "the current crab"; "the ice hand", never "the cone juggling ice hand"), even if the input uses an odd name. No stacked modifiers, no odd word pairs ("calf soft", "drops soft"), no similes ("like popcorn"), no sounds or feelings for things ("the wire hums its snore"). One idea per sentence. Every it, he, she or they points to ONE clear person or thing; if two could match, use the name ("Bev calls the dog by her name", not "calls the name").
 - PAYOFF, BUT SIMPLE: one plain cause, then its effect, that a tired adult at a party gets on first hearing. No wordplay or clever phrasing.
-- ending: exactly 2 short sentences, 30 words max, each with ONE idea. Sentence 1: the winner's final plan, in plain words with its own key word, and what it did right away. Sentence 2: how it ended for the problem, plainly (won = solved, else kindly not). Nothing else: no extra callbacks, no extra jokes, no cast lines here. Nobody is defeated. When won is false, it ends short because of the final plan's own snag; never undo anything in facts that starts with "Done:" (a fixed thing stays fixed).
+- ending: exactly 2 sentences, 35 words max. Sentence 1: the winner's final plan, in plain words with its own key word, and what it did right away. Sentence 2: THE BIGGEST, most visible event of the night (the CD: the finale must be the biggest beat): the last obstacle (state.right_now, and whatever last_moments left in the way) gives way BECAUSE of the plan in one big picture, with a crowd or a side character reacting and the opener's twist (state.hook) acting one last time; if won is false, it is the same big picture failing, kindly. Use only places already named in state; no new rooms. No ominous tail. Nobody is defeated.
   Bad: "The bison picks hay over babysitting and the dog squeaks back, and the lodge worker waves them home." (three ideas, and "squeaks back" is unclear)
   Good: "Gus leads a snack parade to the cabin, and the bison mom follows the snacks. The little dog runs inside to her family."
 - line: 12 words max, the last card, said flatly ("The snake works at the scrapyard now."). This is where ONE callback from memorable may go, in plain words.
 - recap: 2 sentences, 40 words max, that credits EVERY hero by name with what they actually did (from credits), in order, and ends with how it ended (won = they reached the finish line, else kindly that they didn't). Only things that happened. Use exactly the pronouns given.
 - skills: one entry per player: id, and phrase = a clean 1 to 4 word skill in lowercase ("parallel parking"), or "" if what they said is a joke, crude, mean, or not a real skill. Never invent one.
+- bridge: ONE line, 22 words max, said at the reveal right after the real headline, comparing the table's ending with how the real story ended (real_story.how_it_really_ended): a CONTRAST when they differ ("You kept the gold. The real crew handed nine million euros to the police.") or a MATCH when they agree ("Turns out the real crew did the same thing: the bag came back with everything inside."). Plain and warm; real names and numbers are fine HERE only. "" if real_story is missing.
+- sfx_buildup and sfx_payoff (only if sfx_ids is given, else ""): the finale's two sounds, picked from THIS story. sfx_buildup = the tension while everyone shakes for the last roll (the CD's example for the gold story: mining sounds); sfx_payoff = the one loud hit the moment the result lands (a loud clink of gold). Each MUST be exactly one id copied from sfx_ids (never a sound name outside that list; pick the closest one: drumroll or rumble for tension, crash or magic-shimmer for the hit).
+- sfx: if sfx_ids is given, 1 to 3 cues for the ending, one per audible action in order: { id: exactly one id copied from sfx_ids, word: the 0-based index of the word in ending where it happens }; [] if sfx_ids is missing.
 - Only mention things that appear in state (facts, memorable, credits, cast, where): no new objects. No game words (roll, dice, needs, natural, luck).
 
 ${callbackExamplesPrompt()}`;
 
-export const STORY_END_SCHEMA = obj({ ending: str, line: str, recap: str, skills: { type: "array", items: obj({ id: str, phrase: str }) } });
+export const STORY_END_SCHEMA = obj({ ending: str, line: str, recap: str, skills: { type: "array", items: obj({ id: str, phrase: str }) }, sfx: { type: "array", items: obj({ id: str, word: { type: "integer" } }) }, sfx_buildup: str, sfx_payoff: str, bridge: str });
 
 export async function runEnding(input: Any, rating: Rating) {
   const s: StoryState = input.state;
   const user = {
-    state: { where: s?.where, problem: s?.problem, finish_line: s?.finish_line, progress: s?.progress, cast: s?.cast, facts: s?.facts, memorable: s?.memorable, credits: s?.credits, pronouns: s?.pronouns, real_event: s?.real_event },
+    state: { where: s?.where, problem: s?.problem, finish_line: s?.finish_line, progress: s?.progress, right_now: s?.right_now, last_moments: (s?.last_moments ?? []).slice(-3), open_thread: s?.open_thread, hook: s?.hook, cast: s?.cast, facts: s?.facts, memorable: s?.memorable, credits: s?.credits, pronouns: s?.pronouns, real_event: s?.real_event },
+    real_story: input.real_story ? { headline: clip(input.real_story.headline, 200), how_it_really_ended: clip(`${input.real_story.summary ?? ""} ${input.real_story.now ?? ""}`, 500) } : undefined,
     winner: { name: clip(input.winner?.name ?? input.winner_hero?.name ?? input.winner, 40), pronouns: clip(input.winner?.pronouns ?? input.winner_hero?.pronouns, 20) },
     attempt: clip(input.attempt, 160),
     plan: input.plan,
     grade: gradeOf(input.grade),
     won: !!input.won,
     players: Array.isArray(input.players) ? input.players.slice(0, 8) : [],
+    ...(FEATURES.storySfx && STORY_SFX_IDS.length ? { sfx_ids: STORY_SFX_IDS } : {}),
   };
   const call = (extra = "", timeoutMs = 12_000) => museJSON<Any>({ task: `story-end-${rating}`, model: TURN_MODEL, effort: TURN_EFFORT, system: withRating(STORY_END_SYSTEM, rating), schema: STORY_END_SCHEMA, user: JSON.stringify(user) + extra, timeoutMs, maxTokens: 2500 });
   // The final plan is the cause, and the ending stays 2 plain sentences: one retry with the problems if not.
@@ -304,7 +357,7 @@ export async function runEnding(input: Any, rating: Rating) {
     const e = String(d?.ending ?? "");
     const out: string[] = [];
     if (!usesPlan(e, planRaw)) out.push("the ending must use the final plan's own key word");
-    if (sentences(e).length > 2 || e.split(/\s+/).length > 32) out.push("exactly 2 short sentences, 30 words max");
+    if (sentences(e).length > 2 || e.split(/\s+/).length > 37) out.push("exactly 2 sentences, 35 words max");
     return out;
   };
   const t0 = Date.now();

@@ -5,7 +5,7 @@ export type Rating = "kids" | "teens" | "adults";
 
 /** Two optional join questions (lib/real.ts). Either can be "" (skipped). Private until the reveal. */
 export interface RealAnswers {
-  skill: string; // "What's your secret talent?" -> their power, and the reveal's "Solved by" line
+  skill: string; // "What's your secret strength?" -> their power, and the reveal's "Solved by" line
   fear: string; // "What's a small thing that scares you?" -> comedy in the fiction only, never a real dare
 }
 /** How likely the winning plan is to work. Every plan rolls; "clever" is just the best modifier (lib/rules.ts). */
@@ -283,6 +283,7 @@ export type Phase =
   | "narrating"
   | "turn"
   | "pitch"
+  | "convince"
   | "vote"
   | "ruling"
   | "roll"
@@ -342,6 +343,14 @@ export interface GameState {
   wins: Record<string, number>; // player id -> plans of theirs that won (the spotlight rule)
   outcome: string; // 1-2 sentences: what the winning plan did
   endingLine: string; // one line for the reveal: how it ended
+  /** A time warning ~10 s before an input deadline (CD): who is still typing, if it's one person (their character's name). */
+  nudge?: { at: number; kind: "turn" | "idea" | "pitch" | "vote" | "convince"; name: string };
+  /** The grand ending's reveal (CD): each hero's key move, the real story in beats, and the line linking the two. */
+  revealData?: { moves: { heroId: string; name: string; move: string }[]; real: { what: string; ending: string; source: string; date: string }; bridge: string };
+  /** The story slide's sound cues (lib/storySfx.ts): the TV plays them in order when `at` changes. `id` = the first. */
+  /** ~10 s left on a timer (story sets it): the TV plays a time warning (lib/sound/timeWarn.ts); `name` = a live "<Name>, ten seconds." */
+  timeWarn?: { at: number; name?: string };
+  sfx?: { id: string; cues: { id: string; word: number }[]; at: number; kind?: "line" | "buildup" | "payoff" };
   recap: string; // the reveal's "your version": 1-2 sentences on what this group actually did
   storyOptions: { id: string; title: string; teaser: string; art?: string }[]; // the story vote's 3 QUEST cards (never the real headline)
   source: "news" | "ours"; // lobby: Odd news (live headlines) or Our stories (players write true stories)

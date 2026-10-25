@@ -1,6 +1,6 @@
 /**
  * "Real in, magic out" (partner's design/18, trimmed): two optional join questions.
- *   "What's your secret talent?" -> real.skill -> the hero's power, and the reveal's "Solved by" line.
+ *   "What's your secret strength?" -> real.skill -> the hero's power, and the reveal's "Solved by" line.
  *   "What's a small thing that scares you?"   -> real.fear  -> the hero's weakness, comedy in the fiction only.
  * Shared by the table (client) and the server. No side quests, no real-life suggestions.
  */
@@ -27,10 +27,10 @@ export const HEAVY =
 
 const lowerFirst = (s: string) => (/^[A-Z][a-z]/.test(s) ? s[0].toLowerCase() + s.slice(1) : s);
 
-/** "My secret talent is parallel parking." -> "parallel parking". "" when too long or too heavy for a sentence. */
+/** "My secret strength is parallel parking." -> "parallel parking". "" when too long or too heavy for a sentence. */
 export function skillPhrase(skill: string, maxWords = 6) {
   const s = cleanText(skill, 80)
-    .replace(/^(my\s+)?(secret\s+)?talents?\s*(is|are|for|:)\s*/i, "")
+    .replace(/^(my\s+)?(secret\s+)?(talents?|strengths?)\s*(is|are|for|:)\s*/i, "")
     .replace(/^(i'?m|i am|im)\s+/i, "")
     .replace(/^(weirdly|really|very|super|kind of|kinda|pretty)\s+/i, "")
     .replace(/^(good|great|amazing|decent)\s+(at|with)\s+/i, "")

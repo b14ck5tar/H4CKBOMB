@@ -211,6 +211,65 @@ export function FinaleVote({ heroes, plans, votes, deadlineAt, totalSeconds, tit
   );
 }
 
+// ---------- TALK (convince each other, before the vote) ----------
+/** The phase's full length, read from its deadline the first time we see one (30 s judge / 60 s normal: the host decides). */
+export function usePhaseSeconds(deadlineAt?: number, given?: number) {
+  const first = useRef<{ dl: number; s: number } | null>(null);
+  if (deadlineAt && first.current?.dl !== deadlineAt) first.current = { dl: deadlineAt, s: Math.max(5, Math.round((deadlineAt - Date.now()) / 5000) * 5) };
+  return given ?? first.current?.s;
+}
+
+export interface FinaleTalkProps {
+  heroes: FinaleHero[];
+  plans: FinalePlan[];
+  /** Heroes who tapped "I'm ready to vote". */
+  ready: string[];
+  deadlineAt?: number;
+  totalSeconds?: number;
+}
+
+/** Every final plan face up and BIG, a 60 s clock: the table argues out loud, phones tap "ready to vote". */
+export function FinaleTalk({ heroes, plans, ready, deadlineAt, totalSeconds }: FinaleTalkProps) {
+  const total = usePhaseSeconds(deadlineAt, totalSeconds);
+  const byId = new Map(heroes.map((h) => [h.id, h]));
+  const n = plans.length;
+  const cols = n <= 2 ? n : n === 4 ? 2 : 3;
+  useGrowSfx(ready.length, "pop", 0.5);
+  return (
+    <section className="tvx-fin tvx-fin-vote tvx-fin-talk" aria-label="Convince each other">
+      <header className="tvx-fin-vhead">
+        <h2 className="tvx-fin-vtitle">
+          <Words text="Convince each other!" step={0.06} start={0.1} />
+        </h2>
+        <p className="tvx-fin-rule">Talk it out loud. Which plan saves the day?</p>
+        <p className="tvx-fin-vcount">
+          <b key={ready.length}>{ready.length}</b> of {heroes.length} ready to vote
+        </p>
+        <Countdown deadlineAt={deadlineAt} totalSeconds={total} />
+      </header>
+      <div className={`tvx-fin-grid cols-${cols} n-${n}`}>
+        {plans.map((p, i) => {
+          const h = byId.get(p.playerId);
+          if (!h) return null;
+          const st: Css = { "--c": h.color, "--tilt": `${TILTS[i % TILTS.length] * 0.5}deg`, "--i": i };
+          return (
+            <article key={p.id} className={`tvx-vcard ${ready.includes(p.playerId) ? "is-ready" : ""}`} style={st}>
+              <div className="tvx-vcard-in">
+                <header className="tvx-vcard-who">
+                  <Face src={h.portrait} name={h.name} color={h.color} size={3.6} />
+                  <span>{possessive(h.name)} plan</span>
+                  {ready.includes(p.playerId) && <span className="tvx-vcard-lead">Ready</span>}
+                </header>
+                <p className={`tvx-vcard-txt ${p.text.length > 90 ? "is-long" : ""}`}>&ldquo;{p.text}&rdquo;</p>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 // ---------- ARM -> SHAKE ----------
 export interface FinaleShakeProps {
   /** Host stage: arm (tap "arm your die"), count (3-2-1), shake (SHAKE!), tumble (die in the air). */

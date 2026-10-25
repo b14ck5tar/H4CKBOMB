@@ -2,11 +2,11 @@
 
 | # | File | Why |
 |---|---|---|
-| 1 | `1-lobby-and-phone.jpg` (cover) | The table and the controller in one frame: the lobby QR, "Tonight's story is real", and the phone asking "What's your secret talent?" (final build) |
+| 1 | `1-lobby-and-phone.jpg` (cover) | The table and the controller in one frame: the lobby QR, "Tonight's story is real", and the phone's hero form (captured before the rename: it still reads "secret talent"; reshoot the phone after the deploy if there's time) |
 | 2 | `2-friends-ideas-best-move.jpg` | The connection loop in one picture: friends suggest, you pick (+1), swipe to throw |
 | 3 | `3-heroes-painted-in.jpg` | Muse Image painting the players' own heroes into the scene |
 | 4 | `4-new-painting-read-aloud.jpg` | A new painting every turn, one ElevenLabs narrator |
-| 5 | `5-based-on-a-true-story.jpg` | The reveal: the real article next to your version, "Solved by" your secret talents |
+| 5 | `5-based-on-a-true-story.jpg` | The reveal: the real article next to your version, "Solved by" your secret strengths |
 | 6 | `6-under-the-hood.jpg` | Muse writes and judges, code rolls the dice, players steer; the build numbers |
 
 Made Sun ~6 AM from the final-build lobby + phone captures and the deck slides. Left out on purpose:

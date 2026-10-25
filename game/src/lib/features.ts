@@ -32,6 +32,10 @@ export const FEATURES = {
   heroArt: true,
   /** AI plan suggestions on phones (they made everyone's plans the same). */
   suggestions: false,
+  /** One AI-picked sound effect per story slide (lib/storySfx.ts, game/public/sfx/). Voice owns it; ships off unless solid. */
+  storySfx: true,
+  /** The finale talk (CD): 60 s to convince each other before the final vote (phase "convince"). Off until the screens exist. */
+  finaleTalk: true, // look: TV FinaleTalk + phone TalkScreen are in (6c6dbb8, c684ff7); off again if the real run shows a problem
 } as const;
 
 export type Feature = keyof typeof FEATURES;

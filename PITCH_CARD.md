@@ -10,8 +10,8 @@ CD = creative director (speaks). ENG = engineer/partner (drives the laptop and t
 
 **Never mention cut features:** secret clues, Convince the DM, Boost, Catch!, Mirror Mirror, hearts / Hope, "Needs 12+"
 (rolls are graded now; there is no pass line), story ladders or pre-written branches (the story is procedural now).
-Old words to avoid: "fairytale", "Once Upon a Roll", "inspired by real events", "weirdly good at" (the join question
-is "What's your secret talent?"). If asked: "We cut it after playtesting. It crowded the screen."
+Old words to avoid: "fairytale", "Once Upon a Roll", "inspired by real events", "weirdly good at", "secret talent" (the join
+question is "What's your secret strength?"). If asked: "We cut it after playtesting. It crowded the screen."
 
 ## 3 lines to remember
 1. **"The one group project where everyone actually shows up."**
@@ -54,7 +54,7 @@ Slides advance on the bracketed numbers. ~280 spoken words + one live moment. Re
 
 **[6: the ending]** CD:
 > "For the finale, everyone shakes their phone at once for one shared roll. And then the twist: it's based on a
-> true story. You see the real article, and how your secret talent saved the day. That's
+> true story. The TV shows what you did, then what really happened, and how your secret strength saved the day. That's
 > the moment people turn to each other and say 'wait, that's real?'"
 
 **[7: under the hood]** CD (or ENG):
@@ -85,9 +85,9 @@ working demo (the live swipe and the QR on 8).
 
 | Criterion | Weight | Say it | Where they see it |
 |---|---|---|---|
-| Human connection | 30% | "The best move is using a friend's idea." | Friends' suggestion bubbles, "+ Sam's idea +1", the TV's "tell the table your plan", the hand-off by name, the shake-together finale, "Solved by" with their secret talent |
+| Human connection | 30% | "The best move is using a friend's idea." | Friends' suggestion bubbles, "+ Sam's idea +1", the TV's "tell the table your plan", the hand-off by name, the shake-together finale, "Solved by" with their secret strength |
 | AI essential + integrated | 25% | "Muse writes the story from your plans, judges every plan and paints your heroes into every decision." | The outcome uses the player's own words, progress + 3 acts, new painting per decision, narrator, DM's Notes (N) |
-| Originality | 20% | "It's based on a true story, and you find out at the end." | The reveal: the real article + "what's happening now" |
+| Originality | 20% | "It's based on a true story, and you find out at the end." | The reveal: "What you did", then "What really happened" |
 | Working demo | 20% | "You just played it on your own phone." | Their phone, real dice, nothing frozen |
 
 ## Judge Q&A

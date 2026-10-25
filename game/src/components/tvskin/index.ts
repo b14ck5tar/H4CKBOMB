@@ -24,6 +24,9 @@
  *            (it is position:fixed full screen; replaces EndingSlot/RevealCard/Keepsake). SceneArt is optional.
  */
 export { TvStage, SceneArt, HeroTradingCard, CreditChip, D20Glyph, Face, TIER_LOOK } from "./shared";
+export { PayoffPunch } from "./PayoffPunch";
+export { Banner, NudgeChip } from "./Banner";
+export type { PayoffTone } from "./PayoffPunch";
 export type { CardHero } from "./shared";
 export { Particles, PhaseSwap, InkWipe, Letters, shakeStage, flashScreen, useReducedMotion } from "./motion";
 export { TurnCard } from "./TurnCard";
@@ -38,7 +41,7 @@ export { LadderDots, DangerBar, HudStrip } from "./Hud";
 export type { LadderDotsProps, DangerBarProps } from "./Hud";
 export { OutcomeCaption } from "./OutcomeCaption";
 export type { OutcomeCaptionProps } from "./OutcomeCaption";
-export { FinalePitch, FinaleVote, FinaleShake } from "./Finale";
-export type { FinaleHero, FinalePlan, FinalePitchProps, FinaleVoteProps, FinaleShakeProps } from "./Finale";
+export { FinalePitch, FinaleVote, FinaleShake, FinaleTalk } from "./Finale";
+export type { FinaleHero, FinalePlan, FinalePitchProps, FinaleVoteProps, FinaleShakeProps, FinaleTalkProps } from "./Finale";
 export { EndingMontage } from "./EndingMontage";
 export type { MontagePanel, RevealData, EndingMontageProps } from "./EndingMontage";
