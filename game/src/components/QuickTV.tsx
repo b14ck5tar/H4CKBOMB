@@ -22,7 +22,7 @@ import { Reactions } from "./Reactions";
 import { Avatar, Hope, ThankHearts, useFastNow } from "./TV";
 import { KeepsakeQR } from "./Keepsake";
 import { FEATURES } from "@/lib/features";
-import { music, playSfx, useMusic } from "@/lib/sound";
+import { dice, music, playSfx, useMusic } from "@/lib/sound";
 import { EndingMontage, HudStrip, OutcomeCaption, PlanCard, QualityMeter, SuggestionBubbles, TurnCard, TvStage, TIER_LOOK } from "@/components/tvskin";
 import type { CardHero, MontagePanel } from "@/components/tvskin";
 import { TIER_SHIFT, gradeRoll } from "@/lib/grade";
@@ -741,19 +741,23 @@ function Roll({ host, s }: { host: Stage; s: GameState }) {
   const [flash, setFlash] = useState<{ kind: "legendary" | "catastrophe" | null; n: number }>({ kind: null, n: 0 });
   useEffect(() => {
     if (!shown || !r) return;
-    sfx.diceRoll(ROLL_ANIM_MS - 300);
+    const ms = ROLL_ANIM_MS - 200;
+    music.cue("riser", { ms });
+    dice.throw();
+    // The table hits match ThrowFlight's bounces: flight ends at 55%, then two smaller hops.
+    const hits = [0.55, 0.7525, 0.8875].map((f, n) => setTimeout(() => dice.bounce(n), ms * f));
     const t = setTimeout(() => {
       setSettled(true);
-      sfx.diceLand();
-      if (r.band === "LEGENDARY") {
-        sfx.choir();
-        setFlash((f) => ({ kind: "legendary", n: f.n + 1 }));
-      } else if (r.band === "CATASTROPHE") {
-        sfx.recordScratch();
-        setFlash((f) => ({ kind: "catastrophe", n: f.n + 1 }));
-      }
-    }, ROLL_ANIM_MS - 200);
-    return () => clearTimeout(t);
+      dice.land();
+      const g = gradeRoll(r.total, r.kept);
+      music.cue("hit", { grade: g.branch === "worse" ? "down" : g.branch === "mixed" ? "neutral" : "up" });
+      if (r.kept === 20) setFlash((f) => ({ kind: "legendary", n: f.n + 1 }));
+      else if (r.kept === 1) setFlash((f) => ({ kind: "catastrophe", n: f.n + 1 }));
+    }, ms);
+    return () => {
+      clearTimeout(t);
+      hits.forEach(clearTimeout);
+    };
   }, [shown]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!r || !pl) return null;
   return (
@@ -899,6 +903,7 @@ function SkinPlan({ host, s }: { host: Stage; s: GameState }) {
       shift={r?.playerId === pl.id ? r.tierMod : TIER_SHIFT[v.tier]}
       stat={{ label: STAT_LABEL[v.stat], value: pl.hero?.stats[v.stat] ?? 0 }}
       credit={credit ? { name: shortName(credit.hero?.name ?? credit.name), color: credit.color, bonus: 1 } : undefined}
+      cta={s.phase === "roll" ? `${shortName(pl.hero?.name)}: swipe up on your phone to throw` : undefined}
     />
   );
 }
@@ -1333,31 +1338,23 @@ function useStorySound(s: GameState) {
   useEffect(() => {
     if (resolved) music.swell(0.5, 2500);
   }, [resolved]);
+  // The TurnCard plays its own slam and the QualityMeter its own result sound; the music adds the cues around them.
   const turnKey = s.phase === "turn" ? s.turnIndex : -1;
   useEffect(() => {
-    if (turnKey >= 0) playSfx("turnStart");
+    if (turnKey >= 0) music.cue("yourTurn");
   }, [turnKey]);
   const r = s.rolls[0];
-  const landed = (s.phase === "roll" && s.revealed.length > 0) || s.phase === "final_result";
-  const band = landed ? r?.band : undefined;
+  const hitGrade = (x?: RollResult) => {
+    const g = x ? gradeRoll(x.total, x.kept) : null;
+    return !g ? "neutral" : g.branch === "worse" ? "down" : g.branch === "mixed" ? "neutral" : "up";
+  };
   useEffect(() => {
-    if (!band) return;
-    const t = setTimeout(() => {
-      if (band === "LEGENDARY") {
-        playSfx("nat20");
-        music.swell(1, 4000);
-      } else if (band === "CATASTROPHE") playSfx("nat1");
-      else if (band === "SUCCESS") playSfx("success");
-      else if (band === "YES_BUT") playSfx("partial");
-      else playSfx("fail");
-    }, s.phase === "final_result" ? 0 : ROLL_ANIM_MS);
-    return () => clearTimeout(t);
-  }, [band, s.phase]);
-  useEffect(() => {
+    if (s.phase === "final_roll" && (s.final?.stage === "arm" || s.final?.stage === "count")) music.cue("finale", { ms: 9000 });
     if (s.phase === "final_roll" && s.final?.stage === "shake") playSfx("finaleShake", { ms: 2000 });
-    if (s.phase === "final_roll" && s.final?.stage === "landed") music.swell(1, 3500);
-    if (s.phase === "reveal") playSfx("reveal");
+    if (s.phase === "final_result") music.cue("hit", { grade: hitGrade(r) });
+    if (s.phase === "reveal") music.cue("resolve");
     if (s.phase === "storybook") playSfx("keepsake");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [s.phase, s.final?.stage]);
 }
 
@@ -1474,13 +1471,13 @@ export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameS
         <TvStage>
           <SkinHud s={s} />
           {s.phase === "turn" && <SkinTurn host={host} s={s} />}
-          {s.phase === "ruling" && <SkinPlan host={host} s={s} />}
+          {(s.phase === "ruling" || (s.phase === "roll" && !s.revealed.length)) && <SkinPlan host={host} s={s} />}
           {s.phase === "outcome" && <SkinOutcome s={s} />}
         </TvStage>
       )}
       {["epilogue", "reveal", "storybook"].includes(s.phase) && <SkinEnding host={host} s={s} />}
       {/* One instruction pill, only where no skin piece already says what to do. */}
-      {["story_write", "story_vote", "pitch", "vote", "final_roll"].includes(s.phase) || (s.phase === "roll" && !s.revealed.length) ? <NowBanner s={s} /> : null}
+      {["story_write", "story_vote", "pitch", "vote", "final_roll"].includes(s.phase) ? <NowBanner s={s} /> : null}
       {s.paused && (
         <div className="gp-paused" role="status">
           <p className="font-heading text-5xl uppercase">Reconnecting phones…</p>
