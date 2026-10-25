@@ -242,3 +242,9 @@ Full history and train of thought: `design/00-where-we-are.md`.
 - ✅ A submission git tag at 11:30; anything after the deadline goes on a branch.
 - ✅ A local demo is allowed at judging, if disclosed.
 - The video is the coordinator's single smooth cut (one narrator, ~2:00); the spliced submit/v2 cuts were rejected.
+
+## Sun ~11:30 AM: post-submission phase
+- The submission is frozen: main = a3770aa, tag `submission-1130`, live in prod; Devpost video youtu.be/9emoutd3gQQ (2:06).
+- From now on: commit only to `rebuild-around-the-table`. Never merge into main or deploy prod.
+- Judges (2-5 PM) play a LOCAL build on the laptop (TV local; phones via the live /play or the LAN). We disclose honestly that it has improvements made after the deadline.
+- Goals: story engine to 8/10 (followable ≥95%, repeats ≤15%, progress every turn), the local demo launcher, filter-safe dynamic paintings. Muse test budget capped (it costs money).
