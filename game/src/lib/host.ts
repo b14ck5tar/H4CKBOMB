@@ -465,7 +465,7 @@ export class GameHost {
       lastTime: "",
       sceneTitle: "",
       goal: "",
-      nowGoal: this.story?.right_now ?? "",
+      nowGoal: "",
       ladder: [],
       step: 0,
       fling: null,
@@ -1701,7 +1701,7 @@ export class GameHost {
       sceneIndex: 0,
       sceneTitle: sc.title,
       goal: sc.goal,
-      nowGoal: "",
+      nowGoal: this.story?.right_now ?? "", // the first step, from the opener
       narration: sc.narration,
       situation: sc.situation,
       npcLine: sc.npc_line ?? { speaker: "", line: "" },
