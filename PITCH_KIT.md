@@ -228,6 +228,15 @@ The 10-minute plan and the 15-question drill are in `pitch/REHEARSAL.md`.
 - **Phone footer** reworded by the look session (4b8cfa2): "No accounts. Your words go to Meta's Muse AI to run the
   game; the TV keeps the finished tale, and our server caches the art and audio."
 
+## 11. HackTX general judging (Best Overall): Technology, Design, Completion, Learning
+
+| Criterion | Say (one line) | Point at |
+|---|---|---|
+| Technology | "Real-time rooms: phones only send moves, the TV runs the game. Muse does 4 jobs: it judges plans, writes turns, paints your heroes into each scene with image edits, and transcribes voice. Plus an MCP connector. Live news goes through an AI storyability gate, code checks every AI change to the story, dice are crypto, every AI call starts the moment its inputs exist so nobody waits more than ~5 s, and the music is generated in code." | DM's Notes (**N**) live; the how-it-works diagram (`devpost-media/broll/how-it-works.png`) |
+| Design | "Our own Neon Ink art style, a Jackbox-style lobby, a phone UI built for one thumb, and every AI decision explainable." | The lobby, a new painting, the phone, DM's Notes |
+| Completion | "It plays end to end on the live link, and every AI call has a fallback, so a table never freezes." | The judge's own game, start to reveal (say "live link" only after the 8:30 deploy is checked) |
+| Learning | "It's our creative director's first hackathon: they made every creative call and directed AI to build it." Partner: *(line TBD, the lead is asking)*. | PITCH_KIT section 5 (how we built it) |
+
 ## Don't say yet (not built, not tested, or not true on the live site)
 
 - **"Play it now at groupproject-game.vercel.app"** until the merge + deploy: the live site runs an old build (danger

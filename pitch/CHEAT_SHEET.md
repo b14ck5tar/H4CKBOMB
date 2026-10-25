@@ -61,6 +61,15 @@ the TV runs."
 - **Freeze:** F5 on the TV, everyone rescans. Twice = video.
 - **Judge in a hurry:** 30-second pitch + deck reveal slide + QR card.
 
+## HackTX general judging (Best Overall)
+- **Technology:** real-time multi-phone rooms run by the TV; 4 Muse jobs (judge plans, write turns, paint your heroes
+  into each scene, transcribe) + the MCP connector; a live news pipeline with an AI storyability gate; code checks
+  every AI change; crypto dice; generate-ahead so nobody waits >5 s; music made in code. *Point at:* DM's Notes (N),
+  the how-it-works diagram.
+- **Design:** Neon Ink art, Jackbox-style lobby, phone UI, every AI call explainable. *Point at:* lobby, painting, phone.
+- **Completion:** plays end to end on the live link; every AI call has a fallback. *Point at:* their own game.
+- **Learning:** the CD's first hackathon: creative director who directed AI to build it. Partner: *(line TBD)*.
+
 ## Never say
 "4 minutes" · "this week's news" (at the table) · "nothing is saved" · "20 cents" as fact ·
 danger meter, Catch, Boost, Mirror, clues, Convince the DM, Hope · "Play it now" until the deploy is checked.
