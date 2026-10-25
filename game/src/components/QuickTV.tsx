@@ -261,6 +261,14 @@ function GoalBar({ s }: { s: GameState }) {
                 ))}
               </span>
             )}
+            {s.ladder.length > 1 && (
+              <span className="gp-danger" title={`Danger ${s.danger} of 3${s.danger >= 3 ? ": the finale gets −3" : ""}`}>
+                Danger
+                {[0, 1, 2].map((i) => (
+                  <i key={i} className={i < s.danger ? "on" : ""} />
+                ))}
+              </span>
+            )}
           </span>
           <span className="gp-goal-t">{now || s.goal}</span>
         </div>
@@ -641,7 +649,6 @@ function Ruling({ host, s }: { host: Stage; s: GameState }) {
   if (!pitch || !pl) return null;
   const votes = Object.values(s.votes).filter((id) => id === pitch.id).length;
   const credit = pitch.creditId ? s.players.find((p) => p.id === pitch.creditId) : undefined;
-  const need = s.rolls[0]?.need;
   return (
     <div className="qt-stage qt-center">
       <div className="qt-glass gp-card qt-pop" style={{ ["--pc" as string]: pl.color }}>
@@ -669,7 +676,7 @@ function Ruling({ host, s }: { host: Stage; s: GameState }) {
             <>
               <Stamp text={stampText(v.tier)} size="xl" rotate={-4} tone={tierTone(v.tier)} />
               <span className="flex-1" />
-              {need ? <NeedBadge need={need} mods={modsOf(s.rolls[0])} /> : null}
+              {s.rolls[0] ? <ShiftBadge s={s} r={s.rolls[0]} /> : null}
             </>
           ) : (
             <p className="font-heading text-2xl uppercase text-parchment/70 qt-throb">The DM is reading the plan…</p>
@@ -681,28 +688,42 @@ function Ruling({ host, s }: { host: Stage; s: GameState }) {
 }
 
 // ---------- 5. the roll ----------
-/** "Needs 12+": what the die has to show, shown before every roll so the room knows what it's cheering for. */
-function NeedBadge({ need, mods }: { need: number; mods: number }) {
-  const miracle = need > 20;
+/** Before the throw: how the plan shifts the roll ("Wild plan: −5"). No pass line: every total is its own outcome. */
+function ShiftBadge({ s, r }: { s: GameState; r: RollResult }) {
+  const v = s.pitches.find((p) => p.playerId === r.playerId)?.verdict;
+  if (!v) return null;
+  const mods = r.statBonus + (r.bonus ?? 0);
   return (
     <div className="gp-need gp-line">
-      <span>Needs</span>
-      <b>{miracle ? "a 20" : `${need}+`}</b>
-      <i>{miracle ? "a perfect roll" : `d20 ${mods >= 0 ? "+" : "−"} ${Math.abs(mods)}`}</i>
+      <span>{stampText(v.tier)} plan</span>
+      <b>{r.tierMod > 0 ? `+${r.tierMod}` : r.tierMod < 0 ? `−${Math.abs(r.tierMod)}` : "±0"}</b>
+      <i>{`d20 ${mods >= 0 ? "+" : "−"} ${Math.abs(mods)} bonus`}</i>
     </div>
   );
 }
 
-const modsOf = (r?: RollResult) => (r ? r.statBonus + (r.bonus ?? 0) : 0);
-
+/** After the throw: the math, then the total on a 1-20 quality track with its grade ("14 · IT WORKS"). */
 function RollMath({ s, r }: { s: GameState; r: RollResult }) {
   const v = s.pitches.find((p) => p.playerId === r.playerId)?.verdict;
+  const pct = Math.max(5, Math.min(100, (r.total / 20) * 100));
+  const tone = r.total <= 5 ? "var(--crimson)" : r.total <= 9 ? "#FF9A1F" : r.total <= 14 ? "var(--signal)" : "var(--gilt-bright)";
   return (
-    <p className="font-ui text-3xl tabular-nums text-parchment gp-line">
-      {r.kept} <span className="text-parchment/70">{fmt(r.statBonus)} {v ? STAT_LABEL[v.stat] : ""}</span>
-      {r.bonus ? <span className="text-parchment/70"> +{r.bonus} {r.bonusWhy === "backed" ? "backed" : "idea"}</span> : null} = <b className="text-5xl text-[var(--gilt-bright)]">{r.total}</b>
-      {v && <span className="text-parchment/60 text-2xl"> · {v.tier === "miracle" ? "needed a 20" : `needed ${TIER_DC[v.tier]}+`}</span>}
-    </p>
+    <div className="flex flex-col items-center gap-3 gp-line">
+      <p className="font-ui text-2xl tabular-nums text-parchment/80">
+        {r.kept} {fmt(r.statBonus)} {v ? STAT_LABEL[v.stat] : ""}
+        {r.bonus ? ` +${r.bonus} ${r.bonusWhy === "backed" ? "backed" : "idea"}` : ""}
+        {r.tierMod ? ` ${r.tierMod > 0 ? "+" : "−"}${Math.abs(r.tierMod)} ${v ? stampText(v.tier).toLowerCase() : "plan"}` : ""} =
+      </p>
+      <div className="gp-quality" aria-label={`${r.total} out of 20: ${r.gradeLabel ?? ""}`}>
+        <div className="gp-quality-fill" style={{ width: `${pct}%`, background: tone }} />
+        {[5, 9, 14, 19].map((x) => (
+          <i key={x} style={{ left: `${(x / 20) * 100}%` }} />
+        ))}
+      </div>
+      <p className="font-heading uppercase text-4xl tabular-nums" style={{ color: tone }}>
+        {r.total} · {r.gradeLabel ?? BAND_LABEL[r.band]}
+      </p>
+    </div>
   );
 }
 
@@ -743,12 +764,12 @@ function Roll({ host, s }: { host: Stage; s: GameState }) {
         {settled ? (
           <>
             <RollMath s={s} r={r} />
-            <Stamp text={BAND_LABEL[r.band]} size="lg" tone={bandTone(r.band)} />
+            <Stamp text={r.gradeLabel ?? BAND_LABEL[r.band]} size="lg" tone={bandTone(r.band)} />
           </>
         ) : (
           !shown && (
             <>
-              {r.need ? <NeedBadge need={r.need} mods={modsOf(r)} /> : null}
+              <ShiftBadge s={s} r={r} />
               <p className="font-heading text-2xl uppercase text-parchment/80 qt-throb">{pl.hero?.name}: swipe up on your phone to throw</p>
             </>
           )
@@ -912,7 +933,7 @@ function Final({ host, s }: { host: Stage; s: GameState }) {
           </>
         ) : (
           <div className="flex items-center gap-10">
-            {r?.need ? <NeedBadge need={r.need} mods={modsOf(r)} /> : null}
+            {r ? <ShiftBadge s={s} r={r} /> : null}
             <CrewRow host={host} s={s} done={(p) => (stage === "arm" ? !!f?.armed?.includes(p.id) || !!p.away : shook.includes(p.id))} />
           </div>
         )}

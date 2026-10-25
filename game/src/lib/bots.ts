@@ -10,7 +10,7 @@ import type { GameState } from "./types";
 export interface BotPersona {
   name: string;
   persona: string; // for the AI: who they are and how they type
-  skill: string; // the "weirdly good at" answer
+  skill: string; // the "secret talent" answer
   emoji: string[];
   friendIdea: number; // chance they pick a friend's idea on their own turn
   typo: number; // chance of one small typo

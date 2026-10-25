@@ -188,7 +188,7 @@ function CreateHero({ send, onReady }: { send: Send; onReady: () => void }) {
         <textarea className="input min-h-20" value={text} onChange={(e) => setText(e.target.value)} maxLength={140} placeholder={ex} />
       </label>
       <label className="flex flex-col gap-1">
-        <span className="font-ui text-sm">What are you weirdly good at? (optional)</span>
+        <span className="font-ui text-sm">What&apos;s your secret talent? (optional)</span>
         <input className="input" value={skill} onChange={(e) => setSkill(e.target.value)} maxLength={80} placeholder="parallel parking, finding lost things" autoComplete="off" />
         <span className="text-xs text-parchment/70">It becomes your hero&apos;s power. Your real answer stays secret until the end.</span>
       </label>
@@ -260,7 +260,7 @@ function RealForm({ send }: { send: Send }) {
       }}
     >
       <label className="flex flex-col gap-1">
-        <span className="font-heading text-xl uppercase leading-snug">What are you weirdly good at?</span>
+        <span className="font-heading text-xl uppercase leading-snug">What&apos;s your secret talent?</span>
         <input className="input" value={skill} onChange={(e) => setSkill(e.target.value)} maxLength={80} placeholder="parallel parking, finding lost things" autoComplete="off" />
       </label>
       <p className="text-ink-soft text-xs -mt-1">Your hero gets your knack. It stays secret until the end.</p>

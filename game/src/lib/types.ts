@@ -5,7 +5,7 @@ export type Rating = "kids" | "teens" | "adults";
 
 /** Two optional join questions (lib/real.ts). Either can be "" (skipped). Private until the reveal. */
 export interface RealAnswers {
-  skill: string; // "What's something you're weirdly good at?" -> their power, and the reveal's "Solved by" line
+  skill: string; // "What's your secret talent?" -> their power, and the reveal's "Solved by" line
   fear: string; // "What's a small thing that scares you?" -> comedy in the fiction only, never a real dare
 }
 /** How likely the winning plan is to work. Every plan rolls; "clever" is just the best modifier (lib/rules.ts). */
@@ -88,6 +88,9 @@ export interface RollResult {
   bonus?: number; // +1 for working in a friend's suggestion
   bonusWhy?: string; // what the bonus was for ("idea", "backed")
   need?: number; // the TOTAL the roll needs ("Needs 13+"); 21 = only a natural 20 (a miracle)
+  grade?: string; // graded outcome (lib/grade.ts): DISASTER, SETBACK, PARTIAL, PROGRESS, GREAT, LEGENDARY
+  gradeLabel?: string; // the stamp ("IT WORKS")
+  ending?: Ending; // the ending tier if this was the finale roll
 }
 
 export interface RoundOutcome {
@@ -151,6 +154,8 @@ export interface QuestSeed {
   problem?: { pronoun: string; stakes: string };
   /** The story ladder: 3-4 step goals, setup → twist → climax (live stories, from the writer). */
   beats?: string[];
+  /** The real event behind a live story (opener.real_setting, spoiler-free): the outcome and ruling stay inside it. */
+  real_event?: Record<string, unknown>;
   /** "Our stories": who wrote it (their real ending is the_real_story.summary, hidden until the reveal). */
   author?: { pid: string; name: string };
   art_style_hint: string;
@@ -316,7 +321,8 @@ export interface GameState {
   nowGoal: string; // "Right now:" the objective the players' own choices set (written after each outcome)
   ladder: string[]; // the story ladder: 2-4 planned steps, the last one is the goal (the finale). [] = no ladder
   step: number; // the step the table is on (0-based)
-  fling: { power: number; angle: number } | null; // how the die was thrown (flight only; the number is decided in code)
+  fling: { power: number; angle: number } | null;
+  danger: number; // the team's danger meter, 0..3: worse branches raise it, better ones lower it; full = a harder finale // how the die was thrown (flight only; the number is decided in code)
   narration: string;
   situation: string;
   banner: string;

@@ -35,6 +35,7 @@ import { mask } from "./mask";
 import { QUICK, coldOpenTimeline } from "./quick";
 import { FEATURES } from "./features";
 import { Bots } from "./bots";
+import { TIER_SHIFT, gradeRoll } from "./grade";
 import { speakableName } from "./now";
 import { DEFAULT_CAST, VOICES, isVoice } from "./voices";
 import { ART_STYLES, isArtStyle } from "./artStyles";
@@ -110,6 +111,7 @@ const outcomeMs = (text: string) => Math.min(12_000, Math.max(6500, text.split(/
 // Autopilot: a phone that's said nothing for this long (mid-story) is away; its hero keeps playing on its own.
 const AWAY_SILENCE_MS = 25_000;
 const AWAY_AFTER_TIMEOUTS = 2;
+const DANGER_MAX = 3; // the danger meter's top: at full, the finale gets a -3 shift
 const PRESENCE_ONLY = new Set(["hello", "ping", "away"]); // these don't count as "I'm back"
 /** Every phone silent this long = the table pauses ("Reconnecting phones…"). Phones ping every 3 s. */
 const ALL_QUIET_MS = 8000;
@@ -392,7 +394,7 @@ export class GameHost {
   private sceneList: SeedScene[] = []; // the hand-written scenes being played
   private pinned = false; // a story was picked by link, so Full Story skips the vote
   private pendingRoll: RollResult | null = null;
-  private outcomeP: Promise<{ text: string; situation: string; why: string; nowGoal: string; where: string; changed: string; prop: string }> | null = null;
+  private outcomeP: Promise<{ text: string; situation: string; why: string; nowGoal: string; where: string; changed: string; prop: string; memorable: string; scene: string }> | null = null;
   private outcomeAt = 0; // when the outcome text arrived (its audio was asked for then)
   private finalRoll: RollResult | null = null;
   private finalPitch: Pitch | null = null;
@@ -456,6 +458,7 @@ export class GameHost {
       ladder: [],
       step: 0,
       fling: null,
+      danger: 0,
       narration: "",
       situation: "",
       banner: "",
@@ -858,7 +861,7 @@ export class GameHost {
     const name = this.heroName(pitch.playerId);
     // Safety: player text that never reached the AI's moderation is not printed.
     const plan = v.fallback ? "(plan hidden: not reviewed)" : v.moderation === "ok" ? `"${clip(mask(pitch.text), 90)}"` : `(${clip(v.interpretation, 80)})`;
-    const target = v.tier === "miracle" ? "only a natural 20" : `needs ${TIER_DC[v.tier]}+ in total (d20 + bonuses)`;
+    const target = `${TIER_SHIFT[v.tier] >= 0 ? "+" : ""}${TIER_SHIFT[v.tier]} on the roll`;
     this.note("ruling", name, `Judged by Muse Spark: ${plan}${pitch.creditId ? ` (+ ${this.heroName(pitch.creditId)}'s idea, +1)` : ""} → ${TIER_LABEL[v.tier]}, ${target}, rolls ${STAT_LABEL[v.stat]}. ${end(v.reason || "No reason given")}`);
     if (v.moderation === "redirected") {
       this.bump("safety");
@@ -878,10 +881,9 @@ export class GameHost {
       if (r.kept === 1) this.bump("nat1");
       if (r.kept === 20) this.bump("nat20");
       const mods = v ? ` ${fmtMod(r.statBonus)} ${STAT_LABEL[v.stat]}${r.bonus ? ` +${r.bonus} friend's idea` : ""}` : "";
-      const vs = v ? ` vs ${v.tier === "miracle" ? "a natural 20" : `${TIER_DC[v.tier]}+`}` : "";
+      const vs = r.tierMod ? ` ${r.tierMod > 0 ? "+" : ""}${r.tierMod} ${v ? TIER_LABEL[v.tier].toLowerCase() : "plan"}` : "";
       const nat = r.kept === 1 ? " Natural 1." : r.kept === 20 ? " Natural 20." : "";
-      const miracle = v?.tier === "miracle" && r.kept !== 20 ? " (only a natural 20 makes a miracle)" : "";
-      this.note("roll", name, `${auto ? "Didn't tap in time, so the table rolled. " : ""}d20 rolled ${r.kept}${mods} = ${r.total}${vs} → ${end(BAND_LABEL[r.band].replace(/…$/, "") + miracle)}${nat}`);
+      this.note("roll", name, `${auto ? "Didn't tap in time, so the table rolled. " : ""}d20 rolled ${r.kept}${mods}${vs} = ${r.total} → ${end(r.gradeLabel ?? BAND_LABEL[r.band].replace(/…$/, ""))} Every total is its own outcome; the story moves on either way.${nat}`);
     };
     if (delay > 0) setTimeout(write, delay);
     else write();
@@ -1281,7 +1283,7 @@ export class GameHost {
     const hero: Hero = {
       ...p.hero,
       // Keep the hero's designed power (it matches their portrait); the player's knack joins it.
-      ability: skill ? { name: base.ability.name, text: `${base.ability.text.replace(/[.!\s]+$/, "")}, and weirdly good at ${skill}.` } : base.ability,
+      ability: skill ? { name: base.ability.name, text: `${base.ability.text.replace(/[.!\s]+$/, "")}, with a secret talent for ${skill}.` } : base.ability,
       flaw: fear ? `Has the worst luck with ${fear}, at the worst moments.` : base.flaw,
     };
     this.patchPlayer(pid, { hero });
@@ -1569,9 +1571,9 @@ export class GameHost {
     this.sceneList = [{ ...opener, goal }];
     this.rememberStory(seed);
     const ladder = this.buildLadder(seed, goal);
-    this.set({ ladder, step: 0 });
+    this.set({ ladder, step: 0, danger: 0 });
     if (ladder.length) this.note("scene", "The ladder", `${ladder.map((x, i) => `${i + 1}. ${x}`).join(" → ")}. A hit climbs a step, a miss stays put; the top step is the finale.`);
-    this.spine = { problem: seed.the_threat.name, pronoun: seed.problem?.pronoun ?? "", stakes: seed.problem?.stakes ?? "", where: opener.location || "", facts: [], prop: "" };
+    this.spine = { problem: seed.the_threat.name, pronoun: seed.problem?.pronoun ?? "", stakes: seed.problem?.stakes ?? "", where: opener.location || "", facts: [], prop: "", memorable: [] };
     this.set({
       scenes: [{ kind: "hook", location: opener.location, description: opener.situation, twist: "", hasImage: !!this.sceneImages[this.plateFor(0)] }],
       turnOrder: this.makeTurnOrder(),
@@ -1884,6 +1886,7 @@ export class GameHost {
         plan: firstAction(pitch.text).action,
         earlier: this.state.log.map((l) => `${l.hero} (${l.band}): ${l.narration}`).slice(-4),
         story_so_far: this.storySoFar(),
+        real_event: this.seed?.real_event,
       }),
       10_000,
       (d, f): Verdict | null => (f || !d?.tier ? fb() : { ...fb(), ...d, fallback: false, interpretation: d.interpretation || `${h.name} tries their plan` }),
@@ -1934,7 +1937,7 @@ export class GameHost {
       this.outcomeAt = Date.now();
       this.voiceFor(o.text);
       // The new picture shows what just happened, in the place the story has moved to.
-      this.paintDecision(judged, v, o.text, o.situation || this.state.situation);
+      this.paintDecision(judged, v, o.scene || o.text, o.situation || this.state.situation);
       const next = this.state.turnOrder[this.state.turnIndex + 1];
       const where = o.situation || this.state.situation;
       if (next) this.voiceFor(`${this.heroName(next)}, ${where.charAt(0).toLowerCase()}${where.slice(1)}`);
@@ -2057,6 +2060,8 @@ export class GameHost {
         const pronoun = pr?.pronoun || th?.pronoun || "";
         if (name) seed.the_threat = { ...seed.the_threat, name };
         if (stakes || pronoun) seed.problem = { pronoun: /^(she|he|it|they)$/.test(pronoun) ? pronoun : "", stakes };
+        const real = (j.opener as { real_setting?: Record<string, unknown> }).real_setting ?? (j as { real_setting?: Record<string, unknown> }).real_setting;
+        if (real && typeof real === "object") seed.real_event = real;
         if (Array.isArray(j.opener.beats)) seed.beats = j.opener.beats.map((b) => String(b).trim()).filter(Boolean).slice(0, 4);
         this.builtSeeds.set(seed.id, seed);
         this.paintOpening(seed);
@@ -2157,12 +2162,12 @@ export class GameHost {
   private castCache = new Map<string, Promise<{ cast: NonNullable<GameState["cast"]>; failed: boolean; want: string; pronoun: string }>>();
 
   /** The story spine, passed into every ruling, outcome and ending so the story stays on one track. */
-  private spine = { problem: "", pronoun: "", stakes: "", where: "", facts: [] as string[], prop: "" };
+  private spine = { problem: "", pronoun: "", stakes: "", where: "", facts: [] as string[], prop: "", memorable: [] as string[] };
 
   /** The story so far: the problem (never a villain), what's at stake, where the heroes are, what changed. */
   storySoFar() {
     const sp = this.spine;
-    return { problem: sp.problem, at_stake: sp.stakes, ...(sp.pronoun ? { pronoun: sp.pronoun } : {}), where: sp.where, what_changed: sp.facts.slice(-3) };
+    return { problem: sp.problem, at_stake: sp.stakes, ...(sp.pronoun ? { pronoun: sp.pronoun } : {}), where: sp.where, what_changed: sp.facts.slice(-3), memorable: sp.memorable.slice(-3) };
   }
 
   /** The audio for voice line `id` (the TV plays it; nothing goes over the network to phones). */
@@ -2291,19 +2296,27 @@ export class GameHost {
     // +1 for working in a friend's idea; in the finale, +1 per friend who backed the plan (max +2).
     const backed = this.state.finale ? Math.min(2, Object.values(this.state.votes).filter((id) => id === pitch.id).length) : 0;
     const bonus = (pitch.creditId ? 1 : 0) + backed;
-    const total = die + statBonus + bonus;
+    // Graded outcomes (lib/grade.ts): no pass/fail line. The plan's difficulty is a shift on the total; in the finale
+    // a full danger meter adds -3, and the finale's whole shift never goes below -3 (no loss spiral).
+    const finale = this.state.finale;
+    const tierShift = TIER_SHIFT[v.tier];
+    const shift = finale ? Math.max(-3, tierShift + (this.state.danger >= DANGER_MAX ? -3 : 0)) : tierShift;
+    const g = gradeRoll(die + statBonus + bonus + shift, die);
     return {
       playerId: p.id,
       dice: [die],
       kept: die,
       advantage: "none",
       statBonus,
-      tierMod: 0,
+      tierMod: shift,
       bonus,
       bonusWhy: backed ? "backed" : bonus ? "idea" : "",
-      need: TIER_DC[v.tier],
-      total,
-      band: judge(die, total, v.tier),
+      need: 0,
+      total: g.total,
+      band: g.band,
+      grade: g.grade,
+      gradeLabel: g.label,
+      ending: g.ending,
       rescuerId: "",
       noRoll: false,
       boosted: false,
@@ -2351,21 +2364,32 @@ export class GameHost {
    */
   private askOutcome(pitch: Pitch, roll: RollResult) {
     const h = this.player(pitch.playerId)!.hero!;
-    const fb = () => ({ text: FALLBACK_OUTCOME[roll.band].replaceAll("{name}", h.name), situation: "", why: "", nowGoal: "", where: "", changed: "", prop: "" });
-    const won = !["FAIL", "CATASTROPHE"].includes(roll.band);
+    const fb = () => ({ text: FALLBACK_OUTCOME[roll.band].replaceAll("{name}", h.name), situation: "", why: "", nowGoal: "", where: "", changed: "", prop: "", memorable: "", scene: "" });
+    const g = gradeRoll(roll.total, roll.kept);
+    const won = g.branch === "better" || g.branch === "legendary";
+    const L = this.state.ladder;
+    const target = this.state.step + 1 < L.length - 1 ? L[this.state.step + 1] : "";
+    const nextId = this.state.turnOrder[this.state.turnIndex + 1];
+    const npc = this.sceneList[0]?.npc_line;
     return this.viaAI(
       "What happened",
-      this.ask<{ text: string; situation: string; why: string; now_goal: string; where?: string; changed?: string; new_prop?: string }>("outcome", {
+      this.ask<{ text: string; situation: string; why: string; now_goal: string; where?: string; changed?: string; new_prop?: string; memorable?: string; scene?: string }>("outcome", {
         story: { title: this.state.quest?.title ?? this.state.sceneTitle, goal: this.state.goal },
         story_so_far: this.storySoFar(),
         situation: this.state.situation,
         right_now: this.state.nowGoal || this.state.goal,
         last_prop: this.spine.prop,
         ladder: this.state.ladder.length ? { steps: this.state.ladder, current: this.state.ladder[this.state.step] ?? "", next: this.state.step + 1 < this.state.ladder.length - 1 ? this.state.ladder[this.state.step + 1] : "" } : undefined,
+        target,
+        real_event: this.seed?.real_event,
         hero: { name: h.name, power: h.ability?.text ?? "", weakness: h.flaw },
         attempt: pitch.verdict?.interpretation ?? "",
         plan: firstAction(pitch.text).action,
-        helped_by: pitch.creditId && won ? this.heroName(pitch.creditId) : "", // a friend is credited, never blamed
+        idea_from: pitch.creditId && won ? this.heroName(pitch.creditId) : "", // a friend is credited, never blamed
+        heroes: this.heroes().map((p) => p.hero!.name),
+        next_hero: nextId ? this.heroName(nextId) : "",
+        side_character: npc?.speaker ? { speaker: npc.speaker, line: npc.line } : undefined,
+        roll: { total: g.total, grade: g.grade, branch: g.branch, meaning: g.meaning, depth: Math.round(g.depth * 100) / 100 },
         band: roll.band,
         natural: roll.kept === 1 || roll.kept === 20 ? roll.kept : null,
         earlier: this.state.log.map((l) => l.narration).slice(-4),
@@ -2377,7 +2401,17 @@ export class GameHost {
         f
           ? fb()
           : d?.text?.trim()
-          ? { text: d.text.trim(), situation: (d.situation ?? "").trim(), why: (d.why ?? "").trim(), nowGoal: (d.now_goal ?? "").trim(), where: String(d.where ?? "").trim(), changed: String(d.changed ?? "").trim(), prop: String(d.new_prop ?? "").trim() }
+          ? {
+              text: d.text.trim(),
+              situation: (d.situation ?? "").trim(),
+              why: (d.why ?? "").trim(),
+              nowGoal: (d.now_goal ?? "").trim(),
+              where: String(d.where ?? "").trim(),
+              changed: String(d.changed ?? "").trim(),
+              prop: String(d.new_prop ?? "").trim(),
+              memorable: String(d.memorable ?? "").trim(),
+              scene: String(d.scene ?? "").trim(),
+            }
           : null,
       fb,
     );
@@ -2390,13 +2424,14 @@ export class GameHost {
     const pitch = this.state.pitches.find((p) => p.playerId === roll.playerId)!;
     this.set({ phase: "outcome", outcome: "", ready: [], voice: null });
     let settled = false;
-    const op = this.outcomeP ?? Promise.resolve({ text: FALLBACK_OUTCOME[roll.band].replaceAll("{name}", this.heroName(roll.playerId)), situation: "", why: "", nowGoal: "", where: "", changed: "", prop: "" });
+    const op = this.outcomeP ?? Promise.resolve({ text: FALLBACK_OUTCOME[roll.band].replaceAll("{name}", this.heroName(roll.playerId)), situation: "", why: "", nowGoal: "", where: "", changed: "", prop: "", memorable: "", scene: "" });
     op.then(() => (settled = true));
     setTimeout(() => !settled && this.state.phase === "outcome" && this.set({ busy: "The DM is writing it down…" }), 600);
-    const { text, situation, why, nowGoal: asked, where, changed, prop } = await op;
+    const { text, situation, why, nowGoal: asked, where, changed, prop, memorable } = await op;
     // Every turn moves the story on one step; the roll only picks a better or worse branch (a fail = the worse
     // branch, never the same goal again). The top step is the finale, so turns stop one below it.
-    const missed = roll.band === "FAIL" || roll.band === "CATASTROPHE";
+    const g = gradeRoll(roll.total, roll.kept);
+    const missed = g.branch === "worse" || g.branch === "mixed";
     const backward = /(again|start over|back to square)/i.test(asked);
     const L = this.state.ladder;
     const prev = this.state.nowGoal || this.state.goal;
@@ -2409,6 +2444,11 @@ export class GameHost {
     if (where) this.spine.where = where;
     if (changed) this.spine.facts = [...this.spine.facts, changed].slice(-3);
     this.spine.prop = prop;
+    if (memorable) this.spine.memorable = [...this.spine.memorable, memorable].slice(-4);
+    // The danger meter: worse branches raise it, better ones lower it. Full = the finale gets a -3 shift.
+    const dz = g.branch === "worse" ? 1 : g.branch === "better" ? -1 : g.branch === "legendary" ? -2 : 0;
+    const danger = Math.max(0, Math.min(DANGER_MAX, this.state.danger + dz));
+    if (danger !== this.state.danger) this.note("roll", "Danger", `${danger} of ${DANGER_MAX}${danger === DANGER_MAX ? ": full, so the finale roll gets -3" : ""} (${g.label.toLowerCase()} ${dz > 0 ? "raised" : "lowered"} it).`);
     if ((this.state.phase as string) !== "outcome") return;
     // The outcome's audio was asked for the moment its text arrived; give it until 5 s after that, else text only.
     const clip = await this.voiceBy(text, (this.outcomeAt || Date.now()) + 5000);
@@ -2418,7 +2458,7 @@ export class GameHost {
     if (situation) this.note("scene", "Now", situation);
     // The story branches: the next turn starts from what just happened.
     if (nowGoal && nowGoal !== this.state.nowGoal) this.note("scene", "Right now", nowGoal);
-    this.set({ outcome: text, busy: "", situation: situation || this.state.situation, nowGoal: nowGoal || this.state.nowGoal, step });
+    this.set({ outcome: text, busy: "", situation: situation || this.state.situation, nowGoal: nowGoal || this.state.nowGoal, step, danger });
     const spoken = this.play(clip);
     this.setTimer(spoken ? Math.max(spoken + 1000, 4500) : outcomeMs(text), () => this.startTurn(this.state.turnIndex + 1));
   }
@@ -2453,7 +2493,7 @@ export class GameHost {
     this.clearTimer();
     this.finalPitch = pitch;
     this.finalRoll = roll;
-    const ending = endingFromBand(this.finalRoll.band);
+    const ending = this.finalRoll.ending ?? endingFromBand(this.finalRoll.band);
     this.set({
       phase: "final_roll",
       rolls: [],
@@ -2533,7 +2573,7 @@ export class GameHost {
     const key = `${this.state.questId}:${roll.kept}:${pitch.id}`;
     if (this.endingFor === key) return;
     this.endingFor = key;
-    const ending = endingFromBand(roll.band);
+    const ending = roll.ending ?? endingFromBand(roll.band);
     const sc = this.sceneList[this.state.sceneIndex];
     const heroes = this.heroes().map((p) => ({ id: p.id, name: p.hero!.name }));
     const winner = this.heroName(pitch.playerId);
@@ -2548,6 +2588,7 @@ export class GameHost {
         ending,
         won: ending !== "GRIM_BUT_HILARIOUS",
         story_so_far: this.storySoFar(),
+        real_event: this.seed?.real_event,
         players: this.heroes().map((p) => ({ id: p.id, said: `<player_input>${cleanText(this.reals[p.id]?.skill ?? "", 80)}</player_input>` })),
         heroes: heroes.map((h) => h.name),
         situation: this.state.situation,
@@ -2617,7 +2658,7 @@ export class GameHost {
     this.finalSafety = null;
     const r = this.finalRoll!;
     const pitch = this.finalPitch!;
-    const ending = endingFromBand(r.band);
+    const ending = r.ending ?? endingFromBand(r.band);
     this.patchFinal({ stage: "landed", dice: { [r.playerId]: r.kept }, rolled: [r.playerId], total: r.total, ending });
     this.set({ phase: "final_result", rolls: [r], revealed: [r.playerId], players: this.state.players.map((p) => ({ ...p, peril: "" })), ready: [] });
     this.recordWin(pitch, r, `The finale: ${ENDING_LABEL[ending].toLowerCase()}.`);

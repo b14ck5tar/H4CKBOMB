@@ -698,3 +698,12 @@
 .gp-turn-busy .gp-turn-h { font-size: 3rem !important; }
 .gp-turn-busy .gp-turn-sit { font-size: 1.6rem !important; }
 .gp-turn-busy .qt-plan p { font-size: 1.15rem !important; }
+
+/* Graded outcomes: the 1-20 quality track (ticks at the grade edges), and the team's danger meter. */
+.gp-quality { position: relative; width: min(36rem, 70vw); height: 1.1rem; border-radius: 999px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
+.gp-quality-fill { position: absolute; inset: 0 auto 0 0; border-radius: 999px; animation: gp-fill 0.9s cubic-bezier(0.2, 0.8, 0.25, 1) both; box-shadow: 0 0 18px currentColor; }
+.gp-quality i { position: absolute; top: 0; bottom: 0; width: 2px; background: rgba(5, 3, 9, 0.7); }
+@keyframes gp-fill { from { width: 0; } }
+.gp-danger { display: inline-flex; align-items: center; gap: 0.3rem; margin-left: 0.9rem; font-size: 0.7rem; letter-spacing: 0.2em; color: rgba(255, 120, 150, 0.85); vertical-align: middle; }
+.gp-danger i { width: 0.55rem; height: 0.85rem; border-radius: 2px; border: 1.5px solid rgba(255, 46, 126, 0.6); }
+.gp-danger i.on { background: var(--crimson); border-color: var(--crimson); box-shadow: 0 0 8px var(--crimson); }
