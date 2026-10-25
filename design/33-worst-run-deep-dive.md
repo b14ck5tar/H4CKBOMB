@@ -38,26 +38,26 @@ The narrator re-read the same unchanged situation for three turns in a row, twic
 - Bot "lol" and typo suggestions ("silde", "cgaes") confused the players.
 - The night bus hook never came back after the opener.
 
-## 3. On the branch (196ae87..5e2a768, 16 commits)
+## 3. On the branch (196ae87..7b46971, 18 commits)
 
 **Fixed**
 - The ladder is gone. Progress (0-100) now drives 3 act dots.
-- `shownGoals` blocks repeated goals (L2667).
-- `fallbackLine` names the plan and matches the grade (L163).
-- Bots never own a turn while humans are playing, and they write clean text.
+- `shownGoals` blocks repeated goals.
+- `fallbackLine` names the plan and matches the grade.
+- Bots never own a turn while humans are playing, and they write clean text (no "lol", no typos).
 - `own_words` and `friend_idea` now reach the ruling and the outcome.
+- 7b46971 rewrote the prompts: "THE CHOSEN PLAN IS WHAT HAPPENS… A success really works and is never undone". "Never solved for good" is deleted. The ruling now says "if it succeeds, it really works".
 
 **Still broken or worse**
-- The host now waits 15 s, but route.ts still aborts the server call at **12 s** (L45), so nothing gained. Late answers are still discarded, and the clock still starts at the ruling.
-- The **committed** prompts.ts still has "moves to ladder.next", "never solved for good" and "Never copy or quote the plan". The host now sends `ladder: []` plus `finish_line`, `progress` and `own_words`, which the prompt never defines. The working-tree prompt edit is uncommitted.
-- The ruling still has the "only partly work" rule (L208).
+- The host now waits 15 s, but route.ts still aborts the server call at **12 s** (L47), so nothing gained. Late answers are still discarded, and the clock still starts at the ruling. This is the bug that produced 4 of the 6 bad turns.
+- The outcome prompt still says "Never copy or quote the plan" (L264) and still mentions ladder.next. It doesn't explain the `own_words`, `finish_line` and `progress` fields the host now sends.
 - After a fallback, `nowGoal` stays the same, so a success still leaves the same "Right now".
-- **Regression:** `makeTurnOrder` sets cycles from *all* heroes (4 or more means 1 cycle) but deals turns only to humans. This exact table would get **2 turns total**.
+- **Regression:** `makeTurnOrder` (L1732) sets cycles from *all* heroes (4 or more means 1 cycle) but deals turns only to humans. This exact table would get **2 turns total**.
 
 ## 4. Top 5 fixes
-1. **route.ts L45:** outcome `timeoutMs` 20 s. **host:** wait on `outcomeP` until the die lands + 4 s, not ruling + 12 s, and keep a late answer if the outcome isn't on screen yet.
-2. **prompts.ts OUTCOME_BASE:** delete the ladder.next, "never solved" and "never quote the plan" rules. Add: "The plan is the cause, using the player's own key noun (own_words). A success completes the current Right now, and the next situation is caused by it. Nothing achieved is undone." Define `finish_line` and `progress`. Commit the WIP.
-3. **prompts.ts ruling L207-208:** drop "only partly work". If the last outcome set it up (the cat at the cage), "grab it" is Solid. The interpretation keeps the player's noun.
+1. **route.ts L47:** outcome `timeoutMs` 20 s. **host:** wait on `outcomeP` until the die lands + 4 s, not ruling + 12 s, and keep a late answer if the outcome isn't on screen yet.
+2. **prompts.ts OUTCOME_BASE:** replace "Never copy or quote the plan" with "Name the player's own key noun (own_words)". Remove the leftover ladder.next text. Define `finish_line` and `progress`.
+3. **prompts.ts ruling:** if the last outcome set it up (the cat at the cage), "grab it" is Solid, not Risky. The `interpretation` keeps the player's noun ("trusts", "screen", "grab").
 4. **host.ts fallback:** on a better or legendary grade, set a fresh `nowGoal` (the next act from `finish_line`) instead of keeping the old one. Skip the turn narration if the situation is unchanged.
 5. **host.ts `makeTurnOrder`:** cycles from `humans.length` (2 humans → 2 each). Bots ignore ideas under 3 words or without a verb ("Idk", "Meow"). Gate: one 4-human Full Story with Muse live, with no canned line and no repeated goal.
 
