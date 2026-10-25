@@ -2,7 +2,7 @@
 
 **Group Project: the one group project where everyone actually shows up.**
 
-Rewritten Sun Oct 25 ~1 AM, updated Sun ~7 AM for the procedural story build (players steer, the DM reacts) and judge mode. Stage pitch: Sun 5:30 PM (GDC 2.216). Judging table: Sun 2 to 5 PM
+Rewritten Sun Oct 25 ~1 AM, updated Sun ~4:30 AM (laptop clock, CDT) for the procedural story build (players steer, the DM reacts) and judge mode. Stage pitch: Sun 5:30 PM (GDC 2.216). Judging table: Sun 2 to 5 PM
 (WEL): the partner runs it alone until the CD is back ~4:45; lines in PITCH_KIT.md, pocket card `pitch/CHEAT_SHEET.md`. Slides: `pitch/deck.html` (also at
 groupproject-game.vercel.app/pitch/deck.html). Live: **groupproject-game.vercel.app** (TV: `/tv`, phones: `/play`).
 

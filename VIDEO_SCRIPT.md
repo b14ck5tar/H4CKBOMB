@@ -2,11 +2,12 @@
 
 *Group Project: the one group project where everyone actually shows up.*
 
-Rewritten Sun Oct 25 ~8:45 AM for the **procedural story build**: players steer and the DM reacts, "tell the table
+Rewritten Sun Oct 25 (pre-dawn) for the **procedural story build**: players steer and the DM reacts, "tell the table
 your plan", friends' ideas (+1), swipe to throw, graded rolls, a new painting per decision, the hand-off to the next
 player by name, 3 acts, the shake-together finale and "Based on a true story".
 **Record on the deployed build (groupproject-game.vercel.app) once it runs the final branch. Devpost closes 11:30 AM;
-the CD leaves at 11 AM.**
+the CD leaves at 11 AM.** The step-by-step order for the morning (safety check, take, B-roll, edit, upload) is
+`pitch/CD_MORNING.md`; ready-made B-roll stills are in `devpost-media/broll/`.
 Never on screen or in the words: secret clues, Convince the DM, Boost, Catch!, Mirror, hearts / Hope, "Needs 12+",
 "fairytale", "inspired by real events", "this really happened", "weirdly good at" (the question is now "What's your
 secret talent?").
@@ -89,9 +90,9 @@ Part 2 spoken: ~160 words, ~73 s. The rest is game sound: let the narrator and t
 
 | Time | Shot | Type | Spoken | Notes |
 |---|---|---|---|---|
-| 2:00 to 2:14 | One turn as a simple left-to-right graphic: real news → **Muse Spark** (storyable? + opening) → the player's plan → **Muse Spark** (judge) → **code** (d20) → **Muse Spark** (what happens next, progress, hand-off) → **Muse Image** (new painting) → narrator. | PREP (deck slide 7 or `design/how-it-works.html` as the base) | "Muse runs the night. Muse Spark picks news that makes a good story, writes the opening, judges every plan and writes every turn. Muse Image paints your heroes into each new scene." | Labels: *muse-spark-1.3*, *muse-image-1.0* |
+| 2:00 to 2:14 | One turn as a simple left-to-right graphic: real news → **Muse Spark** (storyable? + opening) → the player's plan → **Muse Spark** (judge) → **code** (d20) → **Muse Spark** (what happens next, progress, hand-off) → **Muse Image** (new painting) → narrator. | PREP (`devpost-media/broll/how-it-works.png`, then `deck-slide-7.png`) | "Muse runs the night. Muse Spark picks news that makes a good story, writes the opening, judges every plan and writes every turn. Muse Image paints your heroes into each new scene." | Labels: *muse-spark-1.3*, *muse-image-1.0* |
 | 2:14 to 2:24 | TV with DM's Notes open (press N off camera, then record), entries scrolling. | PREP (screen capture after the take) | "Code keeps it honest. It rolls the dice, keeps every win, and checks the story uses your words. The AI judges ideas, never people." | Check DM's Notes shows no cut features first |
-| 2:24 to 2:30 | Narrator caption on the TV, a waveform. | PREP | "The one non-Meta piece is the narrator's voice, because Meta has no text-to-speech model." | On screen: *Narrator: OpenAI gpt-4o-mini-tts (Gemini TTS backup)* |
+| 2:24 to 2:30 | Narrator caption on the TV, a waveform. | PREP | "The one non-Meta piece is the narrator's voice, because Meta has no text-to-speech model." | On screen: *Narrator: the one non-Meta model* (name the vendor once the voice pick is final) |
 
 ## PART 4: Tools, harnesses and how they helped (2:30 to 3:00)
 

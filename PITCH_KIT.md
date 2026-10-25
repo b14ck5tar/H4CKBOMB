@@ -1,6 +1,6 @@
 # PITCH KIT: Group Project (judge table, Sun 2-5 PM, WEL)
 
-Verified Sun ~7 AM, line by line, against GAME.md (469418e) and the code (`lib/host.ts`, `lib/rules.ts`,
+Verified Sun ~4:30 AM (laptop clock, CDT), line by line, against GAME.md (469418e) and the code (`lib/host.ts`, `lib/rules.ts`,
 `lib/grade.ts`, `components/Presenter.tsx`, `server/tts.ts`, `server/news/candidates.ts`, `server/muse.ts`).
 Pocket version: `pitch/CHEAT_SHEET.md`. Morning drill: `pitch/REHEARSAL.md`. Stage pitch (5:30 PM): PITCH_CARD.md.
 
@@ -144,7 +144,7 @@ code rolled the dice. It was based on a true story. And you just played it."
 > models on our real job: a better rubric took Muse Spark from 5 of 8 fair rulings to 8 of 8, and in a blind test of
 > 5 writers Spark won."
 
-Checked Sun ~7 AM: 174 commits on `rebuild-around-the-table` (`git log`), 35 `design/*.md` files (5,746 lines),
+Checked Sun ~4:30 AM (laptop clock, CDT): 174 commits on `rebuild-around-the-table` (`git log`), 35 `design/*.md` files (5,746 lines),
 100 personas (design/32), 5/8 to 8/8 (design/23), 5 writers (design/26), 32-scenario stress test (commit 8eed30a).
 Re-count commits at 10 AM.
 
@@ -221,7 +221,7 @@ The 10-minute plan and the 15-question drill are in `pitch/REHEARSAL.md`.
 ## Don't say yet (not built, not tested, or not true on the live site)
 
 - **"Play it now at groupproject-game.vercel.app"** until the merge + deploy: the live site runs an old build (danger
-  meter, "RISKY", no "tell the table"). `origin/main` is 55 commits behind the branch (Sun ~7 AM).
+  meter, "RISKY", no "tell the table"). `origin/main` is 55 commits behind the branch (Sun ~4:30 AM).
 - **"This is this week's news"** at the table: judge mode plays a saved story from the library. Say "a real story".
 - **"4 minutes"**: a judge-mode game is ~5 min from Start (section 3).
 - **The narrator's vendor** (OpenAI / ElevenLabs / Gemini) until the voice session confirms the final pick. Say "the

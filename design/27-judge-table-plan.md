@@ -1,6 +1,6 @@
 # 27. Judge table run-of-show (Sun Oct 25, judging 2 to 5 PM, WEL)
 
-Updated Sun ~7 AM for judge mode and the current code. The spoken lines, timing table and FAQ live in PITCH_KIT.md
+Updated Sun ~4:30 AM (laptop clock, CDT) for judge mode and the current code. The spoken lines, timing table and FAQ live in PITCH_KIT.md
 (section 3); the pocket version is `pitch/CHEAT_SHEET.md`. This doc is the setup and logistics.
 
 Goal: every judge plays a real turn on their own phone, sees a friend's idea win "+1", throws the die, plays the
