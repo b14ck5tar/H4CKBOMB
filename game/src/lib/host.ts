@@ -2144,7 +2144,10 @@ export class GameHost {
   private paintOpening(seed: QuestSeed) {
     if (this.plateP.has(seed.id)) return;
     const o = seed.opener!;
-    const p = image({ kind: "scene", location: o.location || "", description: o.situation, realm: "", threat: o.narration, quality: "fast" });
+    // Painted in the story's own theme: the narrator cast (a quick call, cached) picks the art style first.
+    const p = this.castRaw(seed).then((r) =>
+      image({ kind: "scene", location: o.location || "", description: o.situation, realm: "", threat: o.narration, quality: "fast", style: r.cast.art }),
+    );
     this.plateP.set(seed.id, p);
     p.then((url) => {
       if (!url) return;
