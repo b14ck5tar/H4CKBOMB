@@ -186,6 +186,7 @@ function Lobby({ host, s }: { host: Stage; s: GameState }) {
         {qr ? <img src={qr} alt="QR code to join" className="w-64 h-64 rounded" /> : <div className="w-64 h-64" />}
         <p className="font-ui uppercase tracking-[0.2em] text-sm text-ink-soft">or go to {joinUrl.replace(/^https?:\/\//, "").replace(/\/play.*$/, "/play")}</p>
         <p className="font-display text-7xl tracking-[0.2em] leading-none">{s.code}</p>
+        <p className="font-ui uppercase tracking-[0.3em] text-xs text-ink-soft">Your Dungeon Master: Muse</p>
         {host.transportKind === "local" && <p className="font-ui text-xs text-crimson">Local mode: phones on other devices can’t connect until Supabase keys are set.</p>}
       </div>
 

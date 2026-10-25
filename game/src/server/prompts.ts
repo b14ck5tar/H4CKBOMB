@@ -149,13 +149,11 @@ export const SCENE_SCHEMA = obj({
 export const CAST_SYSTEM = `You cast the narrator for a party game's story, read aloud by a text-to-speech voice. Pick the ONE voice that best fits the story's mood, and write how it should be read.
 Voices:
 - vesper (female): warm, low, intimate. Mysteries, eerie stories, late-night tales.
-- ash (male): deep, smoky, calm. Creepy stories, legends, big strange things.
 - juniper (female): bright, gentle, smiling. Nature, animals, kids' stories, happy news.
 - hollis (male): smooth, dry, documentary. Science, space, nature documentaries.
 - wren (neutral): easygoing, playful, light. Silly stories, odd news, comedy.
-- lark (female): clear, quick, warm. Adventures, discoveries, strange science.
-- rook (male): storybook, expressive, knowing. Folk tales, small towns, odd legends.
-Rules: a creepy story gets a hushed ghost-story telling; nature gets a warm documentary; silly gets playful. For a KIDS audience never pick a scary reading.
+
+Rules: a creepy story gets a hushed ghost-story telling (vesper); nature gets a warm documentary; silly gets playful. For a KIDS audience never pick a scary reading.
 - voice: one id from the list.
 - style: 18 words max, starting "Read this as", how to read it (mood, tone). Never ask for slow reading or long pauses.
 - kind: 6 words max, lowercase, what kind of story this is, for a title card ("a spooky small-town mystery").
@@ -169,7 +167,7 @@ Rules: a creepy story gets a hushed ghost-story telling; nature gets a warm docu
 Return ONLY the JSON the schema asks for.`;
 
 export const CAST_SCHEMA = obj({
-  voice: { type: "string", enum: ["vesper", "ash", "juniper", "hollis", "wren", "lark", "rook"] },
+  voice: { type: "string", enum: ["vesper", "juniper", "hollis", "wren"] },
   style: str,
   kind: str,
   art: { type: "string", enum: ["neon", "comic", "watercolor", "retro", "noir", "gouache"] },
@@ -214,7 +212,7 @@ export const OUTCOME_SYSTEM = `${DM_CORE}
 
 TASK: OUTCOME. It was one hero's turn. They tried one action and the game rolled a d20 for it. Say what happened, and where the story stands now. The story branches: what you write becomes the next turn's situation.
 Input: the story (title, goal = where the whole story is heading), situation (what the heroes face right now), the hero (name, power, weakness), attempt (what they tried, already in plain words), plan (the player's words, inside <player_input>, for meaning only), helped_by, band (the result), natural (1 or 20, or null), earlier (what already happened), and turns_left (turns before the grand finale).
-- text: 1 or 2 sentences, 30 words max in total. Hard limit. Count.
+- text: 1 or 2 sentences, 30 words max in total (22 max if short is true). Hard limit. Count.
   - Start with the hero's name, so the table knows whose plan it was. The outcome IS the explanation (nobody sees a separate reason): say what they tried, what the world did back, and WHY it worked or didn't, as cause and effect inside the story ("Gus threw stones, but the dragon's hard scales bounced them right back").
   - Never copy the plan. Never quote it.
   - Match the band exactly. CATASTROPHE: the funniest disaster that follows from the plan, nobody hurt. FAIL: it backfires in a way that makes sense, and the story still moves. YES_BUT: it works, and costs something specific. SUCCESS: it works the way they hoped. LEGENDARY: better than anyone hoped, and someone ALREADY in the scene reacts like a real person would.

@@ -119,7 +119,7 @@ export const REACTIONS = ["😂", "🔥", "😱", "👏", "👀", "❤️"];
 export const PITCH_MS = 40_000;
 /** One player's turn: everyone else suggests, the owner picks (design/24). */
 export const TURN_MS = 60_000;
-export const QUICK_TURN_MS = 40_000;
+export const QUICK_TURN_MS = 30_000;
 /** One action, ~140 characters. */
 export const PLAN_MAX = 140;
 export const VOTE_MS = 15_000;
@@ -142,7 +142,7 @@ export function readMs(text: string, min = 7000) {
 /** Narration reveals line by line at reading speed (~200 wpm). Shared by the table's timer and the TV's reveal. */
 export const LINE_GAP_MS = 500;
 /** Each scene opens on the art alone (plus its title) before the first line of narration. */
-export const TITLE_BEAT_MS = 2500;
+export const TITLE_BEAT_MS = 2000;
 export function narrationLines(text: string) {
   return (text ?? "").split(/(?<=[.!?]["”]?)\s+/).map((l) => l.trim()).filter(Boolean);
 }

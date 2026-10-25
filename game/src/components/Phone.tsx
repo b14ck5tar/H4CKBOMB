@@ -158,6 +158,7 @@ function JoinForm({ onJoin }: { onJoin: (name: string) => void }) {
       <label className="font-heading uppercase" htmlFor="name">Your name</label>
       <input id="name" className="input" value={name} onChange={(e) => setName(e.target.value)} maxLength={16} placeholder="e.g. Sam" autoComplete="off" />
       <button className="btn btn-crimson text-lg" type="submit">Join</button>
+      <p className="text-xs text-ink-soft text-center">Your words go to Meta&apos;s Muse AI to run tonight&apos;s game. Nothing is saved after.</p>
     </form>
   );
 }
@@ -316,6 +317,7 @@ function StoryWriteForm({ state, me, send, deadlineAt }: { state: GameState; me:
         <textarea className="input min-h-16" value={ending} onChange={(e) => setEnding(e.target.value)} maxLength={300} placeholder="A neighbor had a ladder…" />
       </label>
       <p className="text-xs text-parchment/70">Keep it light and kind. Nobody sees who wrote it until the end.</p>
+      <p className="text-xs text-parchment/70">Your words go to Meta&apos;s Muse AI to run tonight&apos;s game. Nothing is saved after.</p>
       <button className="btn btn-crimson text-xl" type="submit" disabled={!setup.trim() || !ending.trim()}>
         Send my story
       </button>

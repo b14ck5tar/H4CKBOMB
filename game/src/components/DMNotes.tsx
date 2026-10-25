@@ -11,10 +11,10 @@ export const FILTER_NOTE = "Every story passes a tragedy filter first: no deaths
 
 const RULES: { icon: string; text: string }[] = [
   { icon: "🎲", text: "Dice are real random numbers from code. The AI never picks a number." },
-  { icon: "🧠", text: "The AI only judges ideas and narrates. Bonuses, totals and Hope are plain math." },
+  { icon: "🧠", text: "Muse Spark judges each plan literally and writes what happens. Needs N+, bonuses and totals are plain math." },
+  { icon: "🎨", text: "Muse Image paints the heroes into each decision. The narrator is voiced by OpenAI TTS (Meta has no voice model)." },
   { icon: "🚫", text: "No real people or brands in the story. Real places only in the broadest sense." },
   { icon: "🛡️", text: "Tragedies are filtered out. Only strange-but-harmless news becomes a story." },
-  { icon: "🪞", text: "Mirror sentences are kind-only. Anything mean is rewritten and never shown." },
 ];
 
 const KIND: Record<NoteKind, { label: string; color: string }> = {
@@ -152,16 +152,12 @@ export function DMNotesBody({ s, showQR = false }: { s: GameState; showQR?: bool
               <>
                 <dt className="font-ui text-sm uppercase text-parchment/60 pt-0.5">Where</dt>
                 <dd>
-                  {scene.kind === "climax" ? "Finale" : `Scene ${s.sceneIndex + 1}`} · {scene.location}
+                  {s.finale ? "Grand finale" : s.turnOrder.length ? `Turn ${s.turnIndex + 1} of ${s.turnOrder.length}` : "The opener"}{scene.location ? ` · ${scene.location}` : ""}
                 </dd>
               </>
             )}
-            <dt className="font-ui text-sm uppercase text-parchment/60 pt-0.5">Question</dt>
-            <dd>{s.question || "Not asked yet."}</dd>
-            <dt className="font-ui text-sm uppercase text-parchment/60 pt-0.5">Hope</dt>
-            <dd>
-              {s.hope} of {s.hopeMax}
-            </dd>
+            <dt className="font-ui text-sm uppercase text-parchment/60 pt-0.5">Right now</dt>
+            <dd>{s.situation || "Not started yet."}</dd>
             <dt className="font-ui text-sm uppercase text-parchment/60 pt-0.5">Canon</dt>
             <dd>
               {n.canon.length ? (
@@ -261,7 +257,6 @@ export function HowThisWasMade({ s }: { s: GameState }) {
   const nums: [string, number | string][] = [
     ["Rounds played", st.rounds],
     ["Plans the DM ruled", st.plans],
-    ["Arguments that won", `${st.appealsChanged} of ${st.appeals}`],
     ["Dice rolled (all by code)", st.rolls],
     ["Natural 1s / 20s", `${st.nat1} / ${st.nat20}`],
     ["Safety rewrites", st.safety],
@@ -314,7 +309,7 @@ export function HowThisWasMade({ s }: { s: GameState }) {
               <b>Named a real person.</b> The only real names tonight are on the reveal page, straight from the article.
             </li>
             <li>
-              <b>Rated a player.</b> It judged plans, not people. Mirror sentences are kind-only, and nobody got a score.
+              <b>Rated a player.</b> It judged plans, not people, and nobody got a score.
             </li>
           </ul>
         </Step>

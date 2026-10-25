@@ -95,14 +95,14 @@ const MIRROR_WRITE_MS = 40_000;
 const MIRROR_GUESS_MS = 20_000;
 const MIRROR_PHASES = ["mirror_write", "mirror_guess", "mirror_reveal"];
 // All-together Final Roll: arm (up to 8 s), "3, 2, 1" (3.5 s), SHAKE window (6 s), shared tumble, land.
-const FINAL_ARM_MS = 8000;
-const FINAL_COUNT_MS = 3500;
-const FINAL_SHAKE_MS = 6000;
-const FINAL_TUMBLE_MS = 2200;
-const FINAL_LAND_MS = 1800;
-const FINAL_RESULT_MS = 4500;
+const FINAL_ARM_MS = 6000;
+const FINAL_COUNT_MS = 3200;
+const FINAL_SHAKE_MS = 5000;
+const FINAL_TUMBLE_MS = 2000;
+const FINAL_LAND_MS = 1400;
+const FINAL_RESULT_MS = 3500;
 const TITLE_CARD_MS = 5200; // Full Story: the title card before scene 1
-const ROLL_HOLD_MS = 1800; // after the die lands: its math stays up for a beat
+const ROLL_HOLD_MS = 1400; // after the die lands: its math stays up for a beat
 /** The outcome stays up long enough to read it out loud, and no longer. */
 const outcomeMs = (text: string) => Math.min(12_000, Math.max(6500, text.split(/\s+/).length * 330 + 3200));
 // Autopilot: a phone that's said nothing for this long (mid-story) is away; its hero keeps playing on its own.
@@ -821,7 +821,7 @@ export class GameHost {
     // Safety: player text that never reached the AI's moderation is not printed.
     const plan = v.fallback ? "(plan hidden: not reviewed)" : v.moderation === "ok" ? `"${clip(mask(pitch.text), 90)}"` : `(${clip(v.interpretation, 80)})`;
     const target = v.tier === "miracle" ? "only a natural 20" : `needs ${TIER_DC[v.tier]}+ in total (d20 + bonuses)`;
-    this.note("ruling", name, `${plan}${pitch.creditId ? ` (+ ${this.heroName(pitch.creditId)}'s idea, +1)` : ""} → ${TIER_LABEL[v.tier]}, ${target}, rolls ${STAT_LABEL[v.stat]}. ${end(v.reason || "No reason given")}`);
+    this.note("ruling", name, `Judged by Muse Spark: ${plan}${pitch.creditId ? ` (+ ${this.heroName(pitch.creditId)}'s idea, +1)` : ""} → ${TIER_LABEL[v.tier]}, ${target}, rolls ${STAT_LABEL[v.stat]}. ${end(v.reason || "No reason given")}`);
     if (v.moderation === "redirected") {
       this.bump("safety");
       this.note("safety", name, "Plan steered to the nearest harmless version. The original is never repeated.");
@@ -1256,7 +1256,7 @@ export class GameHost {
         if (!res?.url || res.fallback || this.state.questId !== questId) return;
         this.sceneImages[plate] = res.url;
         this.sceneCopies.delete(`${questId}:${plate}`);
-        this.note("scene", "Scene art", `Painted the heroes into the scene with muse-image edits (${res.cached ? "cached" : `${Math.round((Date.now() - t0) / 1000)}s`}). The pre-painted scene showed until it was ready.`);
+        this.note("scene", "Scene art", `Painted by Muse Image: the heroes in the scene (${res.cached ? "cached" : `${Math.round((Date.now() - t0) / 1000)}s`}). The pre-painted scene showed until it was ready.`);
         this.set({});
       })
       .catch(() => {});
@@ -1494,7 +1494,7 @@ export class GameHost {
     });
     this.note("scene", "The opener", `"${sc.title}". Goal for the whole story: ${end(sc.goal)}`);
     const spoken = this.play(clip, TITLE_BEAT_MS);
-    const ms = spoken ? TITLE_BEAT_MS + spoken + 1800 : narrationMs(sc.narration, sc.npc_line?.line ?? "");
+    const ms = spoken ? TITLE_BEAT_MS + spoken + 1200 : narrationMs(sc.narration, sc.npc_line?.line ?? "");
     this.setTimer(ms, () => this.startTurn(0));
   }
 
@@ -1631,7 +1631,7 @@ export class GameHost {
       return this.startRuling(el[0]);
     }
     this.set({ phase: "vote", votes: {} });
-    this.setTimer(VOTE_MS, () => this.endVote(true));
+    this.setTimer(this.quick ? 12_000 : VOTE_MS, () => this.endVote(true));
   }
 
   /** Finale plans that can win: every plan someone actually made. */
@@ -1731,7 +1731,7 @@ export class GameHost {
     // The die is decided now (crypto, in code), so the outcome is written while the table watches the roll.
     const roll = this.makeRoll(judged);
     this.set({ pitches: this.state.pitches.map((x) => (x.id === pitch.id ? judged : x)), busy: "", rolls: [{ ...roll, dice: [], kept: 0 }], revealed: [] });
-    if (finale) return this.setTimer(RULING_MS, () => this.startFinalRoll(judged, roll));
+    if (finale) return this.setTimer(this.quick ? 2800 : RULING_MS, () => this.startFinalRoll(judged, roll));
     this.pendingRoll = roll;
     this.outcomeAt = 0;
     this.outcomeP = this.askOutcome(judged, roll);
@@ -1739,7 +1739,7 @@ export class GameHost {
       this.outcomeAt = Date.now();
       this.voiceFor(o.text);
     });
-    this.setTimer(RULING_MS, () => this.startRoll());
+    this.setTimer(this.quick ? 3000 : RULING_MS, () => this.startRoll());
   }
 
   /**
@@ -1799,7 +1799,7 @@ export class GameHost {
         this.lastArtAsked = asked;
         const key = this.artSeq++;
         this.sceneImages[key] = res.url;
-        this.note("scene", "Scene art", `Painted ${this.heroName(pitch.playerId)}'s move into the scene (${Math.round((Date.now() - t0) / 1000)}s): ${clip(v.interpretation, 80)}`);
+        this.note("scene", "Scene art", `Painted by Muse Image: ${this.heroName(pitch.playerId)}'s move (${Math.round((Date.now() - t0) / 1000)}s): ${clip(v.interpretation, 80)}`);
         this.set({ artKey: key });
       })
       .catch(() => {});
@@ -1906,6 +1906,7 @@ export class GameHost {
   private voiceClips = new Map<string, Promise<{ url: string; ms: number; rate: number } | null>>();
   private voiceUrls: Record<number, string> = {};
   private voiceSeq = 0;
+  private voicedBy = "";
   private castP: Promise<NonNullable<GameState["cast"]>> | null = null;
 
   /** The audio for voice line `id` (the TV plays it; nothing goes over the network to phones). */
@@ -1933,7 +1934,7 @@ export class GameHost {
       fb,
     ).then((cast) => {
       this.set({ cast });
-      this.note("hero", "Narrator", `Cast ${cast.name} (${VOICES[cast.voice as keyof typeof VOICES]?.gemini ?? cast.voice} voice) for ${cast.kind}: "${cast.style}". Painted in ${cast.artName}.`);
+      this.note("hero", "Narrator", `Cast by Muse Spark: ${cast.name} (${VOICES[cast.voice as keyof typeof VOICES]?.gemini ?? cast.voice} voice) for ${cast.kind}: "${cast.style}". Painted in ${cast.artName}.`);
       return cast;
     });
     return this.castP;
@@ -1960,6 +1961,10 @@ export class GameHost {
         if (!res.ok) return null;
         // Gemini's calm reads slowly, so the TV plays it at 1.25x; OpenAI's pace is already natural (1x).
         const rate = Number(res.headers.get("X-Voice-Rate") ?? 1) || 1;
+        if (!this.voicedBy) {
+          this.voicedBy = rate === 1 ? "OpenAI TTS" : "Gemini TTS";
+          this.note("hero", "Narrator", `Voiced by ${this.voicedBy} (Meta has no voice model). Text only if a line isn't ready in 5 s.`);
+        }
         const ms = Number(res.headers.get("X-Audio-Ms") ?? 0);
         const url = URL.createObjectURL(await res.blob());
         return { url, ms: Math.round(ms / rate), rate };
@@ -2021,7 +2026,7 @@ export class GameHost {
     this.set({ phase: "roll", rolls: [roll], revealed: [] });
     // Their phone shows a big ROLL button; after 10 s the table rolls for them (and their phone buzzes).
     if (this.player(roll.playerId)?.away) return this.setTimer(1500, () => this.revealRoll());
-    this.setTimer(ROLL_MS, () => this.revealRoll(true));
+    this.setTimer(this.quick ? 8000 : ROLL_MS, () => this.revealRoll(true));
   }
 
   private onRoll(pid: string) {
@@ -2064,6 +2069,7 @@ export class GameHost {
         natural: roll.kept === 1 || roll.kept === 20 ? roll.kept : null,
         earlier: this.state.log.map((l) => l.narration).slice(-4),
         turns_left: Math.max(0, this.state.turnOrder.length - this.state.turnIndex - 1),
+        short: this.quick || undefined,
       }),
       12_000,
       (d, f) => (f ? fb() : d?.text?.trim() ? { text: d.text.trim(), situation: (d.situation ?? "").trim(), why: (d.why ?? "").trim() } : null),
@@ -2087,12 +2093,12 @@ export class GameHost {
     const clip = await this.voiceBy(text, (this.outcomeAt || Date.now()) + 5000);
     if ((this.state.phase as string) !== "outcome") return;
     this.recordWin(pitch, roll, text);
-    if (why) this.note("ruling", "Why it went that way", why);
+    if (why) this.note("ruling", "Why it went that way", `Written by Muse Spark: ${why}`);
     if (situation) this.note("scene", "Now", situation);
     // The story branches: the next turn starts from what just happened.
     this.set({ outcome: text, busy: "", situation: situation || this.state.situation });
     const spoken = this.play(clip);
-    this.setTimer(spoken ? Math.max(spoken + 1800, 5000) : outcomeMs(text), () => this.startTurn(this.state.turnIndex + 1));
+    this.setTimer(spoken ? Math.max(spoken + 1000, 4500) : outcomeMs(text), () => this.startTurn(this.state.turnIndex + 1));
   }
 
   /** The turn's result goes in the log (keepsake, DM's Notes, the next turn's "earlier"). */
@@ -2520,7 +2526,7 @@ export class GameHost {
     const log = this.state.log.map((l, i, all) => (i === all.length - 1 ? { ...l, narration: ending } : l));
     this.set({ log });
     const spoken = this.play(clip);
-    this.setTimer(spoken ? Math.max(spoken + 2000, 6000) : Math.min(12_000, Math.max(8000, ending.split(/\s+/).length * 330 + 3500)), done);
+    this.setTimer(spoken ? Math.max(spoken + 1200, 5000) : Math.min(11_000, Math.max(7000, ending.split(/\s+/).length * 320 + 3000)), done);
   }
 
   private startReveal() {

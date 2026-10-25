@@ -12,7 +12,7 @@ export const QUICK = {
   readCapMs: 16_000,
   beatCapMs: 10_000,
   epilogueMinMs: 9_000,
-  revealMs: 14_000,
+  revealMs: 10_000,
   /** The quest we preselect when Quick Tale is chosen (the 80-ton boulder: the demo script's story). */
   defaultQuest: "hanging-boulder",
 } as const;
@@ -21,10 +21,10 @@ export const QUICK = {
 export function coldOpenTimeline(headline: string) {
   const fadeIn = 900;
   const typeStart = 1500;
-  const charMs = 38;
+  const charMs = 30;
   const typeEnd = typeStart + headline.length * charMs;
-  const titleAt = typeEnd + 1800;
-  const total = titleAt + 4600;
+  const titleAt = typeEnd + 1300;
+  const total = titleAt + 3600;
   return { fadeIn, typeStart, charMs, typeEnd, titleAt, total };
 }
 

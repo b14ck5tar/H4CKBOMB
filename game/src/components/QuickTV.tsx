@@ -374,6 +374,9 @@ function TitleCard({ s, kicker, sub }: { s: GameState; kicker: string; sub: stri
       <p className="font-ui uppercase tracking-[0.3em] text-base text-parchment/60 qt-rise" style={{ animationDelay: "1.2s" }}>
         {sub}
       </p>
+      <p className="font-ui uppercase tracking-[0.35em] text-sm text-[var(--signal)] qt-rise" style={{ animationDelay: "1.5s" }}>
+        Your Dungeon Master: Muse
+      </p>
     </div>
   );
 }
