@@ -286,6 +286,12 @@ const SHOTS = [
 ];
 
 /** One action, ~140 characters, one line. */
+/** A player-chosen hero name: trimmed, 20 characters max, letters and simple punctuation; "" if it has slurs or profanity. */
+function heroNameOf(x: unknown) {
+  const n = cleanText(x, 40).replace(/[^\p{L}\p{N} .'-]/gu, "").replace(/\s+/g, " ").trim().slice(0, 20).trim();
+  return n && mask(n) === n ? n : "";
+}
+
 function cleanPlan(text: unknown) {
   return String(text ?? "").replace(/[<>]/g, "").replace(/\s+/g, " ").trim().slice(0, PLAN_MAX);
 }
@@ -941,9 +947,9 @@ export class GameHost {
       case "join":
         return this.onJoin(m.pid, m.name);
       case "concept":
-        return this.buildCharacter(m.pid, m.text);
+        return this.buildCharacter(m.pid, m.text, m.name);
       case "pick":
-        return this.pickHero(m.pid, m.heroId);
+        return this.pickHero(m.pid, m.heroId, m.name);
       case "redraw":
         return this.redraw(m.pid);
       case "truth":
@@ -1196,16 +1202,19 @@ export class GameHost {
     this.set({ partyName: name.slice(0, 40) });
   }
 
-  async buildCharacter(pid: string, concept: string) {
+  async buildCharacter(pid: string, concept: string, chosenName?: unknown) {
     const p = this.player(pid);
     if (!p || p.status === "building" || this.state.phase !== "lobby") return;
     const text = String(concept ?? "").slice(0, 200);
+    // The player's own hero name (CD): the AI builds around it and code makes sure it is never renamed.
+    const chosen = heroNameOf(chosenName);
     this.patchPlayer(pid, { status: "building", concept: text, hasPortrait: false });
     const others = this.heroes().filter((o) => o.id !== pid);
     const hero = await this.viaAI<Hero, Hero | undefined>(
       `${p.name}'s character card`,
       this.ask<Hero>("character", {
         concept: text,
+        chosen_name: chosen || undefined,
         partySoFar: others.map((o) => o.hero!.visual.anchor),
         real: this.reals[pid],
         avoidNames: others.map((o) => o.hero!.name),
@@ -1227,6 +1236,7 @@ export class GameHost {
       );
     }
     delete this.basePowers[pid];
+    if (chosen) hero.name = chosen;
     hero.stats = evenStats(hero.stats);
     // The AI already built the power from their answer; the code override is only for ready-made heroes.
     this.patchPlayer(pid, { status: "ready", hero, abilityAvailable: true, heart: 1 });
@@ -1247,12 +1257,15 @@ export class GameHost {
   }
 
   /** A ready-made character: instant, no AI call, pre-painted portrait. One of each per table. */
-  async pickHero(pid: string, heroId: string) {
+  async pickHero(pid: string, heroId: string, chosenName?: unknown) {
     const p = this.player(pid);
     const q = QUICK_HEROES.find((h) => h.id === heroId);
     if (!p || !q || p.status === "building" || this.state.phase !== "lobby") return;
     if (this.state.players.some((o) => o.id !== pid && o.pick === q.id)) return;
     const hero: Hero = { ...structuredClone(q.hero), stats: evenStats(q.hero.stats) };
+    // A ready-made keeps its name unless the player typed their own (the phone sends one only if they edited it).
+    const chosen = heroNameOf(chosenName);
+    if (chosen) hero.name = chosen;
     delete this.basePowers[pid];
     this.patchPlayer(pid, { status: "ready", pick: q.id, concept: q.pitch, hero, hasPortrait: false, abilityAvailable: true, heart: 1 });
     this.applyReal(pid);

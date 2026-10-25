@@ -168,15 +168,16 @@ export function Phone({ code }: { code: string }) {
             <MakeHeroScreen
               seed={code}
               readyMade={QUICK}
+              defaultName={me.name}
               takenIds={state.players.filter((p) => p.id !== me.id && p.pick).map((p) => p.pick!)}
-              onCreate={({ text, skill }) => {
+              onCreate={({ text, skill, name }) => {
                 sfx.unlock();
                 send("real", { skill, fear: "" });
-                send("concept", { text });
+                send("concept", { text, name });
               }}
-              onPick={(heroId) => {
+              onPick={(heroId, name) => {
                 sfx.unlock();
-                send("pick", { heroId });
+                send("pick", { heroId, name });
               }}
             />
           );

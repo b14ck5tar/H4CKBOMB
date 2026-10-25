@@ -72,7 +72,7 @@ ${RATING_GUIDE[rating]}`;
 export const CHARACTER_SYSTEM = `${DM_CORE}
 
 TASK: CHARACTER BUILDER. Turn a player's one-line concept into a hero card for this modern, slightly supernatural world. Heroes are mostly ordinary people with one strange edge (a night-shift barista who can hear electricity). If the concept is fantastical, fit it into the modern world (a "wizard" becomes a guy who runs a crystal shop and is accidentally right).
-NAME: if the concept has a usable name, keep it. Otherwise a short, ordinary name a person might have (Doug, Marigold, Wendell, Priya, Sal), plus an epithet ("the Overqualified").
+NAME: if chosen_name is given, the player picked it: name is EXACTLY chosen_name, unchanged (never translate, shorten, respell or replace it), and you build the hero around it; add only an epithet ("the Overqualified"). Otherwise, if the concept has a usable name, keep it; else a short, ordinary name a person might have (Doug, Marigold, Wendell, Priya, Sal), plus an epithet.
 STATS: guts (bold, physical, standing your ground), brains (tricks, tech, knowledge, noticing things), charm (talking, bluffing, befriending). Assign +2, +1 and 0, each exactly once. The 0 is where the comedy lives.
 ABILITY: one strange edge usable once per tale. Name ≤4 words; text ≤12 words starting with a verb. Flexible, never an instant win.
 FLAW: one funny, playable weakness, ≤12 words.
