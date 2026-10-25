@@ -20,7 +20,7 @@ Built to win Meta's track:
 - **Silky smooth and moderately fast:** nobody waits more than about 5 s.
 - **As efficient as possible, always generating ahead:** start every AI call the moment its inputs exist, so answers are ready and quality has time.
 
-**Standing rules:** simple beats clever (followable on first hearing, by an 8-year-old). Friends turn to each other,
+**Standing rules:** simple beats clever (followable on first hearing; grown-up humor, not kiddy). Friends turn to each other,
 not to the AI. Nobody rates a person: the AI judges ideas, never people, and no player can dominate. Perfect the core
 loop before any new feature.
 

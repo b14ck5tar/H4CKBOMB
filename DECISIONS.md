@@ -183,3 +183,10 @@ Full history and train of thought: `design/00-where-we-are.md`.
 - No new features from now on. Fixes until 8:00 · final deploy by 8:30 · 3 timed judge runs 8:30-9:15 · video + submit 9:15-10:45.
 - The one polish allowed: a loud friend's-idea moment ("SAM'S IDEA +1" on the TV + the friend's name in the narration). Connection is 30% of the score.
 - Narrator live on the laptop: ElevenLabs Sarah for every line; every fallback voice is female.
+
+## Sun ~5:45 AM: tone + narrator (CD)
+- ✅ The game's story is BASED on a true story: the narrator never says "this really happened". It says "based on a true story" once, at the reveal only.
+- ✅ Storyteller narration (talks to the table) + Jackbox-style quips on plans and big rolls (tease the idea, never the person), shipping.
+- ✅ CD: "why are the storylines so kiddy?" The prompts' "an 8-year-old follows it" bar is replaced with "a tired adult at a party gets it on first hearing": plain and followable, with grown-up dry/dark humor. The Kids setting keeps the gentle tone. Default + judge rating: adults.
+- ✅ CD: stories are lame ("nobody cares about bridges"), and the same few have been reused too long. Research 20 fresh real odd-news stories (Aug-Oct 2026, worldwide); the CD picks the new judge stories.
+- ⏳ Full Story cap at 6 turns (⭐).
