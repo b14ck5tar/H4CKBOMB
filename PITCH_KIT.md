@@ -161,7 +161,7 @@ Re-count commits at 10 AM.
    the twist and everything that happens are Muse's; the dice and every number are code.
 2. **Safety with real news?** A keyword block, then Muse scores each story: no deaths, injuries, crime with victims,
    war, politics, health scares or private people. 7 storyability scores, average 4 of 5, none below 3. Heavy news is
-   a future, opt-in mode.
+   a future, opt-in mode. Say it as a strength: "Grown-up stories, with hard limits the AI can't cross."
 3. **Why not just ChatGPT?** A chatbot is one person and a screen. This is a room: one shared table, phones as
    controllers, friends feeding each other ideas, real dice and a reveal.
 4. **A shy player?** Typing is the default, so nobody has to speak. Friends send you ideas, so you never face a blank

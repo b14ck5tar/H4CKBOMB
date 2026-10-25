@@ -31,7 +31,8 @@ players in one room. Quick Tale is about 5 minutes (one turn each); a Full Story
      3. Stories show up as fantasy quest cards, so nothing is spoiled.
    - *Our stories:* each player privately writes a small true story and how it really ended, and the table votes on
      one.
-   A Kids / Teens / Adults setting tunes the tone and the news filter.
+   A Kids / Teens / Adults setting tunes the tone and the news filter. Adults gets grown-up stories, with hard limits
+   the AI can't cross.
 3. **Players steer, the DM reacts.** There's no script. On your turn the TV says "Maya, tell the table your plan,"
    and everyone else sends you a move from their phone. You pick your own idea or a friend's. Using a friend's idea
    gives +1, and their name goes on screen.
@@ -128,7 +129,7 @@ What actually changed the game:
 - A turn system where listening to your friends is the best move.
 - A story that follows the players' own logic instead of a script, with AI that runs the whole game but never decides a
   number or rates a person.
-- Our creative director's first hackathon. *(CD: one line in your own words here.)*
+- Our creative director's first hackathon: they made every creative call and directed AI to build it.
 
 ## What we learned
 
@@ -145,9 +146,9 @@ What actually changed the game:
 
 ## What's next for Group Project
 
-- **Our stories first:** every player brings a small true story, and the night becomes "I didn't know that about you."
-- **Remote play** for friends in different cities (a `/watch` big-screen view already exists).
-- **Weekly chapters:** the same crew, a new true story each week.
+- **Campaign mode:** your heroes carry over into the next story and grow from what they did, like a real D&D campaign.
+- **Our stories as the main mode:** every player brings a small true story, and the night becomes "I didn't know that
+  about you."
 - **Real World mode:** opt-in, heavier news with guardrails, for groups who want to talk about things that matter.
 
 ---
@@ -170,4 +171,5 @@ What actually changed the game:
 - Table (open on a laptop or TV): https://groupproject-game.vercel.app/tv
 - Phones: scan the QR on the TV, or go to https://groupproject-game.vercel.app/play
 - Fewer than 2 people? Open https://groupproject-game.vercel.app/tv?bots=1 and add test players.
+- A short, tested game (about 5 minutes): https://groupproject-game.vercel.app/tv?judge=1
 - Video: *(paste the link)*

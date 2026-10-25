@@ -1,6 +1,6 @@
 # Rehearsal: 10 minutes in the morning + the mock-judge drill
 
-Slot: **8:30-9:15 (laptop clock), 3 timed judge runs** on the final deploy (team schedule). Do the 10-minute plan
+Slot: **7:30-8:00 (laptop clock), 3 timed judge games** on the final deploy (team schedule). Do the 10-minute plan
 once, then two more stopwatch runs of the judge visit. The partner does it again alone at ~1:30 PM at WEL, before the
 first judge.
 

@@ -46,7 +46,7 @@ the TV runs."
 2. **Is the story real?** "The starting event is a real article, or a player's own true story. Today's table plays a
    saved one from our checked library, so you never wait. Everything after the start is your plans plus Muse."
 3. **What about dark news?** "A keyword block, then Muse scores every story: no deaths, injuries, crime, politics or
-   health scares. It has to score 4 of 5 on 7 storyability checks. Heavy news is a future opt-in mode."
+   health scares. It has to score 4 of 5 on 7 storyability checks. Grown-up stories, with hard limits the AI can't cross."
 4. **How did you use AI to build it?** "Claude Code ran a team of agents: builders, testers, reviewers. They watched
    our playtest videos frame by frame; our worst run is why we rebuilt the story around players' choices. A better
    rubric took Muse Spark from 5 of 8 fair rulings to 8 of 8."

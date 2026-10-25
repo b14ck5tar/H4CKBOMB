@@ -1,12 +1,13 @@
 # CD morning: record the video, submit Devpost, leave at 11
 
 For the CD. Everything here happens after the final build is deployed. The shot list and the full spoken script are
-in VIDEO_SCRIPT.md; this page is the order to do it in. Devpost closes 11:30 AM; you leave at 11:00, so **submit by
-10:50**.
+in VIDEO_SCRIPT.md; this page is the order to do it in. **You record 8:00-8:30 and leave ~8:30. The partner submits
+Devpost by 11:30 with `pitch/PARTNER_SUBMIT.md`.**
 
-**Team schedule (laptop clock, all sessions):** no new features from now on. Fixes until **8:00**, final deploy by
-**8:30**, **3 timed judge runs 8:30-9:15** (`pitch/REHEARSAL.md`), **video + Devpost submit 9:15-10:45**. Inside that
-window: edit by 9:45, upload by 10:15, Devpost submitted by 10:45.
+**Schedule (laptop clock, the CD's call):** freeze **7:20**, deploy **~7:30**, timed judge games **7:30-8:00**
+(`pitch/REHEARSAL.md`), **you record the video 8:00-8:30**, you leave **~8:30**. Everything for Devpost is paste-ready
+already (DEVPOST.md, `devpost-media/gallery-final/`). Before you leave, hand the partner the raw recordings + this page;
+whoever finishes the edit/upload follows §6-7, and the partner submits with `pitch/PARTNER_SUBMIT.md`.
 
 **Recording on localhost:3000** (the partner's take) is fine: full screen (F11) so the address bar is hidden, and
 check the TV doesn't show "Local mode" (it means the rooms aren't connected).
@@ -105,19 +106,14 @@ Never on screen: hotkeys, the "?" help, "Local mode", the address bar, any key, 
 - [ ] YouTube, **Unlisted**. Open the link in a private window: it plays without a login.
 - [ ] Copy the MP4 to your phone: it's the backup video for the judge table.
 
-## 8. Devpost (10 min), hacktx26.devpost.com
+## 8. Devpost: the partner submits (`pitch/PARTNER_SUBMIT.md`)
 
-- [ ] Paste DEVPOST.md section by section (from "Name" down).
-- [ ] Your one line under "Accomplishments" (replace the placeholder in italics).
-- [ ] Paste the video link.
-- [ ] Gallery: the 5-6 shots Claude picks (listed in `devpost-media/gallery-v2/PICKS.md` once the run is done),
-      cover first. JPG/PNG up to 5 MB, 3:2 crops best.
-- [ ] Tracks: Meta, Most Entertaining, Best Use of SerpApi. Gemini: off (your call).
-- [ ] Built with: already lists `elevenlabs` (the narrator) and `openai-tts` (its backup). Paste as is.
-- [ ] Both teammates added. **Submit.** Screenshot the "submitted" page.
+Everything is paste-ready: the text (DEVPOST.md, your Accomplishments line is filled in), the gallery
+(`devpost-media/gallery-final/`, upload 1-6 in order), tracks (Meta, Most Entertaining, SerpApi). Before you leave:
+- [ ] Add the partner as a teammate on the Devpost project (they can't edit it otherwise).
 
-## 9. Before you leave (11:00)
+## 9. Before you leave (~8:30)
 
-- [ ] Message the partner: the video link, "Devpost submitted", and where the backup MP4 is.
+- [ ] Message the partner: the video link (or "the edit isn't done, the files are in …"), and where the MP4 is.
 - [ ] The partner has `pitch/CHEAT_SHEET.md` (or the team hub's Judging section) on their phone.
 - [ ] Back ~4:45 PM at WEL; stage pitch 5:30 PM in GDC 2.216 (PITCH_CARD.md).
