@@ -118,20 +118,24 @@ const MOTES = Array.from({ length: 22 }, (_, i) => {
   };
 });
 
-function Backdrop({ url, mood }: { url?: string; mood: Mood }) {
+function Backdrop({ url, mood, onNew }: { url?: string; mood: Mood; onNew?: () => void }) {
   // Crossfade: every new picture is a new layer that fades in over the old one, once it has loaded (never a flash).
   const [layers, setLayers] = useState<{ url: string; id: number; anim: "push" | "drift" }[]>([]);
   const id = useRef(0);
+  const shown = useRef(0);
   useEffect(() => {
     if (!url) return;
     let alive = true;
     const img = new Image();
-    const add = () =>
-      alive &&
+    const add = () => {
+      if (!alive) return;
       setLayers((ls) => {
         if (ls[ls.length - 1]?.url === url) return ls;
         return [...ls.slice(-1), { url, id: ++id.current, anim: mood === "push" ? "push" : "drift" }];
       });
+      // A fresh Muse painting (not the first picture, not a pre-painted plate): let the table see it.
+      if (shown.current++ > 0 && url.startsWith("data:")) onNew?.();
+    };
     img.onload = add;
     img.onerror = add;
     img.src = url;
@@ -268,14 +272,7 @@ function GoalBar({ s }: { s: GameState }) {
                 ))}
               </span>
             )}
-            {s.ladder.length > 1 && (
-              <span className="gp-danger" title={`Danger ${s.danger} of 3${s.danger >= 3 ? ": the finale gets −3" : ""}`}>
-                Danger
-                {[0, 1, 2].map((i) => (
-                  <i key={i} className={i < s.danger ? "on" : ""} />
-                ))}
-              </span>
-            )}
+
           </span>
           <span className="gp-goal-t">{now || s.goal}</span>
         </div>
@@ -855,14 +852,13 @@ const cardHero = (host: Stage, p: Player): CardHero => ({
 });
 const GRADE_COLOR: Record<string, string> = { DISASTER: "#ff3b4e", SETBACK: "#ff6b3d", PARTIAL: "#ffad3b", PROGRESS: "#3de7ff", GREAT: "#2cf5c0", LEGENDARY: "#ffd23f" };
 
-/** The HUD under the top bar: the ladder (one dot per turn, the finale on top), Right now, the goal, the danger bar. */
+/** The HUD under the top bar: progress as 3 act dots and the crown, Right now, the goal. One meter only. */
 function SkinHud({ s }: { s: GameState }) {
   if (!s.goal) return null;
   return (
     <HudStrip
       // 3 acts plus the finale crown, driven by progress (0-100): no fixed beats (design/35).
       ladder={{ steps: 4, at: s.finale || (s.progress ?? 0) >= 100 ? 3 : (s.progress ?? 0) >= 67 ? 2 : (s.progress ?? 0) >= 34 ? 1 : 0, now: s.nowGoal || s.goal, goal: s.goal }}
-      danger={{ level: s.danger, max: 3 }}
     />
   );
 }
@@ -1459,6 +1455,21 @@ export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameS
     });
   }, [plates]);
   const [title, setTitle] = useState(false);
+  // A new painting landed while the table is talking: the skin steps back for a beat so everyone sees it.
+  const [peek, setPeek] = useState(false);
+  const phaseNow = useRef(s.phase);
+  phaseNow.current = s.phase;
+  const peekT = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onNewArt = useMemo(
+    () => () => {
+      if (!["turn", "narrating", "pitch"].includes(phaseNow.current)) return;
+      setPeek(true);
+      if (peekT.current) clearTimeout(peekT.current);
+      peekT.current = setTimeout(() => setPeek(false), 3200);
+    },
+    [],
+  );
+  useEffect(() => () => void (peekT.current && clearTimeout(peekT.current)), []);
   const mood = moodFor(s, title && s.phase === "narrating");
   // The latest painting of what the heroes did, once there is one; before that, the (hero-painted) plate.
   const painted = s.artKey >= 0 ? host.sceneImages[s.artKey] : undefined;
@@ -1528,7 +1539,7 @@ export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameS
     s.phase === "turn" ? `turn-${s.turnIndex}` : s.phase === "ruling" || (s.phase === "roll" && !s.revealed.length) ? `plan-${s.turnIndex}-${s.finale}` : s.phase === "outcome" ? `out-${s.turnIndex}` : s.phase;
   return (
     <div className="qt-root" onPointerDown={() => sfx.unlock()}>
-      <Backdrop url={art} mood={mood} />
+      <Backdrop url={art} mood={mood} onNew={onNewArt} />
       <Particles count={28} seed={s.turnIndex + 1} />
       <div key={shot} className="qt-dip" aria-hidden />
       {s.phase !== "quest" && !["epilogue", "reveal", "storybook"].includes(s.phase) && <QTopBar host={host} s={s} onNotes={onNotes} notesOpen={notesOpen} />}
@@ -1543,7 +1554,7 @@ export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameS
       </div>
       {/* The in-game TV skin over the scene: HUD, turn card + suggestions, the plan, the caption. */}
       {(inScene || s.phase === "final_roll" || s.phase === "final_result") && !(title && s.phase === "narrating") && (
-        <TvStage>
+        <TvStage className={peek ? "is-peek" : ""}>
           {s.phase !== "vote" && <SkinHud s={s} />}
           <PhaseSwap k={skinKey}>
             {s.phase === "turn" && <SkinTurn host={host} s={s} />}

@@ -114,10 +114,9 @@ const outcomeMs = (text: string) => Math.min(12_000, Math.max(6500, text.split(/
 const AWAY_SILENCE_MS = 25_000;
 const AWAY_AFTER_TIMEOUTS = 2;
 export const MONTAGE_PANEL_MS = 4800; // one ending-montage panel on the TV
-const DANGER_MAX = 3;
 /** design/35 rule 4: progress is decided by code from the grade, never by the AI. */
 /** The house ranking of the hand-made stories (Quick Tale opens on the first one a table hasn't played). */
-const FEATURED = ["rust-wyrm", "hanging-boulder", "cornfield-dome", "galactic-signal", "billion-pearls", "idle-island", "returned-otter", "littlest-gardener"]; // the danger meter's top: at full, the finale gets a -3 shift
+const FEATURED = ["rust-wyrm", "hanging-boulder", "cornfield-dome", "galactic-signal", "billion-pearls", "idle-island", "returned-otter", "littlest-gardener"];
 const PRESENCE_ONLY = new Set(["hello", "ping", "away"]); // these don't count as "I'm back"
 /** Every phone silent this long = the table pauses ("Reconnecting phones…"). Phones ping every 3 s. */
 const ALL_QUIET_MS = 8000;
@@ -468,7 +467,6 @@ export class GameHost {
       ladder: [],
       step: 0,
       fling: null,
-      danger: 0,
       progress: 0,
       sceneArt: "",
       narration: "",
@@ -1655,7 +1653,7 @@ export class GameHost {
       this.heroes().map((p) => ({ name: p.hero!.name, pronouns: p.hero!.pronouns })),
       this.state.turnOrder.length,
     );
-    this.set({ ladder: [], step: 0, danger: 0, progress: 0 });
+    this.set({ ladder: [], step: 0, progress: 0 });
     this.note("scene", "The finish line", `${this.story.finish_line}. No script: every turn's plan is what happens, and the roll sets how well. Progress fills from 0 to 100 over 3 acts.`);
     this.note("safety", "Why it's safe", SAFETY_NOTES[seed.id] ?? SAFETY_GENERIC);
     this.note(
@@ -1688,14 +1686,15 @@ export class GameHost {
     return this.state.situation; // the scene line already names whose turn it is (design/35 hand-off)
   }
 
-  /** Turn order: everyone in join order, repeated. 2-4 players get 2 turns each, 5-8 get 1, Quick Tale 1. */
+  /** Turn order: everyone in join order, repeated. 2-4 people get 2 turns each, 5+ get 1 (every mode). */
   private makeTurnOrder() {
     const all = this.heroes().map((p) => p.id);
     const humans = all.filter((id) => !this.bots.isBot(id));
     // Test players only own turns when no human is playing (they still suggest ideas).
     const ids = humans.length ? humans : all;
-    const cycles = ids.length >= 4 ? 1 : 2; // rounds from the people who own turns (humans), never the bots
-    return Array.from({ length: cycles }, () => ids).flat().slice(0, 6);
+    // 2-4 people: 2 turns each; 5+: 1 each (every mode). Counted from the people who own turns, never the bots.
+    const cycles = ids.length >= 5 ? 1 : 2;
+    return Array.from({ length: cycles }, () => ids).flat();
   }
 
   private isFinal() {
@@ -2419,10 +2418,10 @@ export class GameHost {
     const backed = this.state.finale ? Math.min(2, Object.values(this.state.votes).filter((id) => id === pitch.id).length) : 0;
     const bonus = (pitch.creditId ? 1 : 0) + backed;
     // Graded outcomes (lib/grade.ts): no pass/fail line. The plan's difficulty is a shift on the total; in the finale
-    // a full danger meter adds -3, and the finale's whole shift never goes below -3 (no loss spiral).
+    // the finale's shift never goes below -3 (no loss spiral).
     const finale = this.state.finale;
     const tierShift = TIER_SHIFT[v.tier];
-    const shift = finale ? Math.max(-3, tierShift + (this.state.danger >= DANGER_MAX ? -3 : 0)) : tierShift;
+    const shift = finale ? Math.max(-3, tierShift) : tierShift;
     const g = gradeRoll(die + statBonus + bonus + shift, die);
     return {
       playerId: p.id,
@@ -2542,10 +2541,6 @@ export class GameHost {
     const g = gradeRoll(roll.total, roll.kept);
     this.story = d.state;
     this.finaleNext = d.finale;
-    // The danger meter: worse branches raise it, better ones lower it. Full = the finale gets a -3 shift.
-    const dz = g.branch === "worse" ? 1 : g.branch === "better" ? -1 : g.branch === "legendary" ? -2 : 0;
-    const danger = Math.max(0, Math.min(DANGER_MAX, this.state.danger + dz));
-    if (danger !== this.state.danger) this.note("roll", "Danger", `${danger} of ${DANGER_MAX}${danger === DANGER_MAX ? ": full, so the finale roll gets -3" : ""} (${g.label.toLowerCase()} ${dz > 0 ? "raised" : "lowered"} it).`);
     // The outcome's audio was asked for the moment its text arrived; give it until 5 s after that, else text only.
     const clip = await this.voiceBy(d.outcome, (this.outcomeAt || Date.now()) + 5000);
     if ((this.state.phase as string) !== "outcome") return;
@@ -2555,7 +2550,7 @@ export class GameHost {
     if (d.fallback) this.note("fallback", "What happened", "The writer was slow, so the engine's own line names the plan and applies the roll.");
     if (d.problems?.length) this.note("fallback", "Checks", d.problems.slice(0, 3).join("; "));
     if (d.right_now && d.right_now !== this.state.nowGoal) this.note("scene", "Right now", d.right_now);
-    this.set({ outcome: d.outcome, busy: "", situation: d.scene || this.state.situation, nowGoal: d.right_now || this.state.nowGoal, progress: d.progress, danger });
+    this.set({ outcome: d.outcome, busy: "", situation: d.scene || this.state.situation, nowGoal: d.right_now || this.state.nowGoal, progress: d.progress });
     const spoken = this.play(clip);
     this.setTimer(spoken ? Math.max(spoken + 1000, 4500) : outcomeMs(d.outcome), () => this.startTurn(this.state.turnIndex + 1));
   }

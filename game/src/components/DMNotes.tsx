@@ -11,7 +11,7 @@ export const FILTER_NOTE = "Every story passes a tragedy filter first: no deaths
 
 const RULES: { icon: string; text: string }[] = [
   { icon: "🎲", text: "Dice are real random numbers from code. The AI never picks a number." },
-  { icon: "🧠", text: "Muse Spark judges each plan literally and writes what happens. Needs N+, bonuses and totals are plain math." },
+  { icon: "🧠", text: "Muse Spark judges each plan and writes what happens. The dice, bonuses and totals are plain math in code." },
   { icon: "🎨", text: "Muse Image paints the heroes into each decision. The narrator is voiced by OpenAI TTS (Meta has no voice model)." },
   { icon: "🚫", text: "No real people or brands in the story. Real places only in the broadest sense." },
   { icon: "🛡️", text: "Tragedies are filtered out. Only strange-but-harmless news becomes a story." },
