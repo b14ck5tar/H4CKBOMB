@@ -2997,3 +2997,32 @@
 .tvx-meter-pd20 .tvx-d20-body { fill: rgba(10, 6, 18, 0.95); }
 .tvx-meter-pd20 text { font-size: 64px; }
 .tvx-meter-eq b { font-size: 1.25em; color: var(--zc); }
+
+/* The count-up: the readout is up as soon as the die lands, showing the die's number, then each bonus adds visibly
+   ("+2 Brains"), then the total and the grade slam. The parts line lights each piece as it's added. */
+.tvx-meter-readout { animation: tvx-slam 0.35s cubic-bezier(0.2, 1.6, 0.4, 1) both var(--d); }
+.tvx-meter-num.is-step { animation: tvx-count-pop 0.28s cubic-bezier(0.2, 1.6, 0.4, 1) both; }
+.tvx-meter-num.is-total { animation: tvx-slam 0.45s cubic-bezier(0.2, 1.6, 0.4, 1) both; }
+.tvx-meter-word.is-in { animation: tvx-slam 0.45s cubic-bezier(0.2, 1.6, 0.4, 1) both 0.05s; }
+.tvx-meter-step {
+  align-self: center;
+  font-family: var(--font-heading), sans-serif;
+  font-weight: 800;
+  font-style: italic;
+  font-size: calc(var(--u) * 2.2);
+  text-transform: uppercase;
+  color: #c6ff2e;
+  text-shadow: 0 calc(var(--u) * 0.15) 0 #000, 0 0 calc(var(--u) * 0.8) #000;
+  animation: tvx-count-pop 0.28s cubic-bezier(0.2, 1.6, 0.4, 1) both;
+}
+@keyframes tvx-count-pop {
+  from { transform: scale(1.35); opacity: 0.4; }
+  to { transform: none; opacity: 1; }
+}
+.tvx-meter-parts > span,
+.tvx-meter-eq { opacity: 0.3; transition: opacity 0.2s ease; }
+.tvx-meter-parts > span.on,
+.tvx-meter-eq.on { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .tvx-meter-num.is-step, .tvx-meter-step { animation: none; }
+}

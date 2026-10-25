@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { gradeRoll, type Grade, type GradeResult } from "@/lib/grade";
 import { playSfx } from "@/lib/sound";
 import { D20Glyph, fmtSigned, type Css } from "./shared";
@@ -32,7 +32,10 @@ const ZONES: { grade: Grade; from: number; to: number; word: string; color: stri
   { grade: "LEGENDARY", from: 20, to: 20, word: "Legend", color: "#ffd23f" },
 ];
 const zoneOf = (n: number) => ZONES.find((z) => n >= z.from && n <= z.to) ?? ZONES[ZONES.length - 1];
-const FILL_S = 1.0; // the host holds 2.2 s after the die lands: the grade has to land by ~1.2 s and settle by ~1.75 s
+// The host holds 2.2 s after the die lands. The readout counts up from the die (0.35 s), one bonus every 0.3 s,
+// then slams the grade; the track fills over the same span. With 3 bonuses the grade lands at ~1.4 s.
+const FIRST_S = 0.35;
+const STEP_S = 0.3;
 /** When segment i (0-based) lights, as a fraction of the fill: matches the marker's ease-out travel (quadratic). */
 const litAt = (i: number, shown: number) => 1 - Math.sqrt(Math.max(0, 1 - (i + 1) / Math.max(1, shown)));
 
@@ -45,6 +48,26 @@ export function QualityMeter({ total, natural, parts, result, grade, label, dela
   const nat = natural === 20 ? 20 : natural === 1 ? 1 : 0;
   const word = (label ?? g.label).toUpperCase();
   const ref = useRef<HTMLElement>(null);
+  // "14 → +2 Brains → +3 clever → 18": the die first, then each bonus adds visibly, then the grade (CD playtest:
+  // a jump from the die's face straight to a bigger total read as a bug). Natural 1/20 skip the steps (they override).
+  const die = parts?.[0] && !parts[0].signed ? parts[0].value : undefined;
+  const adds = die != null && !nat ? parts!.slice(1) : [];
+  const running = die != null && !nat ? adds.reduce<number[]>((acc, p) => [...acc, acc[acc.length - 1] + p.value], [die]) : [];
+  const FILL_S = die != null && !nat ? Math.max(0.7, FIRST_S + adds.length * STEP_S) : 0.8;
+  const [step, setStep] = useState(0);
+  const done = step > adds.length || die == null || !!nat;
+  useEffect(() => {
+    if (die == null || nat) return;
+    const ts = adds.map((_, k) =>
+      setTimeout(() => {
+        setStep(k + 1);
+        if (sound) playSfx("pop", { volume: 0.5, pitch: k * 2 });
+      }, (delay + FIRST_S + k * STEP_S) * 1000),
+    );
+    ts.push(setTimeout(() => setStep(adds.length + 1), (delay + FILL_S) * 1000));
+    return () => ts.forEach(clearTimeout);
+  }, [die, nat, adds.length, delay, FILL_S, sound]); // eslint-disable-line react-hooks/exhaustive-deps
+  const num = done ? g.total : running[Math.min(step, running.length - 1)] ?? g.total;
   useEffect(() => {
     const ts: ReturnType<typeof setTimeout>[] = [];
     // a tick per segment as the track fills (rising pitch), then the verdict hit
@@ -63,7 +86,7 @@ export function QualityMeter({ total, natural, parts, result, grade, label, dela
       }, (delay + FILL_S + 0.05) * 1000),
     );
     return () => ts.forEach(clearTimeout);
-  }, [g.total, g.branch, nat, delay, sound, shown]);
+  }, [g.total, g.branch, nat, delay, sound, shown, FILL_S]);
   const style: Css = {
     "--zc": zone.color,
     "--x": `${((shown - 0.5) / 20) * 100}%`,
@@ -75,9 +98,17 @@ export function QualityMeter({ total, natural, parts, result, grade, label, dela
     <section ref={ref} className={`tvx-meter ${nat === 20 ? "is-nat20" : nat === 1 ? "is-nat1" : ""}`} style={style} aria-label={`${g.total}: ${word}`}>
       <div className="tvx-meter-readout">
         {nat ? <span className="tvx-meter-nat">Natural {nat}!</span> : null}
-        <span className="tvx-meter-num">{g.total}</span>
-        <span className="tvx-meter-dot">·</span>
-        <span className="tvx-meter-word">{word}</span>
+        <span key={done ? "total" : step} className={`tvx-meter-num ${done ? "is-total" : "is-step"}`}>
+          {num}
+        </span>
+        {done ? (
+          <>
+            <span className="tvx-meter-dot">·</span>
+            <span className="tvx-meter-word is-in">{word}</span>
+          </>
+        ) : (
+          <span className="tvx-meter-step">{step === 0 ? "rolled" : `${fmtSigned(adds[step - 1].value)} ${adds[step - 1].label}`}</span>
+        )}
       </div>
       <div className="tvx-meter-track">
         <div className="tvx-meter-cells">
@@ -108,7 +139,7 @@ export function QualityMeter({ total, natural, parts, result, grade, label, dela
       {parts && parts.length > 0 && (
         <p className="tvx-meter-parts">
           {parts.map((p, i) => (
-            <span key={i}>
+            <span key={i} className={i === 0 || done || i <= step ? "on" : ""}>
               {i > 0 && " "}
               {i === 0 && !p.signed ? (
                 <D20Glyph label={String(p.value)} className="tvx-meter-pd20" />
@@ -118,7 +149,7 @@ export function QualityMeter({ total, natural, parts, result, grade, label, dela
               {p.label}
             </span>
           ))}
-          <span className="tvx-meter-eq">
+          <span className={`tvx-meter-eq ${done ? "on" : ""}`}>
             {" "}= <b>{g.total}</b>
           </span>
         </p>
