@@ -11,6 +11,7 @@
  *                               the "because of you" montage and the reveal, with paint-smear wipes between phases
  *                               (&from=meter2 starts at a step)
  *   /tv-preview?piece=finale-pitch   WRITE: sealed plan cards fly in, "2 of 4 in" (live)
+ *   /tv-preview?piece=finale-talk    TALK: every plan big, "N of M ready", the clock
  *   /tv-preview?piece=finale-vote    BACK: plans face up, vote dots land live, countdown
  *   /tv-preview?piece=finale-shake   ARM -> 3,2,1 -> SHAKE! -> ROLLING, cycling (&stage=arm|count|shake|tumble holds one)
  *   /tv-preview?piece=payoff    the finale's payoff punch, every 2.5 s (&tone=up|mixed|down)
@@ -20,7 +21,7 @@
  */
 import { useEffect, useState } from "react";
 import type { Tier } from "@/lib/types";
-import { EndingMontage, FinalePitch, FinaleShake, FinaleVote, HudStrip, InkWipe, OutcomeCaption, PayoffPunch, PhaseSwap, PlanCard, QualityMeter, SceneArt, SuggestionBubbles, TurnCard, TvStage, type PayoffTone } from "@/components/tvskin";
+import { EndingMontage, FinalePitch, FinaleShake, FinaleTalk, FinaleVote, HudStrip, InkWipe, OutcomeCaption, PayoffPunch, PhaseSwap, PlanCard, QualityMeter, SceneArt, SuggestionBubbles, TurnCard, TvStage, type PayoffTone } from "@/components/tvskin";
 import type { MontagePanel, RevealData } from "@/components/tvskin";
 
 const ART = ["/quests/cornfield-dome/scene_1.webp", "/quests/cornfield-dome/scene_2.webp", "/quests/cornfield-dome/scene_3.webp", "/lobby/boulder_114b3c8fbac1bd2a55054597.webp"];
@@ -181,6 +182,10 @@ function FinalePreview({ piece, stageParam }: { piece: string; stageParam?: stri
       />
     );
   }
+  if (piece === "finale-talk") {
+    const ready = FIN_HEROES.slice(0, n % (FIN_HEROES.length + 1)).map((h) => h.id);
+    return <FinaleTalk heroes={FIN_HEROES} plans={FIN_PLANS} ready={ready} deadlineAt={deadline} />;
+  }
   if (piece === "finale-vote") {
     const votes = Object.fromEntries(VOTE_ORDER.slice(0, Math.max(0, n - 1)));
     return <FinaleVote heroes={FIN_HEROES} plans={FIN_PLANS} votes={votes} deadlineAt={deadline} totalSeconds={30} />;
@@ -243,7 +248,7 @@ export default function TvPreview() {
       <div key={run} style={{ position: "fixed", inset: 0, background: "#07040d", overflow: "hidden" }}>
         <SceneArt src={ART[2]} dim={0.6} />
         <TvStage>
-          {piece !== "finale-vote" && <HudStrip ladder={{ steps: 4, at: 3, now: "Send the hatchling home", goal: LADDER.goal }} />}
+          {!["finale-vote", "finale-talk"].includes(piece) && <HudStrip ladder={{ steps: 4, at: 3, now: "Send the hatchling home", goal: LADDER.goal }} />}
           <FinalePreview piece={piece} stageParam={q.get("stage") ?? undefined} />
         </TvStage>
       </div>

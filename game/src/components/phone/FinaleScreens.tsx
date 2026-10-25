@@ -182,11 +182,10 @@ export function TalkScreen({ ready, onReady, goal, deadlineAt }: { ready: boolea
   return (
     <>
       {deadlineAt && first.current && <Fuse deadlineAt={deadlineAt} total={first.current.ms} />}
-      <div className="pk-choices pk-center" style={{ gap: 14 }}>
-        <TvGlyph />
+      <div className="pk-choices pk-center" style={{ gap: 16 }}>
         <Kicker tone="pink">The final move</Kicker>
         <Say text="*Talk it out!* Convince the table out loud" />
-        <p className="pk-hint">Every plan is on the TV. Which one saves the day?</p>
+        <p className="pk-hint pk-hint-bright">Every plan is on the TV. Which one saves the day?</p>
         {ready ? (
           <p className="pk-hint">Ready. Waiting for the others…</p>
         ) : (

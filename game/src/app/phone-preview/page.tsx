@@ -22,6 +22,7 @@ import {
   QuestVoteScreen,
   RevealScreen,
   ShakeScreen,
+  TalkScreen,
   SkillScreen,
   StoryWriteScreen,
   SuggestScreen,
@@ -218,6 +219,8 @@ export default function PhonePreview() {
             timer={{ deadlineAt: now + 12_000, total: 15_000 }}
           />
         );
+      } else if (step === "talk" || step === "talk-ready") {
+        body = <TalkScreen ready={step === "talk-ready"} onReady={() => log("ready")} goal={GOAL} deadlineAt={now + 45_000} />;
       } else if (["arm", "armed", "count", "shake", "thrown"].includes(step)) {
         const stage = step === "armed" ? "arm" : step === "thrown" ? "tumble" : (step as FinalRoll["stage"]);
         const final: FinalRoll = {

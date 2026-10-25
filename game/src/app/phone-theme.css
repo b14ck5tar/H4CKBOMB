@@ -2544,3 +2544,4 @@ textarea.pk-input {
   color: #c6ff2e;
   background: rgba(198, 255, 46, 0.1);
 }
+.pk-hint-bright { color: rgba(245, 241, 255, 0.92); font-size: 1.05rem; }

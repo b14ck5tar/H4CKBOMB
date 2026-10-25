@@ -1382,7 +1382,7 @@ function moodFor(s: GameState, title: boolean): Mood {
   if (s.phase === "quest") return "push";
   if (s.phase === "narrating" && title) return "title";
   if (s.phase === "final_roll" || s.phase === "final_result") return "final";
-  if (["vote", "ruling"].includes(s.phase)) return "action";
+  if (["convince", "vote", "ruling"].includes(s.phase)) return "action";
   if (["turn", "pitch", "roll"].includes(s.phase)) return "scene"; // keep the art bright while people type and roll
   if (["epilogue", "reveal", "storybook", "story_vote", "story_write"].includes(s.phase)) return "end";
   return "scene";
@@ -1624,7 +1624,7 @@ export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameS
       {/* The in-game TV skin over the scene: HUD, turn card + suggestions, the plan, the caption. */}
       {(inScene || s.phase === "final_roll" || s.phase === "final_result") && !(title && s.phase === "narrating") && (
         <TvStage className={peek ? "is-peek" : ""}>
-          {s.phase !== "vote" && <SkinHud s={s} />}
+          {!["vote", "convince"].includes(s.phase) && <SkinHud s={s} />}
           <PhaseSwap k={skinKey}>
             {s.phase === "turn" && <SkinTurn host={host} s={s} />}
             {(s.phase === "ruling" || (s.phase === "roll" && !s.revealed.length)) && <SkinPlan host={host} s={s} />}
