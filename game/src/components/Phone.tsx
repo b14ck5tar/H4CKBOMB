@@ -59,6 +59,7 @@ const KICKER: Record<string, string> = {
   ruling: "The DM rules",
   roll: "The throw",
   outcome: "What happened",
+  final_roll: "The final roll",
   final_result: "The final roll",
   epilogue: "The ending",
 };
