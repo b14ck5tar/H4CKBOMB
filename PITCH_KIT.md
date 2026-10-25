@@ -67,7 +67,7 @@ built (0121947, in main). `judge=1` also forces Quick
 - **On screen:** the lobby. While nobody has joined, the lobby is its own attract screen (the big QR and a pitch
   line, `Lobby.tsx`). There is no attract hotkey any more.
 - **URL:** `https://groupproject-game.vercel.app/tv?judge=1&bots=1`. Lobby buttons: **Quick**, **Odd news**,
-  **Teens** (Adults is grown-up in tone and lets players be mischievous; only if judges ask). Warm up with one full
+  **Adults** (judge mode sets it: grown-up tone, players can be mischievous; the hard limits still hold). Warm up with one full
   game 10 minutes before (wakes Muse, checks the narrator).
 - **The judge stories** (saved, tested): the Busan canal shark, the €9M of gold in a Dendermonde cellar wall, and the
   Norwich Batman.
@@ -159,9 +159,7 @@ Re-count commits at 10 AM.
 
 1. **What's real vs AI?** The story's starting event is real (a real article, or a player's true story). The heroes,
    the twist and everything that happens are Muse's; the dice and every number are code.
-2. **Safety with real news?** A keyword block, then Muse scores each story: no deaths, injuries, crime with victims,
-   war, politics, health scares or private people. 7 storyability scores, average 4 of 5, none below 3. Heavy news is
-   a future, opt-in mode. Say it as a strength: "Grown-up stories, with hard limits the AI can't cross."
+2. **Safety with real news?** "Precise, not broad. Hard limits the AI can't cross in any mode: no deaths, violence against people, sexual content, children, hate, disasters or partisan politics, and no mocking private people. Inside those lines there's room for grown-up mischief (heists, cons, odd court cases), tuned by Kids / Teens / Adults. Then Muse scores every story on 8 storyability checks. Grown-up stories, with hard limits the AI can't cross." (Heavy news is a future, opt-in mode.)
 3. **Why not just ChatGPT?** A chatbot is one person and a screen. This is a room: one shared table, phones as
    controllers, friends feeding each other ideas, real dice and a reveal.
 4. **A shy player?** Typing is the default, so nobody has to speak. Friends send you ideas, so you never face a blank
@@ -235,7 +233,7 @@ The 10-minute plan and the 15-question drill are in `pitch/REHEARSAL.md`.
 | Technology | "Real-time rooms: phones only send moves, the TV runs the game. Muse does 4 jobs: it judges plans, writes turns, paints your heroes into each scene with image edits, and transcribes voice. Plus an MCP connector. Live news goes through an AI storyability gate, code checks every AI change to the story, dice are crypto, every AI call starts the moment its inputs exist so nobody waits more than ~5 s, and the music is generated in code." | DM's Notes (**N**) live; the how-it-works diagram (`devpost-media/broll/how-it-works.png`) |
 | Design | "Our own Neon Ink art style, a Jackbox-style lobby, a phone UI built for one thumb, and every AI decision explainable." | The lobby, a new painting, the phone, DM's Notes |
 | Completion | "It plays end to end on the live link, and every AI call has a fallback, so a table never freezes." | The judge's own game, start to reveal (say "live link" only after the 8:30 deploy is checked) |
-| Learning | (1) "AI needs a director: left alone, it drifts from the idea and writes stories you can't follow, so our engine gives Muse rules and code checks every move." (2) "Build the prototype fast: our first playtest found problems no plan would have." (3) "AI makes things look good fast; making them *feel* good took playtesting with real people." Then: "It's the CD's first hackathon: stressful, fun, worth it." | PITCH_KIT section 5 (how we built it); the worst-playtest story |
+| Learning | (1) "AI needs a director: left alone, it drifts from the idea and writes stories you can't follow, so our engine gives Muse rules and code checks every move." (2) "Build the prototype fast: our first playtest found problems no plan would have." (3) "AI makes things look good fast; making them *feel* good took playtesting with real people." (4) "Guardrails should protect people, not flatten the story: our safety filter was so broad it blocked every story with an edge, so we made it precise." Then: "It's the CD's first hackathon: stressful, fun, worth it." | PITCH_KIT section 5 (how we built it); the worst-playtest story |
 
 ## Don't say yet (not built, not tested, or not true on the live site)
 

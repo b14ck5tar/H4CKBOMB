@@ -26,13 +26,14 @@ players in one room. Quick Tale is about 5 minutes (one turn each); a Full Story
    play right away. Your real answer stays secret until the end.
 2. **Pick tonight's story.** Two sources, both true:
    - *Odd news:* strange, harmless stories from real news this week. A story only gets in if Muse scores it as
-     storyable on 7 measures (a clear situation, a problem with stakes, a place you can picture, a real arc, roles
-     for the players, a payoff, and a fantasy twist that helps). It needs an average of 4 out of 5 and nothing below
+     storyable on 8 measures (a clear situation, a problem with stakes, a place you can picture, a real arc, roles
+     for the players, a payoff, a fantasy twist that helps, and whether adults would talk about it at a party). It needs an average of 4 out of 5 and nothing below
      3. Stories show up as fantasy quest cards, so nothing is spoiled.
    - *Our stories:* each player privately writes a small true story and how it really ended, and the table votes on
      one.
-   A Kids / Teens / Adults setting tunes the tone and the news filter. Adults gets grown-up stories, with hard limits
-   the AI can't cross.
+   Safety is precise, not broad: hard limits the AI can't cross in any mode (no deaths, violence against people,
+   sexual content, children, hate, disasters, partisan politics, or mocking private people), and inside them a Kids /
+   Teens / Adults setting tunes the tone. Adults gets grown-up stories, heists, cons and odd court cases included.
 3. **Players steer, the DM reacts.** There's no script. On your turn the TV says "Maya, tell the table your plan,"
    and everyone else sends you a move from their phone. You pick your own idea or a friend's. Using a friend's idea
    gives +1, and their name goes on screen.
@@ -120,6 +121,10 @@ What actually changed the game:
   the player's own words, never undo a win, move through 3 acts, and hand off to the next player by name.
 - **The AI's writing was hard to follow.** In our first playtest it invented jargon, and a player asked "What the
   hell is foam?" Now every line is short and plain, cause then effect, with the goal always on screen.
+- **Our stories felt lame all night, and we kept treating symptoms.** "Nobody cares about bridges." We added a
+  storytelling score, word filters, spoiler checks. The real cause was one rule: our safety filter was so broad it
+  blocked every story with an edge (heists, cons, weird court cases, scandals), which is exactly what makes real news
+  fun to play. We made safety precise instead of broad: hard lines that protect people, room for grown-up mischief.
 - **Too many features.** Secret clues, arguing with the DM, boosts and re-rolls crowded every screen. A Meta judge
   told us to nail one or two things. We cut it down to one loop: suggest, pick, roll, see what happens.
 
@@ -142,6 +147,8 @@ What actually changed the game:
   took playtesting with real people and watching the recordings.
 - **Let the players steer, and let code decide the numbers.** The best stories came from taking plans literally, and
   players trust real dice.
+- **Guardrails should protect people, not flatten the story.** And when the same complaint keeps coming back in
+  different words, look for the one rule underneath it.
 - **Our first hackathon:** stressful, fun, and a great experience.
 
 ## What's next for Group Project

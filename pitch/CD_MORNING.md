@@ -40,7 +40,7 @@ Open `https://groupproject-game.vercel.app/tv?bots=1` and play to the first turn
 
 ## 2. The live take (about 15 min for 2 takes)
 
-Setup (VIDEO_SCRIPT.md, "Shot list"): `/tv?judge=1&bots=1` (a saved, tested true story), **Quick · Odd news · Teens**,
+Setup (VIDEO_SCRIPT.md, "Shot list"): `/tv?judge=1&bots=1` (a saved, tested true story), **Quick · Odd news · Adults** (judge mode sets these),
 you on a real phone (plus any real player who's around) + 2 test players (press **B** twice). Each real player gets
 1 turn, then the finale.
 
