@@ -10,13 +10,16 @@
  *   /tv-preview?piece=autoplay  a full fake game on a loop: two turns (ideas, plan, roll, outcome), a nat-20 finale,
  *                               the "because of you" montage and the reveal, with paint-smear wipes between phases
  *                               (&from=meter2 starts at a step)
+ *   /tv-preview?piece=finale-pitch   WRITE: sealed plan cards fly in, "2 of 4 in" (live)
+ *   /tv-preview?piece=finale-vote    BACK: plans face up, vote dots land live, countdown
+ *   /tv-preview?piece=finale-shake   ARM -> 3,2,1 -> SHAKE! -> ROLLING, cycling (&stage=arm|count|shake|tumble holds one)
  *   &t=600                      freeze every animation at 600 ms (for review frames), e.g. ?piece=wipe&t=560
  *                               (&fz=4000 waits 4 s before freezing, to catch later events like the picked idea)
  * Keys: Space replays the current piece.
  */
 import { useEffect, useState } from "react";
 import type { Tier } from "@/lib/types";
-import { EndingMontage, HudStrip, InkWipe, OutcomeCaption, PhaseSwap, PlanCard, QualityMeter, SceneArt, SuggestionBubbles, TurnCard, TvStage } from "@/components/tvskin";
+import { EndingMontage, FinalePitch, FinaleShake, FinaleVote, HudStrip, InkWipe, OutcomeCaption, PhaseSwap, PlanCard, QualityMeter, SceneArt, SuggestionBubbles, TurnCard, TvStage } from "@/components/tvskin";
 import type { MontagePanel, RevealData } from "@/components/tvskin";
 
 const ART = ["/quests/cornfield-dome/scene_1.webp", "/quests/cornfield-dome/scene_2.webp", "/quests/cornfield-dome/scene_3.webp", "/lobby/boulder_114b3c8fbac1bd2a55054597.webp"];
@@ -131,6 +134,65 @@ function AutoPlay({ from }: { from?: string }) {
   );
 }
 
+// ---------- finale ----------
+const FIN_HEROES = [
+  { id: "p1", name: "Gus", color: "#3de7ff", portrait: "/heroes/raccoon.webp" },
+  { id: "p2", name: "Mabel", color: "#ff2e7e", portrait: "/heroes/grandma.webp" },
+  { id: "p3", name: "Mr. Pruitt", color: "#ffad3b", portrait: "/heroes/substitute.webp" },
+  { id: "p4", name: "Juno", color: "#c6ff2e", portrait: "/heroes/barista.webp" },
+];
+const FIN_PLANS = [
+  { id: "f1", playerId: "p1", text: "I ask the ranger for the key and promise to turn the light back on at dawn" },
+  { id: "f2", playerId: "p2", text: "I sing the hatchling a lullaby while Gus flips the switch" },
+  { id: "f3", playerId: "p3", text: "I hand out pop quizzes until the light gets bored and turns itself off" },
+  { id: "f4", playerId: "p4", text: "Espresso for everyone, then we carry the hatchling home together", eligible: false },
+];
+const VOTE_ORDER: [string, string][] = [["p2", "f1"], ["p3", "f1"], ["p1", "f2"], ["p4", "f3"]];
+const SHAKE_STAGES = ["arm", "count", "shake", "tumble"] as const;
+
+function FinalePreview({ piece, stageParam }: { piece: string; stageParam?: string }) {
+  const [n, setN] = useState(0); // generic step counter driving the fake live updates
+  const [deadline] = useState(() => Date.now() + 30000);
+  useEffect(() => {
+    const iv = setInterval(() => setN((x) => x + 1), piece === "finale-shake" ? 700 : 1300);
+    return () => clearInterval(iv);
+  }, [piece]);
+  if (piece === "finale-pitch") {
+    const k = Math.min(FIN_HEROES.length, Math.max(0, n - 1));
+    return (
+      <FinalePitch
+        heroes={FIN_HEROES}
+        plans={FIN_PLANS.slice(0, k)}
+        typing={FIN_HEROES.slice(k, k + 2).map((h) => h.id)}
+        situation="The ranger holds the key. The hatchling clutches the pillow. The sun is twenty minutes away."
+        deadlineAt={deadline}
+        totalSeconds={45}
+      />
+    );
+  }
+  if (piece === "finale-vote") {
+    const votes = Object.fromEntries(VOTE_ORDER.slice(0, Math.max(0, n - 1)));
+    return <FinaleVote heroes={FIN_HEROES} plans={FIN_PLANS} votes={votes} deadlineAt={deadline} totalSeconds={30} />;
+  }
+  // shake: cycle arm (fill) -> count 3,2,1 -> shake (fill) -> tumble
+  const held = SHAKE_STAGES.find((x) => x === stageParam);
+  const cyc = n % 16;
+  const stage = held ?? (cyc < 5 ? "arm" : cyc < 8 ? "count" : cyc < 13 ? "shake" : "tumble");
+  const filled = held ? 3 : stage === "arm" ? cyc : stage === "shake" ? cyc - 8 : 4;
+  const ids = FIN_HEROES.slice(0, Math.min(4, filled)).map((h) => h.id);
+  return (
+    <FinaleShake
+      stage={stage}
+      heroes={FIN_HEROES}
+      armed={stage === "arm" ? ids : FIN_HEROES.map((h) => h.id)}
+      shook={stage === "shake" ? ids : stage === "tumble" ? FIN_HEROES.map((h) => h.id) : []}
+      beat={stage === "count" ? 3 - (cyc - 5) : undefined}
+      planBy={FIN_HEROES[0]}
+      plan={FIN_PLANS[0].text}
+    />
+  );
+}
+
 export default function TvPreview() {
   const [q, setQ] = useState<URLSearchParams | null>(null);
   const [run, setRun] = useState(0);
@@ -165,6 +227,16 @@ export default function TvPreview() {
     return () => ts.forEach(clearTimeout);
   }, [q, piece, run]);
   if (!q) return <div style={{ position: "fixed", inset: 0, background: "#07040d" }} />;
+  if (piece.startsWith("finale-"))
+    return (
+      <div key={run} style={{ position: "fixed", inset: 0, background: "#07040d", overflow: "hidden" }}>
+        <SceneArt src={ART[2]} dim={0.6} />
+        <TvStage>
+          {piece !== "finale-vote" && <HudStrip ladder={{ steps: 4, at: 3, now: "Send the hatchling home", goal: LADDER.goal }} danger={{ level: 3, max: 5 }} />}
+          <FinalePreview piece={piece} stageParam={q.get("stage") ?? undefined} />
+        </TvStage>
+      </div>
+    );
   if (piece === "autoplay") return <AutoPlay key={run} from={q.get("from") ?? undefined} />;
 
   const tier = (q.get("tier") ?? "wild") as Tier;

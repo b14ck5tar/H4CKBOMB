@@ -15,6 +15,10 @@
  *   always   <HudStrip ladder={{steps: s.ladder.length, at: s.step, now: s.nowGoal, goal: s.goal}} danger={{level, max}} />
  *            (replaces GoalBar/NowBanner; omit danger until the host has a danger value)
  *   outcome  <OutcomeCaption text={line} tag={grade label} tagColor hero={{name,color}} k={s.scenes.length} />
+ *   finale   WRITE <FinalePitch heroes plans={s.pitches} typing={s.typing} situation={s.situation} deadlineAt={host.deadlineAt} />
+ *            BACK  <FinaleVote heroes plans={pitches as {id, playerId, text: planText(p), eligible}} votes={s.votes} deadlineAt />
+ *            ARM/SHAKE <FinaleShake stage={s.final.stage} heroes armed={s.final.armed} shook={s.final.shook} beat planBy plan />
+ *            (stage "landed" / final_result: show QualityMeter instead)
  *   ending   <EndingMontage panels={[{image: host.sceneImages[i], line, who}]} reveal={{headline, source, date, summary, now,
  *            articleUrl, yourTitle, yourVersion, solvedBy, ending, author (Our Stories: "Based on <author>'s true story")}} keepsake={<KeepsakeQR host={host} s={s} size={260} />} />
  *            (it is position:fixed full screen; replaces EndingSlot/RevealCard/Keepsake). SceneArt is optional.
@@ -34,5 +38,7 @@ export { LadderDots, DangerBar, HudStrip } from "./Hud";
 export type { LadderDotsProps, DangerBarProps } from "./Hud";
 export { OutcomeCaption } from "./OutcomeCaption";
 export type { OutcomeCaptionProps } from "./OutcomeCaption";
+export { FinalePitch, FinaleVote, FinaleShake } from "./Finale";
+export type { FinaleHero, FinalePlan, FinalePitchProps, FinaleVoteProps, FinaleShakeProps } from "./Finale";
 export { EndingMontage } from "./EndingMontage";
 export type { MontagePanel, RevealData, EndingMontageProps } from "./EndingMontage";
