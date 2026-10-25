@@ -96,3 +96,10 @@ Full history and train of thought: `design/00-where-we-are.md`.
 - ✅ Logo/thumbnail: the CD's neon paint logo, with the J fixed (devpost-media/logo-v4-J-*.jpg).
 - ✅ Music + SFX: option a, original music generated in code (Web Audio): lobby loop + 5 story moods (AI-picked), ducks under the narrator; SFX on every press; always something playing on the TV.
 - ✅ Quick Tale turn timer stays 30 s (advances early when everyone's done); about 4 min with 3 real players.
+
+## Sat ~10 PM: after the CD's live playtest ("fun, but not game-like enough; goal too narrow; pictures didn't change; ending lame")
+- ⏸ ON HOLD (CD, ~10 PM): Skill meter before every roll (3 s, friends can tap to slow it): perfect = second die (advantage), good = +2, miss = plain roll. The narrator credits the skill on a perfect-but-failed roll. The die stays the climax.
+- ✅ A "Right now" goal set by the AI after each outcome; the big goal stays in the corner.
+- ✅ Every decision gets a new scene composition; the story follows the players' new threads (yes, and).
+- ⏳ Danger meter / progress bar: unclear, to confirm.
+- ⏳ Ending: to revisit later (proposed a "because of you" montage).
