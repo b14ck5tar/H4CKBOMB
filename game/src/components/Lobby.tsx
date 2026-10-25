@@ -60,12 +60,8 @@ const MAX_PLAYERS = 6;
 const SLIDE_MS = 9000;
 
 // Hero-in-scene paintings lead; quest scenes fill in between them.
-const HERO_ART = [
-  "/lobby/otter_84ead94deddc45011bedb92b.webp",
-  "/lobby/boulder_114b3c8fbac1bd2a55054597.webp",
-  "/lobby/otter_9c5cbf542dc9f919991ff53f.webp",
-  "/lobby/boulder_b9447c85d4cd071251affdf2.webp",
-];
+// (The two otter paintings are left out: their pink-haired girl reads as one of the ready-made heroes.)
+const HERO_ART = ["/lobby/boulder_114b3c8fbac1bd2a55054597.webp", "/lobby/boulder_b9447c85d4cd071251affdf2.webp"];
 const QUEST_ART = ["rust-wyrm", "galactic-signal", "hanging-boulder", "returned-otter", "cornfield-dome", "billion-pearls", "idle-island", "littlest-gardener"].flatMap(
   (q) => [1, 2, 3].map((n) => `/quests/${q}/scene_${n}.webp`),
 );

@@ -1,7 +1,6 @@
 "use client";
 import { shortName } from "@/lib/now";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
-import QRCode from "qrcode";
 import { type GameHost } from "@/lib/host";
 import { sfx } from "@/lib/sfx";
 import type { GameState, Player } from "@/lib/types";
@@ -12,9 +11,8 @@ import { mask } from "@/lib/mask";
 import { DMNotesPanel } from "./DMNotes";
 import { Presenter } from "./Presenter";
 import { QuickTV } from "./QuickTV";
-import { RATINGS, RATING_LABEL } from "@/lib/rating";
+import { Lobby } from "./Lobby";
 import { FEATURES } from "@/lib/features";
-import { playSfx, useMusic } from "@/lib/sound";
 
 const initials = (s: string) => s.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
 const READING = ["quest", "narrating", "outcome", "mirror_reveal", "epilogue", "reveal"];
@@ -150,130 +148,6 @@ function Footer() {
 }
 
 // ---------- lobby ----------
-function Lobby({ host, s }: { host: Stage; s: GameState }) {
-  useMusic("lobby", 0); // starts on the first tap anywhere (browsers need one)
-  const [qr, setQr] = useState("");
-  const [joinUrl, setJoinUrl] = useState("");
-  const known = useRef(new Set<string>());
-  useEffect(() => {
-    const url = `${location.origin}/play?code=${s.code}`;
-    setJoinUrl(url);
-    QRCode.toDataURL(url, { margin: 1, width: 360, color: { dark: "#0A0612", light: "#F5F1FF" } }).then(setQr);
-  }, [s.code]);
-  useEffect(() => {
-    s.players.forEach((p) => {
-      if (!known.current.has(p.id)) {
-        known.current.add(p.id);
-        playSfx("join");
-      }
-    });
-  }, [s.players]);
-  const [showBots, setShowBots] = useState(false);
-  useEffect(() => {
-    try {
-      setShowBots(new URLSearchParams(window.location.search).has("bots"));
-    } catch {
-      // no URL, no test players
-    }
-  }, []);
-  const ready = s.players.filter((p) => p.hero || p.status === "building").length;
-  const status = host.readOnly
-    ? "The table starts it when everyone's in."
-    : ready === 0
-      ? "Scan the code with your phone camera to join."
-      : s.players.some((p) => !p.hero && p.status !== "building")
-        ? "Someone's still picking a hero. Start whenever you're ready."
-        : s.source === "ours"
-          ? "Everyone's in. First, everyone writes a small true story."
-          : s.mode === "quick"
-            ? "Everyone's in. One turn each, about five minutes."
-            : "Everyone's in. You'll vote on the story first.";
-  return (
-    // Fits 1366x768 to 1920x1080: the whole lobby scrolls if a screen is shorter still.
-    <div className="grid grid-cols-[minmax(0,24rem)_minmax(0,1fr)] gap-8 px-8 pb-6 pt-1 flex-1 min-h-0 overflow-y-auto">
-      <div className="page p-6 flex flex-col gap-3 items-center text-center self-start">
-        <p className="font-heading text-2xl uppercase">Scan to join</p>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        {qr ? <img src={qr} alt="QR code to join" className="rounded" style={{ width: "min(16rem, 34vh)", height: "min(16rem, 34vh)" }} /> : <div style={{ width: "min(16rem, 34vh)", height: "min(16rem, 34vh)" }} />}
-        <p className="font-ui uppercase tracking-[0.2em] text-sm text-ink-soft">or go to {joinUrl.replace(/^https?:\/\//, "").replace(/\/play.*$/, "/play")}</p>
-        <p className="font-display text-6xl tracking-[0.2em] leading-none">{s.code}</p>
-        <p className="font-ui uppercase tracking-[0.3em] text-xs text-ink-soft">Your Dungeon Master: Muse</p>
-        {host.transportKind === "local" && <p className="font-ui text-xs text-crimson">Local mode: phones on other devices can’t connect until Supabase keys are set.</p>}
-        {showBots && !host.readOnly && (
-          <button className="gp-tb" onClick={() => host.addBot()} disabled={s.players.length >= 6}>
-            + Add test player
-          </button>
-        )}
-      </div>
-
-      <div className="flex flex-col gap-5">
-        <section className="flex flex-col gap-3">
-          <h2 className="font-heading text-3xl uppercase text-[var(--gilt-bright)]">Your crew</h2>
-          {s.players.length === 0 ? (
-            <p className="text-2xl text-parchment/70">Nobody yet.</p>
-          ) : (
-            <div className="flex gap-6 flex-wrap">
-              {s.players.map((p) => (
-                <div key={p.id} className="flex flex-col items-center gap-1.5 w-28 text-center fade-in">
-                  {p.hero ? <Avatar host={host} p={p} size={72} /> : <WaxSeal initials={initials(p.name)} color={p.color} size={72} pulse />}
-                  <span className="font-heading text-xl uppercase leading-none">{p.hero ? shortName(p.hero.name) : mask(p.name)}</span>
-                  <span className="font-ui text-xs text-parchment/60">{p.hero ? mask(p.name) : p.status === "building" ? "drawing a hero…" : "picking a hero…"}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-
-        {!host.readOnly && (
-          <div className="gp-settings">
-            <span className="gp-set-k">How long?</span>
-            <div className="gp-set-v">
-              <button className={`gp-pill ${s.mode === "quick" ? "on" : ""}`} aria-pressed={s.mode === "quick"} onClick={() => { sfx.unlock(); sfx.pageTurn(); host.setMode("quick"); }}>
-                Quick Tale · ~5 min
-              </button>
-              <button className={`gp-pill ${s.mode === "full" ? "on" : ""}`} aria-pressed={s.mode === "full"} onClick={() => { sfx.unlock(); sfx.pageTurn(); host.setMode("full"); }}>
-                Full Story · ~10 min
-              </button>
-            </div>
-            <span className="gp-set-k">Tonight&apos;s story</span>
-            <div className="gp-set-v">
-              <button className={`gp-pill ${s.source === "news" ? "on" : ""}`} aria-pressed={s.source === "news"} onClick={() => { sfx.unlock(); sfx.pageTurn(); host.setSource("news"); }}>
-                Odd news
-              </button>
-              <button className={`gp-pill ${s.source === "ours" ? "on" : ""}`} aria-pressed={s.source === "ours"} onClick={() => { sfx.unlock(); sfx.pageTurn(); host.setSource("ours"); }}>
-                Our stories
-              </button>
-            </div>
-            <span className="gp-set-k">Who&apos;s playing?</span>
-            <div className="gp-set-v">
-              {RATINGS.map((r) => (
-                <button key={r} className={`gp-pill ${s.rating === r ? "on" : ""}`} aria-pressed={s.rating === r} onClick={() => { sfx.unlock(); sfx.pageTurn(); host.setRating(r); }}>
-                  {RATING_LABEL[r]}
-                </button>
-              ))}
-            </div>
-            <span />
-            <p className="font-ui text-sm text-parchment/65 leading-snug">
-              {s.source === "ours" ? "Each of you writes a small true story. Play one, then hear how it really ended." : "A strange, harmless story from this week's real news."}{" "}
-              {s.mode === "quick" ? "One turn each, then a grand finale." : "Two turns each (one with 5+ players), then a grand finale."}
-            </p>
-          </div>
-        )}
-
-        <div className="flex items-center gap-5 mt-auto">
-          {!host.readOnly && (
-            <button className="btn btn-crimson text-3xl px-10" disabled={!host.canBegin()} onClick={() => host.begin()}>
-              Start
-            </button>
-          )}
-          <span className="font-ui text-lg text-parchment/75">{status}</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/** Ticks fast enough for a countdown to land on the beat. */
 export function useFastNow(active: boolean) {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -448,6 +322,15 @@ export function ThankHearts({ s }: { s: GameState }) {
 export function TV({ host, embedded = false }: { host: Stage; embedded?: boolean }) {
   const s = useHost(host);
   const [notesOpen, setNotesOpen] = useState(false);
+  // Test players ("+ Add test player") only with ?bots in the URL, so judges never see the button.
+  const [showBots, setShowBots] = useState(false);
+  useEffect(() => {
+    try {
+      setShowBots(new URLSearchParams(window.location.search).has("bots"));
+    } catch {
+      // no URL, no test players
+    }
+  }, []);
   const [reactions, setReactions] = useState<{ id: number; emoji: string; color?: string }[]>([]);
   const [toast, setToast] = useState<{ id: number; text: string } | null>(null);
   useEffect(() => host.onToast?.(setToast), [host]);
@@ -496,8 +379,37 @@ export function TV({ host, embedded = false }: { host: Stage; embedded?: boolean
       <Presenter host={host} s={s} onNotes={() => setNotesOpen((o) => !o)} onCloseNotes={() => setNotesOpen(false)} />
     </>
   );
+  // The lobby: a full-bleed title screen with its own music, mute button and START (Lobby.tsx).
+  if (s.phase === "lobby")
+    return (
+      <>
+        <Lobby
+          code={s.code}
+          players={s.players}
+          mode={s.mode}
+          source={s.source}
+          rating={s.rating}
+          portraitOf={(p) => (p.pick ? `/heroes/${p.pick}.webp` : host.thumbs[p.id] ?? host.portraits[p.id])}
+          readOnly={host.readOnly}
+          onMode={(m) => host.setMode(m)}
+          onSource={(x) => host.setSource(x)}
+          onRating={(r) => host.setRating(r)}
+          canStart={host.canBegin()}
+          onStart={() => host.begin()}
+          localMode={host.transportKind === "local"}
+          onAddBot={showBots && !host.readOnly ? () => host.addBot() : undefined}
+        />
+        {overlays}
+        {toast && (
+          <div key={toast.id} className="fixed top-20 left-1/2 -translate-x-1/2 z-50 page px-6 py-3 font-heading text-2xl uppercase fade-in">
+            👋 {toast.text}
+          </div>
+        )}
+        <Reactions items={reactions} />
+      </>
+    );
   // Both modes play the story on one full-bleed, cinematic stage (QuickTV.tsx). Mirror keeps its own screens.
-  if (s.phase !== "lobby" && !(FEATURES.mirror && s.phase.startsWith("mirror")))
+  if (!(FEATURES.mirror && s.phase.startsWith("mirror")))
     return (
       <>
         <QuickTV host={host} s={s} onNotes={() => setNotesOpen((o) => !o)} notesOpen={notesOpen} />
@@ -520,7 +432,7 @@ export function TV({ host, embedded = false }: { host: Stage; embedded?: boolean
       main = <MirrorRevealCard host={host} s={s} />;
       break;
     default:
-      main = <Lobby host={host} s={s} />;
+      main = null;
   }
 
   return (
