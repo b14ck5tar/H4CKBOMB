@@ -1,134 +1,191 @@
-# VIDEO SCRIPT: Group Project (Meta submission video)
+# VIDEO SCRIPT: Group Project (Meta track video, final build)
 
-Rewritten Sat Oct 24 ~9:30 PM for the current build: turn-based, Odd news / Our stories, heroes painted into each
-new scene, a narrator cast per story, the reveal and the keepsake. Every cut feature (secret clues, Convince the DM,
-Boost, Catch!, Mirror) is gone from this script. Do not mention them.
+*Group Project: the one group project where everyone actually shows up.*
 
-Meta's suggested breakdown, matched exactly:
+Rewritten Sun Oct 25 ~1 AM for the **final build**: turns where friends suggest and you pick, graded rolls
+(every number is its own outcome, fail forward), swipe up to throw the die, a new painting per decision, a narrator
+cast per story, the shake-together finale and the "Based on a true story" reveal.
+**Record Sunday morning on the deployed build after feature freeze (10 AM). Final Devpost deadline 11:30 AM.**
+Cut features never appear: secret clues, Convince the DM, Boost, Catch!, Mirror, hearts / Hope, "Needs 12+".
 
-| Part | Meta's ask | Time | Length |
+## Meta's breakdown, matched exactly
+
+| Part | Meta's ask | Time | Spoken words (max) |
 |---|---|---|---|
-| 1 | What problem it solves and how it brings people closer | 0:00 to 0:30 | 30 s |
-| 2 | Working product demo of key features | 0:30 to 2:00 | 90 s |
-| 3 | How AI plays a role and is integrated | 2:00 to 2:30 | 30 s |
-| 4 | Tools, harnesses and models used, and how they helped the build | 2:30 to 3:00 | 30 s |
+| 1 | The problem and how it brings people closer | 0:00 to 0:30 | ~65 |
+| 2 | Working demo of the key features | 0:30 to 2:00 | ~160 (game sound fills the rest) |
+| 3 | How AI plays a role and is integrated | 2:00 to 2:30 | ~65 |
+| 4 | Tools, harnesses and models, and how they helped the build | 2:30 to 3:00 | ~65 |
 
-Hard limit: never over 3:00. Trim the end card to land at 2:58.
-Voiceover pace: about 2.3 words per second, so a 30 s part has room for about 65 words. Word counts are in the spoken script below.
-If a line runs long, cut words, not shots. Captions on everything (judges may watch on mute).
+Hard limit: 3:00. Aim for 2:55 including the end card. Pace about 2.2 words per second.
+If a line runs long, cut words, not shots. Burn in captions for every spoken line (judges often watch muted).
 
-**Who reads:** the creative director, in their own voice. Plain and warm, like telling a friend about it. No
-trailer voice, no "revolutionary", no "seamless".
+**Who reads:** the creative director, in their own voice. Talk like you're telling a friend about it. No trailer
+voice. No "revolutionary", "seamless", "game-changing", "powered by AI". No em dashes in captions.
 
-**Footage you need (record before editing):**
-- A. One Full Story game with 3 to 4 friends on Odd news (TV screen recording + 2 phone screen recordings + a room camera).
-- B. One Quick Tale or Full Story on **Our stories**, where a team member's true story wins the vote, through to the reveal.
-- C. A Muse connector clip (Muse chat calling `start_game_night`), only after the new build is deployed.
-- D. Screen captures: Claude Code with parallel agents, the bake-off table (design/23), the playtest frame analysis (design/21).
+---
+
+## The take to record (one game, ~5 minutes of raw footage)
+
+| Setting | Value | Why |
+|---|---|---|
+| URL | `https://groupproject-game.vercel.app/tv?bots=1` on the laptop | `?bots=1` shows "+ test player" in the lobby |
+| Players | **2 humans on real phones + 2 bots** (click "+ test player" twice, or press B twice in the lobby, before the camera rolls on the lobby) | 4 heroes on screen, 2 real faces for the room camera |
+| How long? | **Quick Tale** (~5 min, 1 turn each, 30 s timers) | Fits the 90 s demo with room to choose |
+| Tonight's story | **Odd news** | Bots can't write Our stories; odd news gives the "Based on a true story" reveal |
+| Who's playing? | **Teens** | Funniest tone that's still safe |
+| Heroes | Humans: type a custom hero (shows Muse painting you). Bots get ready-made heroes. | |
+
+Bots are Riley (the joker), Sam (the planner) and Jo. Their suggestions appear like anyone else's. Never say a
+bot is a person. If a bot shows on screen with its name, that's fine; just don't call it "my friend".
+
+**Do 2 full takes.** Pick the one where (a) the human turn owner picks the other human's idea, (b) one roll lands
+low (UH OH or SORT OF) and one lands high (GREAT or LEGENDARY), (c) the reveal headline is easy to read.
+
+**Plan the two human turns in advance** (not the words, the moves):
+- Human A's turn: Human B types a suggestion and argues for it out loud. A picks it. (+1, "+ B's idea".)
+- Human B's turn: B picks a bot's suggestion or writes their own. Either is fine.
 
 ---
 
 ## PART 1: The problem, and how it brings people closer (0:00 to 0:30)
 
-| Time | Shot | Voiceover (spoken) | Notes |
+| Time | Shot | Spoken | On screen |
 |---|---|---|---|
-| 0:00 to 0:08 | Room camera: four friends on a couch, each looking at their own phone. Quiet. | "When friends hang out, everyone's often together but on their own phone." | Real friends, dim light. Hold the silence for a beat before the line. |
-| 0:08 to 0:18 | A tabletop game: dice, people leaning in. Then one person alone with a thick rulebook. | "Tabletop games fix that: everyone gets a role and a reason to talk. But someone has to plan the night as Dungeon Master, so most groups never play." | B-roll of a rulebook closing. |
-| 0:18 to 0:30 | The TV lights up with the lobby and the QR. Phones come up. People turn toward each other. | "So we made Muse the Dungeon Master. Every story really happened, to the world or to one of you." | Title card: **Group Project**. Lower third: *A game night that gives everyone an excuse to talk to each other.* Let the room sound carry the last 3 s. |
+| 0:00 to 0:09 | Room camera, dim: two friends on a couch, each scrolling their own phone. Nobody talks. Hold 2 s of silence first. | "When friends hang out, a lot of the night is everyone on their own phone." | |
+| 0:09 to 0:19 | Hands rolling real dice on a table, people leaning in. Cut to one person alone, flipping a thick rulebook, then closing it. | "Tabletop games fix that. Everyone gets a role and a reason to talk. But someone has to run the game, so most groups never play." | |
+| 0:19 to 0:30 | The TV lobby: the neon title screen, the big QR. Two phones come up and scan. The friends turn toward each other. | "So we built Group Project. Meta's Muse is the Dungeon Master, your phones are the controllers, and every story is based on something that really happened." | Title card over the lobby: **Group Project**. Subtitle: *the one group project where everyone actually shows up.* |
 
 ## PART 2: Working demo (0:30 to 2:00)
 
-All footage is real. Cut between the TV recording, phone recordings and the room camera. Show faces reacting in at
-least three shots. Never show hotkeys, the presenter overlay or the "Local mode" badge.
+All footage is real gameplay from the take above. Cut between the TV capture, the two phone captures and the room
+camera. Show a real face reacting at least 3 times. Never show hotkeys, the "?" help, DM's Notes key presses,
+"Local mode", or the browser address bar.
 
-| Time | Shot | Voiceover (spoken) | On screen / notes |
-|---|---|---|---|
-| 0:30 to 0:42 | Phone scans the QR. Join screen. Thumb types "a raccoon who runs a food truck". Then "What are you weirdly good at?" and "parallel parking". TV: the hero portrait paints in. | "Scan the code. No app, no account. Describe your hero in one line, and answer one question: what are you weirdly good at? Muse paints you as a cartoon." | Speed-ramp the typing. Chip: *Muse Image*. |
-| 0:42 to 0:51 | TV: "Tonight's story: Odd news." Three real headlines appear. Phones tap a vote. The winner lands. | "Then the table votes on tonight's story: real, harmless, strange headlines from this week." | Pick a vote where the room laughs at a headline. Chip: *live news, safety-filtered*. |
-| 0:51 to 1:02 | The opening scene painting fades up with the group's heroes in it. Narrator voice reads, text appears in sync. | "Muse writes the opening from the article's facts, casts a narrator to fit, and paints your heroes into the scene." | Let 3 to 4 seconds of the narrator play under the VO, then duck it. |
-| 1:02 to 1:20 | TV: "Ava's turn." Two friends' phones: "What should Ava do?" They type. Room camera: one friend leaning over, pitching out loud. Ava's phone shows the suggestions; she picks Gus's. TV: "+ Gus's idea · +1". | "On your turn, your friends send you ideas, and they argue for them out loud. Pick a friend's idea and you get plus one, with their name on screen." | **The money shot.** Hold on the room reacting to "+ Gus's idea". |
-| 1:20 to 1:32 | TV: the ruling, then "Needs 12+". Ava rolls on her phone. The d20 tumbles. The room counts it down. | "Muse judges the plan as written and tells you what you need to roll. The dice are real random numbers." | Keep the dice sound. Cut to a face on the result. |
-| 1:32 to 1:41 | The outcome is narrated over the old painting; the new painting crossfades in, heroes in their new spot. | "Then Muse writes what happened next, and every decision gets a new painting." | Show one crossfade full screen. |
-| 1:41 to 1:49 | Finale: every phone shows "shake". Room camera: everyone shaking phones at once, laughing. One shared die lands. | "The finale is one shared roll. Everyone shakes their phone at once." | Room camera, wide. The "we pulled it off together" shot. |
-| 1:49 to 2:00 | Reveal from footage B: "This really happened to Maya" with her real ending. Cut to the room turning to Maya. Then the keepsake QR. | "At the end, you find out what really happened. With Our stories, it's a true story from someone at the table." | If B isn't filmed, use the news reveal ("This really happened" + the article + "What's happening now") and say: "At the end, you see the real article, and what's happening there now." |
+| Time | Moment | Shot | Spoken | Caption chip |
+|---|---|---|---|---|
+| 0:30 to 0:40 | Join | Phone: scan the QR, type a hero ("a raccoon who runs a food truck"), answer "What are you weirdly good at?" ("parallel parking"). TV: the hero card pops in with a sound, portrait paints in. Bots pop in too. | "Scan the code. No app, no account. Describe your hero in one line, and say what you're weirdly good at." | *Muse Image paints your hero* |
+| 0:40 to 0:48 | Story | TV: the opening title card and the first painting with all four heroes in it. The narrator starts reading; text appears in sync. | "Muse writes tonight's story, picks a narrator to fit the mood, and paints our heroes into the scene." | *Narrator: Vesper* (or whoever was cast) |
+| 0:48 to 1:06 | **Friends suggesting** (the money shot) | TV: "A's TURN" and suggestion bubbles arriving. Phone B: "Suggest a move for A", typing. Room camera: B leaning over, pitching the idea out loud, A laughing. Phone A: friends' ideas listed; A taps B's. TV: "+ B's idea +1". | "On your turn, everyone else sends you ideas. And they argue for them. Use a friend's idea and you get plus one, with their name on screen." | Hold 2 s on "+ B's idea" |
+| 1:06 to 1:18 | **Swipe-to-throw + graded meter** | Phone A: "Swipe up to throw", thumb flicks. TV: the d20 flies onto the table, tumbles, bounces, lands. The outcome meter fills to its grade (e.g. GREAT). Room camera: both react. | "Swipe up to throw. Every number is its own outcome, from disaster to legendary. The dice are real random numbers. The AI never picks them." | *1 = DISASTER ... 20 = LEGENDARY* |
+| 1:18 to 1:30 | **New painting per decision** | TV: the narrator reads what happened over the old painting; the new painting crossfades in, heroes in a new spot. Then a low roll from the other turn: UH OH, and the story gets worse in a funny way. | "Muse writes what happens at exactly that grade. A bad roll doesn't stop the story, it makes it worse. Every decision gets a new painting." | Show one crossfade full screen |
+| 1:30 to 1:42 | **Finale shake** | Phones: "Shake!" Room camera, wide: both humans shaking phones at the same time, laughing. TV: one shared die lands, the screen shakes. | "For the finale, everyone backs one plan, then shakes their phone at the same time. One die for the whole table." | |
+| 1:42 to 2:00 | **"Based on a true story" reveal** | TV: "Based on a true story". The real headline and article card next to "Your version". Slow push on the "Solved by" line with the player's real knack. Room camera: someone says "wait, that's real?" Last 2 s: the keepsake QR. | "Then the twist. It's based on a true story. You see the real article, what's happening there now, and how your weird skill saved the day." | *Take the story home: keepsake QR* |
 
 ## PART 3: How the AI is part of it (2:00 to 2:30)
 
-| Time | Shot | Voiceover (spoken) | Notes |
+| Time | Shot | Spoken | Notes |
 |---|---|---|---|
-| 2:00 to 2:12 | Simple motion graphic of one turn: headline in, then **Muse Spark** (filter, opener), plan in, **Muse Spark** (judge: "Needs 12+"), **code** (d20), **Muse Spark** (what happened), **Muse Image** (new painting). | "Muse runs the story. Spark filters the news, writes the opening, judges each plan and writes what happens next. Muse Image paints every scene. Voice Transcribe is there if you'd rather talk." | Labels: *muse-spark-1.3*, *muse-image-1.0*, *muse-voice-transcribe-1.0*. |
-| 2:12 to 2:20 | The TV with DM's Notes open (press N), entries scrolling. | "Code rolls the dice, and the AI never rates a person. DM's Notes shows every call." | Make sure DM's Notes no longer lists cut features before filming. |
-| 2:20 to 2:30 | Footage C: a Muse chat. User types "Start a quick game night for the judges." Muse calls `start_game_night` and replies with the table link and an invite. The link opens the lobby. | "And through our connector, Muse, Meta's personal agent, can start the night and draft the invite." | Overlay: `/api/mcp` and the caption *Muse drafts. You send.* **If C isn't recorded live,** use a second turn montage and say: "Every turn is a Muse call, and friends talk to each other, not to a chatbot." Never imply the connector ran if it didn't. |
+| 2:00 to 2:14 | Simple motion graphic of one turn, left to right: real news → **Muse Spark** (filter + opening) → friends' plan → **Muse Spark** (judge) → **code** (d20) → **Muse Spark** (outcome at that grade) → **Muse Image** (new painting) → **narrator**. | "Muse runs the night. Muse Spark filters the news, writes the opening, judges every plan and writes each outcome. Muse Image paints your heroes into every new scene." | Labels: *muse-spark-1.3*, *muse-image-1.0*. Use the deck's slide 7 as the base if short on time. |
+| 2:14 to 2:24 | TV with DM's Notes open (press N off camera, then record), entries scrolling. | "Code rolls the dice and keeps score. The AI judges ideas, never people, and DM's Notes shows every call it made." | Check DM's Notes shows no cut features before filming. |
+| 2:24 to 2:30 | Narrator caption on the TV, a waveform. | "Meta has no text-to-speech model, so the one non-Meta piece is the narrator's voice." | On-screen: *Narrator: OpenAI gpt-4o-mini-tts (Gemini TTS backup), picked by ear.* |
 
 ## PART 4: How we built it (2:30 to 3:00)
 
-| Time | Shot | Voiceover (spoken) | Notes |
+| Time | Shot | Spoken | Notes |
 |---|---|---|---|
-| 2:30 to 2:39 | Screen capture: Claude Code with several agents running side by side (research, build, review, QA). | "We built it with Claude Code as lead engineer, running parallel agents for research, building and review. I made the creative calls." | Blur any keys or `.env.local`. Chip: *Claude Code, Anthropic*. |
-| 2:39 to 2:48 | The DM stress-test run scrolling, then the bake-off table from design/23 with 5/8 to 8/8 highlighted. | "We stress-tested the DM on 32 scenarios and ran a model bake-off: a better rubric took Muse Spark from five of eight fair rulings to eight." | On-screen text, not VO: *Meta has no text-to-speech model, so we picked the narrator by ear: OpenAI gpt-4o-mini-tts, Gemini TTS as backup.* |
-| 2:48 to 2:58 | Frames from the recorded playtest (design/21): the idle TV, "what is foam". Then today's clean screen. End card from 2:55. | "Agents went through our playtest recordings frame by frame, and after feedback from Meta's team, we cut everything down to one loop." | End card: **Group Project**, live URL, QR. Hold 3 s. |
+| 2:30 to 2:40 | Screen capture: Claude Code with several agents running side by side (builder, story director, QA). Blur anything that looks like a key. | "This is my first hackathon. I made the creative calls. Claude Code was our lead engineer, running a team of agents: a builder, a story director, designers and a QA tester." | Chip: *Claude Code (Anthropic)* |
+| 2:40 to 2:50 | The DM stress-test results scrolling, then `/bakeoff.html` (blind writer cards) and the design/23 rubric table with 5/8 → 8/8 highlighted. | "We attacked our Dungeon Master with 32 hostile scenarios and ran blind model bake-offs. Muse Spark won." | On-screen text: *Judging rubric: 5/8 → 8/8 fair rulings. Writers tested: Spark, Wonder, GPT-5.5, GPT-4.1.* |
+| 2:50 to 2:55 | Frames from Saturday's playtest recording: the idle TV, "what the hell is foam". Then today's clean turn screen. | "Agents watched our playtest videos frame by frame, and every big change came from real players." | |
+| 2:55 to 3:00 | End card. | (no voice; room laughter under) | **Group Project** · groupproject-game.vercel.app · QR · *the one group project where everyone actually shows up.* |
 
 ---
 
 ## Spoken script only (for the read)
 
-**Part 1 (59 words, about 25 s)**
-When friends hang out, everyone's often together but on their own phone.
-Tabletop games fix that: everyone gets a role and a reason to talk. But someone has to plan the night as Dungeon
-Master, so most groups never play.
-So we made Muse the Dungeon Master. Every story really happened, to the world or to one of you.
+**Part 1 (66 words, ~28 s)**
+When friends hang out, a lot of the night is everyone on their own phone.
+Tabletop games fix that. Everyone gets a role and a reason to talk. But someone has to run the game, so most
+groups never play.
+So we built Group Project. Meta's Muse is the Dungeon Master, your phones are the controllers, and every story is
+based on something that really happened.
 
-**Part 2 (158 words, about 70 s, the rest is game sound)**
-Scan the code. No app, no account. Describe your hero in one line, and answer one question: what are you weirdly
-good at? Muse paints you as a cartoon.
-Then the table votes on tonight's story: real, harmless, strange headlines from this week.
-Muse writes the opening from the article's facts, casts a narrator to fit, and paints your heroes into the scene.
-On your turn, your friends send you ideas, and they argue for them out loud. Pick a friend's idea and you get plus
-one, with their name on screen.
-Muse judges the plan as written and tells you what you need to roll. The dice are real random numbers.
-Then Muse writes what happened next, and every decision gets a new painting.
-The finale is one shared roll. Everyone shakes their phone at once.
-At the end, you find out what really happened. With Our stories, it's a true story from someone at the table.
+**Part 2 (162 words, ~72 s; the rest is game sound)**
+Scan the code. No app, no account. Describe your hero in one line, and say what you're weirdly good at.
+Muse writes tonight's story, picks a narrator to fit the mood, and paints our heroes into the scene.
+On your turn, everyone else sends you ideas. And they argue for them. Use a friend's idea and you get plus one,
+with their name on screen.
+Swipe up to throw. Every number is its own outcome, from disaster to legendary. The dice are real random numbers.
+The AI never picks them.
+Muse writes what happens at exactly that grade. A bad roll doesn't stop the story, it makes it worse. Every
+decision gets a new painting.
+For the finale, everyone backs one plan, then shakes their phone at the same time. One die for the whole table.
+Then the twist. It's based on a true story. You see the real article, what's happening there now, and how your
+weird skill saved the day.
 
-**Part 3 (64 words, about 28 s)**
-Muse runs the story. Spark filters the news, writes the opening, judges each plan and writes what happens next.
-Muse Image paints every scene. Voice Transcribe is there if you'd rather talk.
-Code rolls the dice, and the AI never rates a person. DM's Notes shows every call.
-And through our connector, Muse, Meta's personal agent, can start the night and draft the invite.
+**Part 3 (63 words, ~28 s)**
+Muse runs the night. Muse Spark filters the news, writes the opening, judges every plan and writes each outcome.
+Muse Image paints your heroes into every new scene.
+Code rolls the dice and keeps score. The AI judges ideas, never people, and DM's Notes shows every call it made.
+Meta has no text-to-speech model, so the one non-Meta piece is the narrator's voice.
 
-**Part 4 (70 words, about 29 s at a steady pace; if it runs over, drop "on 32 scenarios" and show the number on screen)**
-We built it with Claude Code as lead engineer, running parallel agents for research, building and review. I made the
-creative calls.
-We stress-tested the DM on 32 scenarios and ran a model bake-off: a better rubric took Muse Spark from five of eight
-fair rulings to eight.
-Agents went through our playtest recordings frame by frame, and after feedback from Meta's team, we cut everything
-down to one loop.
+**Part 4 (61 words, ~26 s)**
+This is my first hackathon. I made the creative calls. Claude Code was our lead engineer, running a team of agents:
+a builder, a story director, designers and a QA tester.
+We attacked our Dungeon Master with 32 hostile scenarios and ran blind model bake-offs. Muse Spark won.
+Agents watched our playtest videos frame by frame, and every big change came from real players.
+
+If Part 4 runs long, drop "a builder, a story director, designers and a QA tester" (the screen shows them).
+
+**Facts behind each Part 4 line (so nobody overclaims):**
+- Agents: builder, story director, story pipeline, lobby and phone designers, QA tester, recording analysts,
+  reviewers (all Claude Code subagents, run in parallel).
+- "32 hostile scenarios": commit 8eed30a, "DM stress test: 32 hostile scenarios across all 8 quests".
+- Judging bake-off: design/23 (Spark minimal, v1 rubric 5-7/8 → v2 rubric 8/8 in 3 runs).
+- Writer bake-off: design/26 (blind, 5 writers: Spark minimal, Spark high, Wonder, GPT-5.5, GPT-4.1; Spark kept
+  because it credited the right friend, kept the limits and stays under the 12 s timeout).
+- Playtest analysis: design/21 (8-minute game, ~2.5 min idle TV, "what the hell is foam").
+- Pivots: design/22 (Meta rep: "nail one or two" features, try other models, let people input their own stories).
 
 ---
 
 ## Recording checklist
 
-**Before you record**
-- [ ] Record on the deployed build after the merge (the public site ran the old build as of Sat 9 PM).
-- [ ] Run one full game first to warm Muse. Check the narrator is audible (not text-only fallback).
-- [ ] For footage B, a team member pre-writes a short true story with a funny real ending. Check nothing in it is
-      private to anyone else.
-- [ ] Before filming DM's Notes, confirm it no longer lists Mirror or Hope.
-- [ ] Do Not Disturb on every phone and the laptop. Hide bookmarks, Slack, email.
-- [ ] No keys, `.env.local` or tokens on any screen. Blur the Claude Code session if in doubt.
-- [ ] Written OK from everyone on camera.
+### Before the camera rolls (Sun ~9:30 to 10:15 AM)
+- [ ] Feature freeze done; the build you record is the one deployed at groupproject-game.vercel.app.
+- [ ] Verify these on the deployed build. If one is missing, change the line, not the footage:
+  - "Based on a true story" on the reveal. *Missing:* say "Then the twist. It really happened."
+  - The graded outcome meter (DISASTER ... LEGENDARY). *Missing:* say "Every number is its own outcome" over the die.
+  - Swipe up to throw on the phone and the die thrown onto the TV.
+  - Narrator audio plays (not text-only). Listen once on the deployed site.
+- [ ] One warm-up game first (wakes Muse and the narrator, caches the news).
+- [ ] DM's Notes (N) lists only current rules.
+- [ ] Laptop: Do Not Disturb (Focus), close Slack/Discord/email, hide the bookmarks bar, browser full screen (F11).
+- [ ] Phones: Do Not Disturb, brightness up, battery > 50%, silence ringer but keep game sound on.
+- [ ] No keys, `.env.local`, Vercel env pages or tokens anywhere on screen, including the Claude Code capture.
+- [ ] Everyone on camera says OK out loud on the recording.
 
-**Capture**
-- [ ] TV at 1920×1080, browser full screen, 100% zoom. OBS (Display Capture, 30/60 fps) or Win+Alt+R.
-- [ ] Phones: built-in screen recorder, portrait. One clip per beat: join, vote, suggestion, pick, roll, shake.
-- [ ] Room camera on a tripod or a stack of books, landscape, TV glow on faces. Shoot wide and one close-up of two
-      people looking at one phone.
-- [ ] Record system audio (narrator, dice, reveal).
+### TV capture (laptop)
+- **OBS (preferred):** Settings > Video: base and output 1920×1080, 60 fps. Settings > Output: Recording format
+  MP4 (or MKV, then File > Remux to MP4), encoder NVENC/QuickSync if available, otherwise x264 "veryfast",
+  rate control CBR 15,000 Kbps. Source: *Window Capture* of the browser (Chrome: "Windows 10 (1903 and up)" capture
+  method) or *Display Capture*. Audio: *Desktop Audio* ON (narrator, dice, music), *Mic/Aux* OFF (voiceover is
+  recorded separately).
+- **Fallback: Snipping Tool.** Win+Shift+R (or Snipping Tool > Record), drag the full screen, turn **system audio
+  ON** and **microphone OFF**, Start. Saves an MP4 to Videos\Screen Recordings.
+- Browser zoom 100%. TV tab only; play on the laptop screen, not a mirrored second screen (avoids scaling blur).
 
-**Voiceover and edit**
-- [ ] Quiet small room, phone mic six inches away. One take per part, then a second full take.
-- [ ] Royalty-free music, low under the voice.
-- [ ] Captions; keep text out of the bottom 15% of the frame.
-- [ ] Export 1080p H.264 MP4, at or under 3:00. Watch it on a phone and a laptop.
-- [ ] Upload (YouTube unlisted or as Devpost asks), open in a private window, confirm it plays without a login.
-- [ ] Keep a copy on the laptop and a phone. It doubles as the backup if the live demo fails.
+### Phone captures
+- **iPhone:** Control Center > Screen Recording. Long-press it to turn the mic **off**. Start 3 s before you need it.
+- **Android:** Quick Settings > Screen record > "Device audio" (or no audio), and "Show touches" ON (shows the swipe).
+- Portrait, one recording per phone for the whole game (easier to sync than clips).
+
+### Room camera
+- A third phone on a tripod or a stack of books, landscape, 1080p 30 fps, wide enough for both faces and the TV glow.
+  One close-up of the two players leaning over one phone.
+- **Clap once on camera at the start** with all recordings running. That clap syncs all four tracks in the edit.
+
+### Voiceover
+- A small quiet room (a closet with clothes is perfect). Phone voice memo, mic about 6 inches from your mouth, a
+  little off to the side.
+- Read each part twice, then one full read-through. Leave a 2 s pause between takes. Keep the room tone.
+- Drink water, smile on the warm lines. Read slower than feels natural.
+
+### Edit and export
+- Game sound under the VO at about -18 dB; game sound alone up to about -10 dB on the narrator and reveal.
+- No extra music needed: the game's own music is original (generated in code). If you add any, royalty-free only.
+- Burn in captions; keep text out of the bottom 15% of the frame.
+- Export 1080p H.264 MP4, at or under 3:00. Watch it once on a phone, once on a laptop, once muted.
+- Upload (YouTube unlisted, or as Devpost asks). Open the link in a private window to confirm it plays without a
+  login. Paste it into Devpost before 11:30 AM.
+- Keep the MP4 on the laptop and a phone: it's the backup if the live demo fails at judging.

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { MODELS, museJSON } from "@/server/muse";
+import { MODELS, museJSON, type Effort } from "@/server/muse";
 import {
   BOT_SCHEMA,
   BOT_SYSTEM,
@@ -32,13 +32,35 @@ import { evenStats } from "@/lib/rules";
 export const maxDuration = 60;
 
 /**
- * One constant for the story-writing calls (outcome = what happened + situation + Right now, and the ending), so a
- * model comparison is a one-line (or one env var) swap: STORY_MODEL=muse-wonder-1.0. Another provider would also need
- * its own client in place of museJSON (same JSON-schema contract).
+ * Model + reasoning per story-writing call type, in one place, so a model comparison is a one-line (or env var) swap
+ * (STORY_MODEL=muse-wonder-1.0, BRANCH_EFFORT=medium). Another provider would also need its own client in place of
+ * museJSON (same JSON-schema contract). design/26 bake-off: spark-1.3 "high" writes best but takes 13-17 s, so it
+ * runs as pre-written branches (outcome_branches) while the table rolls; "low" is the live fallback.
  */
 const STORY_MODEL = process.env.STORY_MODEL || MODELS.writing;
+const STORY_CALLS = {
+  // "high" reasoning needs room: at 3000 tokens it ran out ("empty response (length)") on every call.
+  outcome: { model: STORY_MODEL, effort: (process.env.OUTCOME_EFFORT || "low") as Effort, timeoutMs: Number(process.env.OUTCOME_TIMEOUT_MS) || 12_000, maxTokens: process.env.OUTCOME_EFFORT === "high" ? 9000 : 3000 },
+  branch: { model: process.env.BRANCH_MODEL || STORY_MODEL, effort: (process.env.BRANCH_EFFORT || "high") as Effort, timeoutMs: 28_000, maxTokens: 9000 },
+  epilogue: { model: STORY_MODEL, effort: (process.env.EPILOGUE_EFFORT || "low") as Effort, timeoutMs: 15_000, maxTokens: 4000 },
+};
 
-const TASKS = ["character", "scene", "verdict", "outcome", "round", "epilogue", "storybook", "kind", "cast", "bot"];
+/**
+ * outcome_branches: the three fail-forward branches written ahead, each with a representative roll. The die picks one
+ * when it lands: DISASTER/SETBACK -> worse, PARTIAL -> mixed, PROGRESS/GREAT/LEGENDARY -> better (lib/grade.ts branch).
+ */
+const BRANCH_ROLLS = {
+  worse: { total: 4, grade: "SETBACK", branch: "worse", band: "FAIL" },
+  mixed: { total: 8, grade: "PARTIAL", branch: "mixed", band: "FAIL" },
+  better: { total: 14, grade: "PROGRESS", branch: "better", band: "YES_BUT" },
+} as const;
+const GRADE_MEANING: Record<string, string> = {
+  SETBACK: "it backfires: the problem escalates into a new place or complication, and the stakes rise",
+  PARTIAL: "half of it works, and a twist comes with it",
+  PROGRESS: "it works: a good path opens",
+};
+
+const TASKS = ["character", "scene", "verdict", "outcome", "outcome_branches", "round", "epilogue", "storybook", "kind", "cast", "bot"];
 
 /** Player-authored text is wrapped so the model treats it as in-world speech, never instructions. */
 function wrap(id: string, text: string, max = 240) {
@@ -95,13 +117,33 @@ async function run(task: string, input: Any, rating: Rating) {
     case "cast":
       return museJSON({ task: t("cast"), model: MODELS.ruling, system: withRating(CAST_SYSTEM, rating), schema: CAST_SCHEMA, effort: "minimal", timeoutMs: 8000, maxTokens: 1200, user: JSON.stringify(input) });
     case "outcome":
-      return museJSON({ task: t("outcome"), model: STORY_MODEL, system: withRating(OUTCOME_SYSTEM, rating), schema: OUTCOME_SCHEMA, effort: "low", timeoutMs: 12_000, maxTokens: 3000, user: JSON.stringify(input) });
+      return museJSON({ task: t("outcome"), ...STORY_CALLS.outcome, system: withRating(OUTCOME_SYSTEM, rating), schema: OUTCOME_SCHEMA, user: JSON.stringify(input) });
+    case "outcome_branches": {
+      // Three parallel calls; a branch that fails or times out comes back null (host then uses the live "outcome" call).
+      const helped = input.helped_by || input.idea_from || "";
+      const keys = Object.keys(BRANCH_ROLLS) as (keyof typeof BRANCH_ROLLS)[];
+      const entries = await Promise.all(
+        keys.map(async (b) => {
+          const r = BRANCH_ROLLS[b];
+          const roll = { total: r.total, grade: r.grade, branch: r.branch, meaning: GRADE_MEANING[r.grade], depth: 0.5 };
+          const one = { ...input, band: r.band, natural: null, roll, helped_by: b === "better" ? helped : "" };
+          try {
+            const d = await museJSON({ task: t("outcome"), ...STORY_CALLS.branch, system: withRating(OUTCOME_SYSTEM, rating), schema: OUTCOME_SCHEMA, user: JSON.stringify(one) });
+            return [b, cleanOutcome(scrubDeep(d))] as const;
+          } catch (e) {
+            console.error(`[ai] outcome branch ${b} failed:`, (e as Error).message);
+            return [b, null] as const;
+          }
+        }),
+      );
+      return Object.fromEntries(entries);
+    }
     case "round":
       return museJSON({ task: t("round"), system: withRating(ROUND_SYSTEM, rating), schema: ROUND_SCHEMA, effort: "low", timeoutMs: 14_000, user: JSON.stringify(input) });
     case "kind":
       return museJSON({ task: t("kind"), system: withRating(KIND_SYSTEM, rating), schema: KIND_SCHEMA, effort: "minimal", timeoutMs: 9000, maxTokens: 1200, user: JSON.stringify(input) });
     case "epilogue":
-      return museJSON({ task: t("epilogue"), model: STORY_MODEL, system: withRating(input?.quick_tale ? EPILOGUE_SYSTEM + EPILOGUE_QUICK : EPILOGUE_SYSTEM, rating), schema: EPILOGUE_SCHEMA, effort: "low", timeoutMs: 15_000, maxTokens: 4000, user: JSON.stringify(input) });
+      return museJSON({ task: t("epilogue"), ...STORY_CALLS.epilogue, system: withRating(input?.quick_tale ? EPILOGUE_SYSTEM + EPILOGUE_QUICK : EPILOGUE_SYSTEM, rating), schema: EPILOGUE_SCHEMA, user: JSON.stringify(input) });
     case "storybook":
       return museJSON({
         task: t("storybook"),
@@ -130,6 +172,8 @@ function fallback(task: string, input: Any) {
       return { voice: "vesper", style: "Read this as a low, smoky, mysterious late-night storyteller", kind: "a strange true story", art: "neon", music: "mysterious" };
     case "outcome":
       return fallbackOutcome(cleanText(input?.hero?.name, 40), input?.band);
+    case "outcome_branches":
+      return { worse: null, mixed: null, better: null };
     case "round":
       return fallbackRound(input.actions ?? []);
     case "kind":
@@ -179,6 +223,25 @@ function scrubDeep(v: Any, key = ""): Any {
 
 const TIERS = ["clever", "solid", "risky", "wild", "miracle"];
 
+/** The outcome fields the host reads, cleaned; null when there is no text. */
+function cleanOutcome(data: Any) {
+  const clean = (x: unknown) => String(x ?? "").replace(/<\/?player_input[^>]*>/g, "").trim();
+  const text = clean(data?.text);
+  if (!text) return null;
+  return {
+    text,
+    situation: clean(data.situation).slice(0, 220),
+    why: clean(data.why).slice(0, 180),
+    now_goal: clean(data.now_goal).replace(/[.!]+$/, "").slice(0, 70),
+    // The story spine (host.ts storySoFar), the decision's painting brief and a line for callbacks.
+    where: clean(data.where).slice(0, 80),
+    changed: clean(data.changed).slice(0, 120),
+    new_prop: clean(data.new_prop).slice(0, 40),
+    scene: clean(data.scene).slice(0, 260),
+    memorable: clean(data.memorable).slice(0, 90),
+  };
+}
+
 /** opener.real_setting {place_type, roles, situation, stakes, arc}, clipped; undefined when missing. */
 function realEvent(r: Any) {
   if (!r || typeof r !== "object") return undefined;
@@ -200,9 +263,9 @@ function wrapPlayerText(task: string, input: Any) {
       moments: ((input.moments as Any[]) ?? []).slice(0, 4).map((m, i) => ({ pitch: wrap(`m${i}`, m?.pitch, 200), what_happened: String(m?.what_happened ?? "").slice(0, 240) })),
     };
   }
-  if (task === "verdict" || task === "outcome") input.plan = wrap("plan", input.plan, 200);
+  if (task === "verdict" || task === "outcome" || task === "outcome_branches") input.plan = wrap("plan", input.plan, 200);
   // The real event behind the story (opener.real_setting, spoiler-free): only its known fields, clipped.
-  if (["verdict", "outcome", "epilogue"].includes(task)) input.real_event = realEvent(input.real_event ?? input.story_so_far?.real_event);
+  if (["verdict", "outcome", "outcome_branches", "epilogue"].includes(task)) input.real_event = realEvent(input.real_event ?? input.story_so_far?.real_event);
   if (input.story_so_far?.real_event) delete input.story_so_far.real_event;
   if (task === "round" && Array.isArray(input.actions))
     input.actions = input.actions.map((a: Any) => ({ ...a, pitch: wrap(a.hero_id, a.pitch), appeal: a.appeal ? wrap(`${a.hero_id}-appeal`, a.appeal) : "" }));
@@ -231,21 +294,10 @@ export async function POST(req: Request) {
     data = scrubDeep(conform(fallback(task, fbInput), data));
     if (task === "epilogue" && !String(data.ending ?? "").trim()) throw new Error("empty ending");
     if (task === "outcome") {
-      const clean = (x: unknown) => String(x ?? "").replace(/<\/?player_input[^>]*>/g, "").trim();
-      const text = clean(data.text);
-      if (!text) throw new Error("empty outcome");
-      data = {
-        text,
-        situation: clean(data.situation).slice(0, 220),
-        why: clean(data.why).slice(0, 180),
-        now_goal: clean(data.now_goal).replace(/[.!]+$/, "").slice(0, 70),
-        // The story spine (host.ts storySoFar) and the decision's painting brief: these were dropped here before.
-        where: clean(data.where).slice(0, 80),
-        changed: clean(data.changed).slice(0, 120),
-        new_prop: clean(data.new_prop).slice(0, 40),
-        scene: clean(data.scene).slice(0, 260),
-      };
+      data = cleanOutcome(data);
+      if (!data) throw new Error("empty outcome");
     }
+    if (task === "outcome_branches" && !data.worse && !data.mixed && !data.better) throw new Error("no branches");
     if (task === "kind") {
       // The sentence must finish the frame and stay a sentence; otherwise use the safe local version.
       const frame = String(rawInput?.frame ?? "").trim().toLowerCase();

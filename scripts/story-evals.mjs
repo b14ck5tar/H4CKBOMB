@@ -182,8 +182,8 @@ async function playGame(s) {
   const ladder = beats.length >= 2 ? [...beats.slice(0, -1).slice(0, HEROES.length - 1), goal] : [];
   const problem = op.problem ?? { name: op.title, stakes: "", pronoun: null };
   // host.ts today: spine.where = opener.location = the news place (a real place name; see the report).
-  const spine = { problem: problem.name, stakes: problem.stakes ?? "", pronoun: problem.pronoun ?? "", where: MODE === "old" ? s.news.place : "", facts: [], prop: "" };
-  const storySoFar = () => ({ problem: spine.problem, at_stake: spine.stakes, ...(spine.pronoun ? { pronoun: spine.pronoun } : {}), where: spine.where, what_changed: spine.facts.slice(-3) });
+  const spine = { problem: problem.name, stakes: problem.stakes ?? "", pronoun: problem.pronoun ?? "", where: MODE === "old" ? s.news.place : "", facts: [], prop: "", memorable: [] };
+  const storySoFar = () => ({ problem: spine.problem, at_stake: spine.stakes, ...(spine.pronoun ? { pronoun: spine.pronoun } : {}), where: spine.where, what_changed: spine.facts.slice(-3), ...(MODE === "new" ? { memorable: spine.memorable.slice(-3) } : {}) });
   // The real event behind the story, spoiler-free (no names, numbers or punchline): the writer's real_setting.
   const realEvent = op.real_setting ?? null;
   const st = { situation: op.situation, nowGoal: ladder.length > 1 ? ladder[0] : goal, step: 0, log: [] };
@@ -241,6 +241,7 @@ async function playGame(s) {
             idea_from: t.credit ? name(t.credit) : "",
             heroes: HEROES.map((x) => x.name),
             next_hero: next ? name(next) : "",
+            side_character: op.npc_line?.speaker ? op.npc_line : undefined,
           }
         : {}),
     };
@@ -261,6 +262,7 @@ async function playGame(s) {
     if (out.where) spine.where = out.where;
     if (out.changed) spine.facts = [...spine.facts, out.changed].slice(-3);
     spine.prop = out.new_prop ?? "";
+    if (out.memorable) spine.memorable.push(out.memorable);
     st.log.push({ hero: h.name, band, narration: out.text });
     turns.push({ hero: h.name, plan: t.plan, credit: t.credit ? name(t.credit) : "", tier: v.tier, reason: v.reason, die, total: g ? g.total : raw, grade: g ? g.grade : band, goal_before: before, text: out.text, situation: out.situation, goal_after: nowGoal || st.nowGoal, scene: out.scene ?? "" });
     st.situation = out.situation || st.situation;
@@ -301,7 +303,7 @@ async function playGame(s) {
       earlier: st.log.map((l) => l.narration),
       finale_plan: fv.interpretation ?? "",
       quick_tale: true,
-      ...(MODE === "new" ? { real_event: realEvent, roll: { total: fg.total, grade: fg.grade, branch: fg.branch, meaning: fg.meaning } } : {}),
+      ...(MODE === "new" ? { real_event: realEvent, roll: { total: fg.total, grade: fg.grade, branch: fg.branch, meaning: fg.meaning }, side_character: op.npc_line?.speaker ? op.npc_line : undefined } : {}),
     })
   ).data;
   return {
@@ -340,13 +342,14 @@ Score 1-5 each (5 = excellent, 3 = okay, 1 = broken). Be strict, use the whole s
 - clarity: an 8-year-old follows every line read aloud once; 1-2 sentences; no jargon; no word salad.
 - fun: dry, witty, iconic, creative, unexpected but makes sense; a table would laugh. Penalize generic or try-hard jokes.
 - connectedness: friends whose ideas were used are named and credited; heroes react to each other; the table has reasons to talk.
+- craft: callbacks to earlier moments pay off (especially in the ending); a recurring side character reacts in a distinct voice; each outcome makes the acting hero look cool or hilariously human.
 - intensity: each outcome matches its roll's degree exactly (a 14 is not a 19; a 2 is a real setback; a 1 is spectacular).
 Then list the 3 WORST lines (quote exactly) with a short reason each, and one concrete prompt fix.`;
 
 const GRADE_SCHEMA = {
   type: "object",
   additionalProperties: false,
-  required: ["goal_relevance", "fidelity", "coherence", "clarity", "fun", "connectedness", "intensity", "worst_lines", "fix"],
+  required: ["goal_relevance", "fidelity", "coherence", "clarity", "fun", "connectedness", "craft", "intensity", "worst_lines", "fix"],
   properties: {
     goal_relevance: { type: "integer" },
     fidelity: { type: "integer" },
@@ -354,6 +357,7 @@ const GRADE_SCHEMA = {
     clarity: { type: "integer" },
     fun: { type: "integer" },
     connectedness: { type: "integer" },
+    craft: { type: "integer" },
     intensity: { type: "integer" },
     worst_lines: { type: "array", items: { type: "object", additionalProperties: false, required: ["line", "why"], properties: { line: { type: "string" }, why: { type: "string" } } } },
     fix: { type: "string" },
@@ -383,7 +387,9 @@ async function grade(game) {
 }
 
 // ---------------------------------------------------------------- run
-const DIMS = ["goal_relevance", "fidelity", "coherence", "clarity", "fun", "connectedness", "intensity"];
+
+const DIMS = ["goal_relevance", "fidelity", "coherence", "clarity", "fun", "connectedness", "craft", "intensity"];
+const CORE = DIMS.filter((d) => d !== "craft"); // craft was added in round 3: overall7 compares with older runs
 const results = [];
 for (const s of STORIES.filter((x) => !ONLY || x.key === ONLY)) {
   console.log(`\n=== ${s.key} (${MODE})`);
@@ -405,8 +411,9 @@ for (const s of STORIES.filter((x) => !ONLY || x.key === ONLY)) {
 if (GRADE && results.length) {
   const avg = Object.fromEntries(DIMS.map((d) => [d, +(results.reduce((a, g) => a + g.grade[d], 0) / results.length).toFixed(2)]));
   const overall = +(DIMS.reduce((a, d) => a + avg[d], 0) / DIMS.length).toFixed(2);
-  console.log(`\n=== ${LABEL} (${MODE}) average: ${DIMS.map((d) => `${d} ${avg[d]}`).join(", ")}  overall ${overall}`);
-  ledger.runs.push({ label: LABEL, mode: MODE, at: new Date().toISOString(), avg, overall });
+  const overall7 = +(CORE.reduce((a, d) => a + avg[d], 0) / CORE.length).toFixed(2);
+  console.log(`\n=== ${LABEL} (${MODE}) average: ${DIMS.map((d) => `${d} ${avg[d]}`).join(", ")}  overall ${overall} (overall7 ${overall7})`);
+  ledger.runs.push({ label: LABEL, mode: MODE, at: new Date().toISOString(), avg, overall, overall7 });
 }
 fs.writeFileSync(path.join(OUT, `games-${LABEL}.json`), JSON.stringify(results, null, 2));
 fs.writeFileSync(LEDGER, JSON.stringify(ledger, null, 2));

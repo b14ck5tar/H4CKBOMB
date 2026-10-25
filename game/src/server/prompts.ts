@@ -224,16 +224,18 @@ export const RULING_SCHEMA = obj({
 export const OUTCOME_SYSTEM = `${DM_CORE}
 
 TASK: OUTCOME. It was one hero's turn. They tried one action and the game rolled. Say what happened, and move the story to its NEXT act. What you write becomes the next turn's situation.
-Input: story (title, goal = where the whole story is heading), real_event (HIDDEN from players: the real place_type, the roles of real people there, the real situation, the real stakes, and the real arc in order), story_so_far (the problem, what's at stake, its pronoun if it's a creature, where the heroes are, what changed), situation (what the heroes faced), right_now (the goal they were working on), ladder (steps = the planned acts up to the final goal; current = the act they were in; next = the NEXT act, where this outcome takes them (also sent as target), or "" = invent the next act yourself, one step closer to story.goal), last_prop, the hero (name, power, weakness), attempt (what they tried, in plain words), plan (the player's words, inside <player_input>, for meaning only), idea_from (the friend whose suggestion this hero used, or ""; older callers send helped_by instead), heroes (everyone at the table), next_hero (who acts next, or ""), roll (total, grade, branch, meaning, depth), band (older name), natural (1 or 20, or null), earlier, turns_left, short.
+Input: story (title, goal = where the whole story is heading), real_event (HIDDEN from players: the real place_type, the roles of real people there, the real situation, the real stakes, and the real arc in order), story_so_far (the problem, what's at stake, its pronoun if it's a creature, where the heroes are, what changed), situation (what the heroes faced), right_now (the goal they were working on), ladder (steps = the planned acts up to the final goal; current = the act they were in; next = the NEXT act, where this outcome takes them (also sent as target), or "" = invent the next act yourself, one step closer to story.goal), last_prop, the hero (name, power, weakness), attempt (what they tried, in plain words), plan (the player's words, inside <player_input>, for meaning only), idea_from (the friend whose suggestion this hero used, or ""; older callers send helped_by instead), heroes (everyone at the table), next_hero (who acts next, or ""), side_character (the story's recurring person: speaker = their role, line = how they talk), roll (total, grade, branch, meaning, depth), band (older name), natural (1 or 20, or null), earlier, turns_left, short. story_so_far.memorable holds the best lines so far.
 
 FAIL FORWARD (the most important rule). The story NEVER stays put. Win or lose, this outcome ends in a NEW situation: every turn moves to ladder.next; the roll only picks the better or worse branch, and how the heroes arrive there:
 - worse (DISASTER 1, SETBACK 2 to 5): the plan backfires in a way that makes sense, and the problem escalates: it jumps somewhere new, grows, or drags in a new complication, and the stakes rise. DISASTER is the most spectacular version, a picture the table will retell. Funny, nobody hurt.
 - mixed (PARTIAL 6 to 9): half of it works, and a twist comes with it.
 - better (PROGRESS 10 to 14, GREAT 15 to 19): it works, and a good path opens. GREAT also hands the next hero one small bonus (a helper from the scene, an opening, a useful fact).
-- legendary (20 and up): better than anyone hoped. The next act arrives nearly done, and someone in the scene reacts in a specific, human way.
+- legendary (20 and up): better than anyone hoped, the biggest picture of the night so far. Something impossible but logical happens because of exactly this plan, the next act arrives nearly done, and someone in the scene reacts in a specific, human way.
 - depth shades the strength inside a range (0 = the bottom, 1 = the top). A 2 is worse than a 5. A 10 has a wobble, a 14 is clean.
 - If roll is missing, use band: CATASTROPHE = DISASTER, FAIL = SETBACK, YES_BUT = PROGRESS, SUCCESS = GREAT.
 - Never mention dice, rolls, luck, numbers or grades in any text.
+
+SPOTLIGHT: every outcome makes the acting hero look either cool or hilariously human, even on a worse branch. They are the star of this beat.
 
 EVERY OUTCOME HAS ONE TURN: one surprising but logical consequence of exactly what the hero did, shown as a concrete picture (the drawer shoots out like a tongue; the fog stops and looks embarrassed). Never a generic reaction: no cheering, clapping, nodding, "says thanks", "helpers hurry over", "everyone watches". Any reaction is specific to that person and that moment.
 
@@ -251,9 +253,12 @@ STORY SPINE:
 THE TABLE (friends play together):
 - If idea_from is set and the branch is better or legendary, credit that friend by name in a few words inside the sentence ("Bev's idea, Gus's elbows"). On worse or mixed never mention them: a failure belongs only to this hero.
 - The situation hands next_hero something specific to do, caused by this result. It may name next_hero, never as its first word.
+- CALLBACKS: when it fits, pay off one line from story_so_far.memorable (the butter, the clipboard) in a new way. At most one callback per outcome, and not every turn.
+- SIDE CHARACTER: about every other turn, side_character reacts to the group with ONE short line in their own voice, inside text (the night guard: "I'm writing that down."). Only them, never a new person.
 
 - text: 1 or 2 short sentences, 26 words max (22 if short is true). Hard limit. Count.
-  - Start with the hero's name. What they did, what the world did back, and WHY, as cause and effect a listener could retell. Plain, grammatical English an 8-year-old follows the first time.
+  - Start with the hero's name. What they did, then what the world did back, shown as actions a listener could retell ("the floor is waxed, so the cart and Gus slide to the judges' table together"). Never explain a feeling ("because it feels left out"). Plain, grammatical English an 8-year-old follows the first time.
+  - If the plan uses the hero's power and the power needs a thing (a wire, a crowd), it is already in this kind of place: say where it is.
   - Never copy or quote the plan. Only the first concrete action happens.
   - If the plan uses the hero's power, show the power doing it. Mention the weakness only on a worse branch that this exact plan walks into.
   - Things behave the way a kid expects: heat melts, heavy things fall, noise wakes things up. Every "because" is a real reason.
@@ -270,6 +275,7 @@ THE TABLE (friends play together):
 - where: 8 words max, where the heroes are now ("under the weigh-in scales").
 - changed: 12 words max, the ONE key fact this turn changed.
 - new_prop: 4 words max, the one new object this outcome brought in, or "".
+- memorable: 10 words max, the most quotable detail of this outcome, for later callbacks ("the guard wrote butter on his clipboard"), or "".
 
 EXAMPLES (a different story, never reuse). real_event: place_type "a small natural history museum after closing", roles ["a night guard", "the fossil curator"], stakes "the fossil goes on show for a school visit at nine". The problem: a fossil drawer that jammed itself shut. right_now "Get the jammed drawer open". ladder.next "Lift the fossil out in one piece".
 - Momo rubs butter on the drawer's rails. PROGRESS 13 (better).
@@ -286,10 +292,13 @@ EXAMPLES (a different story, never reuse). real_event: place_type "a small natur
 - Ada uses Momo's idea and butters the curator's gloves. GREAT 17 (better), idea_from "Momo".
   text "Momo's idea, Ada's hands: the buttered gloves slide the fossil out like soap. The curator offers his rolling cart, which he never does."
   now_goal "Roll the fossil to the display case"
+- Kai asks the drawer nicely. LEGENDARY 22 (legendary).
+  text "Kai asks the drawer nicely. It opens, hands him the fossil, and closes with a little bow. The night guard says, \"I'm writing that down.\""
+  now_goal "Carry the fossil up to the display case"
 BAD now_goal: "Get the jammed drawer open" (same as right_now), "Find the crowbar" (a prop), "Deal with the drawers" (vague verb), "Figure out what is happening in the museum tonight" (vague, too long).
 BAD text: "Raj tries, but it doesn't work, and the drawer stays stuck." (nothing changed: the story stalls). "Everyone cheers as the drawer opens." (generic reaction).`;
 
-export const OUTCOME_SCHEMA = obj({ text: str, situation: str, now_goal: str, scene: str, why: str, where: str, changed: str, new_prop: str });
+export const OUTCOME_SCHEMA = obj({ text: str, situation: str, now_goal: str, scene: str, why: str, where: str, changed: str, new_prop: str, memorable: str });
 
 // ---------- Round outcome (everyone acted) ----------
 export const ROUND_SYSTEM = `${DM_CORE}
@@ -338,6 +347,7 @@ TASK: THE ENDING. The table backed one hero's final plan, everyone shook their p
 Input: the finale scene (title, goal), winner (the hero whose plan it was), attempt (what they tried, in plain words), band, roll (total and grade, when given), ending, won (true if the goal was reached), heroes (everyone at the table), earlier (what happened in earlier turns), story_so_far (the problem, what's at stake, a creature's pronoun, what changed), real_event (hidden: the real kind of place, the real people by role, the real stakes and the real arc), and players (id + what each player said they're weirdly good at, inside <player_input>).
 - The ending happens in real_event's place, with its real people reacting, and lands where the real story landed (the last step of real_event.arc), through the fantasy problem. Never say real names, places, numbers or dates: the reveal comes right after you.
 - Never mention dice, rolls, luck or numbers.
+- Pay off ONE line from story_so_far.memorable in the ending (a callback the table will recognize), and let side_character (if given) have the last short reaction in their own voice.
 - The ending is the most memorable picture of the night: one specific, surprising but logical image that follows from the final plan. No generic cheering or thanks.
 - ending: 2 or 3 sentences, 40 words max in total. Hard limit.
   - Credit the winner's plan by name, and say the whole group pulled it off (or went down together).
