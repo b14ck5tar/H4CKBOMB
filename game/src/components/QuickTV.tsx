@@ -22,7 +22,7 @@ import { Reactions } from "./Reactions";
 import { Avatar, Hope, ThankHearts, useFastNow } from "./TV";
 import { KeepsakeQR } from "./Keepsake";
 import { FEATURES } from "@/lib/features";
-import { dice, music, playSfx, useMusic } from "@/lib/sound";
+import { dice, music, playSfx, playStorySfx, useMusic } from "@/lib/sound";
 import { EndingMontage, FinalePitch, FinaleShake, FinaleVote, HudStrip, OutcomeCaption, Particles, PhaseSwap, PlanCard, QualityMeter, SuggestionBubbles, TurnCard, TvStage, TIER_LOOK } from "@/components/tvskin";
 import { QUICK_TURN_MS, TURN_MS, VOTE_MS } from "@/lib/rules";
 import type { CardHero, MontagePanel } from "@/components/tvskin";
@@ -1359,6 +1359,15 @@ function moodFor(s: GameState, title: boolean): Mood {
   return "scene";
 }
 
+/** The slide's one story sound (Muse's pick, state.sfx), under the narration. Silent unless FEATURES.storySfx. */
+function useStorySfx(s: GameState) {
+  const at = s.sfx?.at ?? 0;
+  useEffect(() => {
+    if (at && s.sfx) void playStorySfx(s.sfx.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [at]);
+}
+
 /** Plays the narrator's current line on the TV (respects mute). Text never waits for it. */
 function useNarrator(host: Stage, s: GameState) {
   const id = s.voice?.id ?? 0;
@@ -1436,6 +1445,7 @@ function useTimerTicks(host: Stage) {
 
 export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameState; onNotes?: () => void; notesOpen?: boolean }) {
   useNarrator(host, s);
+  useStorySfx(s);
   useStorySound(s);
   useTimerTicks(host);
   const [reactions, setReactions] = useState<{ id: number; emoji: string; color?: string }[]>([]);
