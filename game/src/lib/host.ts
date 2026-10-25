@@ -37,7 +37,7 @@ import { QUICK, coldOpenTimeline } from "./quick";
 import { FEATURES } from "./features";
 import { Bots } from "./bots";
 import { TIER_SHIFT, gradeRoll } from "./grade";
-import { applyTurn, fallbackProposal, stateFromOpener, type StoryState, type TurnResult } from "./procedural";
+import { applyTurn, fallbackProposal, quipOk, stateFromOpener, type StoryState, type TurnResult } from "./procedural";
 import { speakableName } from "./now";
 import { DEFAULT_CAST, VOICES, isVoice } from "./voices";
 import { ART_STYLES, isArtStyle } from "./artStyles";
@@ -1650,6 +1650,7 @@ export class GameHost {
     this.sceneList = [{ ...opener, goal }];
     this.rememberStory(seed);
     this.turnArt.clear();
+    this.quipsSaid = [];
     // Where the heroes are: the real kind of place (never a real place name, which would leak into story_so_far).
     const placeType = typeof seed.real_event?.place_type === "string" ? (seed.real_event.place_type as string) : "";
     this.story = null;
@@ -1841,6 +1842,9 @@ export class GameHost {
     if (owner && !this.preRuled.has(norm(clean))) this.preRuled.set(norm(clean), this.askRuling({ id: `pre-${pid}`, playerId: owner, text: clean, useAbility: false, embraceFlaw: false, creditId: pid, idea: clean }));
   }
 
+  /** The storyteller's quips spoken this game (sent to the ruling so it varies them). */
+  private quipsSaid: string[] = [];
+
   /** Rulings started early on friends' ideas (by their text), for the current turn only. */
   private preRuled = new Map<string, Promise<Verdict>>();
 
@@ -2007,6 +2011,7 @@ export class GameHost {
         story_so_far: this.storySoFar(),
         real_event: this.seed?.real_event,
         pronouns: this.pronounMap(),
+        quips_so_far: this.quipsSaid.slice(-4), // so the storyteller never repeats a shape
       }),
       10_000,
       (d, f): Verdict | null => (f || !d?.tier ? fb() : { ...fb(), ...d, fallback: false, interpretation: d.interpretation || `${h.name} tries their plan` }),
@@ -2051,6 +2056,15 @@ export class GameHost {
     // The die is decided now (crypto, in code), so the outcome is written while the table watches the roll.
     const roll = this.makeRoll(judged);
     this.set({ pitches: this.state.pitches.map((x) => (x.id === pitch.id ? judged : x)), busy: "", rolls: [{ ...roll, dice: [], kept: 0 }], revealed: [] });
+    // The storyteller's quip on the plan (CD): spoken over the plan card while the die is thrown, every other turn
+    // (or before a 20 or a 1), only if it passes the plain-words check; otherwise silence. It comes free with the ruling.
+    const hero = this.player(pitch.playerId)?.hero?.name ?? "";
+    const quip = String(v.quip ?? "").trim();
+    if (!finale && quip && (turn % 2 === 0 || roll.kept === 20 || roll.kept === 1) && quipOk(quip, hero)) {
+      this.note("ruling", "Storyteller", `"${quip}" (said while the die is thrown)`);
+      this.quipsSaid.push(quip);
+      this.voiceBy(quip, Date.now() + 2500).then((clip) => ["ruling", "roll"].includes(this.state.phase) && this.state.turnIndex === turn && this.play(clip));
+    }
     if (finale) return this.setTimer(this.quick ? 2800 : RULING_MS, () => this.startFinalRoll(judged, roll));
     this.pendingRoll = roll;
     this.outcomeAt = 0;

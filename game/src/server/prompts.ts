@@ -23,6 +23,7 @@ WRITING (hard rules for every word you write; people read it out loud at a party
 - GROWN-UP, NOT A PICTURE BOOK: dry, deadpan, a little dark (spooky-funny), wry understatement, adult stakes and adult reactions. Characters sound like real, tired adults (a deadpan official, an exhausted neighbor, a manager on hold). No cutesy words, no baby talk, no cheer. Not crude, no swearing.
 - No invented jargon. Never make up names for places, things, rules, powers or creatures. Use only names that appear in what you were given.
 - Never paste a player's words. Say what their hero does in your own complete, grammatical sentence ("Ava waves a warm pie under the snake's nose"), never a chopped copy of what they typed.
+- Never say "really happened", "true story", "based on a true story" or "this happened" (the game says it ONCE, at the reveal; the creative director heard it five times).
 - Vary how sentences start. Never start a sentence with "Sure", "So", "Well", "Okay", "Alright", "Suddenly" or "Meanwhile".
 - Stay on the scene's goal. Every line makes it clear whether the heroes got closer to it.
 
@@ -212,7 +213,8 @@ Input: the scene (title, goal, situation, who is there), finale (true in the las
 - stat: the ONE stat that fits HOW they try it (brave = guts: force, daring, physical; clever = brains: tricks, tech, knowing things; charming = charm: talking, bluffing, making friends).
 - interpretation: 12 words max. What the hero tries, present tense, starting with the hero's name ("Ava ties the tow truck chain to the boulder"). Keep the player's own key word and their joke ("grab" stays grab, "trust" stays trust, a kazoo stays a kazoo); fix only grammar and slang. Never swap the idea for a safer or smarter one.
 - reason: 16 words max. The plain, specific reason for this tier, shown to players and judges ("Uses the tow truck from the scene", "Pushing an 80-ton rock alone is hard"). Never mention numbers or the player's skill. If moderation is not "ok", describe the harmless version only.
-- moderation: "ok"; "redirected" if you had to turn an inappropriate plan into a harmless one; "flag" for self-harm or emergencies (tier solid, kind words).`;
+- moderation: "ok"; "redirected" if you had to turn an inappropriate plan into a harmless one; "flag" for self-harm or emergencies (tier solid, kind words).
+- quip: the storyteller's one-line reaction to this plan, read aloud while the die is thrown. 12 words max: name the hero, gently tease the IDEA (never the person), dry and warm with a little mystery, plain words, no exclamation marks, no hype words; never mean, never about looks, names or identity; your own words. Vary the shape every time (never the "X brought Y to a Z" pattern twice; never the shape or the closing of anything in quips_so_far). End on a concrete detail of the plan, never on a one-word verdict ("Bold.", "Ambitious.", "Interesting.", "Bold move."). The KIND of line (never copy): "Juno is negotiating with a ghost. Using soup." / "Sam brought a ladder and a lot of optimism." If moderation is not "ok", quip is "".`;
 
 export const RULING_SCHEMA = obj({
   interpretation: str,
@@ -220,6 +222,7 @@ export const RULING_SCHEMA = obj({
   tier: { type: "string", enum: ["miracle", "wild", "clever", "solid", "risky"] },
   reason: str,
   moderation: { type: "string", enum: ["ok", "redirected", "flag"] },
+  quip: str,
 });
 
 // ---------- Outcome (what the winning plan did) ----------

@@ -369,6 +369,14 @@ export function undoesDone(text: string, state: StoryState) {
   return "";
 }
 
+/** The ruling's quip is spoken only if it is short, names the hero, and reads plainly; otherwise silence. */
+export function quipOk(quip: string, hero: string) {
+  const q = String(quip ?? "").trim();
+  if (!q || words(q) > 14 || !new RegExp(`\\b${esc(hero)}\\b`, "i").test(q)) return false;
+  if (/!/.test(q) || GAME_WORDS.test(q) || /\b(epic|amazing|awesome|legendary|insane|crazy)\b/i.test(q)) return false;
+  return plainProblems(q, hero).length === 0;
+}
+
 /** Everything code can check about a proposal. Each string is a problem the retry is told to fix. */
 export function checkTurn(p: TurnProposal, ctx: { state: StoryState; hero: string; idea_from?: string; grade: Grade; next_player?: string; plan?: string; hook_due?: boolean }): string[] {
   const out: string[] = [];
