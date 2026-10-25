@@ -2036,6 +2036,12 @@ export class GameHost {
     const winner = best[randInt(best.length)];
     const tally = el.map((p) => `${this.heroName(p.playerId)} ${count(p.id)}`).join(", ");
     this.note("ruling", "The vote", `Backs: ${tally}.${best.length > 1 ? " Tie, broken at random." : ""} ${this.heroName(winner.playerId)}'s plan is the final move.`);
+    // A tie is announced, never silent (CD: "how is it randomly choosing?").
+    if (best.length > 1) {
+      const said = `Tie! ${this.heroName(winner.playerId)}'s plan wins the coin flip.`;
+      this.set({ banner: said });
+      this.voiceBy(said, Date.now() + 2500).then((clip) => this.play(clip));
+    }
     this.startRuling(winner);
   }
 
@@ -2111,7 +2117,7 @@ export class GameHost {
       this.quipsSaid.push(quip);
       this.voiceBy(quip, Date.now() + 2500).then((clip) => ["ruling", "roll"].includes(this.state.phase) && this.state.turnIndex === turn && this.play(clip));
     }
-    if (finale) return this.setTimer(this.quick ? 2800 : RULING_MS, () => this.startFinalRoll(judged, roll));
+    if (finale) return this.setTimer(this.judge ? 1800 : this.quick ? 2800 : RULING_MS, () => this.startFinalRoll(judged, roll));
     this.pendingRoll = roll;
     this.outcomeAt = 0;
     // design/35: ONE turn call, started the moment the plan is ruled (hidden behind the plan card, the throw and
@@ -2125,7 +2131,7 @@ export class GameHost {
       this.paintDecision(judged, v, d.outcome, d.scene || this.state.situation, d.finale ? "finale" : d.act_changed ? "act" : "win");
       if (d.scene) this.voiceFor(d.finale || !this.nextOwner() ? `Alright, everyone… time for the grand finale. ${d.scene} So. What's the final move?` : d.scene);
     });
-    this.setTimer(this.quick ? 2200 : RULING_MS, () => this.startRoll());
+    this.setTimer(this.judge ? 1800 : this.quick ? 2200 : RULING_MS, () => this.startRoll());
   }
 
   /**
@@ -2566,7 +2572,7 @@ export class GameHost {
     this.set({ phase: "roll", rolls: [roll], revealed: [], fling: null });
     // Their phone shows a big ROLL button; after 10 s the table rolls for them (and their phone buzzes).
     if (this.player(roll.playerId)?.away) return this.setTimer(1500, () => this.revealRoll());
-    this.setTimer(this.quick ? 6000 : ROLL_MS, () => this.revealRoll(true));
+    this.setTimer(this.judge ? 3000 : this.quick ? 6000 : ROLL_MS, () => this.revealRoll(true)); // judge mode: auto-throw at 3 s (CD: waits)
   }
 
   /** The roller swiped (or tapped). The swipe only shapes the throw on the TV; the number was decided in code. */
@@ -2711,12 +2717,13 @@ export class GameHost {
     const ending = this.finalRoll.ending ?? endingFromBand(this.finalRoll.band);
     this.set({
       phase: "final_roll",
+      banner: "",
       rolls: [],
       revealed: [],
       finalMoves: { [pitch.playerId]: pitch.text },
       final: { dice: {}, rolled: [], best: pitch.playerId, hopeBonus: 0, total: 0, ending, stage: "arm", armed: [], shook: [], auto: [] },
     });
-    this.setTimer(FINAL_ARM_MS, () => this.startCountdown());
+    this.setTimer(this.judge ? 3000 : FINAL_ARM_MS, () => this.startCountdown());
     // The die is already decided (crypto, in code), so the ending is written while everyone shakes.
     this.askEnding(this.finalRoll, pitch);
     if (this.finalSafety) clearTimeout(this.finalSafety);
@@ -2747,7 +2754,7 @@ export class GameHost {
   private startShake() {
     if (this.state.phase !== "final_roll" || this.state.final?.stage !== "count") return;
     this.patchFinal({ stage: "shake" });
-    this.setTimer(FINAL_SHAKE_MS, () => this.startTumble(true));
+    this.setTimer(this.judge ? 3500 : FINAL_SHAKE_MS, () => this.startTumble(true));
     this.broadcastNow();
   }
 
@@ -2887,7 +2894,7 @@ export class GameHost {
     this.set({ phase: "final_result", rolls: [r], revealed: [r.playerId], players: this.state.players.map((p) => ({ ...p, peril: "" })), ready: [] });
     this.recordWin(pitch, r, `The finale: ${ENDING_LABEL[ending].toLowerCase()}.`);
     this.note("roll", "The ending", `${r.kept} ${fmtMod(r.statBonus)}${r.bonus ? ` +${r.bonus}` : ""} = ${r.total} → ${BAND_LABEL[r.band]} → ${ENDING_LABEL[ending]}. Below the target fails; reaching it works with a cost; 3 over works cleanly.`);
-    this.setTimer(FINAL_RESULT_MS, () => this.startFinalScene());
+    this.setTimer(this.judge ? 2000 : FINAL_RESULT_MS, () => this.startFinalScene());
   }
 
   /**
