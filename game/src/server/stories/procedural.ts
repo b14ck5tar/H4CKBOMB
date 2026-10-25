@@ -2,7 +2,7 @@ import "server-only";
 import type { Rating } from "@/lib/types";
 import { museJSON, MODELS, type Effort } from "@/server/muse";
 import { FEATURES } from "@/lib/features";
-import { STORY_SFX_IDS, pickStorySfx } from "@/lib/storySfx";
+import { STORY_SFX_IDS, pickStorySfxCues } from "@/lib/storySfx";
 import { DM_CORE, withRating } from "@/server/prompts";
 import { badExamplesPrompt, callbackExamplesPrompt, outcomeExamplesPrompt } from "@/server/story-examples";
 import {
@@ -91,7 +91,7 @@ THE FINISH LINE STAYS OPEN until the grand finale (CD: "it's already off the bri
 FOLLOW THE REAL EVENT: when real_event.arc is given, each act moves the story toward the NEXT step of that arc, in order, told through the fantasy problem, so the ending lands near where the real story landed and the reveal clicks.
 16. THREE ACTS: act 1, act 2, act 3, then the finale, each a different situation. When act_changes_next is true, the scene opens the next act: a new place or a new turn of the problem, caused by what just happened. Keep hook (the opener's twist) in play: it must show up in act 2 and in the finale push.
 
-SFX: if sfx_ids is given, sfx = the ONE id from sfx_ids that best fits the sound of what happens in the outcome (the action or its result); "" if none fits or sfx_ids is missing.
+SFX: if sfx_ids is given, sfx = 1 to 3 sound cues for the outcome, one per action you can hear, in the order they happen ("Sam throws the net" = a whoosh on "throws", then a splash on "net"): each cue is { id: one of sfx_ids, word: the 0-based index of the word in outcome where that action happens }. At least one when anything audible happens; [] if sfx_ids is missing.
 WRITE: outcome, scene, right_now, progress_gain, progress_why (12 words max), step_solved, new_fact (12 words max, or ""), new_character (name + role, or both ""), where (8 words max if the heroes moved, else ""), open_thread (12 words max, a loose end, or ""), memorable (10 words max, the funniest detail of this turn, or "").
 
 ${outcomeExamplesPrompt({ games: 1 })}
@@ -117,7 +117,7 @@ export const TURN_SCHEMA = obj({
   open_thread: str,
   memorable: str,
   step_solved: { type: "boolean" },
-  sfx: str,
+  sfx: { type: "array", items: obj({ id: str, word: { type: "integer" } }) },
 });
 
 const GRADES: Grade[] = ["DISASTER", "SETBACK", "PARTIAL", "PROGRESS", "GREAT", "LEGENDARY"];
@@ -229,7 +229,7 @@ export async function runTurn(i: TurnInput, rating: Rating): Promise<TurnResult>
   p.right_now = trimPile(p.right_now);
   const applied = applyTurn(state, p, { hero, attempt: i.attempt, grade, depth: i.depth });
   console.log(`[turn] ${grade} ${hero} ${Date.now() - t0}ms progress ${state.progress}->${applied.state.progress}${fallback ? " FALLBACK" : ""}${probs.length ? ` problems: ${probs.join(" | ")}` : ""}`);
-  return { sfx: pickStorySfx(p.sfx), outcome: p.outcome, scene: p.scene, right_now: applied.state.right_now, progress: applied.state.progress, progress_delta: applied.delta, progress_why: String(p.progress_why ?? "").slice(0, 140), finale: applied.finale, act: applied.state.act, act_changed: applied.act_changed, state: applied.state, problems: probs, fallback };
+  return { sfx: pickStorySfxCues(p.sfx), outcome: p.outcome, scene: p.scene, right_now: applied.state.right_now, progress: applied.state.progress, progress_delta: applied.delta, progress_why: String(p.progress_why ?? "").slice(0, 140), finale: applied.finale, act: applied.state.act, act_changed: applied.act_changed, state: applied.state, problems: probs, fallback };
 }
 
 const HARD = /must name the acting hero|game words|never name|outcome is empty|the plan is the cause|banned filler/;
@@ -285,12 +285,12 @@ Input: state (where, problem, finish_line, progress, cast, facts, memorable = th
 - line: 12 words max, the last card, said flatly ("The snake works at the scrapyard now."). This is where ONE callback from memorable may go, in plain words.
 - recap: 2 sentences, 40 words max, that credits EVERY hero by name with what they actually did (from credits), in order, and ends with how it ended (won = they reached the finish line, else kindly that they didn't). Only things that happened. Use exactly the pronouns given.
 - skills: one entry per player: id, and phrase = a clean 1 to 4 word skill in lowercase ("parallel parking"), or "" if what they said is a joke, crude, mean, or not a real skill. Never invent one.
-- sfx: if sfx_ids is given, the ONE id that best fits the sound of the ending; "" if none fits or sfx_ids is missing.
+- sfx: if sfx_ids is given, 1 to 3 cues for the ending, one per audible action in order: { id: one of sfx_ids, word: the 0-based index of the word in ending where it happens }; [] if sfx_ids is missing.
 - Only mention things that appear in state (facts, memorable, credits, cast, where): no new objects. No game words (roll, dice, needs, natural, luck).
 
 ${callbackExamplesPrompt()}`;
 
-export const STORY_END_SCHEMA = obj({ ending: str, line: str, recap: str, skills: { type: "array", items: obj({ id: str, phrase: str }) }, sfx: str });
+export const STORY_END_SCHEMA = obj({ ending: str, line: str, recap: str, skills: { type: "array", items: obj({ id: str, phrase: str }) }, sfx: { type: "array", items: obj({ id: str, word: { type: "integer" } }) } });
 
 export async function runEnding(input: Any, rating: Rating) {
   const s: StoryState = input.state;
