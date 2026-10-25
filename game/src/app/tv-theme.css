@@ -3133,3 +3133,26 @@
 .tvx-clip-solo .tvx-clip-sum { font-size: calc(var(--u) * 1.9); }
 .tvx-clip-solo .tvx-clip-now { font-size: calc(var(--u) * 1.9); }
 .is-real .tvx-take { left: calc(var(--u) * 70); top: calc(var(--u) * 16); width: calc(var(--u) * 20); animation-delay: 0.7s; }
+
+/* A one-line announcement (the finale tie): a lime strip across the upper third, ~2.6 s. */
+.tvx-banner { position: absolute; left: 0; right: 0; top: 24%; z-index: 45; display: flex; justify-content: center; pointer-events: none; }
+.tvx-banner-txt {
+  max-width: 80%;
+  padding: calc(var(--u, 1vw) * 0.8) calc(var(--u, 1vw) * 2.4) calc(var(--u, 1vw) * 0.6);
+  font-family: var(--font-display), Impact, sans-serif;
+  font-size: calc(var(--u, 1vw) * 4.2);
+  line-height: 1;
+  text-align: center;
+  text-transform: uppercase;
+  color: #0a0612;
+  background: #c6ff2e;
+  transform: rotate(-2deg) skewX(-6deg);
+  box-shadow: calc(var(--u, 1vw) * 0.5) calc(var(--u, 1vw) * 0.5) 0 #ff2e7e, 0 0 calc(var(--u, 1vw) * 3) rgba(198, 255, 46, 0.45);
+  animation: tvx-banner 2.6s cubic-bezier(0.2, 1.5, 0.4, 1) both;
+}
+@keyframes tvx-banner {
+  0% { opacity: 0; transform: rotate(-2deg) skewX(-6deg) scale(2); }
+  12% { opacity: 1; transform: rotate(-2deg) skewX(-6deg) scale(0.95); }
+  20%, 85% { opacity: 1; transform: rotate(-2deg) skewX(-6deg) scale(1); }
+  100% { opacity: 0; transform: rotate(-2deg) skewX(-6deg) scale(1.05); }
+}
