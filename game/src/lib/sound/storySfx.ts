@@ -163,7 +163,7 @@ export async function playStorySfxCues(cues: { id: string; word: number }[] | nu
 // ---- the finale: a build-up under the last line, then the payoff hit on the result (the biggest sound of the game) ----
 const BUILD_GAIN: Kind = "buildup"; // under the narrator's last line
 const HIT_GAIN: Kind = "payoff"; // the loudest story sound; it lands as the result shows, right after her line
-let building = new Set<{ src: AudioBufferSourceNode; g: GainNode }>();
+const building = new Set<{ src: AudioBufferSourceNode; g: GainNode }>();
 
 function fadeOut(set: Set<{ src: AudioBufferSourceNode; g: GainNode }>, sec: number) {
   for (const c of [...set]) {
