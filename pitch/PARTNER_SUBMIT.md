@@ -21,8 +21,8 @@ If you can't see the project, the CD has to add you as a teammate first (message
 | Devpost field | Paste this (from `DEVPOST.md`) |
 |---|---|
 | Project name | `Group Project` |
-| Elevator pitch | `The one group project where everyone actually shows up.` |
-| Thumbnail | `devpost-media/thumbnail-final.jpg` |
+| Elevator pitch | the 181-character line in `DEVPOST_SUBMIT.md` §2 |
+| Thumbnail | keep the current logo |
 | About the project (the big text box) | Everything from **## Inspiration** down to the end of **## What's next for Group Project** (stop at the `---` line). Keep the `##` headings; Devpost reads Markdown. |
 | Built with | The 19 tags in `DEVPOST_SUBMIT.md` §3 |
 | "Try it out" links | `https://groupproject-game.vercel.app/tv` and `https://groupproject-game.vercel.app/tv?judge=1` |
@@ -33,7 +33,7 @@ The full field-by-field list is `DEVPOST_SUBMIT.md` (top level). Don't paste the
 anything in *italics with brackets*.
 
 ## 3. Submit
-- [ ] Prizes / tracks, tick exactly these: **Meta: Bringing People Closer Together with AI**, **Most Entertaining**,
+- [ ] **Additional info → Sponsor / Special Prizes (was EMPTY at 7:17)**, tick exactly these: **Meta: Bringing People Closer Together with AI**, **Most Entertaining**,
       **Best Use of SerpApi**. (Best Novice applies by itself if we're eligible. Gemini: off, the CD's call.)
 - [ ] Both teammates listed on the project.
 - [ ] Press **Submit**. Wait for the "submitted" page.
