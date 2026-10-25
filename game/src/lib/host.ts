@@ -158,7 +158,7 @@ function voiceText(text: string) {
 function openerText(sc: SeedScene) {
   const npc = sc.npc_line?.speaker && sc.npc_line?.line ? ` And ${speakerRef(sc.npc_line.speaker)}? Very calmly: "${sc.npc_line.line}"` : "";
   // v3 (CD): the story comes from a REAL article, said up front; the narration's first line is the real problem.
-  return FEATURES.storyV3 ? `This really happened… mostly. Tonight, you're in it. ${sc.narration}${npc}` : `Okay, everyone… gather in. ${sc.narration}${npc}`;
+  return FEATURES.storyV3 ? `This is based on a true story. Tonight, you're in it. ${sc.narration}${npc}` : `Okay, everyone… gather in. ${sc.narration}${npc}`;
 }
 
 /** The narrator's sign-off after the ending (the same text wherever it's voiced, so the early clip is the one that plays). */
@@ -3429,7 +3429,7 @@ export class GameHost {
       const said = this.seed?.author
         ? `Here's the twist… it's based on ${speakableName(this.seed.author.name)}'s true story. ${rsr.summary}`
         : orig
-        ? `Here's the twist… your story started from a real article. That first problem really happened: ${orig.charAt(0).toLowerCase()}${orig.slice(1)}. ${rsr.headline}.`
+        ? `Here's the twist… your story started from a real article. That first problem was real: ${orig.charAt(0).toLowerCase()}${orig.slice(1)}. ${rsr.headline}.`
         : `Now, here's the strange part… it's based on a true story. ${rsr.headline}.`;
       // The bridge links the table's ending to the real one, after a beat of breathing room (CD: the grand ending).
       const bridge = this.state.revealData?.bridge ?? "";

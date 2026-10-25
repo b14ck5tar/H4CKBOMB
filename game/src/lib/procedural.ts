@@ -282,6 +282,16 @@ export function repeatsEarlier(text: string, earlier: string[]) {
 }
 
 /**
+ * One-and-done goals (CD): a goal's target object (the first content word after its verb: "Stop the handbag thief" ->
+ * "handbag") is retired once offered, whatever happened. Returns the retired goal it matches, or "".
+ */
+export function retiredTarget(rn: string, state: StoryState) {
+  const target = (g: string) => planWords(g)[1] ?? "";
+  const t = target(rn);
+  return t ? [...state.goals_done, state.right_now].find((g) => g && target(g) === t) ?? "" : "";
+}
+
+/**
  * Circling (Meta's judges: "4 turns to get a bag"): the next step shares a key word with BOTH of the last two steps
  * ("Catch the bag on the wall", "Stop the bag on the ledge", "Catch the coated bag"). Returns that word, or "".
  * Heroes' names don't count.
@@ -566,6 +576,8 @@ export function checkTurn(p: TurnProposal, ctx: { state: StoryState; hero: strin
         const own = planWords(rn).filter((w) => !names.has(w) && planWords(ctx.plan!).includes(w));
         if (own.length) out.push(`repeats an earlier moment: after a miss, right_now "${rn}" is about the plan's own mess ("${own.join(", ")}"); make a pressure worse or start a NEW problem instead`);
       }
+      const rt = retiredTarget(rn, ctx.state);
+      if (rt && !was) out.push(`repeats an earlier moment: right_now "${rn}" goes after the same thing as a retired goal ("${rt}"); every goal is offered once, so give a DIFFERENT goal`);
       const c = circles(rn, ctx.state);
       if (c && !was) out.push(`repeats an earlier moment: the story has circled "${c}" for three turns; the next situation is about something ELSE (a pressure, a person, a new problem)`);
     } else {
@@ -680,7 +692,7 @@ function applyTurnV3(state: StoryState, p: TurnProposal, ctx: { hero: string; at
   const earlier = earlierSituations(state);
   let rn = clip(p.right_now, 80).replace(/[.!]+$/, "");
   let problem = clip(p.problem_now, 200);
-  const stale = !rn || /\bagain\b/i.test(rn) || !!repeatsEarlier(rn, earlier) || !!circles(rn, state) || !problem || !!repeatsEarlier(problem, [...(state.problems_seen ?? []), state.problem]);
+  const stale = !rn || /\bagain\b/i.test(rn) || !!repeatsEarlier(rn, earlier) || !!circles(rn, state) || !!retiredTarget(rn, state) || !problem || !!repeatsEarlier(problem, [...(state.problems_seen ?? []), state.problem]);
   // The forced twist: the pressure itself becomes the situation (never "try again").
   if (stale && pr) {
     problem = pr.stage;
