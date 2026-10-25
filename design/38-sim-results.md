@@ -164,3 +164,36 @@ TV never shows. I removed it and re-rated (81%). Both rating sets are in `sim-v3
    (5.6, but give the talking gold a voice: raters miss it in both engines).
 5. **The finale's moment of truth = the original problem plus the biggest pressure, never the latest mess.** Then
    reveal "What you did → What really happened".
+
+## Story v3 + fixes (`1a9b442`, prod build on :3108): 2 shark + 2 gold games, ~11:00
+What changed: one-sentence scenes, the pressure as a TV chip, a redo after a miss when the Right now is the plan's own
+words, model-reported `repeat_of`, DISASTER only on a natural 1, wild −3, and the finale = suggested goal + the
+biggest pressure.
+
+Seats are the same as baseline games 1, 2 and 4 (shark, gold, shark): 19 turns, 40 ratings, 69 Muse calls, 0
+fallbacks. The pressure chip is on the TV but glanceable; my transcript printed it as a full line, so I rated twice
+(with and without that line) to bracket followability.
+
+| Measure | Baseline (same seats) | v3 + fixes |
+|---|---|---|
+| Fun, 1-10 | 4.87 | **5.72** without the chip line (5.65 with it), median 5.5-6 |
+| Followable | 93% | **65-83%** (with / without the chip line) |
+| Turns repeating an objective (auditor) | 38% (5/13) | 26% (5/19); 16% without the finale snap-back (below) |
+| Turns that did not progress | 23% (3/13) | 21% (4/19): about the same on these seats |
+| "Clean up your own mess" after a miss | common | 3 (one stuck bus; gold: the freeze alerts a neighbor, then catch the shouting kid) |
+| `wild` rulings / DISASTER | 38% / 21% | 4/19 / 1 (a natural 1) |
+| Scene length | 12.9 words | 13.0 words |
+
+**The new issue is the finale rule.** "Suggested goal + biggest pressure" snaps the last Right now back to "Get the
+shark out to sea before it outgrows the canal", even when the shark already slipped out on turn 5. That accounts for
+2 of the 5 repeats, and 2 of the 7 chip-free "not followable" votes: "the shark exits, then somehow needs to be freed
+again", "the ending made no sense". The other "n" votes are text volume (4 of 7).
+
+**Ship rule (CD: followable ≥95%, repeats ≤15%): not met in the sim**, though both are close once the finale snap-back
+goes. The raters read text with no art or voice, so absolute followability is pessimistic: trust the direction.
+
+**Next fix, ranked:**
+1. The last Right now and the finale = the CURRENT situation + the biggest pressure, and the suggested goal only if
+   it's still open.
+2. Trim one line per turn (outcome + scene + Right now + chip is the "wall of text").
+3. The talking gold is still never used after the opener (raters in all three runs).

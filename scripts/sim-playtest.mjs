@@ -16,7 +16,7 @@ import { fileURLToPath } from "node:url";
 import { registerHooks } from "node:module";
 // The game's TS files import each other without extensions (Next resolves them); teach Node the same.
 registerHooks({ resolve: (spec, ctx, next) => { try { return next(spec, ctx); } catch (e) { if (spec.startsWith(".")) return next(`${spec}.ts`, ctx); throw e; } } });
-const { stateFromOpener } = await import("../game/src/lib/procedural.ts");
+const { stateFromOpener, pressureNow } = await import("../game/src/lib/procedural.ts");
 const { gradeRoll, TIER_SHIFT } = await import("../game/src/lib/grade.ts");
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -120,6 +120,8 @@ const PLAN = [
   ["canal-shark", 4, 4], ["wall-gold", 3, 6], ["norwich-batman", 4, 4],
   ["opera-snake", 3, 5], ["rust-wyrm", 4, 4], ["hanging-boulder", 3, 6], ["cornfield-dome", 3, 5],
 ].slice(0, NGAMES);
+// --stories a,b,c: swap the stories on the first rows (same seats and turn counts), e.g. a new judge top 3.
+arg("--stories", "").split(",").filter(Boolean).forEach((id, i) => PLAN[i] && (PLAN[i] = [id, PLAN[i][1], PLAN[i][2]]));
 
 /** The host's Quick Tale opener (judge mode): host.startStory + seedScenes(seed, quick=true). */
 function openerFor(seed) {
@@ -280,7 +282,7 @@ async function playGame(gi, [storyId, nPlayers, nTurns], seatPersonas) {
       tier: v.tier, stat: v.stat, interpretation: v.interpretation, verdictFallback: !!v.fallback,
       die, statBonus, shift, total: gr.total, grade: gr.grade, gradeLabel: gr.label,
       outcome: d.outcome ?? "(no outcome)", scene: d.scene ?? "", lines: d.lines ?? [],
-      rightBefore: prevRight, rightNow: d.right_now ?? g.state.right_now, problemNow: d.problem_now ?? d.state?.problem ?? "",
+      rightBefore: prevRight, rightNow: d.right_now ?? g.state.right_now, problemNow: d.problem_now ?? d.state?.problem ?? "", chip: (d.state && pressureNow ? pressureNow(d.state)?.stage : "") ?? "",
       progress: d.progress, delta: d.progress_delta, why: d.progress_why, act: d.act, finale: !!d.finale,
       fallback: !!(tr?.fallback || d.fallback), problems: d.problems ?? [], ms: tr?.ms,
     };
@@ -339,7 +341,7 @@ function storySoFar(st) {
 function transcript(g) {
   const L = [`# Game ${g.game}: ${g.title} (${g.seats.length} players, ${g.turns.length} turns + finale)`, ``, `Players: ${g.seats.map((s) => `${s.hero.name} (played by ${s.persona.name} ${s.persona.id}; power: ${s.hero.ability.text})`).join("; ")}`, ``, `OPENING: ${g.openerText}`, `Finish line on screen: ${g.start.finish_line}`, `Right now: ${g.start.right_now}`, ``];
   for (const t of g.turns) {
-    L.push(`## Turn ${t.k}: ${t.hero} (${t.persona})`, `Plan typed: "${t.plan}"`, `DM ruling: ${t.tier}${t.interpretation ? ` ("${t.interpretation}")` : ""}. d20 = ${t.die} (+${t.statBonus} stat, ${t.shift >= 0 ? "+" : ""}${t.shift} difficulty) = ${t.total}: ${t.gradeLabel}`, `Outcome: ${t.outcome}`, t.scene ? `Scene: ${t.scene}` : "", `Right now: ${t.rightNow}`, ``);
+    L.push(`## Turn ${t.k}: ${t.hero} (${t.persona})`, `Plan typed: "${t.plan}"`, `DM ruling: ${t.tier}${t.interpretation ? ` ("${t.interpretation}")` : ""}. d20 = ${t.die} (+${t.statBonus} stat, ${t.shift >= 0 ? "+" : ""}${t.shift} difficulty) = ${t.total}: ${t.gradeLabel}`, `Outcome: ${t.outcome}`, t.scene ? `Scene: ${t.scene}` : "", t.chip ? `Pressure chip on the TV: ${t.chip}` : "", `Right now: ${t.rightNow}`, ``);
   }
   const f = g.finale;
   L.push(`## GRAND FINALE`, ...f.plans.map((p) => `- ${p.hero}: "${p.plan}" (${p.backs} backed it)`), `Winning plan: ${f.winner}'s. Ruling ${f.tier}. One shared die: ${f.die} (+${f.backed} backing) = ${f.total}: ${f.gradeLabel}`, `Ending: ${f.ending}`, f.line ? `Last line: "${f.line}"` : "", f.recap ? `Recap: ${f.recap}` : "", ``);
