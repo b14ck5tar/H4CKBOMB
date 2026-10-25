@@ -217,3 +217,5 @@ Full history and train of thought: `design/00-where-we-are.md`.
 - ✅ (Sun ~7 AM) CD: no personal judge story; the judge 3 stay shark/gold/Batman.
 - ✅ CD: the ending is PLAYER-LED. The real event gives only the setup (place, problem, stakes); the middle and end follow the players with no steering to the real outcome (reverses 74cec6d's arc steering). The reveal contrasts or matches "What you did" vs "What really happened" with a bridge line.
 - Optional pitch opener from the CD's real HackTX journey (denied application, walk-in line, the chess tournament win): pitch drafts it as Opener A/B.
+- ✅ CD: the finale talk phase is 30 s in judge mode, 60 s in normal games. The partner is awake and will run a judge game on the final build before the CD leaves.
+- Rollback point: git tag judge-safe-1 = prod once-upon-a-roll-ggknns93n (`npx vercel promote <that url>` from the export folder). Deploy once, after a full local production test.
