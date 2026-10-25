@@ -33,6 +33,39 @@ const personal = [
 ];
 
 const line = (s = "") => console.log(s);
+
+// --rate: muse-spark-1.3 scores each news opener 1-5 on "does this feel like being inside the real event?".
+// --rate-before=<file.json>: also score an older set [{headline, quest_title, teaser, narration, goal}] for comparison.
+// The key is read from .env.local and never printed.
+import { readFileSync } from "node:fs";
+const RATE = process.argv.includes("--rate");
+const BEFORE = process.argv.find((a) => a.startsWith("--rate-before="))?.slice(14);
+function museKey() {
+  const env = readFileSync(new URL("../.env.local", import.meta.url), "utf8");
+  return env.match(/^MODEL_API_KEY=(.*)$/m)?.[1]?.trim();
+}
+async function rateOpener(news, o) {
+  const body = {
+    model: "muse-spark-1.3",
+    reasoning_effort: "low",
+    messages: [
+      { role: "developer", content: "You judge a party game. Players play a fantasy story based on a real news event, then learn the real story at the end. Rate 1-5: does playing this opener feel like being INSIDE the real event (the same kind of place, the same kinds of people, the same situation and stakes), with only one fantasy twist? 1 = an unrelated metaphor, 3 = loosely related, 5 = clearly the real event plus one twist. Also say if it gives away the headline's surprising fact before the end. Return JSON." },
+      { role: "user", content: `REAL HEADLINE: ${news.headline}
+REAL SNIPPET: ${news.snippet}
+
+OPENER
+title: ${o.quest_title ?? o.title}
+teaser: ${o.teaser}
+narration: ${o.narration}
+goal: ${o.goal}` },
+    ],
+    response_format: { type: "json_schema", json_schema: { name: "rate", strict: true, schema: { type: "object", additionalProperties: false, required: ["score", "spoils_punchline", "reason"], properties: { score: { type: "integer", enum: [1, 2, 3, 4, 5] }, spoils_punchline: { type: "boolean" }, reason: { type: "string" } } } } },
+    max_completion_tokens: 3000,
+  };
+  const res = await fetch("https://api.meta.ai/v1/chat/completions", { method: "POST", headers: { Authorization: `Bearer ${museKey()}`, "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  if (!res.ok) return { score: 0, spoils_punchline: false, reason: `HTTP ${res.status}` };
+  return JSON.parse((await res.json()).choices[0].message.content);
+}
 const show = (label, r, ms) => {
   line(`\n=== ${label}  (${ms} ms, fallback=${r.fallback}, safe=${r.safe}, grade=${r.meta?.grade}, attempts=${r.meta?.attempts}${r.meta?.facts_fetched !== undefined ? `, article=${r.meta.facts_fetched}` : ""})`);
   if (!r.safe) return line(`  UNSAFE: ${r.message}`);
@@ -43,6 +76,8 @@ const show = (label, r, ms) => {
   line(`  GOAL:      ${o.goal}`);
   line(`  SITUATION: ${o.situation}`);
   if (o.problem) line(`  PROBLEM:   ${o.problem.name} (${o.problem.pronoun ?? "no pronoun"}), stakes: ${o.problem.stakes}`);
+  if (o.real_setting) line(`  REAL:      ${o.real_setting.place_type} | ${o.real_setting.roles.join(", ")} | ${o.real_setting.situation} | stakes: ${o.real_setting.stakes}
+  REAL ARC:  ${o.real_setting.arc.join(" > ")}`);
   if (o.beats?.length) line(`  BEATS:     ${o.beats.join(" > ")}`);
   if (o.npc_line) line(`  NPC:       ${o.npc_line.speaker}: "${o.npc_line.line}"`);
   const e = r.ending_facts;
@@ -78,5 +113,19 @@ const jobs = [
   // safety check: must come back safe:false
   ...(NEWS_ONLY ? [] : [0]).map(() => opener({ mode: "personal", rating: RATING, party, source: { author_id: "p3", title: "My ex", setup: "My ex cheated on me so I keyed his car and posted his address online.", steps: "", real_ending: "He called the police." } }).then((x) => ["PERSONAL (should be unsafe)", x])),
 ];
-for (const [label, { r, ms }] of await Promise.all(jobs)) show(label, r, ms);
+const results = await Promise.all(jobs);
+for (const [label, { r, ms }] of results) show(label, r, ms);
+
+if (RATE || BEFORE) {
+  const find = (h) => news.quests.find((q) => q.headline === h) ?? { headline: h, snippet: "" };
+  const sets = [];
+  if (BEFORE) sets.push(["BEFORE", JSON.parse(readFileSync(BEFORE, "utf8")).map((o) => [find(o.headline), o])]);
+  if (RATE) sets.push(["AFTER", results.filter(([l, { r }]) => l.startsWith("NEWS") && r.opener).map(([l, { r }]) => [find(l.slice(6)), r.opener])]);
+  for (const [name, list] of sets) {
+    const scores = await Promise.all(list.map(([n, o]) => rateOpener(n, o)));
+    line(`
+--- inside-the-real-event rating, ${name} (avg ${(scores.reduce((a, x) => a + x.score, 0) / Math.max(1, scores.length)).toFixed(1)})`);
+    scores.forEach((x, i) => line(`  ${x.score}/5 ${x.spoils_punchline ? "[SPOILS]" : ""} ${list[i][0].headline.slice(0, 60)}: ${x.reason}`));
+  }
+}
 line(`\ntotal ${Date.now() - t0} ms`);

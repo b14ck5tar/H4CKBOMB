@@ -30,9 +30,12 @@ export type Opener = {
   problem: { name: string; stakes: string; pronoun: Pronoun | null };
   /** @deprecated alias of `problem` for one release: {name, pronoun: problem.pronoun ?? "it", want: problem.stakes}. */
   threat: { name: string; pronoun: Pronoun; want: string };
-  /** The story ladder: 3-4 steps to solve the problem, setup → twist → climax. The last one pays off the real story. */
+  /** The story ladder: 3-4 steps that mirror real_setting.arc in fantasy form. The last one lands where the real story did. */
   beats: string[];
+  /** The REAL event, spoiler-free (no names, numbers or punchline), for the story director to feed every turn. */
+  real_setting: RealSetting;
 };
+export type RealSetting = { place_type: string; roles: string[]; situation: string; stakes: string; arc: string[] };
 export const PRONOUNS = ["she", "he", "they", "it"] as const;
 export type Pronoun = (typeof PRONOUNS)[number];
 export const MOODS = ["silly", "spooky", "cozy", "eerie", "wondrous", "tense"] as const;
@@ -58,43 +61,33 @@ const clip = (s: unknown, n: number) => String(s ?? "").replace(/[<>]/g, "").rep
 
 // ---------------------------------------------------------------- prompt
 
-const EXAMPLES = `EXAMPLES (NEWS). Each one disguises the real story as a PROBLEM that only clicks at the reveal.
-1. REAL: "Road with new bridge to reopen after nearly 3 years"
-   key_concepts ["road", "bridge", "reopen", "closed", "traffic", "steel"]
-   quest_title "The Metal Went Soft"  mood "eerie"
-   teaser "Every bit of metal in a river town is going soft, and tomorrow is a big day."
-   scene_line "A river town has waited years for this sunrise, and tonight every railing feels soft as butter."
-   problem_line "The metal in town gets tired at night and bends, and nobody knows how to wake it up."
-   stakes_line "If the shiny new railing goes soft too, nobody crosses the river for years."
-   goal "Make the metal strong again before sunrise"
-   situation "A bendy lamp post, a railing drooping like a noodle, and a toolbox full of floppy wrenches."
-   npc_line {"speaker": "Night guard", "line": "My keys bent in my pocket. That is new."}
-   problem {"name": "The Tired Metal", "stakes": "nobody can cross the river for years", "pronoun": "none"}
-   beats ["Find where the soft metal starts", "Learn what makes the metal tired", "Wake up the old metal first", "Get the first car across at sunrise"]
-2. REAL: "Massive 80-ton boulder comes crashing down after more than a century at a park"
-   key_concepts ["boulder", "rock", "crash", "fall", "century", "attraction"]
-   quest_title "The Park Let Go"  mood "spooky"
-   teaser "After a hundred years of holding on, a whole park is letting go of things."
-   scene_line "In a quiet park, things that held still for a hundred years are slipping and sliding."
-   problem_line "The park got tired of holding on, so benches tip, signs drop and paths slide downhill."
-   stakes_line "If nothing will stay put, the park can never open again."
-   goal "Get the park to hold on through the winter"
-   situation "A bench sliding by itself, a sign hanging by one bolt, and a cracked path tilting downhill."
-   npc_line {"speaker": "Park ranger", "line": "My lunch rolled away. Again."}
-   problem {"name": "The Tired Park", "stakes": "the park can never open again", "pronoun": "none"}
-   beats ["Catch the sliding bench", "Find out why the park is tired", "Give the park a reason to hold on", "Tuck the park in for winter"]
-3. REAL: "Plastic pellets on a beach likely came from a river spill hundreds of miles away"
-   key_concepts ["plastic", "pellets", "nurdles", "spill", "pollution", "coast"]
-   quest_title "Beads That Want Home"  mood "silly"
-   teaser "A billion tiny white beads are rolling up the beach, and they are all homesick."
-   scene_line "A cold, windy beach is covered in tiny white beads, and they are rolling uphill."
-   problem_line "The beads came from very far away, and they are rolling inland trying to find home."
-   stakes_line "If they reach town, every street fills up with beads, and they still won't be home."
-   goal "Send the lost beads back where they came from"
-   situation "A sea wall covered in beads, a leaky bucket, and a long wet trail heading inland."
-   npc_line {"speaker": "Lifeguard", "line": "They roll uphill. I checked twice."}
-   problem {"name": "The Homesick Beads", "stakes": "the whole town fills up with beads", "pronoun": "none"}
-   beats ["Stop the beads before they reach town", "Learn where the beads came from", "Find the way back to their river", "Send every bead home"]`;
+const EXAMPLES = `EXAMPLES (NEWS). Each keeps the real place, people, situation, stakes and order, and adds ONE fantasy twist.
+1. REAL: "Road with new bridge reopens after nearly 3 years" (old steel beams rusted through; long detours)
+   punchline_words ["rusted", "deteriorated"]
+   real_setting {"place_type": "a small river town with a closed road", "roles": ["a road crew", "a bridge inspector", "drivers stuck on long detours"], "situation": "a new bridge is about to open after the old one wore out", "stakes": "if it fails inspection, the town stays cut off", "arc": ["The old bridge wears out and closes", "Drivers take long detours for years", "A crew builds a new bridge", "The new bridge passes inspection and opens"]}
+   quest_title "The Bridge Is Breakfast"  mood "eerie"
+   teaser "A river town's new bridge opens at sunrise, but something has been nibbling the railing."
+   scene_line "A small river town's brand-new bridge opens at sunrise, after years of long detours."
+   problem_line "A giant snake that eats metal ate the old bridge, and tonight she is nibbling the new railing."
+   stakes_line "If the inspector finds bite marks at sunrise, the bridge fails and the town stays cut off."
+   goal "Get the snake off the bridge before inspection"
+   situation "Orange barriers, a shiny railing with fresh bite marks, and a dark river that hums."
+   npc_line {"speaker": "Bridge inspector", "line": "Good morning! Is the bridge supposed to be humming?"}
+   problem {"name": "The Hungry River Snake", "stakes": "the bridge fails and the town stays cut off", "pronoun": "she"}
+   beats ["Find what is nibbling the railing", "Lead the snake away from the bridge", "Find her something else to eat", "Pass the sunrise inspection"]
+2. REAL: "Plastic pellets on a country's beaches likely came from a river spill in another country 390 miles away"
+   punchline_words ["spill", "another country", "miles away"]
+   real_setting {"place_type": "a windy beach town", "roles": ["beach cleaners", "scientists testing the beads", "people far away where they came from"], "situation": "tiny white plastic beads are washing up by the million", "stakes": "the beads hurt sea animals and must be cleaned up", "arc": ["Tiny beads wash up on the beach", "Cleaners scoop them up by the bucket", "Tests show where they came from", "Both places work to clean up"]}
+   quest_title "Mom Wants Her Eggs"  mood "silly"
+   teaser "Millions of tiny white beads are washing up, and someone big thinks they are hers."
+   scene_line "On a windy beach, cleaners are scooping up millions of tiny white plastic beads."
+   problem_line "A sea mom as big as a ferry thinks the beads are her eggs, so she keeps pushing them ashore."
+   stakes_line "The beads hurt the sea animals, so if she keeps nesting, the whole beach gets buried."
+   goal "Help the sea mom let go of the beads"
+   situation "Buckets full of beads, a cleaner with a long scoop, and a giant sea mom curled around a white nest."
+   npc_line {"speaker": "Beach cleaner", "line": "I scooped this spot an hour ago."}
+   problem {"name": "The Bead Nest", "stakes": "the whole beach gets buried in beads", "pronoun": "none"}
+   beats ["Scoop the beads before the tide", "Find out who keeps pushing them ashore", "Show the sea mom where they came from", "Clean the beach together"]`;
 
 export const OPENER_SYSTEM = `You write the opening of a co-op party story game. A group of friends play heroes together. Your words
 appear on a TV and are read aloud, so they must be instantly clear to everyone, including an 8-year-old.
@@ -105,24 +98,24 @@ Odd and funny, a little spooky at most. Deadpan: the joke is one specific detail
 
 You get a SOURCE. It is either NEWS (a real news story) or PERSONAL (a real thing that happened to one player).
 
-THE REVEAL RULE (NEWS, most important): players must NOT guess the real story until the reveal, and at the
-reveal it must click ("oh, THAT is what the soft metal was!"). Everything except official_line,
-whats_happening_now and real_ending is the disguised FANTASY version:
-- Turn the real story into an urban-fantasy METAPHOR. Keep its emotional core (forgotten and wants to be found,
-  stuck and wants out, the biggest ever and wants to be seen, lost and wants to go home) and its rough shape,
-  but change what the things ARE.
-- First fill key_concepts with the headline's key nouns and ideas plus their obvious cousins (3 to 8 words).
-  Then never use any of them, or the KEY NOUNS in the user message, anywhere outside official_line and
-  whats_happening_now. Example: for "Giant squid filmed alive in deep water for the first time", the concepts
-  are squid, tentacles, ocean, deep sea, filmed, camera. The disguise could be a shy neighbor who only comes out
-  when the lights are off, and the reveal makes it click.
-- Every story needs its OWN metaphor that fits ITS real facts. Never reuse the images from these instructions
-  or the examples (locked boxes, cabinets, knocking, snakes, ice hands, eggs) unless the real story calls for it.
-- Never use real place names, countries, dates, months, holidays, organizations, people or any number from the
-  source, and never retell the headline. Say "a seaside town", "a farm show", "a hundred years".
-- The disguise must make plain sense on its own: anyone can picture it right away. Use whole, natural phrases
-  ("a locked box", not "a shut box"; "a man on an old coin", not "a flat man"). One strange thing, not a
-  pile of riddles. Never add random extra characters.
+THE REAL-EVENT RULE (NEWS, most important): players should feel like they are INSIDE the real event, with one
+fantasy twist. At the reveal they say "wait, that really happened?"
+- KEEP, recognizably: the real KIND of place (a museum basement, a farm field, a seaside town getting ready for a
+  costume parade), the real ROLES of the people involved (museum staff, the grower, the town's volunteers), the
+  real situation, the real stakes and the real order of what happened.
+- ADD exactly ONE fantasy twist that secretly explains or drives the real event. Treat it as completely normal.
+  The twist is the problem the group must solve.
+- HIDE only: proper nouns (people, towns, countries, organizations, brands), exact numbers and dates, and the
+  headline's PUNCHLINE: the one surprising fact the reveal delivers (for "A forgotten fossil reveals a fearsome
+  dinosaur with giant claws", keep the museum and the forgotten bone, hide that it is a new kind of dinosaur with
+  giant claws). Put the punchline's words in punchline_words (2 to 5 words) and never use them, or the GIVEAWAY
+  WORDS in the user message, outside official_line and whats_happening_now.
+- real_setting describes the REAL event (not the fantasy), spoiler-free with the same HIDE rules: place_type,
+  roles (2 to 4 people or groups, by role), situation (one plain sentence), stakes (what was really at risk), and
+  arc (3 or 4 short steps of what really happened, in order).
+- Every story needs its OWN twist that fits ITS real facts. Never reuse the examples' twists.
+- The twist must make plain sense on its own: anyone can picture it right away. Use whole, natural phrases.
+  One strange thing, not a pile of riddles. Never add random extra characters.
 
 WRITE:
 - quest_title: 2 to 5 words, funny and concrete, fantasy only. Shown on the story vote card.
@@ -134,14 +127,13 @@ WRITE:
 - problem: kept the same in every later scene. problem_name: a plain 2-4 word name ("The Tired Metal",
   "The Homesick Beads"), never an invented proper name. problem_stakes: what goes wrong if nobody solves it, in
   a few plain words. problem_pronoun: she, he, they or it ONLY if the problem is a creature, else "none".
-- beats: the story ladder, 3 or 4 step goals in order (setup, twist, climax), each 8 words max and starting with
-  a verb. They are the steps to SOLVE the problem. Fantasy only, with the same disguise rules. Each step follows
-  from the one before, and the LAST step solves the problem in a way that pays off the real story at the reveal. The first beat is a
-  small first step toward the goal, and the last beat finishes the goal.
+- beats: the story ladder, ONE beat per real_setting.arc step, in the same order, each 8 words max and starting
+  with a verb. Each beat is what the heroes do at that step of the real event, with the twist in play. The last
+  beat solves the problem and lands where the real story landed, so the reveal pays off.
 - The narration is three sentences, 45 words max in total, written as three fields:
-  - scene_line: where we are and what is strange (fantasy only, no real names or numbers).
-  - problem_line: WHAT the problem is, in plain words, and why it is happening. This is the one magical twist
-    that secretly explains the real event. Anything named in the goal MUST be explained here.
+  - scene_line: the real kind of place and the real situation, with the real roles in it (no names or numbers).
+  - problem_line: the ONE fantasy twist: WHAT the problem is, in plain words, and why it is happening. It
+    secretly explains the real event. Anything named in the goal MUST be explained here.
   - stakes_line: WHY the goal matters: what goes wrong if the group fails ("if the new railing goes soft too,
     nobody crosses the river for years"). Cause and effect, said plainly.
   An 8-year-old must be able to retell the problem after hearing these three sentences once.
@@ -167,9 +159,9 @@ WRITING RULES (hard):
   just to match a hero's power. The situation comes from the story itself.
 
 NEWS SOURCE RULES:
-- The fantasy must grow from the real facts in the source text, but must not give them away (THE REVEAL RULE).
-  The user message lists GIVEAWAY WORDS: never use any of them outside official_line and whats_happening_now.
-- Never name or describe real people, brands or companies anywhere. Never mock or blame anyone real.
+- Follow THE REAL-EVENT RULE: the real place type, roles, situation and stakes, plus one twist. The user message
+  lists GIVEAWAY WORDS (names and numbers): never use any of them outside official_line and whats_happening_now.
+- Never name real people, brands or companies outside the reveal fields. Never mock or blame anyone real.
 - official_line and whats_happening_now are the REVEAL: plain real words, with the real names, places and
   key nouns (no disguise there). They use ONLY facts in the source text. Never invent numbers, names, dates
   or outcomes. Here the real place, date and numbers are welcome.
@@ -187,7 +179,8 @@ PERSONAL SOURCE RULES:
 - Keep it recognizable (the same place, the same problem, the same key objects) but add one magical twist
   that secretly explains it. It is happening to the whole group right now.
 - You may name the author's hero (AUTHOR_HERO) as the one this happened to. Nobody else.
-- THE REVEAL RULE above is for NEWS. A personal story stays recognizable, and key_concepts is [].
+- THE REAL-EVENT RULE above is for NEWS. A personal story stays recognizable, punchline_words is [], and
+  real_setting describes the player's real situation and the steps that led there, NEVER the real ending.
 - REAL_ENDING is how it really ended. NEVER reveal it, hint at it, or set up its exact solution in the opener,
   the quest_title or the teaser.
   The table will play their own ending and see the real one at the end.
@@ -211,11 +204,11 @@ const str = { type: "string" } as const;
 export const OPENER_SCHEMA = {
   type: "object",
   additionalProperties: false,
-  required: ["safe", "unsafe_message", "key_concepts", "quest_title", "teaser", "mood", "scene_line", "problem_line", "stakes_line", "goal", "situation", "npc_speaker", "npc_line", "official_line", "whats_happening_now", "real_ending", "problem_name", "problem_pronoun", "problem_stakes", "beats"],
+  required: ["safe", "unsafe_message", "punchline_words", "quest_title", "teaser", "mood", "scene_line", "problem_line", "stakes_line", "goal", "situation", "npc_speaker", "npc_line", "official_line", "whats_happening_now", "real_ending", "problem_name", "problem_pronoun", "problem_stakes", "beats", "real_place_type", "real_roles", "real_situation", "real_stakes", "real_arc"],
   properties: {
     safe: { type: "boolean" },
     unsafe_message: str,
-    key_concepts: { type: "array", items: str },
+    punchline_words: { type: "array", items: str },
     quest_title: str,
     teaser: str,
     mood: { type: "string", enum: [...MOODS] },
@@ -233,13 +226,18 @@ export const OPENER_SCHEMA = {
     problem_pronoun: { type: "string", enum: [...PRONOUNS, "none"] },
     problem_stakes: str,
     beats: { type: "array", items: str },
+    real_place_type: str,
+    real_roles: { type: "array", items: str },
+    real_situation: str,
+    real_stakes: str,
+    real_arc: { type: "array", items: str },
   },
 } as const;
 
 type Draft = {
   safe: boolean;
   unsafe_message: string;
-  key_concepts: string[];
+  punchline_words: string[];
   quest_title: string;
   teaser: string;
   mood: Mood;
@@ -247,6 +245,11 @@ type Draft = {
   problem_pronoun: Pronoun | "none";
   problem_stakes: string;
   beats: string[];
+  real_place_type: string;
+  real_roles: string[];
+  real_situation: string;
+  real_stakes: string;
+  real_arc: string[];
   title: string; // = quest_title, set in code
   scene_line: string;
   problem_line: string;
@@ -412,6 +415,10 @@ function problems(d: Draft, mode: "news" | "personal", sourceText: string, perso
   const beats = Array.isArray(d.beats) ? d.beats.map((b) => String(b ?? "").trim()).filter(Boolean) : [];
   const all = [d.quest_title, d.teaser, d.narration, d.goal, d.situation, d.npc_speaker, d.npc_line, d.problem_name, d.problem_stakes, ...beats].join(" ");
   if (beats.length < 3 || beats.length > 4) list.push(`beats must be 3 or 4 steps (got ${beats.length})`);
+  const arc = Array.isArray(d.real_arc) ? d.real_arc.filter((x) => String(x ?? "").trim()) : [];
+  if (arc.length < 3 || arc.length > 4) list.push(`real_arc must be 3 or 4 steps (got ${arc.length})`);
+  else if (beats.length !== arc.length) list.push(`beats must mirror real_arc one to one (${beats.length} beats, ${arc.length} arc steps)`);
+  if (!d.real_place_type?.trim() || !d.real_situation?.trim() || !(d.real_roles ?? []).length) list.push("real_setting needs place_type, roles and situation");
   const longBeat = beats.find((b) => wordCount(b) > 8);
   if (longBeat) list.push(`each beat is 8 words max ("${longBeat}" is ${wordCount(longBeat)})`);
   const noVerb = beats.find((b) => NOT_VERB_START.test(b));
@@ -422,10 +429,15 @@ function problems(d: Draft, mode: "news" | "personal", sourceText: string, perso
     if (hits.length) list.push(`giveaway: the opener uses real-story words (${hits.join(", ")}). Replace them with fantasy words`);
   }
   if (mode === "news") {
-    // The disguise: the headline's key nouns (code + the model's own key_concepts) never appear before the reveal.
-    const concepts = conceptWords([...keyNouns, ...(Array.isArray(d.key_concepts) ? d.key_concepts : [])]);
-    const used = concepts.filter((c) => conceptRe(c).test(all));
-    if (used.length) list.push(`giveaway: the opener uses the real story's key nouns (${used.join(", ")}). Disguise them as a fantasy metaphor`);
+    // The disguise: the headline's key nouns (code + the model's own punchline_words) never appear before the reveal.
+    // Hide only the punchline (the model names it), plus names and numbers (giveaway words above).
+    const concepts = conceptWords(Array.isArray(d.punchline_words) ? d.punchline_words : []);
+    const setting = [d.real_place_type, d.real_situation, d.real_stakes, ...(d.real_roles ?? []), ...(d.real_arc ?? [])].join(" ");
+    const used = concepts.filter((c) => conceptRe(c).test(`${all} ${setting}`));
+    if (used.length) list.push(`giveaway: the opener or real_setting uses the punchline (${used.join(", ")}). Keep the real situation but hide that fact`);
+    const sHits = giveaway.length ? giveawayHits(setting, giveaway) : [];
+    if (sHits.length) list.push(`giveaway: real_setting uses names or numbers (${sHits.join(", ")})`);
+    if (!Array.isArray(d.punchline_words) || !d.punchline_words.length) list.push("punchline_words is required");
     if (!d.problem_name.trim() || !d.problem_stakes.trim()) list.push("problem_name and problem_stakes are required");
     if (VILLAIN.test(`${d.problem_name} ${d.problem_line} ${d.goal} ${(Array.isArray(d.beats) ? d.beats : []).join(" ")}`)) list.push("this reads like a villain to defeat: make it a problem to solve (stuck, lost, broken, spreading)");
   }
@@ -478,6 +490,7 @@ function newsFallback(): Opener {
     situation: "A quiet street at night, a flickering lamp, and one thing that looks a little out of place.",
     problem: { name: "The Out-of-Place Thing", stakes: "it will happen again tomorrow", pronoun: null },
     threat: { name: "The Out-of-Place Thing", pronoun: "it", want: "it will happen again tomorrow" },
+    real_setting: { place_type: "a quiet town", roles: ["people who live there"], situation: "something odd happened that made the news", stakes: "people want to know what happened", arc: ["Something odd happens", "People notice", "Someone looks into it", "The truth comes out"] },
     beats: ["Look for what is out of place", "Follow the strange clue to its hiding spot", "Find out what the hidden thing wants", "Give it what it wants before morning"],
   };
 }
@@ -515,6 +528,7 @@ function personalFallback(src: PersonalSource, authorHero: string): Opener {
     situation: "The exact spot where it all started, looking normal except for one strange detail.",
     problem: { name: "The Bad Luck Day", stakes: "the whole day falls apart", pronoun: null },
     threat: { name: "The Bad Luck Day", pronoun: "it", want: "the whole day falls apart" },
+    real_setting: { place_type: "an ordinary day", roles: ["the player who lived it"], situation: firstSentence(src.setup, 160), stakes: "the day could go very wrong", arc: [src.setup, ...[src.steps].flat()].map((x) => clip(x, 80)).filter(Boolean).slice(0, 4) },
     beats: ["Find where the bad luck started", "Get past the first big problem", "Turn the bad luck around", "Fix what went wrong before the day ends"],
   };
 }
@@ -529,7 +543,6 @@ function userPrompt(mode: "news" | "personal", rating: Rating, party: PartyMembe
   if (mode === "personal") u += `AUTHOR_HERO: ${authorHero || "(unknown, do not name anyone)"}\n`;
   u += `\n<source>\n${body}\n</source>\n`;
   if (giveaway.length) u += `\nGIVEAWAY WORDS (only allowed in official_line and whats_happening_now): ${giveaway.join(", ")}. Also no digits outside those two fields.\n`;
-  if (keyNouns.length) u += `KEY NOUNS from the headline (disguise them, never use them or their plurals outside official_line and whats_happening_now): ${keyNouns.join(", ")}\n`;
   if (prev) {
     const { problem_name, problem_stakes, quest_title, teaser, scene_line, problem_line, stakes_line, goal, situation, official_line, whats_happening_now } = prev.draft;
     u += `\nYour previous draft had problems. Write a new version that fixes ALL of them and keeps what worked.\nPREVIOUS DRAFT: ${JSON.stringify({ quest_title, teaser, problem_name, problem_stakes, beats: prev.draft.beats, scene_line, problem_line, stakes_line, goal, situation, ...(mode === "news" ? { official_line, whats_happening_now } : {}) })}\nPROBLEMS:\n${prev.problems.map((p) => `- ${p}`).join("\n")}\n`;
@@ -550,6 +563,13 @@ function finish(d: Draft): Opener {
     problem: { name: "", stakes: "", pronoun: null },
     threat: { name: "", pronoun: "it", want: "" },
     beats: (Array.isArray(d.beats) ? d.beats : []).map((b) => sanitize(String(b ?? "")).replace(/[.!]+$/, "")).filter(Boolean).slice(0, 4),
+    real_setting: {
+      place_type: sanitize(d.real_place_type ?? ""),
+      roles: (Array.isArray(d.real_roles) ? d.real_roles : []).map((r) => sanitize(String(r ?? ""))).filter(Boolean).slice(0, 4),
+      situation: sanitize(d.real_situation ?? ""),
+      stakes: sanitize(d.real_stakes ?? ""),
+      arc: (Array.isArray(d.real_arc) ? d.real_arc : []).map((r) => sanitize(String(r ?? "")).replace(/[.!]+$/, "")).filter(Boolean).slice(0, 4),
+    },
   };
   const pron = (PRONOUNS as readonly string[]).includes(d.problem_pronoun) ? (d.problem_pronoun as Pronoun) : null;
   o.problem = {
