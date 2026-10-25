@@ -219,3 +219,6 @@ Full history and train of thought: `design/00-where-we-are.md`.
 - Optional pitch opener from the CD's real HackTX journey (denied application, walk-in line, the chess tournament win): pitch drafts it as Opener A/B.
 - ✅ CD: the finale talk phase is 30 s in judge mode, 60 s in normal games. The partner is awake and will run a judge game on the final build before the CD leaves.
 - Rollback point: git tag judge-safe-1 = prod once-upon-a-roll-ggknns93n (`npx vercel promote <that url>` from the export folder). Deploy once, after a full local production test.
+- ✅ (Sun ~7:20 AM) CD: the hero question is "What's your secret strength?" everywhere (was "secret talent"): game copy + prompts (story), docs/Devpost/hub (pitch), video (video session).
+- ✅ CD: the final-roll phone buttons get bigger and clearer, with obvious states and instant feedback (look).
+- A new "video" session (local_e5d8a79d) owns the video rework; the hook is the real-headline cold open.
