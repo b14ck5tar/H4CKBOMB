@@ -745,3 +745,23 @@ html:has(.qt-root) { font-size: clamp(11px, min(1.3vw, 2.31vh), 30px) !important
 /* Narration over brighter art: the words carry their own soft shadow. */
 .gp-lowerthird .qt-narration,
 .gp-lowerthird p { text-shadow: 0 2px 0 #000, 0 0 18px rgba(5, 3, 9, 0.95), 0 0 36px rgba(5, 3, 9, 0.8); }
+
+/* Continue on the ending stretch (montage + reveal): a clear pill, bottom-right, clear of the reveal cards. */
+.qt-continue {
+  position: absolute;
+  right: 1.6rem;
+  bottom: 1.3rem;
+  z-index: 40;
+  padding: 0.55rem 1.3rem 0.45rem;
+  font-family: var(--font-display), Impact, sans-serif;
+  font-size: 1.35rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #0a0612;
+  background: #c6ff2e;
+  border-radius: 0.5rem;
+  transform: rotate(-2deg);
+  box-shadow: 0.25rem 0.25rem 0 #000, 0 0 1.2rem rgba(198, 255, 46, 0.45);
+  transition: transform 0.15s ease;
+}
+.qt-continue:hover { transform: rotate(-2deg) scale(1.06); }

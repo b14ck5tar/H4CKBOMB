@@ -396,7 +396,7 @@ export function LinkButton({ children, onClick, type = "button" }: { children: R
 
 // ---------- typing ----------
 /**
- * The plan box: one action, PLAN_MAX characters, a filling meter. `onTyping` fires at most every 1.5 s
+ * The plan box: one action, TYPE_MAX characters, a filling meter. `onTyping` fires at most every 1.5 s
  * (the TV shows "… is typing").
  */
 export function PlanBox({

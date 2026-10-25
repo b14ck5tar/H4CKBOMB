@@ -9,6 +9,7 @@
 import { useState } from "react";
 import type { Player } from "@/lib/types";
 import { shortName } from "@/lib/now";
+import { PLAN_MAX } from "@/lib/rules";
 import { Face, Fuse, GameButton, Goal, Kicker, PlanBox, Say, heroImg, vibrate, type TimerSpec } from "./kit";
 
 const PLAN_EXAMPLES = [
@@ -57,9 +58,9 @@ export function YourTurnScreen({
   const creditName = shortName(creditPl?.hero?.name, 12) || "a friend";
   const picked = credit ? (ideas[credit] ?? "").trim() : "";
   const own = text.trim();
-  // What the DM reads: your words plus the friend's idea (or just one of them), never more than `max`.
+  // What the DM reads: your words plus the friend's idea (or just one of them), never more than PLAN_MAX (each part is typed in a TYPE_MAX box).
   const joined = picked && own && own !== picked ? `${own}, using ${creditName}'s idea: ${picked}` : own || picked;
-  const plan = joined.length > max ? `${joined.slice(0, max - 1).trimEnd()}…` : joined;
+  const plan = joined.length > PLAN_MAX ? `${joined.slice(0, PLAN_MAX - 1).trimEnd()}…` : joined;
   return (
     <form
       className="pk-choices"

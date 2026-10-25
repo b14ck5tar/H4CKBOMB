@@ -1548,6 +1548,12 @@ export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameS
           Skip ▸
         </button>
       )}
+      {/* The ending stretch (montage + reveal) runs on timers; the table can always move on (CD playtest). */}
+      {["epilogue", "reveal"].includes(s.phase) && host.deadlineAt > 0 && !s.busy && !host.readOnly && (
+        <button className="qt-continue" onClick={() => host.skip()} title="Spacebar works too">
+          Continue ▸
+        </button>
+      )}
       {["story_write", "story_vote", "turn", "pitch", "vote", "roll"].includes(s.phase) && <Fuse host={host} phase={shot} />}
       <div key={shot + "-c"} className="qt-shot">
         {main}

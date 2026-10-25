@@ -33,7 +33,7 @@ export function SuggestScreen({
   nowGoal?: string;
   ladder?: string[];
   step?: number;
-  /** PLAN_MAX */
+  /** TYPE_MAX */
   max: number;
   onIdea: (text: string) => void;
   onTyping?: () => void;

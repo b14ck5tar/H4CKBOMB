@@ -11,10 +11,17 @@ export const HARD_BLOCK: RegExp[] = [
   /\b(abuse|assault|rape|sexual|trafficking|torture|harass)/i,
   /\b(suicide|overdose|self-harm)\b/i,
   /\b(outbreak|epidemic|pandemic|ebola|cholera|measles|mpox|patients?|hospitali[sz]ed|cancer|diseases?|infect(ion|ions|ed)|virus(es)?|flesh-eating)\b/i,
-  /\b(human remains|skeletons?|graves?|pentagon|cyber-?attacks?|hackers?|hacked|data breach|scam(mers?)?|fraud|ransomware|stalk(er|ing))\b/i,
-  /\b(missing|search for|manhunt|arrest(ed)?|charged|sentenced|trial|lawsuit|sues?|indict)/i,
+  /\b(human remains|skeletons?|graves?|pentagon|cyber-?attacks?|ransomware|stalk(er|ing))\b/i,
+  /\b(missing|search for|manhunt)/i,
   /\b(election|midterms?|vote|voters|ballot|campaign|senator|congress|parliament|president|prime minister|tariffs?|white house|trump|biden|putin|kim jong|netanyahu|zelensk)/i,
 ];
+
+/**
+ * Adults only (CD, Sun): non-violent crime, cons, scams, heists, smuggling, fraud, weird court cases. Not rejected by
+ * the regex; the gate judges them (still never with victims hurt), and a story that matches is rated "adults".
+ */
+export const ADULT_ONLY =
+  /\b(arrest(ed)?|charged|sentenced|trial|lawsuit|sues?|sued|indict(ed|ment)?|court|judge|scam(mers?)?|fraud|con artist|heist|thie(f|ves)|theft|stole|stolen|smuggl(e|ed|er|ers|ing)|hackers?|hacked|data breach|counterfeit|forg(ed|ery)|embezzl)/i;
 
 /** Soft: not rejected outright; candidates.ts scores these lower. */
 export const SOFT_BLOCK: RegExp[] = [

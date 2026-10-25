@@ -2,7 +2,8 @@
 
 Judging Sun 2-5 PM, WEL. Stage pitch 5:30 PM, GDC 2.216. Partner hosts alone until the CD is back ~4:45.
 TV: `groupproject-game.vercel.app/tv?judge=1&bots=1` (Quick · Odd news · Teens). Judge mode = 1 turn each, max 3,
-then the finale. About 5 min from Start.
+then the finale. About 5 min from Start. Judge stories: the Busan canal shark, the €9M gold in a Dendermonde cellar
+wall, the Norwich Batman.
 
 ## The 30-second pitch (say it while they scan)
 "Last time you hung out with friends, how much of it was everyone on their own phone? Game nights fix that, but
@@ -31,6 +32,7 @@ the TV runs."
 7. Reveal: wait 3 s. "That's the real headline." "That's the talent you typed." "Take it home."
 8. Close: "Your friends' ideas were your best move. Muse wrote, judged and painted every decision; code rolled the
    dice. It was based on a true story. And you just played it."
+9. For Meta judges, last: "Every brain in this game is Meta's Muse: it writes, judges every plan, paints you in, and listens. The only thing it borrowed is a voice."
 
 ## 3 lines to memorize
 1. "The one group project where everyone actually shows up."
@@ -58,6 +60,18 @@ the TV runs."
   backup video (laptop + phone) and talk over it; hand out the QR card.
 - **Freeze:** F5 on the TV, everyone rescans. Twice = video.
 - **Judge in a hurry:** 30-second pitch + deck reveal slide + QR card.
+
+## HackTX general judging (Best Overall)
+- **Technology:** real-time multi-phone rooms run by the TV; 4 Muse jobs (judge plans, write turns, paint your heroes
+  into each scene, transcribe) + the MCP connector; a live news pipeline with an AI storyability gate; code checks
+  every AI change; crypto dice; generate-ahead so nobody waits >5 s; music made in code. *Point at:* DM's Notes (N),
+  the how-it-works diagram.
+- **Design:** Neon Ink art, Jackbox-style lobby, phone UI, every AI call explainable. *Point at:* lobby, painting, phone.
+- **Completion:** plays end to end on the live link; every AI call has a fallback. *Point at:* their own game.
+- **Learning (both of you):** "AI needs a director: left alone it drifts and writes stories you can't follow, so our
+  engine gives Muse rules and code checks every move." "Build the prototype fast: our first playtest found problems no
+  plan would have." "AI makes things look good fast; making them feel good took playtesting." "First hackathon:
+  stressful, fun, worth it." (Never say "AI is bad at stories".)
 
 ## Never say
 "4 minutes" · "this week's news" (at the table) · "nothing is saved" · "20 cents" as fact ·

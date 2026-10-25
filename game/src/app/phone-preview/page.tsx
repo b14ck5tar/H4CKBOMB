@@ -9,7 +9,7 @@
 import { useEffect, useMemo, useState } from "react";
 import quick from "@/data/quickstart_heroes.json";
 import questImages from "@/data/quest_images.json";
-import { REACTIONS, PLAN_MAX } from "@/lib/rules";
+import { REACTIONS, TYPE_MAX } from "@/lib/rules";
 import type { FinalRoll, Hero, Pitch, Player, Storybook } from "@/lib/types";
 import {
   BackPlanScreen,
@@ -154,7 +154,7 @@ export default function PhonePreview() {
           nowGoal={NOW}
           ladder={LADDER}
           step={1}
-          max={PLAN_MAX}
+          max={TYPE_MAX}
           onIdea={(t) => {
             log("idea", { text: t });
             setIdea(t);
@@ -173,7 +173,7 @@ export default function PhonePreview() {
           nowGoal={NOW}
           ladder={LADDER}
           step={1}
-          max={PLAN_MAX}
+          max={TYPE_MAX}
           onPitch={(text, creditId) => log("pitch", { text, creditId })}
           timer={{ deadlineAt: now + 24_000, total: 30_000 }}
         />
@@ -243,7 +243,7 @@ export default function PhonePreview() {
           />
         );
       } else {
-        body = <FinalePitchScreen goal={GOAL} max={PLAN_MAX} onPitch={(text) => log("pitch", { text })} timer={{ deadlineAt: now + 40_000, total: 60_000 }} />;
+        body = <FinalePitchScreen goal={GOAL} max={TYPE_MAX} onPitch={(text) => log("pitch", { text })} timer={{ deadlineAt: now + 40_000, total: 60_000 }} />;
       }
       break;
     }

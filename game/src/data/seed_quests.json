@@ -1,5 +1,607 @@
 [
  {
+  "id": "canal-shark",
+  "quest_title": "The Shark That Went Viral",
+  "category": "animals",
+  "tone": "silly",
+  "rating": "teens",
+  "realm_name": "Busan, South Korea",
+  "fairytale_premise": "A three-meter shark swam into a narrow city canal in a big port city and will not leave. The city made it the mascot. Every photo of it makes it a little bigger.",
+  "the_threat": {
+   "name": "The Canal Shark",
+   "description": "A three-meter shark living in a narrow city canal. It grows a little every time someone takes its picture, and a million people are coming to take its picture.",
+   "mapped_from": "A 3-meter shark lived in a Busan canal for a month and about 1.7 million people came to see it."
+  },
+  "the_goal": {
+   "description": "Get the shark back out to sea before it outgrows the canal.",
+   "mapped_from": "On the third rescue try, a floating platform slowly pushed the shark out to sea."
+  },
+  "problem": {
+   "pronoun": "it",
+   "stakes": "one more weekend of tourists and it will not fit under the bridges"
+  },
+  "locations": [
+   {
+    "name": "The Canal Bridges",
+    "description": "Low concrete footbridges packed with people holding up phones, a gray fin circling in the green water below.",
+    "mapped_from": "Crowds lined the canal for weeks"
+   },
+   {
+    "name": "The Souvenir Stalls",
+    "description": "Folding tables of shark keychains, shark hats and shark-shaped fish cakes along the canal wall.",
+    "mapped_from": "The city made the shark its mascot"
+   },
+   {
+    "name": "The Net Line",
+    "description": "A sagging net stretched across the canal between two small boats, the fin sliding right over it.",
+    "mapped_from": "The shark dodged boats and swam over nets"
+   },
+   {
+    "name": "The Harbor Office",
+    "description": "A cramped office with a big whiteboard of failed rescue plans and a wall of shark fan mail.",
+    "mapped_from": "Officials planned the rescue tries"
+   },
+   {
+    "name": "The Canal Mouth",
+    "description": "Where the narrow canal opens to the dark port, a wide floating platform waiting at the edge.",
+    "mapped_from": "A floating platform pushed it out"
+   }
+  ],
+  "complications": [
+   {
+    "stage": 1,
+    "title": "The Crowd",
+    "what_happens": "A crowd packs every bridge to photograph the shark, and with every photo it grows.",
+    "why_obvious_in_hindsight": "A celebrity grows with its audience.",
+    "mapped_from": "About 1.7 million people came to see it."
+   },
+   {
+    "stage": 2,
+    "title": "The Failed Rescues",
+    "what_happens": "The boats come, and the shark dodges them. The net comes, and it swims right over it.",
+    "why_obvious_in_hindsight": "It is a shark. It has done this before.",
+    "mapped_from": "Two rescue tries failed."
+   },
+   {
+    "stage": 3,
+    "title": "The Platform",
+    "what_happens": "The only thing left is a huge floating platform, and the shark has to be talked into following it.",
+    "why_obvious_in_hindsight": "You cannot rush a star.",
+    "mapped_from": "A floating platform slowly pushed it out."
+   }
+  ],
+  "scenes": [
+   {
+    "kind": "hook",
+    "title": "The New Mascot",
+    "location": "The Canal Bridges",
+    "narration": "A three-meter shark swam into a narrow canal in a big port city and will not leave. The city made it the mascot. Every photo makes it a little bigger.",
+    "goal": "Clear the crowd off the canal bridges",
+    "situation": "Low concrete bridges packed with phones held high, and a gray fin circling below.",
+    "npc_line": {
+     "speaker": "Harbor official",
+     "line": "We sold forty thousand shark keychains. I need it gone and I need it happy."
+    }
+   },
+   {
+    "kind": "twist",
+    "title": "Over the Net",
+    "location": "The Net Line",
+    "narration": "The rescue boats come, and the shark slips around them. The net comes, and the shark swims right over it, tail up for the cameras.",
+    "goal": "Find a rescue the shark will not see coming",
+    "situation": "A sagging net between two small boats, the fin sliding over the top of it.",
+    "npc_line": {
+     "speaker": "Harbor official",
+     "line": "That was plan two. Plan three is a whiteboard and a prayer."
+    }
+   },
+   {
+    "kind": "climax",
+    "title": "The Platform",
+    "location": "The Canal Mouth",
+    "narration": "A huge floating platform waits where the canal meets the port. The shark is too big to rush now. It has to want to go.",
+    "goal": "Get the shark back out to sea",
+    "situation": "The wide dark port, a floating platform at the canal mouth, and the shark watching it.",
+    "npc_line": {
+     "speaker": "Harbor official",
+     "line": "If it goes, we keep the keychains. If it stays, we need a bigger canal."
+    }
+   }
+  ],
+  "quick_scene": {
+   "kind": "hook",
+   "title": "The Shark That Went Viral",
+   "location": "The Canal Bridges",
+   "narration": "A three-meter shark swam into a narrow canal in a big port city and will not leave. The city made it the official mascot. Every photo makes it a little bigger, and a million people are coming this weekend.",
+   "goal": "Get the shark out to sea before it outgrows the canal",
+   "situation": "Low concrete bridges packed with phones held high, and a gray fin circling in the green water below.",
+   "npc_line": {
+    "speaker": "Harbor official",
+    "line": "We sold forty thousand shark keychains. I need it gone and I need it happy."
+   },
+   "first_step": "Clear the crowd off the canal bridges",
+   "problem_name": "the canal shark"
+  },
+  "the_real_story": {
+   "summary": "A 3-meter shark lived in a canal in Busan, South Korea, for a month. The city nicknamed it Bukangi and made it a mascot, and about 1.7 million people came to see it.",
+   "headline": "South Korean officials free a shark trapped for a month in Busan canal",
+   "source": "AP",
+   "date": "2026-10-21",
+   "now": "Two rescues failed: it dodged the boats and swam over the nets. On the third try a big floating platform slowly pushed it out, and it swam back to sea.",
+   "link": "https://www.ksl.com/article/51639046/south-korean-officials-free-a-shark-trapped-for-a-month-in-busan-canal",
+   "context_note": "No people or animals were hurt."
+  },
+  "real_event": {
+   "place_type": "a narrow canal in a big port city",
+   "roles": [
+    "harbor officials",
+    "a rescue boat crew",
+    "huge crowds of visitors"
+   ],
+   "situation": "a large shark swam into a city canal and would not leave",
+   "stakes": "the longer it stays, the harder it is to get it back to sea",
+   "arc": [
+    "The shark swims into the canal and the city adopts it as a mascot",
+    "Over a million people come to look",
+    "Two rescue tries fail: it dodges the boats and swims over the nets",
+    "A big floating platform slowly pushes it back out to sea"
+   ]
+  },
+  "art_style_hint": "A narrow concrete canal between apartment towers at night, crowds with glowing phones on low bridges, a giant shark fin in neon-lit green water."
+ },
+ {
+  "id": "wall-gold",
+  "quest_title": "The Wall That Made an Offer",
+  "category": "treasure",
+  "tone": "eerie",
+  "rating": "teens",
+  "realm_name": "A small town in Belgium",
+  "fairytale_premise": "A sewer crew digging under an old brewer's house broke into a bricked-up wall full of gold, nine million euros of it. The gold talks, and every bar has a good reason why you should keep it.",
+  "the_threat": {
+   "name": "The Talking Gold",
+   "description": "About fifty gold bars and a pile of coins, bricked up in a cellar wall for decades. Each bar talks, softly and reasonably, about why you should keep it.",
+   "mapped_from": "Sewer workers found about 50 gold bars and coins worth about 9 million euros in a cellar wall; the crew briefly considered keeping it."
+  },
+  "the_goal": {
+   "description": "Get every bar to the police before anyone keeps one.",
+   "mapped_from": "The crew called the police, and the gold went to a government vault."
+  },
+  "problem": {
+   "pronoun": "it",
+   "stakes": "if one bar goes missing, the whole crew ends up in the newspaper for the wrong reason"
+  },
+  "locations": [
+   {
+    "name": "The Cellar Wall",
+    "description": "A broken brick wall in a damp cellar, gold bars stacked inside like firewood, a work lamp on the floor.",
+    "mapped_from": "Gold bricked inside a cellar wall"
+   },
+   {
+    "name": "The Sewer Trench",
+    "description": "A muddy trench in the street, orange barriers, a small digger and a crew in hi-vis vests.",
+    "mapped_from": "A sewer crew was installing pipes"
+   },
+   {
+    "name": "The Quiet Street",
+    "description": "Cobblestones, shuttered windows, and a few too many people walking slowly past with metal detectors.",
+    "mapped_from": "Treasure hunters came looking"
+   },
+   {
+    "name": "The Brewer's House",
+    "description": "An old narrow brick house with a crooked chimney and dusty beer barrels in the hall.",
+    "mapped_from": "The house of an old brewer"
+   },
+   {
+    "name": "The Police Van",
+    "description": "An unmarked van with a strongbox in the back and a very tired officer with a clipboard.",
+    "mapped_from": "The gold went to a government vault"
+   }
+  ],
+  "complications": [
+   {
+    "stage": 1,
+    "title": "The Offer",
+    "what_happens": "The gold starts talking, softly, about early retirement.",
+    "why_obvious_in_hindsight": "Nine million euros is very persuasive.",
+    "mapped_from": "The crew briefly considered keeping it"
+   },
+   {
+    "stage": 2,
+    "title": "The Street Knows",
+    "what_happens": "Word gets out, and people with metal detectors start strolling past the trench.",
+    "why_obvious_in_hindsight": "Nothing travels faster than gold.",
+    "mapped_from": "Treasure hunters came; police said it was pointless"
+   },
+   {
+    "stage": 3,
+    "title": "The Van",
+    "what_happens": "The police van arrives, and the gold makes its final, best argument.",
+    "why_obvious_in_hindsight": "The last bar always talks the loudest.",
+    "mapped_from": "The gold went to a government vault"
+   }
+  ],
+  "scenes": [
+   {
+    "kind": "hook",
+    "title": "The Offer",
+    "location": "The Cellar Wall",
+    "narration": "A sewer crew digging under an old brewer's house broke into a bricked-up wall full of gold. Nine million euros of it. The gold talks, and every bar has a very good reason why you should keep it.",
+    "goal": "Carry the gold up out of the cellar",
+    "situation": "A broken brick wall, gold bars stacked inside like firewood, and a work lamp on a wet floor.",
+    "npc_line": {
+     "speaker": "The crew foreman",
+     "line": "Thirty years in sewers. First time a wall made me an offer."
+    }
+   },
+   {
+    "kind": "twist",
+    "title": "The Street Knows",
+    "location": "The Quiet Street",
+    "narration": "Word gets out. People with metal detectors start strolling past the trench, very slowly, pretending to look at the houses.",
+    "goal": "Keep the street away from the gold",
+    "situation": "Cobblestones, orange barriers, and three people with metal detectors walking very slowly.",
+    "npc_line": {
+     "speaker": "The crew foreman",
+     "line": "That man has walked his dog past us nine times. He does not have a dog."
+    }
+   },
+   {
+    "kind": "climax",
+    "title": "The Van",
+    "location": "The Police Van",
+    "narration": "The police van pulls up. The gold makes its final argument, and it is a good one.",
+    "goal": "Get every bar to the police before anyone keeps one",
+    "situation": "An unmarked van, a strongbox, and a tired officer with a clipboard counting bars.",
+    "npc_line": {
+     "speaker": "Police officer",
+     "line": "Fifty bars. Sign here. And here. And please stop listening to it."
+    }
+   }
+  ],
+  "quick_scene": {
+   "kind": "hook",
+   "title": "The Wall That Made an Offer",
+   "location": "The Cellar Wall",
+   "narration": "A sewer crew digging under an old brewer's house broke into a bricked-up wall full of gold. Nine million euros of it. The gold talks, and every bar has a very good reason why you should keep it.",
+   "goal": "Get every bar to the police before anyone keeps one",
+   "situation": "A broken brick wall in a damp cellar, gold bars stacked inside like firewood, and a work lamp on a wet floor.",
+   "npc_line": {
+    "speaker": "The crew foreman",
+    "line": "Thirty years in sewers. First time a wall made me an offer."
+   },
+   "first_step": "Carry the gold up out of the cellar",
+   "problem_name": "the talking gold"
+  },
+  "the_real_story": {
+   "summary": "In Dendermonde, Belgium, a sewer crew found about 50 gold bars and many coins, worth about 9 million euros, bricked inside the cellar wall of an old brewer's house.",
+   "headline": "Construction workers find $10M in gold bars & coins during sewer installation",
+   "source": "WJLA",
+   "date": "2026-08-15",
+   "now": "The crew briefly considered keeping it, then called the police. The gold sits in a government vault, nobody knows who owns it, and police told treasure hunters it is truly pointless to come looking.",
+   "link": "https://wjla.com/news/offbeat/construction-workers-find-10m-in-gold-bars-coins-during-sewer-installation-belgium-buried-treasure-hunters-renovation-project-brewery-money-value-finders-reward",
+   "context_note": "Nobody was hurt and nothing was stolen."
+  },
+  "real_event": {
+   "place_type": "an old brewer's house on a quiet town street",
+   "roles": [
+    "a sewer crew",
+    "a crew foreman",
+    "the police",
+    "treasure hunters"
+   ],
+   "situation": "a sewer crew finds a fortune in gold bricked inside a cellar wall",
+   "stakes": "the crew must decide what to do with gold that is not theirs",
+   "arc": [
+    "The crew breaks into a bricked-up cellar wall",
+    "They find about fifty gold bars and many coins",
+    "They briefly consider keeping it, then call the police",
+    "The gold goes to a government vault, and treasure hunters are told not to bother"
+   ]
+  },
+  "art_style_hint": "A damp cellar under an old Belgian brick house at night, a broken wall glowing with stacked gold bars, a sewer crew's work lamp, neon gold light."
+ },
+ {
+  "id": "norwich-batman",
+  "quest_title": "The Bag That Climbs",
+  "category": "heist",
+  "tone": "silly",
+  "rating": "adults",
+  "realm_name": "An old cathedral city in England",
+  "fairytale_premise": "On a birthday night out, a man dressed as Batman and his friends see a thief snatch a woman's handbag. The bag climbs to the highest place it can find.",
+  "the_threat": {
+   "name": "The Climbing Handbag",
+   "description": "A woman's handbag, snatched from a queue by a thief. Wherever it ends up, it climbs to the highest point it can find: lamp posts, roofs, the cathedral.",
+   "mapped_from": "The stolen bag was found on top of a high flint wall by the cathedral."
+  },
+  "the_goal": {
+   "description": "Get the handbag back down to its owner with everything inside.",
+   "mapped_from": "Batman climbed the wall and returned the bag with everything still inside."
+  },
+  "problem": {
+   "pronoun": "it",
+   "stakes": "her keys, her phone and her rent money are in it, and it is heading for the cathedral roof"
+  },
+  "locations": [
+   {
+    "name": "The Bar Queue",
+    "description": "A long queue outside a busy bar on a narrow old street, people in fancy dress, a bouncer with a clipboard.",
+    "mapped_from": "The bag was snatched from a queue on Queen Street"
+   },
+   {
+    "name": "The Old Lanes",
+    "description": "Crooked cobbled lanes between leaning timber houses, a chip shop still open, a lamp post with something swinging from it.",
+    "mapped_from": "The chase through the old city"
+   },
+   {
+    "name": "The Police Car",
+    "description": "A police car with its lights going and two officers listening very patiently to Batman.",
+    "mapped_from": "They flagged down police on the way"
+   },
+   {
+    "name": "The Cathedral Close",
+    "description": "A quiet lawn under a huge floodlit cathedral, a tall flint wall along one side.",
+    "mapped_from": "The bag ended up by the cathedral"
+   },
+   {
+    "name": "The Flint Wall",
+    "description": "A tall old flint wall in the dark, a handbag sitting on the very top, a long streamer of toilet paper hanging down the stones.",
+    "mapped_from": "A toilet-paper grappling hook failed, so Batman climbed"
+   }
+  ],
+  "complications": [
+   {
+    "stage": 1,
+    "title": "The Snatch",
+    "what_happens": "A thief grabs a woman's bag from the queue and runs into the old lanes.",
+    "why_obvious_in_hindsight": "Every birthday night out has one bad moment.",
+    "mapped_from": "A thief snatched a bag from a queue"
+   },
+   {
+    "stage": 2,
+    "title": "The Bag Climbs",
+    "what_happens": "The bag keeps turning up higher and higher: a lamp post, a shop sign, a roof.",
+    "why_obvious_in_hindsight": "It was always going to end up somewhere hard to reach.",
+    "mapped_from": "The bag was found on top of a high wall"
+   },
+   {
+    "stage": 3,
+    "title": "The Wall",
+    "what_happens": "The bag sits on top of a tall flint wall by the cathedral, and the only gadget is made of toilet paper.",
+    "why_obvious_in_hindsight": "Of course the grappling hook was not real.",
+    "mapped_from": "A toilet-paper grappling hook failed"
+   }
+  ],
+  "scenes": [
+   {
+    "kind": "hook",
+    "title": "The Snatch",
+    "location": "The Bar Queue",
+    "narration": "On a birthday night out in an old English city, Batman, Poison Ivy and Mister Fantastic are queuing for a bar when a thief snatches a woman's handbag and runs. The bag is the strange part: it always climbs to the highest place it can find.",
+    "goal": "Chase the thief through the old lanes",
+    "situation": "A long queue in fancy dress, a woman pointing, and a thief vanishing into a crooked lane.",
+    "npc_line": {
+     "speaker": "Batman",
+     "line": "I have a grappling hook. It is made of toilet paper."
+    }
+   },
+   {
+    "kind": "twist",
+    "title": "Higher",
+    "location": "The Old Lanes",
+    "narration": "The thief has dropped the bag and gone. The bag has not stayed down. It is halfway up a lamp post and still going.",
+    "goal": "Get the bag down before it reaches the roofs",
+    "situation": "A crooked lane, a chip shop, and a handbag inching up a lamp post.",
+    "npc_line": {
+     "speaker": "Poison Ivy",
+     "line": "Nobody tell the birthday girl we left her cake at the bar."
+    }
+   },
+   {
+    "kind": "climax",
+    "title": "The Wall",
+    "location": "The Flint Wall",
+    "narration": "The bag has reached the top of a tall flint wall by the cathedral. The toilet-paper grappling hook is not going to hold.",
+    "goal": "Get the handbag back down to its owner",
+    "situation": "A tall flint wall, a handbag on top, and a streamer of toilet paper fluttering down.",
+    "npc_line": {
+     "speaker": "Batman",
+     "line": "This is the part of the movie where it works."
+    }
+   }
+  ],
+  "quick_scene": {
+   "kind": "hook",
+   "title": "The Bag That Climbs",
+   "location": "The Bar Queue",
+   "narration": "On a birthday night out in an old English city, Batman, Poison Ivy and Mister Fantastic are queuing for a bar when a thief snatches a woman's handbag and runs. The bag is the strange part: wherever it lands, it climbs to the highest place it can find.",
+   "goal": "Get the handbag back down to its owner",
+   "situation": "A long queue in fancy dress outside a bar, a woman pointing, and a thief vanishing into a crooked lane.",
+   "npc_line": {
+    "speaker": "Batman",
+    "line": "I have a grappling hook. It is made of toilet paper."
+   },
+   "first_step": "Chase the thief through the old lanes",
+   "problem_name": "the climbing handbag"
+  },
+  "the_real_story": {
+   "summary": "On a night out in Norwich, England, a man dressed as Batman chased a suspected handbag thief, with friends dressed as Poison Ivy and Mister Fantastic.",
+   "headline": "Pow! Man in Batman costume chases down suspected Norwich handbag thief",
+   "source": "Irish Examiner",
+   "date": "2026-09-19",
+   "now": "A tip led them to the bag on top of a high flint wall by the cathedral. A grappling hook made from a roll of toilet paper failed, so Batman climbed up and got it back with everything inside. The thief got away, and the video went viral.",
+   "link": "https://www.irishexaminer.com/world/arid-41915671.html",
+   "context_note": "Nobody was hurt, and the bag came back with everything inside."
+  },
+  "real_event": {
+   "place_type": "an old cathedral city at night",
+   "roles": [
+    "a man dressed as Batman",
+    "friends dressed as Poison Ivy and Mister Fantastic",
+    "the woman whose bag was taken",
+    "police officers"
+   ],
+   "situation": "a costumed group on a birthday night out chases a bag thief",
+   "stakes": "the woman's bag with all her things is gone",
+   "arc": [
+    "A thief snatches a woman's bag from a queue on a night out",
+    "Batman gives chase with Poison Ivy and Mister Fantastic and flags down police",
+    "A tip leads them to the bag on top of a high flint wall by the cathedral",
+    "A toilet-paper grappling hook fails, so Batman climbs up and returns the bag with everything inside"
+   ]
+  },
+  "art_style_hint": "Old English cathedral city at night, crooked cobbled lanes, a man in a homemade bat costume and cape climbing a tall flint wall toward a handbag, a streamer of toilet paper, neon street light."
+ },
+ {
+  "id": "opera-snake",
+  "quest_title": "The Snake Who Got the Part",
+  "category": "animals",
+  "tone": "silly",
+  "rating": "teens",
+  "realm_name": "A grand opera house in New York",
+  "fairytale_premise": "A grand opera house held auditions for a real snake, and a boa named Princess got the part. On opening night she is in the air vents, humming the whole opera.",
+  "the_threat": {
+   "name": "The Star Snake",
+   "description": "Princess, a big boa who won the part in the opera. She hums every note of the show, and on opening night she has gone into the air vents.",
+   "mapped_from": "A boa named Princess won the role at the Metropolitan Opera's snake auditions."
+  },
+  "the_goal": {
+   "description": "Get Princess on stage before the curtain goes up.",
+   "mapped_from": "Princess got the part on a trial basis, with a smaller boa as her understudy."
+  },
+  "problem": {
+   "pronoun": "she",
+   "stakes": "three thousand people paid to see a snake, and the backup snake is eleven inches long"
+  },
+  "locations": [
+   {
+    "name": "The Audition Room",
+    "description": "A bare rehearsal room with a piano, a row of snake carriers and a handler lifting a boa overhead.",
+    "mapped_from": "Snakes auditioned by being lifted over the handler's head"
+   },
+   {
+    "name": "The Air Vents",
+    "description": "Dusty metal ducts above the stage, faint humming echoing through them.",
+    "mapped_from": "Opening night"
+   },
+   {
+    "name": "The Dressing Room",
+    "description": "A mirror ringed with bulbs, a nine-foot sequined costume on a hanger, and a very small snake in a shoebox.",
+    "mapped_from": "A smaller boa became the understudy"
+   },
+   {
+    "name": "The Orchestra Pit",
+    "description": "Music stands, a nervous conductor and a harp with one string missing.",
+    "mapped_from": "The opera's music"
+   },
+   {
+    "name": "The Main Stage",
+    "description": "Red velvet curtain, a painted forest set and a spotlight waiting on an empty mark.",
+    "mapped_from": "The performance"
+   }
+  ],
+  "complications": [
+   {
+    "stage": 1,
+    "title": "The Humming",
+    "what_happens": "Princess is in the air vents, humming the opera note for note.",
+    "why_obvious_in_hindsight": "She learned the music in rehearsal. Of course she knows it.",
+    "mapped_from": "Princess won the role"
+   },
+   {
+    "stage": 2,
+    "title": "The Understudy",
+    "what_happens": "The understudy is ready to go on, and she is much too small for the costume.",
+    "why_obvious_in_hindsight": "Every star has an understudy. This one fits in a shoebox.",
+    "mapped_from": "A smaller boa named Nala became the understudy"
+   },
+   {
+    "stage": 3,
+    "title": "Curtain",
+    "what_happens": "The curtain is about to rise, and the star has to be on her mark.",
+    "why_obvious_in_hindsight": "The show always goes on.",
+    "mapped_from": "The production opened with a live snake"
+   }
+  ],
+  "scenes": [
+   {
+    "kind": "hook",
+    "title": "Opening Night",
+    "location": "The Air Vents",
+    "narration": "A grand opera house held auditions for a real snake, and a boa named Princess got the part. Tonight is opening night, and she is somewhere in the air vents, humming the whole opera.",
+    "goal": "Follow the humming through the air vents",
+    "situation": "Dusty ducts over the stage, faint perfect humming, and an empty spotlight below.",
+    "npc_line": {
+     "speaker": "Stage manager",
+     "line": "The understudy is eleven inches long. The costume is nine feet."
+    }
+   },
+   {
+    "kind": "twist",
+    "title": "The Understudy",
+    "location": "The Dressing Room",
+    "narration": "The understudy is warming up in a shoebox. She is small, keen and absolutely certain this is her night.",
+    "goal": "Keep the understudy out of the star costume",
+    "situation": "A mirror ringed with bulbs, a nine-foot costume, and a very small snake looking at it.",
+    "npc_line": {
+     "speaker": "Stage manager",
+     "line": "She has been doing scales since noon."
+    }
+   },
+   {
+    "kind": "climax",
+    "title": "Curtain",
+    "location": "The Main Stage",
+    "narration": "The orchestra is tuning and the curtain is about to rise. The spotlight is on an empty mark.",
+    "goal": "Get Princess on stage before the curtain goes up",
+    "situation": "Red velvet curtain, a painted forest set, and a spotlight on an empty mark.",
+    "npc_line": {
+     "speaker": "Stage manager",
+     "line": "Three thousand people paid to see a snake. They will see a snake."
+    }
+   }
+  ],
+  "quick_scene": {
+   "kind": "hook",
+   "title": "The Snake Who Got the Part",
+   "location": "The Air Vents",
+   "narration": "A grand opera house held auditions for a real snake, and a boa named Princess got the part. Tonight is opening night. She is somewhere in the air vents, humming the whole opera, and her understudy is very small.",
+   "goal": "Get Princess on stage before the curtain goes up",
+   "situation": "Dusty metal ducts above the stage, perfect humming echoing through them, and an empty spotlight below.",
+   "npc_line": {
+    "speaker": "Stage manager",
+    "line": "The understudy is eleven inches long. The costume is nine feet."
+   },
+   "first_step": "Follow the humming through the air vents",
+   "problem_name": "the star snake"
+  },
+  "the_real_story": {
+   "summary": "The Metropolitan Opera in New York held auditions for a live snake. Each snake wrapped around the handler and was lifted overhead. A boa named Princess got the part, on a trial basis.",
+   "headline": "Even snakes have to audition for the opera at the Met. Princess the boa constrictor got the part",
+   "source": "AP",
+   "date": "2026-08-28",
+   "now": "A smaller boa named Nala is her understudy.",
+   "link": "https://medicinehatnews.com/?p=5243058",
+   "context_note": "No people or animals were hurt."
+  },
+  "real_event": {
+   "place_type": "a grand opera house",
+   "roles": [
+    "a stage manager",
+    "a snake handler",
+    "an orchestra"
+   ],
+   "situation": "an opera house auditions live snakes for a role in a new show",
+   "stakes": "the show needs a real snake that stays calm on stage",
+   "arc": [
+    "The opera house holds auditions for a real snake",
+    "Each snake is lifted over the handler's head",
+    "A boa named Princess wins the part",
+    "A smaller boa becomes her understudy"
+   ]
+  },
+  "art_style_hint": "Inside a grand opera house at night, red velvet curtain and gold balconies, a huge boa coiled in a spotlight, neon magenta stage light."
+ },
+ {
   "id": "rust-wyrm",
   "quest_title": "The Bridge That Hums at Night",
   "category": "infrastructure",

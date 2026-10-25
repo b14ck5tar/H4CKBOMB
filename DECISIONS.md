@@ -183,3 +183,18 @@ Full history and train of thought: `design/00-where-we-are.md`.
 - No new features from now on. Fixes until 8:00 · final deploy by 8:30 · 3 timed judge runs 8:30-9:15 · video + submit 9:15-10:45.
 - The one polish allowed: a loud friend's-idea moment ("SAM'S IDEA +1" on the TV + the friend's name in the narration). Connection is 30% of the score.
 - Narrator live on the laptop: ElevenLabs Sarah for every line; every fallback voice is female.
+
+## Sun ~5:45 AM: tone + narrator (CD)
+- ✅ The game's story is BASED on a true story: the narrator never says "this really happened". It says "based on a true story" once, at the reveal only.
+- ✅ Storyteller narration (talks to the table) + Jackbox-style quips on plans and big rolls (tease the idea, never the person), shipping.
+- ✅ CD: "why are the storylines so kiddy?" The prompts' "an 8-year-old follows it" bar is replaced with "a tired adult at a party gets it on first hearing": plain and followable, with grown-up dry/dark humor. The Kids setting keeps the gentle tone. Default + judge rating: adults.
+- ✅ CD: stories are lame ("nobody cares about bridges"), and the same few have been reused too long. Research 20 fresh real odd-news stories (Aug-Oct 2026, worldwide); the CD picks the new judge stories.
+- ⏳ Full Story cap at 6 turns (⭐).
+- ✅ (Sun ~6 AM) CD: new judge stories = the Busan canal shark, the Met Opera snake audition, the €9M gold in a Dendermonde cellar wall (from 20 researched Aug-Oct 2026 stories). The other 7 of the top 10 go into the library. The old rust-wyrm/boulder/cornfield stories leave the judge top 3.
+- ✅ (Sun ~6:10 AM) CD: the safety filter is why the stories are lame. ADULTS mode now allows non-violent crime (heists, cons, scams, fraud), weird court cases, public-figure/company scandals, absurd local-government drama and dark-funny topics. Still blocked in every mode: deaths, serious injuries, violence against people, sexual content, children, hate, war/tragedy/disasters, partisan hot-button politics, mocking private people. Teens/Kids keep the old rules. 10 juicier stories are being researched for the CD to consider for the demo.
+- ✅ (Sun ~6:25 AM) CD: judge top 3 = the Busan canal shark, the €9M gold in the Dendermonde cellar wall, the Norwich Batman (replaces the opera snake). The library adds the rest of the top 10 plus the adult-tier winery heist, fake pilot, swallowed Tiffany earrings and Pokémon card heist.
+- ✅ CD: Adults mode lets players be mischievous (lie, bribe, steal, prank, scam): played out literally with consequences. Only violence against people, sexual content, hate, self-harm and kids get redirected.
+
+## Sun ~6:30 AM (laptop clock): final schedule (CD)
+- Feature freeze 7:20 (after it: crash or "hard to follow" fixes only) · 7:30 final merge to main + the CD deploys · 7:30-8:00 timed judge games + blind scorer · 8:00-8:30 the CD records the video · the CD leaves ~8:30 · Devpost final 11:30 (submitter: ⏳ ⭐ the partner).
+- Pitch framing for the Adults tier: "grown-up stories, with hard limits the AI can't cross."

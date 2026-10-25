@@ -52,7 +52,7 @@ export function buildKeepsake(s: GameState, art: { cover?: string; portraits: Re
   const awards = new Map(book.hero_pages.map((hp) => [hp.hero_id, hp]));
   return {
     v: 1,
-    t: book.title,
+    t: s.quest?.title || book.title, // one title everywhere: the one the TV showed (CD playtest)
     g: s.partyName || "",
     d: new Date().toISOString().slice(0, 10),
     x: s.final ? ENDING_LABEL[s.final.ending] : "",
@@ -162,7 +162,7 @@ export function saveToHall(s: GameState) {
     if (!s.storybook) return;
     const line = keyLines(s.log, 1)[0];
     const entry: HallEntry = {
-      title: s.storybook.title,
+      title: s.quest?.title || s.storybook.title,
       quote: line?.l ?? s.storybook.moral,
       by: line?.n ?? "",
       heroes: s.players.filter((p) => p.hero).map((p) => p.hero!.name),

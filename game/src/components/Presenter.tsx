@@ -68,7 +68,7 @@ export function Presenter({ host, s, onNotes, onCloseNotes }: { host: Stage; s: 
         if (READING.includes(st.phase)) host.skip();
       } else if (k === "s") {
         if (host.deadlineAt) host.skip();
-      } else if (k === "b" && st.phase === "lobby" && new URLSearchParams(window.location.search).has("bots")) {
+      } else if ((k === "b" || k === "B") && st.phase === "lobby" && new URLSearchParams(window.location.search).has("bots")) {
         const name = host.addBot();
         setToast(name ? `Test player ${name} joined.` : "No room for another test player.");
       } else if (k === "q" && st.phase === "lobby") {

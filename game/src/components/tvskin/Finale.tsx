@@ -266,7 +266,7 @@ export function FinaleShake({ stage, heroes, armed = [], shook = [], beat, planB
       <div className="tvx-bigdie" aria-hidden>
         <span className="tvx-bigdie-halo" />
         <div className="tvx-bigdie-rattle">
-          <D20Glyph label="20" className="tvx-bigdie-svg" />
+          <D20Glyph label="?" className="tvx-bigdie-svg" />
         </div>
       </div>
       {verb && (

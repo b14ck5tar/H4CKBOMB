@@ -67,7 +67,10 @@ built (0121947, in main). `judge=1` also forces Quick
 - **On screen:** the lobby. While nobody has joined, the lobby is its own attract screen (the big QR and a pitch
   line, `Lobby.tsx`). There is no attract hotkey any more.
 - **URL:** `https://groupproject-game.vercel.app/tv?judge=1&bots=1`. Lobby buttons: **Quick**, **Odd news**,
-  **Teens**. Warm up with one full game 10 minutes before (wakes Muse, checks the narrator).
+  **Teens** (Adults is grown-up in tone and lets players be mischievous; only if judges ask). Warm up with one full
+  game 10 minutes before (wakes Muse, checks the narrator).
+- **The judge stories** (saved, tested): the Busan canal shark, the €9M of gold in a Dendermonde cellar wall, and the
+  Norwich Batman.
 
 ### Joining fast
 - They scan the lobby QR (it carries the 4-letter code). Backup: `groupproject-game.vercel.app/play` + the code.
@@ -95,6 +98,10 @@ argue about an idea, stop talking. Nobody types for a judge.
 
 **The close (one breath):** "Your friends' ideas were your best move. Muse wrote, judged and painted every decision;
 code rolled the dice. It was based on a true story. And you just played it."
+
+**The Meta reveal line (last, for Meta judges):** "Every brain in this game is Meta's Muse: it writes, judges every plan, paints you in, and listens. The only thing it borrowed is a voice."
+(True: Muse Spark writes and judges, Muse Image paints, Muse Voice Transcribe listens, plus the Muse connector; the
+narrator is ElevenLabs because Meta has no text-to-speech.)
 
 **The hook to come back:** "Every table gets a different true story. Come back with a friend and play another."
 
@@ -220,6 +227,15 @@ The 10-minute plan and the 15-question drill are in `pitch/REHEARSAL.md`.
   plan purchase; until the deployed narrator is ElevenLabs, say "OpenAI TTS" instead. **Gemini track: off.**
 - **Phone footer** reworded by the look session (4b8cfa2): "No accounts. Your words go to Meta's Muse AI to run the
   game; the TV keeps the finished tale, and our server caches the art and audio."
+
+## 11. HackTX general judging (Best Overall): Technology, Design, Completion, Learning
+
+| Criterion | Say (one line) | Point at |
+|---|---|---|
+| Technology | "Real-time rooms: phones only send moves, the TV runs the game. Muse does 4 jobs: it judges plans, writes turns, paints your heroes into each scene with image edits, and transcribes voice. Plus an MCP connector. Live news goes through an AI storyability gate, code checks every AI change to the story, dice are crypto, every AI call starts the moment its inputs exist so nobody waits more than ~5 s, and the music is generated in code." | DM's Notes (**N**) live; the how-it-works diagram (`devpost-media/broll/how-it-works.png`) |
+| Design | "Our own Neon Ink art style, a Jackbox-style lobby, a phone UI built for one thumb, and every AI decision explainable." | The lobby, a new painting, the phone, DM's Notes |
+| Completion | "It plays end to end on the live link, and every AI call has a fallback, so a table never freezes." | The judge's own game, start to reveal (say "live link" only after the 8:30 deploy is checked) |
+| Learning | (1) "AI needs a director: left alone, it drifts from the idea and writes stories you can't follow, so our engine gives Muse rules and code checks every move." (2) "Build the prototype fast: our first playtest found problems no plan would have." (3) "AI makes things look good fast; making them *feel* good took playtesting with real people." Then: "It's the CD's first hackathon: stressful, fun, worth it." | PITCH_KIT section 5 (how we built it); the worst-playtest story |
 
 ## Don't say yet (not built, not tested, or not true on the live site)
 

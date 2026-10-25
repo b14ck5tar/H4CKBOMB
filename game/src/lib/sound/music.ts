@@ -14,6 +14,8 @@ import {
   ramp,
   readPref,
   setRoomOn,
+  claimTv,
+  trackNarration,
   writePref,
 } from "./context";
 import { CUE_NAMES, cueLength, playCue, type CueName, type CueOpts } from "./cues";
@@ -120,6 +122,7 @@ class MusicEngine {
   /** Play any track by id. Re-requesting the current track is a no-op (no restart). */
   play(id: TrackId) {
     if (isServer() || !TRACKS[id]) return;
+    claimTv(); // only TVs play music: the newest TV tab wins, older ones go silent
     this.loadPrefs();
     this.want = id;
     emitChange();
@@ -232,6 +235,8 @@ class MusicEngine {
 
   /** Duck while an <audio> element is playing. Returns a cleanup function (call it when you drop the element). */
   duckWhile(audio: HTMLAudioElement): () => void {
+    if (!isServer()) claimTv();
+    const untrack = trackNarration(audio); // a silenced (old or hidden) TV tab never narrates
     const key = `a${Math.random().toString(36).slice(2)}`;
     // Hold the dip ~0.9 s after a line ends, so back-to-back lines duck ONCE instead of pumping in and out.
     let hold: ReturnType<typeof setTimeout> | null = null;
@@ -252,6 +257,7 @@ class MusicEngine {
     return () => {
       evs.forEach((e) => audio.removeEventListener(e, down));
       offs.forEach((e) => audio.removeEventListener(e, up));
+      untrack();
       up();
     };
   }

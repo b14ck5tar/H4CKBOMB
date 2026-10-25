@@ -106,7 +106,7 @@ function Panel({ p, n, of, ms }: { p: MontagePanel; n: number; of: number; ms: n
       </p>
       <div className="tvx-panel-cap">
         <p className="tvx-panel-line">
-          <Words text={p.line} start={0.5} step={0.08} />
+          <Words text={p.line} start={0.3} step={0.05} /> {/* panels are 3.6 s: a 30-word line is in by ~1.8 s */}
         </p>
         <p className="tvx-panel-who">
           {p.who.map((w, k) => (
@@ -192,7 +192,7 @@ function Reveal({ r, keepsake, keepsakeUrl }: { r: RevealData; keepsake?: React.
         {keepsake ?? (
           <span className="tvx-take-qr">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            {take ? <img src={take} alt="QR code: your storybook" /> : <span className="tvx-take-wait" />}
+            {take ? <img src={take} alt="QR code: your storybook" /> : <span className="tvx-take-wait">Binding your storybook…</span>}
           </span>
         )}
         <p className="tvx-take-sub">Scan for your storybook</p>

@@ -31,6 +31,7 @@ export default function TVPage() {
       if (qs.get("judge") === "1") {
         h.judge = true;
         h.setMode("quick");
+        h.setRating("adults"); // judges are adults: grown-up humor (CD)
       }
       if (quest) h.chooseQuest(quest);
     } catch {}

@@ -37,7 +37,7 @@ import { QUICK, coldOpenTimeline } from "./quick";
 import { FEATURES } from "./features";
 import { Bots } from "./bots";
 import { TIER_SHIFT, gradeRoll } from "./grade";
-import { applyTurn, fallbackProposal, stateFromOpener, type StoryState, type TurnResult } from "./procedural";
+import { applyTurn, fallbackProposal, quipOk, stateFromOpener, type StoryState, type TurnResult } from "./procedural";
 import { speakableName } from "./now";
 import { DEFAULT_CAST, VOICES, isVoice } from "./voices";
 import { ART_STYLES, isArtStyle } from "./artStyles";
@@ -106,19 +106,21 @@ const FINAL_SHAKE_MS = 5000;
 const FINAL_TUMBLE_MS = 2000;
 const FINAL_LAND_MS = 1400;
 const FINAL_RESULT_MS = 3500;
+const FULL_READ_CAP_MS = 20_000; // a reading screen never holds the table longer (Space or every phone skips sooner)
 const TITLE_CARD_MS = 5200; // Full Story: the title card before scene 1
-const ROLL_HOLD_MS = 3400; // after the die lands: the quality meter fills and its grade reads (~3 s)
+const ROLL_HOLD_MS = 2200; // after the die lands: the quality meter fills and its grade reads (was 3.4 s of dead air)
 /** The outcome stays up long enough to read it out loud, and no longer. */
 const outcomeMs = (text: string) => Math.min(12_000, Math.max(6500, text.split(/\s+/).length * 330 + 3200));
 // Autopilot: a phone that's said nothing for this long (mid-story) is away; its hero keeps playing on its own.
 const AWAY_SILENCE_MS = 25_000;
 const AWAY_AFTER_TIMEOUTS = 2;
-export const MONTAGE_PANEL_MS = 4800; // one ending-montage panel on the TV
+export const MONTAGE_PANEL_MS = 3600; // one ending-montage panel on the TV (was 4.8 s: the CD waited ~70 s across montage + reveal)
 /** design/35 rule 4: progress is decided by code from the grade, never by the AI. */
 /** The house ranking of the hand-made stories (Quick Tale opens on the first one a table hasn't played). */
 const JUDGE_TOP = 3; // judge mode (/tv?judge=1) rotates through the first 3 FEATURED stories only
 // galactic-signal is last: its premise ("radio glow", "the catalog stays wrong") made 2 of 3 unfollowable lines in the Sun eval.
-const FEATURED = ["rust-wyrm", "hanging-boulder", "cornfield-dome", "billion-pearls", "idle-island", "returned-otter", "littlest-gardener", "galactic-signal"];
+// The judge top 3 (CD, Sun): the canal shark, the gold in the wall, the Norwich Batman; then the opera snake and the old three.
+const FEATURED = ["canal-shark", "wall-gold", "norwich-batman", "opera-snake","rust-wyrm", "hanging-boulder", "cornfield-dome", "billion-pearls", "idle-island", "returned-otter", "littlest-gardener", "galactic-signal"];
 const PRESENCE_ONLY = new Set(["hello", "ping", "away"]); // these don't count as "I'm back"
 /** Every phone silent this long = the table pauses ("Reconnecting phones…"). Phones ping every 3 s. */
 const ALL_QUIET_MS = 8000;
@@ -126,11 +128,26 @@ const ALL_QUIET_MS = 8000;
 const CLIMAX = new Set(["final_roll", "final_result", "epilogue", "reveal", "storybook"]);
 const BAND_RANK: Record<Band, number> = { LEGENDARY: 0, SUCCESS: 1, YES_BUT: 2, FAIL: 3, CATASTROPHE: 4 };
 
-/** What the narrator reads for the opener: the narration, then the character's line. */
-function openerText(sc: SeedScene) {
-  const npc = sc.npc_line?.speaker && sc.npc_line?.line ? ` ${sc.npc_line.speaker} says: "${sc.npc_line.line}"` : "";
-  return `${sc.narration}${npc}`;
+/** "Bridge inspector" -> "the bridge inspector", "The sheriff" -> "the sheriff", "TV reporter" -> "the TV reporter", "Grandpa" stays. */
+function speakerRef(s: string) {
+  const t = s.trim();
+  if (/^the\s/i.test(t)) return `the ${t.slice(4)}`;
+  const w = t.split(/\s+/);
+  if (w.length === 1) return t;
+  return `the ${[/^[A-Z]{2,}$/.test(w[0]) ? w[0] : w[0].toLowerCase(), ...w.slice(1)].join(" ")}`;
 }
+
+/**
+ * What the narrator reads for the opener: a storyteller's lead-in, the narration, then the character's line (CD: a
+ * storyteller talking to the table). The judge openers are pre-voiced from exactly this text (game/voice-cache).
+ */
+function openerText(sc: SeedScene) {
+  const npc = sc.npc_line?.speaker && sc.npc_line?.line ? ` And ${speakerRef(sc.npc_line.speaker)}? Very calmly: "${sc.npc_line.line}"` : "";
+  return `Okay, everyone… gather in. ${sc.narration}${npc}`;
+}
+
+/** The narrator's sign-off after the ending (the same text wherever it's voiced, so the early clip is the one that plays). */
+const SIGN_OFF = "And that, friends, is how the story goes.";
 
 type OutcomeData = { progress_hint?: "low" | "mid" | "high"; step_solved?: boolean; text: string; situation?: string; why?: string; now_goal?: string; where?: string; changed?: string; new_fact?: string; new_prop?: string; memorable?: string; scene?: string; open_thread?: string };
 
@@ -306,6 +323,10 @@ const SAFETY_NOTES: Record<string, string> = {
   "rust-wyrm": "No one hurt. The bridge closed as a precaution and is reopening. No real people in the story.",
   "billion-pearls": "No one hurt. The spill was in July and the beach clean-up is underway. No real people in the story.",
   "hanging-boulder": "No one hurt. The rock fell on a closed walkway and the event is over. No real people in the story.",
+  "canal-shark": "Good animal news: the shark swam back to sea. No one hurt. No real people in the story.",
+  "opera-snake": "A real opera casting call for a snake. No one hurt. No real people in the story.",
+  "wall-gold": "Found treasure, handed to the police. No one hurt, nothing stolen. No real people in the story.",
+  "norwich-batman": "A bag snatch with a happy ending: the bag came back with everything inside. No one hurt. The thief is never named or shown. Adults rating.",
   "galactic-signal": "Nobody involved at all: a radio source 49,000+ light-years away. No danger. No real people in the story.",
   "littlest-gardener": "Happy local news: a festival pumpkin win. No one hurt. The young grower is never named or shown.",
   "idle-island": "Nothing happened to anyone: it was a computer simulation in a research study. No real people in the story.",
@@ -363,7 +384,7 @@ function fallbackEnding(ending: Ending, name: string, attempt: string, finish: s
   const did = (attempt || `${name} goes for it`).replace(/[.!]+$/, "");
   const goal = finish.replace(/[.!]+$/, "").replace(/^./, (c) => c.toLowerCase());
   // The finish line is usually verb-first ("Get the dog home"); anything else is said as a plain result.
-  if (ending === "TRIUMPHANT") return !goal || /^(the|a|an|it|they|we|everyone)/i.test(goal) ? `${did}, and it works. The heroes pull it off together.` : `${did}, and it works. Together, the heroes ${goal}.`;
+  if (ending === "TRIUMPHANT") return !goal || /^(the|a|an|it|they|we|everyone)\b/i.test(goal) ? `${did}, and it works. The heroes pull it off together.` : `${did}, and it works. Together, the heroes ${goal}.`;
   if (ending === "BITTERSWEET") return `${did}, and it mostly works. The job gets done, but one silly thing never goes back to normal.`;
   return `${did}, but it doesn't quite work. Everyone is fine, and somehow the town likes it better this way.`;
 }
@@ -1167,7 +1188,8 @@ export class GameHost {
   /** Reading-screen safety timer; Quick Tale caps it so the demo stays under three minutes. */
   private readFor(text: string, minMs: number, capMs: number = QUICK.readCapMs) {
     const ms = readMs(text, minMs);
-    return this.quick ? Math.min(ms, Math.max(capMs, minMs)) : ms;
+    // Full Story caps too: a long article summary read at 0.4 s a word held the reveal for 70 s (CD playtest).
+    return Math.min(ms, Math.max(this.quick ? capMs : FULL_READ_CAP_MS, minMs));
   }
 
   setPartyName(name: string) {
@@ -1633,6 +1655,8 @@ export class GameHost {
     this.sceneList = [{ ...opener, goal }];
     this.rememberStory(seed);
     this.turnArt.clear();
+    this.seenArt.clear();
+    this.quipsSaid = [];
     // Where the heroes are: the real kind of place (never a real place name, which would leak into story_so_far).
     const placeType = typeof seed.real_event?.place_type === "string" ? (seed.real_event.place_type as string) : "";
     this.story = null;
@@ -1776,12 +1800,19 @@ export class GameHost {
       return this.startFinale();
     }
     this.verdicts.clear();
+    this.preRuled.clear();
     const owner = order[k];
     this.set({ phase: "turn", turnIndex: k, ideas: {}, pitches: [], votes: {}, winnerId: "", outcome: "", rolls: [], revealed: [], ready: [], busy: "", typing: [] });
     this.setTimer(this.turnMs(), () => this.endTurn(true));
     // "Jay, the lodger is…": the narrator reads the turn start if the clip is ready (it was asked for with the outcome).
     const line = this.turnLine(owner);
-    this.voiceBy(line, Date.now() + 4000).then((clip) => this.state.phase === "turn" && this.state.turnIndex === k && this.play(clip));
+    // The clock restarts once the narrator has finished the line (CD playtest: "is it my turn?" while it was still
+    // talking), so the turn owner always gets the full time after the story stops speaking.
+    this.voiceBy(line, Date.now() + 4000).then((clip) => {
+      if (this.state.phase !== "turn" || this.state.turnIndex !== k) return;
+      const ms = this.play(clip);
+      if (ms) this.setTimer(this.turnMs() + ms, () => this.endTurn(true));
+    });
     this.note("turn", this.heroName(owner), `Turn ${k + 1} of ${order.length}. Everyone else can suggest one action; ${this.heroName(owner)} picks.`);
   }
 
@@ -1817,7 +1848,27 @@ export class GameHost {
     const clean = cleanPlan(text);
     if (!clean) return;
     this.set({ ideas: { ...this.state.ideas, [pid]: clean }, typing: this.state.typing.filter((x) => x !== pid) });
+    // Generate ahead: rule the idea now, as the owner's plan with this friend's credit, so if the owner takes it as
+    // written the plan card shows the moment they press Go (the "DM is reading" wait was 5-15 s in the CD playtest).
+    // Guards (fresh-eyes review): edits are debounced (1.5 s of quiet), and at most 2 ideas a turn are ruled ahead,
+    // so a busy table never floods Muse at judging hour.
+    const owner = this.owner();
+    const turn = this.state.turnIndex;
+    clearTimeout(this.preRuleTimers[pid]);
+    this.preRuleTimers[pid] = setTimeout(() => {
+      if (this.state.phase !== "turn" || this.state.turnIndex !== turn || this.state.ideas[pid] !== clean) return;
+      if (!owner || this.preRuled.has(norm(clean)) || this.preRuled.size >= 2) return;
+      this.preRuled.set(norm(clean), this.askRuling({ id: `pre-${pid}`, playerId: owner, text: clean, useAbility: false, embraceFlaw: false, creditId: pid, idea: clean }));
+    }, 1500);
   }
+
+  private preRuleTimers: Record<string, ReturnType<typeof setTimeout>> = {};
+
+  /** The storyteller's quips spoken this game (sent to the ruling so it varies them). */
+  private quipsSaid: string[] = [];
+
+  /** Rulings started early on friends' ideas (by their text), for the current turn only. */
+  private preRuled = new Map<string, Promise<Verdict>>();
 
   /** The owner picks: their own words, or a friend's suggestion (maybe edited). Using a friend's idea is +1 and credited. */
   private onPitch(pid: string, text: string, creditId = "", own?: unknown, idea?: unknown) {
@@ -1894,7 +1945,7 @@ export class GameHost {
     this.verdicts.clear();
     this.set({ phase: "pitch", finale: true, nowGoal: this.state.goal, pitches: [], votes: {}, winnerId: "", outcome: "", rolls: [], revealed: [], ready: [], busy: "", typing: [] });
     this.note("turn", "Grand finale", "Everyone proposes the final move, everyone backs a friend's plan (never their own), and the winning plan gets one shared die.");
-    const line = `The grand finale. ${this.state.situation} Everyone, what's the final move?`;
+    const line = `Alright, everyone… time for the grand finale. ${this.state.situation} So. What's the final move?`;
     this.voiceBy(line, Date.now() + 4000).then((clip) => this.state.phase === "pitch" && this.play(clip));
     this.setTimer(this.turnMs(), () => this.endPitch(true));
   }
@@ -1982,6 +2033,7 @@ export class GameHost {
         story_so_far: this.storySoFar(),
         real_event: this.seed?.real_event,
         pronouns: this.pronounMap(),
+        quips_so_far: this.quipsSaid.slice(-4), // so the storyteller never repeats a shape
       }),
       10_000,
       (d, f): Verdict | null => (f || !d?.tier ? fb() : { ...fb(), ...d, fallback: false, interpretation: d.interpretation || `${h.name} tries their plan` }),
@@ -2011,7 +2063,7 @@ export class GameHost {
     this.set({ phase: "ruling", winnerId: pitch.id, busy: "" });
     const turn = this.state.turnIndex;
     const finale = this.state.finale;
-    const vp = this.verdicts.get(pitch.id) ?? this.askRuling(pitch);
+    const vp = this.verdicts.get(pitch.id) ?? (!finale ? this.preRuled.get(norm(pitch.text)) : undefined) ?? this.askRuling(pitch);
     this.verdicts.set(pitch.id, vp);
     let settled = false;
     vp.then(() => (settled = true));
@@ -2026,6 +2078,15 @@ export class GameHost {
     // The die is decided now (crypto, in code), so the outcome is written while the table watches the roll.
     const roll = this.makeRoll(judged);
     this.set({ pitches: this.state.pitches.map((x) => (x.id === pitch.id ? judged : x)), busy: "", rolls: [{ ...roll, dice: [], kept: 0 }], revealed: [] });
+    // The storyteller's quip on the plan (CD): spoken over the plan card while the die is thrown, every other turn
+    // (or before a 20 or a 1), only if it passes the plain-words check; otherwise silence. It comes free with the ruling.
+    const hero = this.player(pitch.playerId)?.hero?.name ?? "";
+    const quip = String(v.quip ?? "").trim();
+    if (!finale && quip && (turn % 2 === 0 || roll.kept === 20 || roll.kept === 1) && quipOk(quip, hero)) {
+      this.note("ruling", "Storyteller", `"${quip}" (said while the die is thrown)`);
+      this.quipsSaid.push(quip);
+      this.voiceBy(quip, Date.now() + 2500).then((clip) => ["ruling", "roll"].includes(this.state.phase) && this.state.turnIndex === turn && this.play(clip));
+    }
     if (finale) return this.setTimer(this.quick ? 2800 : RULING_MS, () => this.startFinalRoll(judged, roll));
     this.pendingRoll = roll;
     this.outcomeAt = 0;
@@ -2038,9 +2099,9 @@ export class GameHost {
       // A new painting every turn (CD, Sun): what just happened, in the place the story has moved to. A new act or
       // the finale frames the whole party; any other turn frames the hero and the friend whose idea it was.
       this.paintDecision(judged, v, d.outcome, d.scene || this.state.situation, d.finale ? "finale" : d.act_changed ? "act" : "win");
-      if (d.scene) this.voiceFor(d.finale || !this.nextOwner() ? `The grand finale. ${d.scene} Everyone, what's the final move?` : d.scene);
+      if (d.scene) this.voiceFor(d.finale || !this.nextOwner() ? `Alright, everyone… time for the grand finale. ${d.scene} So. What's the final move?` : d.scene);
     });
-    this.setTimer(this.quick ? 3000 : RULING_MS, () => this.startRoll());
+    this.setTimer(this.quick ? 2200 : RULING_MS, () => this.startRoll());
   }
 
   /**
@@ -2109,7 +2170,11 @@ export class GameHost {
         const key = this.artSeq++;
         this.sceneImages[key] = res.url;
         this.turnArt.set(forTurn, res.url);
+        // Landed while its own turn's result is still up: that's the picture the table saw for this move.
+        if (forTurn >= 0 && this.state.turnIndex === forTurn && this.state.phase === "outcome") this.seenArt.set(forTurn, res.url);
+        // Phones' "live on the TV" thumbnail: a small copy (the full painting is too big to broadcast).
         if (!res.url.startsWith("data:")) this.set({ sceneArt: res.url });
+        else thumbnail(res.url, 240, 0.6).then((t) => this.state.questId === questId && t && this.set({ sceneArt: t }));
         this.note("scene", "Scene art", `Painted by Muse Image, a new shot (${Math.round((Date.now() - t0) / 1000)}s): ${clip(where, 90)}`);
         this.set({ artKey: key });
       })
@@ -2121,6 +2186,8 @@ export class GameHost {
 
   /** The painting of each turn's decision (turn index; -1 = the finale), for the ending montage. */
   private turnArt = new Map<number, string>();
+  /** The picture on screen while each turn's result was shown (CD: the montage card must match what they saw). */
+  private seenArt = new Map<number, string>();
 
   /**
    * The ending montage ("Because of you"): up to 3 turn moments plus the ending, each with its painting, its line and
@@ -2131,7 +2198,7 @@ export class GameHost {
     const turns = log.slice(0, -1).map((l, i) => ({ l, i }));
     const pick = turns.length <= 3 ? turns : [turns[0], turns[Math.floor(turns.length / 2)], turns[turns.length - 1]];
     const fallback = this.sceneImages[this.state.artKey] ?? this.sceneImages[2] ?? this.sceneImages[0] ?? "";
-    const panels = pick.map(({ l, i }) => ({ image: this.turnArt.get(i) ?? this.sceneImages[Math.min(2, i)] ?? fallback, line: l.narration, heroIds: [l.heroId] }));
+    const panels = pick.map(({ l, i }) => ({ image: this.seenArt.get(i) || this.turnArt.get(i) || this.sceneImages[Math.min(2, i)] || fallback, line: l.narration, heroIds: [l.heroId] }));
     const winner = log[log.length - 1]?.heroId ?? "";
     if (this.state.epilogue)
       panels.push({
@@ -2475,7 +2542,7 @@ export class GameHost {
     this.set({ phase: "roll", rolls: [roll], revealed: [], fling: null });
     // Their phone shows a big ROLL button; after 10 s the table rolls for them (and their phone buzzes).
     if (this.player(roll.playerId)?.away) return this.setTimer(1500, () => this.revealRoll());
-    this.setTimer(this.quick ? 8000 : ROLL_MS, () => this.revealRoll(true));
+    this.setTimer(this.quick ? 6000 : ROLL_MS, () => this.revealRoll(true));
   }
 
   /** The roller swiped (or tapped). The swipe only shapes the throw on the TV; the number was decided in code. */
@@ -2554,21 +2621,26 @@ export class GameHost {
     this.clearTimer();
     const roll = this.state.rolls[0];
     const pitch = this.state.pitches.find((p) => p.playerId === roll.playerId)!;
-    this.set({ phase: "outcome", outcome: "", ready: [], voice: null });
+    // The die, its math and the plan stay on screen until the result is ready (fresh-eyes review: never a bare
+    // "writing it down" screen); usually it was written before the die even landed.
     let settled = false;
     const tp = this.turnP ?? Promise.resolve(this.localTurn(pitch, roll));
     tp.then(() => (settled = true));
-    setTimeout(() => !settled && this.state.phase === "outcome" && this.set({ busy: "The DM is writing it down…" }), 600);
+    setTimeout(() => !settled && this.state.phase === "roll" && this.set({ busy: "The DM is writing it down…" }), 1200);
     // The call started at the ruling; a late answer is kept as long as nothing is on screen yet (design/33).
     const landed = Date.now();
     const d = (await withTimeout(tp, 9000, () => null)) ?? this.localTurn(pitch, roll);
-    if ((this.state.phase as string) !== "outcome") return;
+    if ((this.state.phase as string) !== "roll") return;
+    // The outcome's audio was asked for the moment its text arrived; give it until 5 s after that, else text only.
+    const clip = await this.voiceBy(d.outcome, (this.outcomeAt || Date.now()) + 5000);
+    if ((this.state.phase as string) !== "roll") return;
+    this.set({ phase: "outcome", outcome: "", ready: [], voice: null });
+    // The picture on screen now is the one the table sees with this result (the montage reuses it).
+    const onScreen = this.sceneImages[this.state.artKey] ?? this.sceneImages[this.plateFor(this.state.turnIndex)];
+    if (onScreen) this.seenArt.set(this.state.turnIndex, onScreen);
     const g = gradeRoll(roll.total, roll.kept);
     this.story = d.state;
     this.finaleNext = d.finale;
-    // The outcome's audio was asked for the moment its text arrived; give it until 5 s after that, else text only.
-    const clip = await this.voiceBy(d.outcome, (this.outcomeAt || Date.now()) + 5000);
-    if ((this.state.phase as string) !== "outcome") return;
     this.recordWin(pitch, roll, d.outcome);
     this.note("scene", "Progress", `${d.progress_delta >= 0 ? "+" : ""}${d.progress_delta} progress (${d.progress}/100)${d.progress_why ? `: ${d.progress_why}` : ""}.`);
     if (d.act_changed) this.note("scene", `Act ${d.act}`, d.scene || "A new situation.");
@@ -2736,7 +2808,9 @@ export class GameHost {
     this.endingAt = 0;
     this.epilogueP.then((e) => {
       this.endingAt = Date.now();
+      // The final scene reads the ending; the montage closes on the sign-off alone (never the ending twice).
       this.voiceFor(e.ending);
+      this.voiceFor(SIGN_OFF);
       if (pitch.verdict) this.paintDecision(pitch, pitch.verdict, e.ending, e.line || this.state.situation);
     });
     const images = this.artCount().map((i) => `scene_${i + 1}`);
@@ -2762,7 +2836,8 @@ export class GameHost {
         long: FEATURES.longStorybook,
         real_story: this.seed?.the_real_story,
       }),
-      30_000,
+      // Started with the final roll; the keepsake QR waits on it, so a slow book falls back instead (was 30 s).
+      15_000,
       (d) => (Array.isArray(d?.pages) && d.pages.length ? d : null),
       bookFallback,
     );
@@ -2786,7 +2861,25 @@ export class GameHost {
     this.set({ phase: "final_result", rolls: [r], revealed: [r.playerId], players: this.state.players.map((p) => ({ ...p, peril: "" })), ready: [] });
     this.recordWin(pitch, r, `The finale: ${ENDING_LABEL[ending].toLowerCase()}.`);
     this.note("roll", "The ending", `${r.kept} ${fmtMod(r.statBonus)}${r.bonus ? ` +${r.bonus}` : ""} = ${r.total} → ${BAND_LABEL[r.band]} → ${ENDING_LABEL[ending]}. Below the target fails; reaching it works with a cost; 3 over works cleanly.`);
-    this.setTimer(FINAL_RESULT_MS, () => this.runEnding(this.endingPlan[this.state.mode] ?? ["epilogue"]));
+    this.setTimer(FINAL_RESULT_MS, () => this.startFinalScene());
+  }
+
+  /**
+   * The final scene (CD playtest 10:17: "there was no final scene"): the finale's result gets its own narrated beat over
+   * the finale painting, like every turn's outcome, before the "Because of you" montage. The ending was written while
+   * everyone shook, so this never waits long.
+   */
+  private async startFinalScene() {
+    this.clearTimer();
+    const plan = this.endingPlan[this.state.mode] ?? ["epilogue"];
+    const e = await withTimeout(this.epilogueP ?? Promise.resolve(null), 4000, () => null);
+    if (this.state.phase !== "final_result") return;
+    if (!e?.ending) return this.runEnding(plan);
+    const clip = await this.voiceBy(e.ending, (this.endingAt || Date.now()) + 3000);
+    if (this.state.phase !== "final_result") return;
+    this.set({ phase: "outcome", outcome: e.ending, busy: "", ready: [] });
+    const spoken = this.play(clip);
+    this.setTimer(spoken ? Math.max(spoken + 1200, 4500) : outcomeMs(e.ending), () => this.runEnding(plan));
   }
 
   // ---------- ending modules ----------
@@ -3020,7 +3113,8 @@ export class GameHost {
     const { ending, line, recap, skills } = await this.epilogueP!;
     this.cleanSkills = skills;
     if (this.state.phase !== "epilogue") return;
-    const clip = await this.voiceBy(ending, (this.endingAt || Date.now()) + 8000);
+    // The ending was already read as the final scene; the montage closes on the sign-off.
+    const clip = await this.voiceBy(SIGN_OFF, Date.now() + 3000);
     if (this.state.phase !== "epilogue") return;
     this.set({ epilogue: ending, endingLine: line, recap: recap || this.state.log.map((l) => l.narration).slice(0, 1).join(" "), busy: "" });
     // The finale's log line becomes the real ending, for the keepsake.
@@ -3069,7 +3163,9 @@ export class GameHost {
     this.set({ phase: "reveal", solvedBy });
     const rsr = this.seed?.the_real_story;
     if (rsr) {
-      const said = this.seed?.author ? `Based on ${speakableName(this.seed.author.name)}'s true story. ${rsr.summary}` : `Based on a true story. ${rsr.headline}.`;
+      // "based on a true story" is said ONCE in the game, here (the on-screen banner stays). Never "this really happened":
+      // the game's story is based on it, it didn't happen (CD).
+      const said = this.seed?.author ? `Here's the twist… it's based on ${speakableName(this.seed.author.name)}'s true story. ${rsr.summary}` : `Now, here's the strange part… it's based on a true story. ${rsr.headline}.`;
       this.voiceBy(said, Date.now() + 2500).then((clip) => this.state.phase === "reveal" && this.play(clip));
     }
     const text = `${this.seed?.the_real_story.headline ?? ""} ${this.seed?.the_real_story.summary ?? ""}`;
