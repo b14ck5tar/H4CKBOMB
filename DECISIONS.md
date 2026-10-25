@@ -194,3 +194,7 @@ Full history and train of thought: `design/00-where-we-are.md`.
 - ✅ (Sun ~6:10 AM) CD: the safety filter is why the stories are lame. ADULTS mode now allows non-violent crime (heists, cons, scams, fraud), weird court cases, public-figure/company scandals, absurd local-government drama and dark-funny topics. Still blocked in every mode: deaths, serious injuries, violence against people, sexual content, children, hate, war/tragedy/disasters, partisan hot-button politics, mocking private people. Teens/Kids keep the old rules. 10 juicier stories are being researched for the CD to consider for the demo.
 - ✅ (Sun ~6:25 AM) CD: judge top 3 = the Busan canal shark, the €9M gold in the Dendermonde cellar wall, the Norwich Batman (replaces the opera snake). The library adds the rest of the top 10 plus the adult-tier winery heist, fake pilot, swallowed Tiffany earrings and Pokémon card heist.
 - ✅ CD: Adults mode lets players be mischievous (lie, bribe, steal, prank, scam): played out literally with consequences. Only violence against people, sexual content, hate, self-harm and kids get redirected.
+
+## Sun ~6:30 AM (laptop clock): final schedule (CD)
+- Feature freeze 7:20 (after it: crash or "hard to follow" fixes only) · 7:30 final merge to main + the CD deploys · 7:30-8:00 timed judge games + blind scorer · 8:00-8:30 the CD records the video · the CD leaves ~8:30 · Devpost final 11:30 (submitter: ⏳ ⭐ the partner).
+- Pitch framing for the Adults tier: "grown-up stories, with hard limits the AI can't cross."
