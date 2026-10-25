@@ -103,3 +103,4 @@ Full history and train of thought: `design/00-where-we-are.md`.
 - ✅ Every decision gets a new scene composition; the story follows the players' new threads (yes, and).
 - ⏳ Danger meter / progress bar: unclear, to confirm.
 - ⏳ Ending: to revisit later (proposed a "because of you" montage).
+- ✅ Story ladder: 3-4 planned steps per quest (success climbs, fail stays with a twist), small progress dots next to 'Right now'. No spoilers before the reveal; vote on fantasy quest cards.
