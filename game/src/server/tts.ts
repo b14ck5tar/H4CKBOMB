@@ -525,13 +525,13 @@ function partsFromLines(lines: SpeakLine[], cast: { name: string; role: string }
   return lines
     .map((l) => ({ text: String(l.text ?? "").replace(/\s+/g, " ").trim(), speaker: String(l.speaker ?? "").trim() }))
     .filter((l) => l.text)
-    .map((l) => (l.speaker ? { text: l.text.replace(/^"|"$/g, ""), as: voiceForSpeaker(l.speaker.toLowerCase(), `${l.speaker} ${roleOf(l.speaker)}`) } : { text: l.text }));
+    .map((l) => (l.speaker ? { text: l.text.replace(/^["\u201c\u201d]+|["\u201c\u201d]+$/g, "").trim(), as: voiceForSpeaker(l.speaker.toLowerCase(), `${l.speaker} ${roleOf(l.speaker)}`) } : { text: l.text }));
 }
 
 async function speakWithCharacters(voice: VoiceId, style: string, text: string, opts: SpeakOpts): Promise<Clip | null> {
   if (opts.lines?.length) return speakParts(voice, style, partsFromLines(opts.lines, opts.cast), opts);
   const parts: Part[] = [];
-  const re = /"([^"]{2,})"/g;
+  const re = /["\u201c]([^"\u201c\u201d]{2,})["\u201d]/g;
   let last = 0;
   let m: RegExpExecArray | null;
   while ((m = re.exec(text))) {
@@ -555,7 +555,12 @@ async function speakParts(voice: VoiceId, style: string, parts: Part[], opts: Sp
   for (const p of parts) {
     let clip: Clip | null = null;
     if (p.as) {
-      clip = await elevenClip(voice, p.text, ELEVEN[voice].live, timeoutMs, false, p.as);
+      // already voiced in one of the character voices (the judge openers): that clip wins over the gender guess
+      for (const v of [p.as, ...CHAR_VOICES.m, ...CHAR_VOICES.f]) {
+        clip = await elevenClip(voice, p.text, ELEVEN[voice].live, timeoutMs, true, v);
+        if (clip) break;
+      }
+      if (!clip) clip = await elevenClip(voice, p.text, ELEVEN[voice].live, timeoutMs, false, p.as);
       if (!clip) clip = await speakOne(voice, style, `"${p.text}"`, opts).catch(() => null); // Sarah reads it rather than lose it
     } else clip = await speakOne(voice, style, p.text, opts); // narration: throws = this line is text only
     if (!clip) continue;
@@ -573,7 +578,7 @@ async function speakParts(voice: VoiceId, style: string, parts: Part[], opts: Sp
  */
 export async function speak(voice: VoiceId, style: string, text: string, opts: SpeakOpts = {}): Promise<Clip> {
   const on = opts.characterVoices ?? (FEATURES.characterVoices || FEATURES.castVoices);
-  if (on && (opts.lines?.length || /"[^"]{2,}"/.test(text)) && (await gameProvider()).provider === "elevenlabs") {
+  if (on && (opts.lines?.length || /["\u201c][^"\u201c\u201d]{2,}["\u201d]/.test(text)) && (await gameProvider()).provider === "elevenlabs") {
     const clip = await speakWithCharacters(voice, style, text, opts);
     if (clip) return clip;
   }
