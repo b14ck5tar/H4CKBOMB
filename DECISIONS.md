@@ -158,3 +158,7 @@ Full history and train of thought: `design/00-where-we-are.md`.
 - Priority: everything at a high standard. **Story quality is the weak point**, plus preparing for the actual judging. Art, looks, sound and smoothness need only small touch-ups.
 - Judge mode: `/tv?judge=1` = 1 turn each, max 3 turns, then the finale everyone plays (about 5 min). Normal games keep 2 each at 2-4 players and 1 each at 5+.
 - Handoff: a short GAME.md (the shared truth) plus a tailored brief per session.
+
+## Sun ~6 AM: GAME.md rewritten (lead session)
+- GAME.md cut to ~2 pages: final answers only, "Conflicts found" resolved and removed. Resolved with: danger meter cut; turns 2-4 = 2 each, 5+ = 1 (humans only); judge mode 1 turn each, max 3, then the finale; "Based on a true story"; "What's your secret talent?"; friend's idea +1; Quick Tale live opener with stored backup, `?judge=1` forces stored; narrator ElevenLabs vs OpenAI (CD picking voices); Neon Ink + per-story themes; no pass-line numbers.
+- ⚠️ Quick Tale turn timer: GAME.md follows the code's 45 s (the 100-persona sim found 30 s too tight), not the Sat 8 PM 30 s. Change it back if the CD wants.
