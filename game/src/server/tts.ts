@@ -119,6 +119,63 @@ export const ELEVEN: Record<VoiceId, { voiceId: string; voice: string; live: Ele
 const ELEVEN_FIRST_BYTE_MS = 4_000; // slower than this to start = fall back to OpenAI
 let elevenOffUntil = 0; // out of characters / bad key: skip ElevenLabs for a while instead of paying the wait every line
 
+// ---- credit guard: ONE provider per game, so the narrator's voice never switches mid-game ----
+// Billing (measured from the `character-cost` header): v3 = 1 credit per character, Flash v2.5 = 0.5.
+// Estimated per game with v3 for openers/scenes/endings and Flash for live lines (3 players): Full ~2,500,
+// Quick ~2,000, judge ~1,150 (its stored opener is free once cached). The real number is logged after each game.
+const GAME_CREDITS = Number(process.env.ELEVENLABS_GAME_CREDITS) || 3_000; // less than this left = OpenAI for the game
+const NEW_GAME_IDLE_MS = 6 * 60_000; // no narration this long = the next line starts a new game (when the TV doesn't say)
+type Decision = { provider: "elevenlabs" | "openai"; remaining: number | null; why: string; at: number; credits: number };
+const gs = globalThis as unknown as { __gpTtsGame?: { decision: Promise<Decision> | null; lastAt: number; current: Decision | null; subUntil: number } };
+const game = (gs.__gpTtsGame ??= { decision: null, lastAt: 0, current: null, subUntil: 0 });
+
+/** Credits left this month, from the subscription endpoint. null = unknown (the key lacks the User: Read permission). */
+async function elevenRemaining(): Promise<number | null> {
+  const k = process.env.ELEVENLABS_API_KEY;
+  if (!k || Date.now() < game.subUntil) return null;
+  try {
+    const res = await fetch("https://api.elevenlabs.io/v1/user/subscription", { headers: { "xi-api-key": k }, signal: AbortSignal.timeout(3_000) });
+    if (!res.ok) {
+      game.subUntil = Date.now() + 10 * 60_000; // don't ask again for a while
+      console.warn(`[tts] can't read ElevenLabs credits (HTTP ${res.status}); give the key the "User: Read" permission for the guard`);
+      return null;
+    }
+    const j = (await res.json()) as { character_limit?: number; character_count?: number };
+    return typeof j.character_limit === "number" && typeof j.character_count === "number" ? j.character_limit - j.character_count : null;
+  } catch {
+    return null;
+  }
+}
+
+async function decide(): Promise<Decision> {
+  const at = Date.now();
+  if (process.env.TTS_PROVIDER !== "elevenlabs" || !process.env.ELEVENLABS_API_KEY) return { provider: "openai", remaining: null, why: "TTS_PROVIDER is not elevenlabs", at, credits: 0 };
+  const remaining = await elevenRemaining();
+  if (remaining != null && remaining < GAME_CREDITS)
+    return { provider: "openai", remaining, why: `only ${remaining} ElevenLabs credits left (a game needs ~${GAME_CREDITS})`, at, credits: 0 };
+  return { provider: "elevenlabs", remaining, why: remaining == null ? "credits unknown" : `${remaining} credits left`, at, credits: 0 };
+}
+
+/**
+ * The provider for the current game. Decided once at game start (the TV calls GET /api/tts?start=1), or on the first
+ * line after NEW_GAME_IDLE_MS of quiet, then kept for the whole game.
+ */
+export function gameProvider(start = false): Promise<Decision> {
+  const now = Date.now();
+  if (start || !game.decision || now - game.lastAt > NEW_GAME_IDLE_MS) {
+    const prev = game.current;
+    if (prev && prev.provider === "elevenlabs") console.log(`[tts] last game used ${Math.round(prev.credits)} ElevenLabs credits`);
+    game.current = null;
+    game.decision = decide().then((d) => {
+      game.current = d;
+      console.log(`[tts] this game reads with ${d.provider} (${d.why})`);
+      return d;
+    });
+  }
+  game.lastAt = now;
+  return game.decision;
+}
+
 /** v3 reads [audio tags]; Flash would say them out loud, so they're dropped for it. */
 function elevenText(model: ElevenModel, text: string) {
   return model === "eleven_v3" ? text : text.replace(/\[[^\]]{1,30}\]\s*/g, "").trim();
@@ -146,6 +203,8 @@ async function eleven(voice: VoiceId, model: ElevenModel, text: string, timeoutM
       console.warn(`[tts] elevenlabs HTTP ${res.status} (${why}), falling back to OpenAI`);
       return null;
     }
+    const cost = Number(res.headers.get("character-cost"));
+    if (Number.isFinite(cost) && game.current) game.current.credits += cost;
     const parts: Buffer[] = [];
     const reader = res.body.getReader();
     for (;;) {
@@ -267,7 +326,7 @@ async function openaiClip(voice: VoiceId, style: string, text: string, timeoutMs
  */
 export async function speak(voice: VoiceId, style: string, text: string, opts: SpeakOpts = {}): Promise<Clip> {
   const timeoutMs = opts.timeoutMs ?? 20_000;
-  if (process.env.TTS_PROVIDER === "elevenlabs") {
+  if ((await gameProvider()).provider === "elevenlabs") {
     const cfg = ELEVEN[voice];
     const model = opts.ahead ? cfg.ahead : cfg.live;
     const clip = (await elevenClip(voice, text, model, timeoutMs)) ?? (model !== cfg.live ? await elevenClip(voice, text, cfg.live, timeoutMs) : null);
