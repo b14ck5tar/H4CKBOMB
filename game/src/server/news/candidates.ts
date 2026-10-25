@@ -10,12 +10,28 @@ import { addToLibrary } from "./library";
 // CD: "only choose ones that can be storytold/dramatized; otherwise we're grasping at straws."
 // SerpApi (2 past-week queries; 1 past-month query only if the week keeps < 3; random English editions) → dedupe →
 // regex block → rank (narrative words up, sports/business down) → enrich (free page fetch) → STORYABILITY GATE
-// (muse-spark-1.3, low, parallel batches of 15) → top 10, also saved to the story library (library.ts).: 7 scores
-// 1-5, keep avg >= 4 with no score below 3 → top 10 by score. Never throws; [] on failure (client uses seeds).
+// (muse-spark-1.3, low, parallel batches) → top 10, also saved to the story library (library.ts).
+// THE GATE (design/37, CD): the hard safety gate (code + model), then the CD's 8-box checklist. A story enters the
+// pool ONLY if all 8 boxes are YES. Each box carries a short reason (DM's Notes / library). "talk" (1-5) only ranks
+// stories that passed. Never throws; [] on failure (client uses seeds).
 
-export const SCORE_KEYS = ["situation", "problem", "setting", "arc", "roles", "payoff", "fantasy_fit", "talk"] as const;
-export type ScoreKey = (typeof SCORE_KEYS)[number];
-export type Scores = Record<ScoreKey, number>;
+/** design/37: the CD's 8 questions. All must be YES. */
+export const CHECKLIST = {
+  box1: "Is the problem big enough that it takes the whole group to solve?",
+  box2: "Is there an alterable ending that doesn't strictly favor one side?",
+  box3: "Does the story feel and flow well when dramatized for a group of people?",
+  box4: "Can the dramatized story fit unique characters with different superpower abilities?",
+  box5: "Can the story have multiple endings and routes, especially when someone does something unexpected?",
+  box6: 'Does the real event make people say "wait, that REALLY happened?"',
+  box7: "Is it easy to follow? Can the setup be told in one plain sentence (where, what's wrong, what's at stake), and can every turn be followed by someone who just walked up to the table?",
+  box8: "Is there a real dilemma the group will argue about, not just a task?",
+} as const;
+export const BOX_KEYS = Object.keys(CHECKLIST) as (keyof typeof CHECKLIST)[];
+export type BoxKey = (typeof BOX_KEYS)[number];
+export type Box = { yes: boolean; why: string };
+export type Checklist = Record<BoxKey, Box>;
+/** Kept for older callers: the checklist IS the score now. */
+export type Scores = Checklist;
 
 export interface NewsCandidate {
   id: string;
@@ -26,8 +42,10 @@ export interface NewsCandidate {
   date: string; // ISO, "" if unknown
   place: string; // "Town, Country" or ""
   rating: Rating; // youngest group it suits
-  storyability: number; // average of the 7 scores, 1-5
-  scores: Scores;
+  storyability: number; // "talk" 1-5: ranks stories that passed all 8 boxes (it is not a gate)
+  checklist: Checklist; // all 8 YES, each with a short reason
+  one_sentence_setup: string; // where, what's wrong, what's at stake (box 7), for the opener
+  dilemma: string; // what the group will argue about (box 8), for the opener
   thumbnail: string;
 }
 
@@ -42,18 +60,16 @@ export interface CandidateStats {
   gated: number;
   picked: number;
   phase?: "week" | "week+month";
-  kept: { title: string; avg: number; scores: Scores }[];
-  rejected: { title: string; reason: string; avg?: number; scores?: Scores }[];
+  kept: { title: string; talk: number; setup: string; dilemma: string }[];
+  rejected: { title: string; reason: string; failed?: string[]; checklist?: Checklist }[];
   ms: number;
   error?: string;
 }
 
 const WANT = 10;
 const ENRICH_TOP = 48;
-const GATE_TOP = 45; // 3 parallel batches of 15
-const BATCH = 15;
-const MIN_AVG = 4;
-const MIN_ANY = 3;
+const GATE_TOP = 40; // 5 parallel batches of 8 (8 boxes with reasons per story is a long answer)
+const BATCH = 8;
 const MAX_AGE_MS = 35 * 24 * 3600 * 1000;
 const CACHE_TTL_MS = 4 * 3600 * 1000;
 
@@ -89,7 +105,7 @@ const EXTRA_BLOCK =
   /\b(victims?|injur\w*|tragic|tragedy|disaster|crisis|attack(ed|s)?|weapons?|guns?|drugs?|cocaine|poison\w*|toxic|robbery|burglar\w*|protest\w*|strike|government|minister|mayor|governor|obituary|funeral|grief|mourn\w*|wildfire|hurricane|earthquake|flood\w*|evacuat\w*|earnings|shares|stock|ipo|revenue|quarterly|launch(es|ed)?)\b/i;
 const MISSING_OK = /\b(found|reunited|returned|home|back|safe)\b/i;
 
-function blocked(text: string): string | null {
+export function blocked(text: string): string | null {
   for (const re of HARD_BLOCK) {
     const m = text.match(re);
     if (!m) continue;
@@ -121,35 +137,43 @@ function shuffle<T>(a: T[]): T[] {
 
 // ---------------------------------------------------------------- storyability gate
 
-const GATE_SYSTEM = `You are the story editor for a party game. A group of friends step INTO a real news event as
-heroes, play it with one fantasy twist, and at the end learn it really happened. Your job: keep only real stories
-that can be told as a story. If we have to grasp at straws to dramatize it, it is a bad pick.
+const GATE_SYSTEM = `You are the strict story editor for a party game. A group of friends step INTO a real news event as
+heroes with different superpowers, play it with one fantasy twist, and at the end learn it really happened. Most news
+is NOT a story we can use. Be strict: when a box is not clearly YES, it is NO.
 
-For each numbered story, score 1 to 5 (5 = perfect, 3 = workable, 1 = missing):
-- situation: a clear situation a group could step into right now ("a town getting ready for a giant parade").
-- problem: a concrete problem with stakes (something stuck, lost, broken, at risk, about to go wrong).
-- setting: a visual, specific setting you can picture (a muddy farm field, a museum basement, a harbor).
-- arc: a natural 3-4 step arc that ACTUALLY HAPPENED (setup, complication, climax, outcome), from the text.
-- roles: real people involved, by role, that heroes could talk to (the farmer, the zookeeper, the volunteers).
-- payoff: an ending that pays off at the reveal ("wait, that really happened?").
-- fantasy_fit: one fantasy twist makes it better and stays easy to follow, not confusing.
-- talk: would adults talk about this at a party? 5 = everyone leans in ("a shark became a city's mascot", "workers found 9 million euros of gold in a wall"); 1 = nobody would repeat it. Routine news scores 1-2 here: a road or bridge reopening, repairs, construction, routine government, ordinary business, weather.
+SAFETY GATE FIRST: safe=false if anyone died, is missing and not found, was seriously hurt, sick or in danger now; any
+disaster or accident with victims; violence against people; sexual content; children involved; hate; war, the
+military, tragedies; partisan hot-button politics or protests; health scares or medical stories; a named private
+person who could be embarrassed or mocked. Then answer the boxes anyway (all NO is fine).
+ADULTS ONLY (still safe, rating "adults"): non-violent crime (heists, cons, smuggling, bizarre thefts), weird court
+cases, scandals of public figures or institutions, absurd local-government drama, dark-funny topics, as long as
+nobody was hurt and no private person is mocked.
 
-SAFETY: usable=false (and every score 1) if anyone died, is missing without being found, was seriously hurt, sick
-or in danger now; any disaster or accident with victims; violence against people; sexual content; children involved;
-hate; war, the military, tragedies; partisan hot-button politics or protests; health scares or medical stories; a
-named private person who could be embarrassed or mocked.
-ADULTS ONLY (usable, rating "adults"): non-violent crime (heists, cons, scams, smuggling, fraud, bizarre thefts),
-weird court cases, scandals of public figures, companies or institutions, absurd local-government drama, and
-dark-funny or uncomfortable topics, as long as nobody was hurt and no private person is mocked.
-Also score low (these are not stories): pure statistics or rankings, policy, business, earnings, product launches,
-obituaries, opinion, a science paper with no scene, celebrity gossip, sports results.
+THE 8 BOXES (answer each YES or NO with a reason of 12 words or less):
+box1: ${CHECKLIST.box1}
+box2: ${CHECKLIST.box2}
+box3: ${CHECKLIST.box3}
+box4: ${CHECKLIST.box4}
+box5: ${CHECKLIST.box5}
+box6: ${CHECKLIST.box6}
+box7: ${CHECKLIST.box7}
+box8: ${CHECKLIST.box8}
+NO examples: a road or bridge reopening (box6, box8), a statistic or ranking (box3, box7), a science paper with no
+scene (box3), a lost pet found (box1: one family's problem, box8: nothing to argue about), a sports result (box2).
+YES example: workers find a fortune in gold coins hidden in a cellar wall (whole crew, who keeps it is a real
+dilemma, many endings, "wait, really?").
 
-Also return: index, usable, reason (12 words max), rating (the YOUNGEST group it suits: "kids" = fine for 6-year-olds,
-"teens" = a little spooky or gross, "adults" = grown-up topics), place ("Town, Country" or "Region, Country" from
-the text, "" if none). Be honest and strict: most news is not a story. Return ONLY JSON matching the schema.`;
+Also return:
+- one_sentence_setup: ONE plain sentence a newcomer gets at once: where, what's wrong, what's at stake. No names of
+  private people. "" if you cannot.
+- dilemma: ONE plain sentence of the choice the group will argue about ("keep the gold or hand it in"). "" if none.
+- talk (1-5): how hard adults lean in at a party when they hear it. 5 = everyone, 1 = nobody repeats it.
+- index, safe, safety_reason (12 words max, "" if safe), rating (the YOUNGEST group it suits: "kids" = fine for
+  6-year-olds, "teens" = a little spooky or gross, "adults" = grown-up topics), place ("Town, Country" or "Region,
+  Country" from the text, "" if none).
+Return ONLY JSON matching the schema.`;
 
-const int5 = { type: "integer", enum: [1, 2, 3, 4, 5] } as const;
+const box = { type: "object", additionalProperties: false, required: ["yes", "why"], properties: { yes: { type: "boolean" }, why: { type: "string" } } } as const;
 const GATE_SCHEMA = {
   type: "object",
   additionalProperties: false,
@@ -160,12 +184,15 @@ const GATE_SCHEMA = {
       items: {
         type: "object",
         additionalProperties: false,
-        required: ["index", "usable", "reason", ...SCORE_KEYS, "rating", "place"],
+        required: ["index", "safe", "safety_reason", ...BOX_KEYS, "one_sentence_setup", "dilemma", "talk", "rating", "place"],
         properties: {
           index: { type: "integer" },
-          usable: { type: "boolean" },
-          reason: { type: "string" },
-          ...Object.fromEntries(SCORE_KEYS.map((k) => [k, int5])),
+          safe: { type: "boolean" },
+          safety_reason: { type: "string" },
+          ...Object.fromEntries(BOX_KEYS.map((k) => [k, box])),
+          one_sentence_setup: { type: "string" },
+          dilemma: { type: "string" },
+          talk: { type: "integer", enum: [1, 2, 3, 4, 5] },
           rating: { type: "string", enum: ["kids", "teens", "adults"] },
           place: { type: "string" },
         },
@@ -174,7 +201,57 @@ const GATE_SCHEMA = {
   },
 } as const;
 
-type Gate = { index: number; usable: boolean; reason: string; rating: Rating; place: string } & Scores;
+export type Gate = {
+  index: number;
+  safe: boolean;
+  safety_reason: string;
+  one_sentence_setup: string;
+  dilemma: string;
+  talk: number;
+  rating: Rating;
+  place: string;
+} & Checklist;
+
+export const checklistOf = (g: Gate): Checklist =>
+  Object.fromEntries(BOX_KEYS.map((k) => [k, { yes: Boolean(g[k]?.yes), why: String(g[k]?.why ?? "").slice(0, 120) }])) as Checklist;
+export const failedBoxes = (c: Checklist) => BOX_KEYS.filter((k) => !c[k].yes);
+/** The pass rule: safe, all 8 YES, and the two sentences the opener needs. */
+export const passes = (g: Gate) => g.safe && !failedBoxes(checklistOf(g)).length && Boolean(g.one_sentence_setup.trim()) && Boolean(g.dilemma.trim());
+
+/** One story the gate can read. */
+export type GateInput = { headline: string; source: string; date: string; text: string };
+
+/** Run the gate on any stories (live candidates, library re-scoring, judge seeds). Parallel batches; never throws. */
+export async function checkStories(items: GateInput[]): Promise<(Gate | null)[]> {
+  const out: (Gate | null)[] = items.map(() => null);
+  const batches: number[][] = [];
+  for (let i = 0; i < items.length; i += BATCH) batches.push(items.slice(i, i + BATCH).map((_, j) => i + j));
+  await Promise.all(
+    batches.map(async (idx) => {
+      const user = idx
+        .map((ii, n) => {
+          const it = items[ii];
+          return `STORY ${n}\nHEADLINE: ${it.headline}\nSOURCE: ${it.source}\nDATE: ${(it.date || "").slice(0, 10) || "unknown"}\nTEXT: ${(it.text || "(none)").slice(0, 700)}`;
+        })
+        .join("\n\n");
+      try {
+        const res = await museJSON<{ results: Gate[] }>({
+          task: "news-checklist",
+          system: GATE_SYSTEM,
+          user,
+          schema: GATE_SCHEMA,
+          effort: "low",
+          maxTokens: 12000,
+          timeoutMs: 90_000,
+        });
+        for (const r of res.results ?? []) if (Number.isInteger(r.index) && r.index >= 0 && r.index < idx.length && !out[idx[r.index]]) out[idx[r.index]] = r;
+      } catch (e) {
+        console.warn(`[news] checklist batch failed: ${(e as Error).message}`);
+      }
+    }),
+  );
+  return out;
+}
 
 type Cand = { item: NewsItem; facts: string; score: number };
 
@@ -195,34 +272,9 @@ function snippetOf(c: Cand) {
   return (end > 120 ? cut.slice(0, end + 1) : cut).trim();
 }
 
-const scoresOf = (g: Gate): Scores => Object.fromEntries(SCORE_KEYS.map((k) => [k, Number(g[k]) || 1])) as Scores;
-const avgOf = (s: Scores) => Math.round((SCORE_KEYS.reduce((a, k) => a + s[k], 0) / SCORE_KEYS.length) * 10) / 10;
-
-/** Score one batch. Indexes in the result refer to the batch. Throws on AI failure. */
-async function gateBatch(batch: Cand[]): Promise<Map<number, Gate>> {
-  const user = batch
-    .map((c, i) => {
-      const d = c.item.date ? c.item.date.slice(0, 10) : "unknown";
-      return `STORY ${i}\nHEADLINE: ${c.item.title}\nSOURCE: ${c.item.source}\nDATE: ${d}\nTEXT: ${(c.facts || c.item.snippet || "(none)").slice(0, 700)}`;
-    })
-    .join("\n\n");
-  const res = await museJSON<{ results: Gate[] }>({
-    task: "news-storyability",
-    system: GATE_SYSTEM,
-    user,
-    schema: GATE_SCHEMA,
-    effort: "low",
-    maxTokens: 8000,
-    timeoutMs: 60_000,
-  });
-  const out = new Map<number, Gate>();
-  for (const r of res.results ?? []) if (Number.isInteger(r.index) && r.index >= 0 && r.index < batch.length && !out.has(r.index)) out.set(r.index, r);
-  return out;
-}
-
 // ---------------------------------------------------------------- run
 
-type Good = { c: Cand; g: Gate; s: Scores; avg: number };
+type Good = { c: Cand; g: Gate; list: Checklist };
 
 /** Regex block → rank → enrich → storyability gate, for one batch of fetched items. Pushes rejects to stats. */
 async function gatePhase(raw: NewsItem[], stats: CandidateStats, live: boolean, skip: Set<string>): Promise<Good[]> {
@@ -274,25 +326,24 @@ async function gatePhase(raw: NewsItem[], stats: CandidateStats, live: boolean, 
     .slice(0, GATE_TOP);
   if (!cands.length) return [];
 
-  // STORYABILITY GATE: parallel batches of 15 (faster and steadier than one big call).
-  const batches: Cand[][] = [];
-  for (let i = 0; i < cands.length; i += BATCH) batches.push(cands.slice(i, i + BATCH));
-  const results = await Promise.all(batches.map((b) => gateBatch(b).catch((e) => (console.warn(`[news] gate batch failed: ${(e as Error).message}`), new Map<number, Gate>()))));
-
+  // THE GATE: safety + the 8-box checklist, in parallel batches.
+  const results = await checkStories(cands.map((c) => ({ headline: c.item.title, source: c.item.source, date: c.item.date, text: c.facts || c.item.snippet })));
   const good: Good[] = [];
   let gated = 0;
-  batches.forEach((b, bi) =>
-    b.forEach((c, i) => {
-      const g = results[bi].get(i);
-      if (!g) return;
-      gated++;
-      const s = scoresOf(g);
-      const avg = avgOf(s);
-      const min = Math.min(...SCORE_KEYS.map((k) => s[k]));
-      if (g.usable && avg >= MIN_AVG && min >= MIN_ANY) good.push({ c, g, s, avg });
-      else stats.rejected.push({ title: c.item.title, reason: g.usable ? `storyability ${avg} (min ${min})` : `unsafe: ${g.reason}`, avg, scores: s });
-    }),
-  );
+  cands.forEach((c, i) => {
+    const g = results[i];
+    if (!g) return;
+    gated++;
+    const list = checklistOf(g);
+    if (passes(g)) good.push({ c, g, list });
+    else
+      stats.rejected.push({
+        title: c.item.title,
+        reason: !g.safe ? `unsafe: ${g.safety_reason}` : `failed ${failedBoxes(list).join(", ") || "setup/dilemma missing"}`,
+        failed: failedBoxes(list),
+        checklist: list,
+      });
+  });
   stats.gated += gated;
   if (!gated) throw new Error("storyability gate failed");
   return good;
@@ -333,9 +384,9 @@ async function run(stats: CandidateStats): Promise<NewsCandidate[]> {
     stats.fetched = raw.length;
     good = await gatePhase(raw, stats, live, new Set());
   }
-  good.sort((a, b) => b.avg - a.avg || b.c.score - a.c.score);
+  good.sort((a, b) => b.g.talk - a.g.talk || b.c.score - a.c.score);
 
-  const out = good.slice(0, WANT).map(({ c, g, s, avg }) => ({
+  const out = good.slice(0, WANT).map(({ c, g, list }) => ({
     id: candidateId(c.item.title),
     headline: c.item.title,
     snippet: snippetOf(c),
@@ -345,11 +396,13 @@ async function run(stats: CandidateStats): Promise<NewsCandidate[]> {
     place: String(g.place ?? "").trim(),
     // Crime, cons and court stories are adults-only, whatever the gate said (CD: the safety tier follows the rating).
     rating: ADULT_ONLY.test(`${c.item.title} ${c.item.snippet} ${c.facts}`) ? ("adults" as const) : g.rating,
-    storyability: avg,
-    scores: s,
+    storyability: g.talk,
+    checklist: list,
+    one_sentence_setup: g.one_sentence_setup.trim(),
+    dilemma: g.dilemma.trim(),
     thumbnail: c.item.thumbnail,
   }));
-  stats.kept = out.map((x) => ({ title: x.headline, avg: x.storyability, scores: x.scores }));
+  stats.kept = out.map((x) => ({ title: x.headline, talk: x.storyability, setup: x.one_sentence_setup, dilemma: x.dilemma }));
   stats.picked = out.length;
   if (live && out.length) addToLibrary(out); // the "old database of good stories"
   return out;

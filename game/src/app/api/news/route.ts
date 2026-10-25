@@ -28,7 +28,7 @@ const cached = unstable_cache(
     if (!list.length) throw new Error("no candidates (not caching)");
     return { list, generatedAt: new Date().toISOString() };
   },
-  ["story-news-candidates-v4"],
+  ["story-news-candidates-v6-checklist"],
   { revalidate: 14400, tags: ["news-candidates"] },
 );
 
@@ -56,4 +56,30 @@ export async function GET(req: NextRequest) {
   return NextResponse.json(body, {
     headers: { "Cache-Control": live.length && !played.size ? "public, s-maxage=3600, stale-while-revalidate=14400" : "no-store" },
   });
+}
+
+// POST (dev only): the design/37 8-box checklist outside the live pipeline. No SerpApi calls.
+//   {action: "check", stories: [{id, headline, source, date, text}]} → each story's boxes (judge seeds, spot checks)
+//   {action: "rescore"} → re-check every library story; failures are dropped from story_library.json
+export async function POST(req: NextRequest) {
+  if (process.env.NODE_ENV === "production") return NextResponse.json({ error: "dev only" }, { status: 404 });
+  const b = (await req.json().catch(() => ({}))) as { action?: string; stories?: { id: string; headline: string; source?: string; date?: string; text?: string }[] };
+  const { checkStories, checklistOf, failedBoxes, passes, blocked } = await import("@/server/news/candidates");
+  const { allStories, applyChecklist } = await import("@/server/news/library");
+  const items =
+    b.action === "rescore"
+      ? allStories().map((s) => ({ id: s.id, headline: s.headline, source: s.source, date: s.date, text: s.snippet }))
+      : (b.stories ?? []).slice(0, 40).map((s) => ({ id: s.id, headline: s.headline, source: s.source ?? "", date: s.date ?? "", text: s.text ?? "" }));
+  const gates = await checkStories(items);
+  const results = items.map((it, i) => {
+    const g = gates[i];
+    const regex = blocked(`${it.headline} ${it.text}`);
+    if (!g) return { id: it.id, headline: it.headline, pass: false, error: "no answer", regex };
+    const checklist = checklistOf(g);
+    const pass = passes(g) && !regex;
+    return { id: it.id, headline: it.headline, pass, safe: g.safe && !regex, safety_reason: regex ? `regex: ${regex}` : g.safety_reason, failed: failedBoxes(checklist), checklist, one_sentence_setup: g.one_sentence_setup, dilemma: g.dilemma, talk: g.talk };
+  });
+  // Re-score only applies stories that got an answer (a failed batch never empties the library).
+  const applied = b.action === "rescore" ? applyChecklist(results.filter((r) => !("error" in r)) as Parameters<typeof applyChecklist>[0]) : undefined;
+  return NextResponse.json({ results, applied });
 }
