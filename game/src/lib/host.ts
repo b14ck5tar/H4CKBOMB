@@ -2465,7 +2465,8 @@ export class GameHost {
       this.note("reveal", "The source", `Now revealed: "${rs.headline}" (${rs.source}, ${rs.date}).`);
     }
     // "Solved by Ava's parallel parking and Ben's coffee.": built in code from the join answers, never by the AI.
-    const solvedBy = solvedByLine(this.heroes().map((p) => ({ name: p.name, real: this.reals[p.id], hero: p.hero?.name })));
+    const won = this.state.final?.ending !== "GRIM_BUT_HILARIOUS"; // a win, or mostly fine; not when it fell apart
+    const solvedBy = solvedByLine(this.heroes().map((p) => ({ name: p.name, real: this.reals[p.id], hero: p.hero?.name })), won);
     if (solvedBy) this.note("reveal", "Solved by", `${solvedBy} (built from the join answers, in code)`);
     this.set({ phase: "reveal", solvedBy });
     const text = `${this.seed?.the_real_story.headline ?? ""} ${this.seed?.the_real_story.summary ?? ""}`;

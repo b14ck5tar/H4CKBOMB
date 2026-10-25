@@ -54,7 +54,7 @@ const poss = (name: string) => `${name}'s`;
  * The reveal's hero line, built in code (never by the AI): "Solved by Ava's parallel parking and Ben's coffee."
  * Uses the players' real names. "" when nobody shared a usable skill.
  */
-export function solvedByLine(players: (Pick<Player, "name" | "real"> & { hero?: string })[]) {
+export function solvedByLine(players: (Pick<Player, "name" | "real"> & { hero?: string })[], won = true) {
   const parts = players
     .map((p) => {
       const s = skillPhrase(p.real?.skill ?? "");
@@ -64,5 +64,6 @@ export function solvedByLine(players: (Pick<Player, "name" | "real"> & { hero?: 
     .filter(Boolean);
   if (!parts.length) return "";
   const list = parts.length > 1 ? `${parts.slice(0, -1).join(", ")} and ${parts[parts.length - 1]}` : parts[0];
-  return `Solved by ${list}.`;
+  // Only a win is "solved"; otherwise the knacks still get their credit, without contradicting the ending.
+  return `${won ? "Solved by" : "Starring"} ${list}.`;
 }
