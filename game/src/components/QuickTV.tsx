@@ -949,7 +949,7 @@ function useNarrator(host: Stage, s: GameState) {
     const url = host.voiceUrl(id);
     if (!url) return;
     const audio = new Audio(url);
-    audio.playbackRate = 1.25;
+    audio.playbackRate = s.voice.rate || 1;
     (audio as HTMLAudioElement & { preservesPitch?: boolean }).preservesPitch = true;
     const t = setTimeout(() => {
       if (!sfx.muted()) audio.play().catch(() => {});

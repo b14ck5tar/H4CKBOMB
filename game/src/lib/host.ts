@@ -1823,9 +1823,7 @@ export class GameHost {
   }
 
   // ---------- the narrator's voice (design/24 P5) ----------
-  /** Narration plays a little faster than Gemini reads it: the house style is calm, and a party can't wait. */
-  static VOICE_RATE = 1.25;
-  private voiceClips = new Map<string, Promise<{ url: string; ms: number } | null>>();
+  private voiceClips = new Map<string, Promise<{ url: string; ms: number; rate: number } | null>>();
   private voiceUrls: Record<number, string> = {};
   private voiceSeq = 0;
   private castP: Promise<NonNullable<GameState["cast"]>> | null = null;
@@ -1880,9 +1878,11 @@ export class GameHost {
           body: JSON.stringify({ text: clean, voice: cast.voice, style: `${cast.style}, at a brisk, flowing storytelling pace with only short pauses` }),
         });
         if (!res.ok) return null;
+        // Gemini's calm reads slowly, so the TV plays it at 1.25x; OpenAI's pace is already natural (1x).
+        const rate = Number(res.headers.get("X-Voice-Rate") ?? 1) || 1;
         const ms = Number(res.headers.get("X-Audio-Ms") ?? 0);
         const url = URL.createObjectURL(await res.blob());
-        return { url, ms: Math.round(ms / GameHost.VOICE_RATE) };
+        return { url, ms: Math.round(ms / rate), rate };
       } catch {
         return null;
       }
@@ -1899,14 +1899,14 @@ export class GameHost {
   }
 
   /** Start reading a line aloud on the TV (after `delay` ms). Returns how long it takes, 0 if text only. */
-  private play(clip: { url: string; ms: number } | null, delay = 0) {
+  private play(clip: { url: string; ms: number; rate: number } | null, delay = 0) {
     if (!clip) {
       this.set({ voice: null });
       return 0;
     }
     const id = ++this.voiceSeq;
     this.voiceUrls[id] = clip.url;
-    this.set({ voice: { id, ms: clip.ms, delay } });
+    this.set({ voice: { id, ms: clip.ms, delay, rate: clip.rate } });
     return clip.ms;
   }
 

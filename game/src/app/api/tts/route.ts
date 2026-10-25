@@ -20,7 +20,7 @@ export async function POST(req: Request) {
   try {
     const clip = await speak(body.voice, style, text);
     return new Response(new Uint8Array(clip.wav), {
-      headers: { "Content-Type": "audio/wav", "X-Audio-Ms": String(clip.ms), "Cache-Control": "private, max-age=86400" },
+      headers: { "Content-Type": "audio/wav", "X-Audio-Ms": String(clip.ms), "X-Voice-Rate": String(clip.rate), "Cache-Control": "private, max-age=86400" },
     });
   } catch (e) {
     console.error("[tts] failed:", (e as Error).message);

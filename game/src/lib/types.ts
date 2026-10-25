@@ -335,7 +335,7 @@ export interface GameState {
   /** The narrator the AI cast for this story (design/24 P5): a voice, a style line, and the kind of story. */
   cast: { voice: string; name: string; style: string; kind: string; art: string; artName: string } | null;
   /** The line being read aloud right now (TV only plays it; phones ignore it). ms = its length at play speed. */
-  voice: { id: number; ms: number; delay: number } | null;
+  voice: { id: number; ms: number; delay: number; rate: number } | null;
   artKey: number; // the latest painting of what the heroes just did (a key into the TV's sceneImages), -1 = the plate
   boosts: Record<string, string>; // booster id -> pitch id
   rolls: RollResult[]; // in reveal order (lowest result first)
