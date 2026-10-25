@@ -23,7 +23,7 @@ import { Avatar, Hope, ThankHearts, useFastNow } from "./TV";
 import { KeepsakeQR } from "./Keepsake";
 import { FEATURES } from "@/lib/features";
 import { dice, music, playSfx, playStoryBuildup, playStoryPayoff, playStorySfxCues, stopStoryBuildup, useMusic } from "@/lib/sound";
-import { EndingMontage, FinalePitch, FinaleShake, FinaleVote, HudStrip, OutcomeCaption, Particles, PayoffPunch, PhaseSwap, PlanCard, QualityMeter, SuggestionBubbles, TurnCard, TvStage, TIER_LOOK } from "@/components/tvskin";
+import { Banner, EndingMontage, FinalePitch, FinaleShake, FinaleVote, HudStrip, OutcomeCaption, Particles, PayoffPunch, PhaseSwap, PlanCard, QualityMeter, SuggestionBubbles, TurnCard, TvStage, TIER_LOOK } from "@/components/tvskin";
 import { QUICK_TURN_MS, TURN_MS, VOTE_MS } from "@/lib/rules";
 import type { CardHero, MontagePanel } from "@/components/tvskin";
 import { TIER_SHIFT, gradeRoll } from "@/lib/grade";
@@ -1562,6 +1562,7 @@ export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameS
     <div className="qt-root" onPointerDown={() => sfx.unlock()}>
       <Backdrop url={art} mood={mood} onNew={onNewArt} />
       <Particles count={28} seed={s.turnIndex + 1} />
+      <Banner text={s.banner} />
       <div key={shot} className="qt-dip" aria-hidden />
       {s.phase !== "quest" && !["epilogue", "reveal", "storybook"].includes(s.phase) && <QTopBar host={host} s={s} onNotes={onNotes} notesOpen={notesOpen} />}
       {s.phase === "quest" && !host.readOnly && (

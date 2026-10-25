@@ -2638,7 +2638,7 @@ export class GameHost {
     const won = g.branch === "better" || g.branch === "legendary";
     return this.ask<TurnResult>("turn", {
       state: this.story,
-      hero: { name: h.name, power: h.ability?.text ?? "", pronouns: h.pronouns || "they/them" },
+      hero: { name: h.name, power: h.ability?.text ?? "", pronouns: h.pronouns || "they/them", concept: this.player(pitch.playerId)?.concept ?? "" },
       plan: pitch.text, // the player's own words (own + the friend's idea), never shortened
       own: pitch.own,
       idea: pitch.idea,

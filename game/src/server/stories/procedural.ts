@@ -131,7 +131,7 @@ type Any = any;
 
 export type TurnInput = {
   state: StoryState;
-  hero: { name: string; power?: string; pronouns?: string };
+  hero: { name: string; power?: string; pronouns?: string; concept?: string };
   plan: string; // already wrapped in <player_input> by the route
   /** The player's plan as typed (for the "plan is the cause" check in code; never sent to the model raw). */
   plan_raw?: string;
@@ -225,15 +225,55 @@ export async function runTurn(i: TurnInput, rating: Rating): Promise<TurnResult>
     p = fallbackProposal(state, { hero, attempt: i.attempt, idea_from: idea, grade, next_player: nextPlayer });
     fallback = true;
   }
+  // EDITOR PASS (CD, Sun): one minimal-effort Muse call fixes the draft's clarity, ONLY inside the hidden window (the
+  // die is still being thrown), never as a visible wait. Code checks decide whether the edit is kept.
+  let edited = false;
+  if (p && !fallback && Date.now() - t0 < EDIT_BY_MS) {
+    const known = { where: state.where, cast: state.cast, facts: state.facts, last_moments: state.last_moments, finish_line: state.finish_line };
+    const e = await museJSON<{ outcome: string; scene: string; changed: boolean }>({
+      task: "story-editor",
+      model: TURN_MODEL,
+      effort: "minimal",
+      system: EDITOR_SYSTEM,
+      schema: EDITOR_SCHEMA,
+      user: JSON.stringify({ outcome: p.outcome, scene: p.scene, plan: i.plan, concept: clip(i.hero?.concept, 140), hero, grade, idea_from: idea, next_player: nextPlayer, known }),
+      timeoutMs: EDIT_TIMEOUT_MS,
+      maxTokens: 700,
+    }).catch(() => null);
+    if (e?.changed && e.outcome?.trim()) {
+      const cand = { ...p, outcome: e.outcome.trim(), scene: e.scene?.trim() || p.scene };
+      const after = checkTurn(cand, ctx);
+      const heavy = (x: string[]) => x.filter((y) => HARD.test(y) || REDO.test(y)).length;
+      if (heavy(after) <= heavy(probs) && after.length <= probs.length) {
+        console.log(`[turn] editor: "${p.outcome}" -> "${cand.outcome}"`);
+        [p, probs, edited] = [cand, after, true];
+      }
+    }
+  }
   // Soft problems are fixed in code: clamp the outcome, hand the scene to the next player.
   p.outcome = clampOutcome(p.outcome);
   if (nextPlayer && !new RegExp(`\\b${nextPlayer.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`).test(p.scene)) p.scene = p.scene ? `${nextPlayer}, ${p.scene.charAt(0).toLowerCase()}${p.scene.slice(1)}` : `${nextPlayer}, you're up.`;
   p.scene = sentences(p.scene)[0] ?? p.scene;
   p.right_now = trimPile(p.right_now);
   const applied = applyTurn(state, p, { hero, attempt: i.attempt, grade, depth: i.depth });
-  console.log(`[turn] ${grade} ${hero} ${Date.now() - t0}ms progress ${state.progress}->${applied.state.progress}${fallback ? " FALLBACK" : ""}${probs.length ? ` problems: ${probs.join(" | ")}` : ""}`);
+  console.log(`[turn] ${grade} ${hero} ${Date.now() - t0}ms progress ${state.progress}->${applied.state.progress}${fallback ? " FALLBACK" : ""}${edited ? " EDITED" : ""}${probs.length ? ` problems: ${probs.join(" | ")}` : ""}`);
   return { sfx: pickStorySfxCues(p.sfx), outcome: p.outcome, scene: p.scene, right_now: applied.state.right_now, progress: applied.state.progress, progress_delta: applied.delta, progress_why: String(p.progress_why ?? "").slice(0, 140), finale: applied.finale, act: applied.state.act, act_changed: applied.act_changed, state: applied.state, problems: probs, fallback };
 }
+
+// The editor pass: only if the draft is in by EDIT_BY_MS (the die lands ~8-12 s after the ruling), capped at
+// EDIT_TIMEOUT_MS, so the edited line is still ready before the result shows.
+const EDIT_BY_MS = 5_000;
+const EDIT_TIMEOUT_MS = 2_500;
+const EDITOR_SYSTEM = `You are the copy editor for a party game's narrator. The narrator reads the outcome and the scene ONCE to a room of tired adults. Fix them ONLY where they break a rule below; if nothing breaks, return them unchanged with changed false.
+RULES:
+1. Followable on first hearing: plain everyday words, one idea per sentence, no odd or stacked phrases, no similes, cause then effect.
+2. Only people, places and things already named in known, the plan or the outcome itself. Never a new room, hall, person or prop.
+3. If the plan has two parts, the outcome mentions both, or says plainly why the second did not happen.
+4. No ominous tail clause ("...which never lasts", "...for now", "...or so they think").
+5. The hero is exactly what the player typed (concept): if the concept says a can, a raccoon or a ghost, the hero is that.
+6. KEEP: the result the grade gives (do not make a miss a win or a win a miss), the hero's name first, the player's own key word, a friend's credit (idea_from) on a success, and next_player's name in the scene, and a short dry aside at the end of the outcome if there is one ("...and nobody mentions it again"). Outcome: at most 2 sentences and 30 words. Scene: 1 sentence. Dry, grown-up tone.
+Return outcome, scene, changed.`;
+const EDITOR_SCHEMA = obj({ outcome: str, scene: str, changed: { type: "boolean" } });
 
 const HARD = /must name the acting hero|game words|never name|outcome is empty|the plan is the cause|banned filler/;
 const TURN_PARALLEL = Math.max(1, Math.min(3, Number(process.env.TURN_PARALLEL) || 2));

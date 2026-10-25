@@ -275,7 +275,7 @@ const DETERMINERS = new Set("the a an his her their its my your our this that ev
 const PLAIN_ADJ = new Set(
   "big little small tiny huge giant old new red blue green yellow black white pink orange purple gold silver brown gray grey long short tall wet dry hot cold warm soft hard loud quiet lost sleepy angry happy sad scared baby mom dad good bad last first next whole same other only real empty full".split(" "),
 );
-const TAIL = new Set("away back home out off down up over around now here there too fast slowly till asleep awake still safe free inside outside together alone".split(" "));
+const TAIL = new Set("away back home out off down up over around now here there too fast slowly till asleep awake still safe free inside outside together alone without toward towards behind beneath beside across along".split(" "));
 
 /**
  * The most odd describing words piled onto one thing after "the/a/his…": "the cone juggling ice hand" = 3 (cone,
