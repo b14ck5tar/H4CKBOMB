@@ -230,7 +230,7 @@ Full history and train of thought: `design/00-where-we-are.md`.
 - The newspaper stays on screen (TV ‹ › only) with a QR to the real article; framing copy says it's real news dramatized into fantasy and your secret strength becomes your power; suggestion screens show the turn owner's strength.
 - Ships ~1:15 PM, behind flags, after simulated-player testing (100 simulated college students); the CD/partner approves the deploy.
 
-## Sun ~8:30 AM
+## Sun ~10:35 AM (laptop clock)
 - ✅ CD: GitHub repo stays private, left off Devpost. Tracks: Meta, Most Entertaining, SerpApi + Best Novice. The walk-in line is removed from Devpost (optional pitch opener only).
 - ✅ Prod 07:49 (once-upon-a-roll-m6y4zur2o): storySfx + finale talk ON, "secret strength", the new final-roll buttons. Story's verdict: GO.
 - ✅ CD (via the coordinator): kick from lobby, play again / back to lobby, character voices. Built and tested on a local prod build; publish AFTER the 9:00-9:45 video recording. castVoices needs NEXT_PUBLIC_CAST_VOICES=1 on Vercel.
