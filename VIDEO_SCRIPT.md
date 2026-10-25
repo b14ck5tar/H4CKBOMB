@@ -34,6 +34,10 @@ the address bar, any key or DM.
 
 ## The voiceover: one clean read (record in one take)
 
+**Opener A (below) ⭐ for the video:** Meta asks for the problem in the first 30 s, and A is the problem.
+**Opener B (alternative, ~10 s):** "Our application to HackTX got denied. My teammate never even applied. We walked in anyway, and built the one group project where everyone actually shows up." If the CD prefers B, read it first and drop the sentence "Tabletop games fix
+that… never play." to stay at 30 s.
+
 Read it straight through like telling a friend. At each `[pause]`, stop for two full seconds (that's where the edit
 cuts). Slower than feels natural. No trailer voice.
 
@@ -62,7 +66,7 @@ cuts). Slower than feels natural. No trailer voice.
 > `[pause]`
 >
 > For the finale, everyone backs a friend's plan, then the whole table shakes their phones at once.
-> And the twist: it's based on a true story. The real article, and how your secret talents saved the day.
+> And the twist: it's based on a true story. Here's what you did, and here's what really happened.
 >
 > `[pause]`
 >
@@ -105,7 +109,7 @@ ideas, never own a turn; never call one "my friend". A test player's idea can st
 | 1:06-1:16 | "Swipe up to throw…" | Phone A: the thumb flicks up. TV: the d20 flies onto the table, lands, the meter fills to its grade. Caption: *1 = DISASTER … 20 = LEGENDARY*. | §2 take: phone A + TV |
 | 1:16-1:32 | "Muse takes your plan literally…" | TV: the outcome uses A's own word, the new painting crossfades in, the progress meter moves, the last line names B. | §2 take: TV |
 | 1:32-1:44 | "For the finale…" | Phones: "Shake!" TV: one shared die lands, the screen shakes. | §2 take: phones + TV |
-| 1:44-2:00 | "And the twist…" | TV: "Because of you" with names, then **Based on a true story**: the real headline, "Solved by" with the real talents. Last 2 s: the keepsake QR. Headline hard to read? Cut to `deck-slide-6.png`. | §2 take: TV / §4 |
+| 1:44-2:00 | "And the twist…" | TV: "Because of you" with names, then **What you did** (your story, "Solved by" the real talents), then **What really happened** (the real clipping, how it really ended). Last 2 s: the keepsake QR. Headline hard to read? Cut to `deck-slide-6.png`. | §2 take: TV / §4 |
 | *optional* | (only if time allows) | **Our stories reveal, ~20 s**: a short second take with the lobby on **Our stories**; record only its ending, "Based on Ava's true story" and how it really ended. It's the strongest connection beat (fresh-eyes). Slot it right after the odd-news reveal and trim the finale shake to fit 3:00. Optional VO line: "Or play a friend's true story, and find out how it really ended." | a second §2 take, TV |
 | **Part 3** | | | |
 | 2:00-2:14 | "Muse runs the night…" | The one-turn diagram: real news → Muse Spark → plan → Muse Spark judges → code rolls → Muse Spark writes → Muse Image paints → narrator. Chips: *muse-spark-1.3*, *muse-image-1.0*. | §4 `how-it-works.png` |

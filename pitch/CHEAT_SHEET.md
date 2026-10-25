@@ -5,7 +5,10 @@ TV: `groupproject-game.vercel.app/tv?judge=1&bots=1` (Quick · Odd news · Adult
 then the finale. About 5 min from Start. Judge stories: the Busan canal shark, the €9M gold in a Dendermonde cellar
 wall, the Norwich Batman.
 
-## The 30-second pitch (say it while they scan)
+## Opener B (10 s, say it first) ⭐ then A
+"Our application to HackTX got denied. My teammate never even applied. We walked in anyway, and built the one group project where everyone actually shows up."
+
+## Opener A: the 30-second pitch (say it while they scan)
 "Last time you hung out with friends, how much of it was everyone on their own phone? Game nights fix that, but
 someone has to run the game, so nobody plays. Here, Meta's Muse is the Dungeon Master. The TV is the table, your phone
 is the controller. On your turn your friends send you ideas, and using one is your best move. You swipe to throw the
@@ -29,7 +32,8 @@ the TV runs."
 4. Turn 1: "Everyone else, send [A] an idea. Use a friend's and you get plus one." / "Which one made you laugh?"
 5. "Swipe up to throw." / "Every number is its own outcome. Code rolls, never the AI."
 6. Finale: "Everyone back one plan, not your own. Then everyone shakes at once."
-7. Reveal: wait 3 s. "That's the real headline." "That's the talent you typed." "Take it home."
+7. Reveal: "What you did", then "What really happened". "That's how it really went." "That's the talent you
+   typed." "Take it home."
 8. Close: "Your friends' ideas were your best move. Muse wrote, judged and painted every decision; code rolled the
    dice. It was based on a true story. And you just played it."
 9. For Meta judges, last: "Every brain in this game is Meta's Muse: it writes, judges every plan, paints you in, and listens. The only thing it borrowed is a voice."

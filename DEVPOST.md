@@ -55,9 +55,10 @@ players in one room. Quick Tale is about 5 minutes (one turn each); a Full Story
 8. **The finale, together.** Everyone proposes a last plan and backs one that isn't theirs (each backer adds +1, up to
    +2). Then the whole table shakes their phones at the same moment to roll one shared die.
 9. **Based on a true story.** A "because of you" montage credits every player by name for what they did and calls
-   back a funny moment. Then the reveal: *Based on a true story*, with the real article and what's happening there
-   now. In Our stories it says *Based on Ava's true story* and shows how it really ended. The "Solved by" line credits
-   each player's real secret talent. A keepsake QR lets everyone take the story home.
+   back a funny moment. The real event only set the scene; the ending is yours. So the reveal comes in two beats:
+   *What you did* (your story, and a "Solved by" line crediting each player's real secret talent), then *What really
+   happened*: the real article and how it really ended, so you see where you matched reality and where you went wild.
+   In Our stories it says *Based on Ava's true story* and shows how it really ended for her. A keepsake QR lets everyone take the story home.
 
 ## How AI is essential (and where code takes over)
 

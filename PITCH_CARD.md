@@ -54,7 +54,7 @@ Slides advance on the bracketed numbers. ~280 spoken words + one live moment. Re
 
 **[6: the ending]** CD:
 > "For the finale, everyone shakes their phone at once for one shared roll. And then the twist: it's based on a
-> true story. You see the real article, and how your secret talent saved the day. That's
+> true story. The TV shows what you did, then what really happened, and how your secret talent saved the day. That's
 > the moment people turn to each other and say 'wait, that's real?'"
 
 **[7: under the hood]** CD (or ENG):
@@ -87,7 +87,7 @@ working demo (the live swipe and the QR on 8).
 |---|---|---|---|
 | Human connection | 30% | "The best move is using a friend's idea." | Friends' suggestion bubbles, "+ Sam's idea +1", the TV's "tell the table your plan", the hand-off by name, the shake-together finale, "Solved by" with their secret talent |
 | AI essential + integrated | 25% | "Muse writes the story from your plans, judges every plan and paints your heroes into every decision." | The outcome uses the player's own words, progress + 3 acts, new painting per decision, narrator, DM's Notes (N) |
-| Originality | 20% | "It's based on a true story, and you find out at the end." | The reveal: the real article + "what's happening now" |
+| Originality | 20% | "It's based on a true story, and you find out at the end." | The reveal: "What you did", then "What really happened" |
 | Working demo | 20% | "You just played it on your own phone." | Their phone, real dice, nothing frozen |
 
 ## Judge Q&A
