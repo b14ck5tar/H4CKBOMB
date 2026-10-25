@@ -909,7 +909,7 @@ function SkinPlan({ host, s }: { host: Stage; s: GameState }) {
       tier={v.tier}
       shift={r?.playerId === pl.id ? r.tierMod : TIER_SHIFT[v.tier]}
       stat={{ label: STAT_LABEL[v.stat], value: pl.hero?.stats[v.stat] ?? 0 }}
-      credit={credit ? { name: shortName(credit.hero?.name ?? credit.name), color: credit.color, bonus: 1 } : undefined}
+      credit={credit ? { name: shortName(credit.hero?.name ?? credit.name), color: credit.color, bonus: 1, by: shortName(credit.name), portrait: portraitOf(host, credit) } : undefined}
       cta={s.phase === "roll" ? `${shortName(pl.hero?.name)}: swipe up on your phone to throw` : undefined}
     />
   );
