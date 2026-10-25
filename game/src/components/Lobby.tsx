@@ -306,6 +306,55 @@ export function Lobby(props: LobbyProps) {
     QRCode.toDataURL(join, { margin: 1, width: 600, errorCorrectionLevel: "M", color: { dark: "#0A0612", light: "#FFFFFF" } }).then(setQr);
   }, [code, props.joinUrl, props.shortUrl]);
 
+  // Copy the join link: the async clipboard where allowed, else select a hidden field and copy (http / old browsers).
+  const [copied, setCopied] = useState<"" | "yes" | "manual">("");
+  const linkRef = useRef<HTMLSpanElement>(null);
+  const copyJoin = useCallback(() => {
+    const url = addr.join;
+    if (!url) return;
+    const flash = (v: "yes" | "manual") => {
+      setCopied(v);
+      setTimeout(() => setCopied(""), v === "yes" ? 1600 : 4000);
+    };
+    const done = () => flash("yes");
+    // Clipboard blocked: select the visible link so Ctrl+C / Cmd+C copies it, and say so.
+    const manual = () => {
+      const el = linkRef.current;
+      const sel = window.getSelection();
+      if (el && sel) {
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+      flash("manual");
+    };
+    const legacy = () => {
+      const ta = document.createElement("textarea");
+      ta.value = url;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      let ok = false;
+      try {
+        ok = document.execCommand("copy");
+      } catch {}
+      ta.remove();
+      if (ok) done();
+      else manual();
+    };
+    if (!navigator.clipboard?.writeText) return legacy();
+    // A blocked or pending permission can leave the promise hanging: fall back after a beat.
+    let settled = false;
+    navigator.clipboard.writeText(url).then(
+      () => ((settled = true), done()),
+      () => ((settled = true), legacy()),
+    );
+    setTimeout(() => !settled && legacy(), 800);
+  }, [addr.join]);
+
   // a sound for every new face (not for the ones already here when the screen opened)
   const known = useRef<Set<string> | null>(null);
   useEffect(() => {
@@ -506,9 +555,16 @@ export function Lobby(props: LobbyProps) {
                 </span>
               ))}
             </div>
-            <p className="lb-url">
-              or go to <b>{addr.short}</b>
-            </p>
+            {/* Laptops can't scan: the full link (with the room code), click to copy (CD, Sun AM). */}
+            <button type="button" className={`lb-url lb-copy ${copied === "yes" ? "is-copied" : ""}`} onClick={copyJoin} title="Click to copy the join link">
+              <span className="lb-copy-link" ref={linkRef}>
+                {/* one string (no line break inside), so selecting it and pressing Ctrl+C copies a working link */}
+                {addr.join.replace(/^https?:\/\//, "").replace(/\/play.*$/, "")}
+                <wbr />
+                <b>{addr.join.replace(/^https?:\/\/[^/]+/, "")}</b>
+              </span>
+              <span className="lb-copy-btn" aria-live="polite">{copied === "yes" ? "Copied!" : copied === "manual" ? "Ctrl+C" : "Copy"}</span>
+            </button>
             {localMode && <p className="lb-local">Local mode: other devices can’t join until Supabase keys are set.</p>}
           </div>
           {onAddBot && (
