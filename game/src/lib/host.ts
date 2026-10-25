@@ -115,6 +115,7 @@ const AWAY_AFTER_TIMEOUTS = 2;
 export const MONTAGE_PANEL_MS = 4800; // one ending-montage panel on the TV
 const DANGER_MAX = 3;
 const QUICK_IS_CURATED = true; // judge mode (CD, Sun)
+const USE_BRANCHES = false; // outcome_branches (3 high-effort calls) vs one live outcome with the real roll
 /** The house ranking of the hand-made stories (Quick Tale opens on the first one a table hasn't played). */
 const FEATURED = ["rust-wyrm", "hanging-boulder", "cornfield-dome", "galactic-signal", "billion-pearls", "idle-island", "returned-otter", "littlest-gardener"]; // the danger meter's top: at full, the finale gets a -3 shift
 const PRESENCE_ONLY = new Set(["hello", "ping", "away"]); // these don't count as "I'm back"
@@ -2531,6 +2532,10 @@ export class GameHost {
    * outcome call writes it with the real roll.
    */
   private outcomeFor(pitch: Pitch, roll: RollResult) {
+    // The real roll is decided in code before the throw, so the outcome is written with it right away, while the
+    // table watches the plan and the die. (Pre-written branches timed out at 28 s in testing: off until faster.)
+    this.landed = Promise.resolve();
+    if (!USE_BRANCHES) return this.askOutcome(pitch, roll);
     const branchesP = withTimeout(
       this.ask<Record<string, OutcomeData | null>>("outcome_branches", this.outcomeInput(pitch, null)).then((r) => (r.fallback ? null : r.data)),
       30_000,

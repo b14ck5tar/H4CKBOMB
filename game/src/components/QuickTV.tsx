@@ -763,9 +763,11 @@ function Roll({ host, s }: { host: Stage; s: GameState }) {
   return (
     <div className="qt-stage qt-center !gap-6">
       <ScreenFlash kind={flash.kind} trigger={flash.n} />
+      <div style={{ opacity: settled ? 0 : 1, transition: "opacity 0.5s ease 0.3s" }}>
       <ThrowFlight fling={s.fling} thrown={shown} ms={ROLL_ANIM_MS - 200}>
         <D20 value={shown ? r.kept : null} rolling={shown && !settled} size={300} tone={settled && r.band === "CATASTROPHE" ? "crimson" : "gold"} />
       </ThrowFlight>
+      </div>
       {settled && (
         <TvStage>
           <SkinMeter s={s} r={r} />
