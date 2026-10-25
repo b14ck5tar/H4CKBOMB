@@ -349,6 +349,7 @@ export function GameButton({
   disabled,
   onClick,
   className = "",
+  ariaLabel,
 }: {
   children: React.ReactNode;
   sub?: React.ReactNode;
@@ -358,6 +359,7 @@ export function GameButton({
   disabled?: boolean;
   onClick?: () => void;
   className?: string;
+  ariaLabel?: string;
 }) {
   const [rings, setRings] = useState<number[]>([]);
   return (
@@ -366,6 +368,7 @@ export function GameButton({
       className={`pk-btn ${xl ? "pk-btn-xl" : ""} ${className}`}
       data-tone={tone === "pink" ? undefined : tone}
       disabled={disabled}
+      aria-label={ariaLabel}
       onPointerDown={() => {
         if (disabled) return;
         vibrate(12);

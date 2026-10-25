@@ -314,6 +314,7 @@ export function ShakeScreen({
           tone="amber"
           xl
           className="pk-roll-btn"
+          ariaLabel="Shake: roll the die"
           onClick={() => {
             press();
             roll.current();
@@ -353,6 +354,7 @@ export function ShakeScreen({
           tone="pink"
           xl
           className="pk-roll-btn"
+          ariaLabel="Arm the die"
           onClick={() => {
             press();
             onUnlock?.();
