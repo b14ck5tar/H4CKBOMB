@@ -244,6 +244,7 @@ export class GameHost {
   private finalRoll: RollResult | null = null;
   private finalPitch: Pitch | null = null;
   private artP = new Map<string, Promise<void>>(); // `${questId}:${scene}` -> hero-painted scene art in flight
+  private artSeq = 10; // keys for per-decision paintings in sceneImages (0-2 are the plates)
   private epilogueP: Promise<{ ending: string; line: string; recap: string }> | null = null;
   private storybookP: Promise<Storybook> | null = null;
   private reactionId = 0;
@@ -317,6 +318,7 @@ export class GameHost {
       turnIndex: 0,
       ideas: {},
       finale: false,
+      artKey: -1,
       boosts: {},
       rolls: [],
       revealed: [],
@@ -1083,6 +1085,7 @@ export class GameHost {
       turnIndex: 0,
       ideas: {},
       finale: false,
+      artKey: -1,
       solvedBy: "",
       round: null,
       final: null,
@@ -1169,6 +1172,7 @@ export class GameHost {
       turnIndex: 0,
       ideas: {},
       finale: false,
+      artKey: -1,
     });
     this.note("safety", "Why it's safe", SAFETY_NOTES[seed.id] ?? SAFETY_GENERIC);
     this.note(
@@ -1453,6 +1457,7 @@ export class GameHost {
     if (this.state.phase !== "ruling" || this.state.turnIndex !== turn || this.state.finale !== finale) return;
     const judged = { ...pitch, verdict: v };
     this.noteRuling(judged, v);
+    this.paintDecision(judged, v);
     // The die is decided now (crypto, in code), so the outcome is written while the table watches the roll.
     const roll = this.makeRoll(judged);
     this.set({ pitches: this.state.pitches.map((x) => (x.id === pitch.id ? judged : x)), busy: "", rolls: [{ ...roll, dice: [], kept: 0 }], revealed: [] });
@@ -1461,6 +1466,52 @@ export class GameHost {
     this.outcomeP = this.askOutcome(judged, roll);
     this.setTimer(RULING_MS, () => this.startRoll());
   }
+
+  /**
+   * design/24 P4: every decision gets a new painting. The moment the plan is ruled (1-2 s after the owner picks),
+   * muse-image edits the CURRENT picture: the heroes, doing this action, in this situation. ~15 s; the outcome shows
+   * over the previous art and the TV crossfades when it lands. Never waited on. Steered plans are never painted.
+   */
+  private paintDecision(pitch: Pitch, v: Verdict) {
+    if (!FEATURES.heroArt || !this.seed || v.fallback || v.moderation !== "ok") return;
+    const questId = this.seed.id;
+    const plate = this.plateFor(this.state.turnIndex);
+    const prev = this.sceneImages[this.state.artKey] ?? this.sceneImages[plate];
+    const heroes = this.heroes()
+      .slice(0, 4)
+      .map((p) => ({ id: p.pick ?? p.id, name: p.hero!.name, portraitUrl: p.pick ? `/heroes/${p.pick}.webp` : this.portraits[p.id], visual: p.hero!.visual }));
+    if (!heroes.length || !prev) return;
+    const t0 = Date.now();
+    const asked = this.artSeq;
+    fetch("/api/scene-art", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        questId,
+        sceneIndex: this.quick ? "quick" : plate,
+        heroes,
+        rating: this.state.rating,
+        sceneUrl: prev,
+        sceneText: this.state.situation,
+        moment: v.interpretation,
+      }),
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((res: { url?: string; fallback?: boolean } | null) => {
+        if (!res?.url || res.fallback || this.state.questId !== questId || this.state.phase === "lobby") return;
+        // Paintings land in order; a slow older one never replaces a newer one.
+        if (asked < this.lastArtAsked) return;
+        this.lastArtAsked = asked;
+        const key = this.artSeq++;
+        this.sceneImages[key] = res.url;
+        this.note("scene", "Scene art", `Painted ${this.heroName(pitch.playerId)}'s move into the scene (${Math.round((Date.now() - t0) / 1000)}s): ${clip(v.interpretation, 80)}`);
+        this.set({ artKey: key });
+      })
+      .catch(() => {});
+    this.artSeq++;
+  }
+
+  private lastArtAsked = 0;
 
   /** One d20 + the stat the DM picked + 1 for a friend's idea, against the tier's target. All in code. */
   private makeRoll(pitch: Pitch, die = d20()): RollResult {
@@ -2101,6 +2152,7 @@ export class GameHost {
       turnIndex: 0,
       ideas: {},
       finale: false,
+      artKey: -1,
       pitches: [],
       rolls: [],
       revealed: [],

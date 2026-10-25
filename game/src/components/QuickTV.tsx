@@ -647,24 +647,24 @@ function Outcome({ host, s }: { host: Stage; s: GameState }) {
   if (!r || !pl) return null;
   return (
     <div className="qt-stage">
-      <div className="qt-lower qt-beat gp-lowerthird !flex-row !items-end">
-        <div className="qt-beat-portrait qt-pop" style={{ ["--pc" as string]: pl.color }}>
-          {host.portraits[pl.id] ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={host.portraits[pl.id]} alt="" />
-          ) : (
-            <Avatar host={host} p={pl} size={200} />
-          )}
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2">
-            <Stamp text={BAND_LABEL[r.band]} sub={`rolled ${r.kept}`} size="md" tone={bandTone(r.band)} slam={false} />
+      <div className="gp-lowerthird">
+        <div className="flex items-end gap-8">
+          <div className="gp-out-portrait qt-pop" style={{ ["--pc" as string]: pl.color }}>
+            {host.portraits[pl.id] ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={host.portraits[pl.id]} alt="" />
+            ) : (
+              <Avatar host={host} p={pl} size={150} />
+            )}
           </div>
-        </div>
-        <div className="flex flex-col gap-3 min-w-0 min-h-[10rem] justify-center">
-          {s.outcome ? (
-            <TypeReveal text={s.outcome} className="qt-narration !text-[2.6rem]" phraseMs={300} />
-          ) : (
-            <p className="font-heading text-3xl uppercase text-parchment/70 qt-throb">{s.busy || "…"}</p>
-          )}
+          <div className="flex flex-col gap-3 min-w-0 flex-1">
+            <Stamp text={BAND_LABEL[r.band]} sub={`rolled ${r.kept}`} size="md" tone={bandTone(r.band)} slam={false} rotate={-3} />
+            {s.outcome ? (
+              <TypeReveal text={s.outcome} className="qt-narration" phraseMs={300} />
+            ) : (
+              <p className="font-heading text-3xl uppercase text-parchment/70 qt-throb">{s.busy || "…"}</p>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -841,7 +841,7 @@ function Keepsake({ host, s, onNotes }: { host: Stage; s: GameState; onNotes?: (
         <p className="font-heading text-3xl uppercase text-parchment/70 qt-throb">{s.busy || "Binding your keepsake…"}</p>
       </div>
     );
-  const cover = host.sceneImages[2] ?? host.sceneImages[0];
+  const cover = (s.artKey >= 0 ? host.sceneImages[s.artKey] : undefined) ?? host.sceneImages[2] ?? host.sceneImages[0];
   const pg = book.pages[page % book.pages.length];
   const told = host.startedAt && host.endedAt ? Math.round((host.endedAt - host.startedAt) / 1000) : 0;
   return (
@@ -933,7 +933,9 @@ export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameS
   }, [plates]);
   const [title, setTitle] = useState(false);
   const mood = moodFor(s, title && s.phase === "narrating");
-  const art = s.phase === "story_vote" ? undefined : host.sceneImages[plateFor(s)] ?? host.sceneImages[0];
+  // The latest painting of what the heroes did, once there is one; before that, the (hero-painted) plate.
+  const painted = s.artKey >= 0 ? host.sceneImages[s.artKey] : undefined;
+  const art = s.phase === "story_vote" ? undefined : painted ?? host.sceneImages[plateFor(s)] ?? host.sceneImages[0];
   // One key per "shot": a new key plays the dip-to-dark transition and the enter animation.
   const shot = s.phase === "final_result" ? "final_roll" : ["turn", "ruling", "roll", "outcome"].includes(s.phase) ? `${s.phase}-${s.turnIndex}-${s.finale}` : s.phase;
 

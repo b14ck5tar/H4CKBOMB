@@ -324,6 +324,7 @@ export interface GameState {
   turnIndex: number; // whose turn it is in turnOrder
   ideas: Record<string, string>; // suggester id -> their one-action idea for the owner this turn
   finale: boolean; // the grand finale: everyone proposes, everyone votes (not your own), one shared die
+  artKey: number; // the latest painting of what the heroes just did (a key into the TV's sceneImages), -1 = the plate
   boosts: Record<string, string>; // booster id -> pitch id
   rolls: RollResult[]; // in reveal order (lowest result first)
   revealed: string[]; // player ids whose die is shown
