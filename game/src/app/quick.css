@@ -534,8 +534,10 @@
 .gp-goal {
   position: absolute;
   top: 4.4rem;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  width: fit-content;
   z-index: 15;
   display: flex;
   align-items: baseline;
@@ -611,3 +613,12 @@
 .ph-choice.on { border-color: var(--signal); background: rgba(61, 231, 255, 0.14); box-shadow: 0 0 24px -6px var(--signal); }
 .gp-pill { padding: 0.8rem 1rem; border-radius: 4px; border: 2px solid rgba(255, 255, 255, 0.15); background: rgba(5, 3, 9, 0.5); font-family: var(--font-heading), sans-serif; font-size: 1.5rem; text-transform: uppercase; transition: all 0.2s; }
 .gp-pill.on { border-color: var(--gilt-bright); background: rgba(255, 182, 72, 0.14); box-shadow: 0 0 24px -8px var(--gilt-bright); }
+
+/* Heroes are painted into the lower part of the art: words over them get a soft dark scrim. */
+.gp-scrim { position: relative; }
+.gp-scrim::before {
+  content: ""; position: absolute; inset: -2.5rem -3rem; z-index: -1; border-radius: 2rem;
+  background: radial-gradient(ellipse at 40% 55%, rgba(5, 3, 9, 0.82) 0%, rgba(5, 3, 9, 0.6) 55%, transparent 80%);
+  filter: blur(8px);
+}
+.qt-keep { padding-top: 6rem; padding-bottom: 2.5rem; }

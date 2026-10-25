@@ -9,7 +9,7 @@ import QRCode from "qrcode";
 import type { Stage } from "./TV";
 import { BAND_LABEL, ENDING_LABEL, ROLL_ANIM_MS, STAT_LABEL, TIER_LABEL, isFailure, lineMs, narrationLines, stampText } from "@/lib/rules";
 import { coldOpenTimeline } from "@/lib/quick";
-import { heroFirst, nowText, winnerPid } from "@/lib/now";
+import { eligibleIds, heroFirst, nowText, winnerPid } from "@/lib/now";
 import { sfx } from "@/lib/sfx";
 import { mask } from "@/lib/mask";
 import type { GameState, Pitch, Player, RollResult, Tier } from "@/lib/types";
@@ -224,7 +224,7 @@ function GoalBar({ s }: { s: GameState }) {
 /** The ONE instruction on the TV right now. Phones show the same words. */
 function NowBanner({ s }: { s: GameState }) {
   const text = nowText(s);
-  if (!text || s.phase === "storybook") return null;
+  if (!text || s.phase === "storybook" || s.phase === "reveal") return null;
   return (
     <div className="gp-now" key={text}>
       <span className="gp-now-k">Now</span>
@@ -391,7 +391,7 @@ function Narration({ s }: { s: GameState }) {
   }, [s.sceneIndex]);
   return (
     <div className="qt-stage">
-      <div className="qt-lower flex flex-col gap-4 max-w-[78rem] pb-24">
+      <div className="qt-lower flex flex-col gap-4 max-w-[78rem] pb-24 gp-scrim">
         <p className="kicker !text-[var(--gilt-bright)] !text-lg qt-rise">{s.sceneTitle}</p>
         <div className="flex flex-col gap-3">
           {lines.slice(0, shown).map((l, i) => (
@@ -430,14 +430,6 @@ function Planning({ host, s }: { host: Stage; s: GameState }) {
 }
 
 // ---------- 3. back a friend's plan ----------
-function eligibleIds(s: GameState) {
-  const real = s.pitches.filter((p) => !p.auto);
-  const here = s.players.filter((p) => p.hero && !p.away).map((p) => p.id);
-  const min = here.length ? Math.min(...here.map((id) => s.wins[id] ?? 0)) : 0;
-  const el = real.filter((p) => (s.wins[p.playerId] ?? 0) <= min);
-  return new Set((el.length ? el : real).map((p) => p.id));
-}
-
 function Vote({ host, s }: { host: Stage; s: GameState }) {
   const el = eligibleIds(s);
   const cols = Math.min(s.pitches.length, s.pitches.length === 4 ? 2 : 3);
@@ -590,7 +582,7 @@ function Outcome({ host, s }: { host: Stage; s: GameState }) {
             <Stamp text={BAND_LABEL[r.band]} sub={`rolled ${r.kept}`} size="md" tone={bandTone(r.band)} slam={false} />
           </div>
         </div>
-        <div className="flex flex-col gap-3 min-w-0 min-h-[12rem] justify-center">
+        <div className="flex flex-col gap-3 min-w-0 min-h-[12rem] justify-center gp-scrim">
           {s.outcome ? (
             <TypeReveal text={s.outcome} className="qt-narration !text-[2.6rem]" phraseMs={300} />
           ) : (
@@ -810,9 +802,9 @@ function Keepsake({ host, s }: { host: Stage; s: GameState }) {
             );
           })}
         </div>
-        <div className="flex items-center gap-6 flex-wrap">
-          <KeepsakeQR host={host} s={s} size={150} />
-          <div className="flex flex-col gap-2">
+        <div className="flex items-start gap-6">
+          <KeepsakeQR host={host} s={s} size={130} />
+          <div className="flex flex-col gap-3 pt-10">
             <p className="italic text-2xl text-parchment/90">{book.moral}</p>
             {told > 0 && (
               <p className="font-ui text-lg text-parchment/60">

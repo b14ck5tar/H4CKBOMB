@@ -28,6 +28,8 @@ export default function TVPage() {
       if (qs.get("mode") === "quick") h.setMode("quick");
       if (quest) h.chooseQuest(quest);
     } catch {}
+    // Dev only: lets the playtest scripts read the table's phase and timings.
+    if (process.env.NODE_ENV !== "production") (window as unknown as { __host: GameHost }).__host = h;
     setHost(h);
     return () => h.close();
   }, []);

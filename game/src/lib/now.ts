@@ -54,3 +54,12 @@ export function nowText(s: GameState, me?: string): string {
       return "Eyes on the TV";
   }
 }
+
+/** Plans that can win (the spotlight rule, mirrored from the table) so the TV and phones grey out the rest. */
+export function eligibleIds(s: GameState) {
+  const real = s.pitches.filter((p) => !p.auto);
+  const here = s.players.filter((p) => p.hero && !p.away).map((p) => p.id);
+  const min = here.length ? Math.min(...here.map((id) => s.wins[id] ?? 0)) : 0;
+  const el = real.filter((p) => (s.wins[p.playerId] ?? 0) <= min);
+  return new Set((el.length ? el : real).map((p) => p.id));
+}

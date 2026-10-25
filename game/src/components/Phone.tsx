@@ -6,7 +6,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useCountdown, usePhone } from "@/lib/usePhone";
 import { REACTIONS } from "@/lib/rules";
-import { nowText, winnerPid } from "@/lib/now";
+import { eligibleIds, nowText, winnerPid } from "@/lib/now";
 import { sfx } from "@/lib/sfx";
 import { HeroCard } from "./HeroCard";
 import { MicButton } from "./MicButton";
@@ -301,6 +301,43 @@ function StoryVote({ state, me, send, deadlineAt }: { state: GameState; me: Play
   );
 }
 
+/** Back a friend's plan: never your own, and plans that already had a turn are greyed out. */
+function BackPlan({ state, me, send, deadlineAt }: { state: GameState; me: Player; send: Send; deadlineAt: number }) {
+  const el = eligibleIds(state);
+  const others = state.pitches.filter((p) => p.playerId !== me.id && !p.auto);
+  const mine = state.votes[me.id];
+  if (!others.some((p) => el.has(p.id))) return <Say text="Your plan is up. Eyes on the TV" goal={state.goal} />;
+  return (
+    <div className="flex flex-col gap-3">
+      <Timer deadlineAt={deadlineAt} total={15000} />
+      <Say text={nowText(state, me.id)} goal={state.goal} />
+      {others.map((p) => {
+        const ok = el.has(p.id);
+        const pl = state.players.find((x) => x.id === p.playerId);
+        return (
+          <button
+            key={p.id}
+            disabled={!ok}
+            className={`ph-choice ${mine === p.id ? "on" : ""} ${ok ? "" : "opacity-40"}`}
+            onClick={() => {
+              vibrate(15);
+              send("vote", { id: p.id });
+            }}
+          >
+            <span className="flex flex-col gap-1 min-w-0">
+              <span className="font-heading text-lg uppercase leading-tight" style={{ color: pl?.color }}>
+                {pl?.hero?.name}
+                {ok ? "" : " · had a turn"}
+              </span>
+              <span className="text-base leading-snug">“{p.verdict && p.verdict.moderation !== "ok" ? p.verdict.interpretation : p.text}”</span>
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 function PitchForm({ state, send, deadlineAt }: { state: GameState; send: Send; deadlineAt: number }) {
   const [text, setText] = useState("");
   const [ex] = useState(() => PLAN_EXAMPLES[Math.floor(Math.random() * PLAN_EXAMPLES.length)]);
@@ -545,7 +582,7 @@ export function Phone({ code }: { code: string }) {
       break;
     }
     case "vote":
-      body = passive("Eyes on the TV");
+      body = <BackPlan state={state} me={me} send={send} deadlineAt={deadlineAt} />;
       break;
     case "final_roll":
       body = <FinalRollPhone state={state} me={me} send={send} deadlineAt={deadlineAt} />;
