@@ -42,6 +42,8 @@ const show = (label, r, ms) => {
   line(`  NARRATION: ${o.narration}`);
   line(`  GOAL:      ${o.goal}`);
   line(`  SITUATION: ${o.situation}`);
+  if (o.threat) line(`  THREAT:    ${o.threat.name} (${o.threat.pronoun}), ${o.threat.want}`);
+  if (o.beats?.length) line(`  BEATS:     ${o.beats.join(" > ")}`);
   if (o.npc_line) line(`  NPC:       ${o.npc_line.speaker}: "${o.npc_line.line}"`);
   const e = r.ending_facts;
   if (e?.kind === "news") {
@@ -65,7 +67,11 @@ if (st) line(`  serpapi calls this run: ${st.serpCalls} (editions ${st.editions?
 for (const q of news.all ?? news.quests) line(`  - [${q.rating ?? "?"} ${q.oddness ?? ""}] ${q.headline} (${q.place || "?"}; ${q.source}, ${String(q.date).slice(0, 10)})`);
 if (st?.rejected?.length) line(`  rejected sample: ${st.rejected.slice(0, 8).map((r) => `${r.title.slice(0, 50)} [${r.reason}]`).join("; ")}`);
 
-const picks = news.quests.slice(0, 3);
+// --pick=fossil,elf,moon picks cached headlines by substring (no extra SerpApi calls).
+const pickArg = process.argv.find((a) => a.startsWith("--pick="))?.slice(7).split(",").filter(Boolean) ?? [];
+const picks = pickArg.length
+  ? pickArg.map((k) => news.quests.find((q) => q.headline.toLowerCase().includes(k.toLowerCase()))).filter(Boolean)
+  : news.quests.slice(0, 3);
 const jobs = [
   ...picks.map((q) => opener({ mode: "news", rating: RATING, party, source: q }).then((x) => [`NEWS: ${q.headline}`, x])),
   ...(NEWS_ONLY ? [] : personal).map((p) => opener({ mode: "personal", rating: RATING, party, source: p }).then((x) => [`PERSONAL: ${p.title}`, x])),
