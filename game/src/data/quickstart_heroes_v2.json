@@ -394,5 +394,203 @@
         "expression": "calm and smug, one eyebrow up, already three steps ahead"
       }
     }
+  },
+  {
+    "id": "council-kid",
+    "pitch": "A 9-year-old who got elected to city council",
+    "hero": {
+      "name": "Lupe",
+      "epithet": "Councilmember, Age 9",
+      "pronouns": "she/her",
+      "concept_status": "ok",
+      "concept_note": "",
+      "stats": {
+        "brave": -1,
+        "clever": 1,
+        "charming": 3
+      },
+      "ability": {
+        "name": "Motion Carries",
+        "text": "Bang her gavel and any argument nearby has to end in a fair vote, even between ghosts."
+      },
+      "flaw": "Calls a recess whenever she is losing.",
+      "roast": "Lupe passed a law against bedtimes. It is not enforced in her own house.",
+      "visual": {
+        "anchor": "a small round cartoon Mexican-American girl, age nine, two big puffy pigtails, a gap where a front tooth fell out, a blazer far too big for her",
+        "outfit": "a grown-up's navy blazer with rolled sleeves over a unicorn t-shirt and light-up sneakers",
+        "palette": [
+          "navy",
+          "bubblegum pink",
+          "gold"
+        ],
+        "prop": "a wooden gavel and a clipboard",
+        "expression": "very serious, chin up, about to make a ruling"
+      }
+    }
+  },
+  {
+    "id": "lighthouse-keeper",
+    "pitch": "A lighthouse keeper who argues with the fog",
+    "hero": {
+      "name": "Augustin",
+      "epithet": "Keeper of the Light",
+      "pronouns": "he/him",
+      "concept_status": "ok",
+      "concept_note": "",
+      "stats": {
+        "brave": 3,
+        "clever": 1,
+        "charming": -1
+      },
+      "ability": {
+        "name": "Talk Back to the Fog",
+        "text": "Argues with fog, mist or smoke until it gives up and shows what it was hiding."
+      },
+      "flaw": "Wins every argument, then sulks about it for an hour.",
+      "roast": "Augustin has won 4,000 arguments with the fog. The fog keeps coming back.",
+      "visual": {
+        "anchor": "a broad barrel-shaped cartoon Haitian-American lighthouse keeper in his sixties, a short white beard, bushy eyebrows, a knitted watch cap, thick wool sweater",
+        "outfit": "a yellow rain slicker over a cable-knit sweater and tall rubber boots",
+        "palette": [
+          "slicker yellow",
+          "sea blue",
+          "rust red"
+        ],
+        "prop": "an old brass lantern and a mug of tea",
+        "expression": "mid-argument, pointing, scowling at the sky"
+      }
+    }
+  },
+  {
+    "id": "mall-santa",
+    "pitch": "A mall Santa in July with nothing to do",
+    "hero": {
+      "name": "Big Walt",
+      "epithet": "Mall Santa (Off-Season)",
+      "pronouns": "he/him",
+      "concept_status": "ok",
+      "concept_note": "",
+      "stats": {
+        "brave": 1,
+        "clever": -1,
+        "charming": 3
+      },
+      "ability": {
+        "name": "Naughty or Nice",
+        "text": "One look and he knows exactly what anyone, or anything, secretly wants."
+      },
+      "flaw": "Says ho ho ho when nervous, which is always.",
+      "roast": "Walt has been on the nice list 62 years running. He wrote the list.",
+      "visual": {
+        "anchor": "a huge round cartoon off-season mall Santa, a big white beard tied in a ponytail, sunburned nose, sunglasses, a belly like a beach ball",
+        "outfit": "a loud red Hawaiian shirt with tiny reindeer, cargo shorts and flip-flops, a Santa hat stuffed in his pocket",
+        "palette": [
+          "Santa red",
+          "palm green",
+          "sunscreen white"
+        ],
+        "prop": "a melting snow cone and a little silver bell",
+        "expression": "jolly but sweaty, eyebrows up"
+      }
+    }
+  },
+  {
+    "id": "beekeeper",
+    "pitch": "A beekeeper with terrible stage fright",
+    "hero": {
+      "name": "Sunny",
+      "epithet": "the Shy Beekeeper",
+      "pronouns": "they/them",
+      "concept_status": "ok",
+      "concept_note": "",
+      "stats": {
+        "brave": 1,
+        "clever": 3,
+        "charming": -1
+      },
+      "ability": {
+        "name": "The Hive Knows",
+        "text": "Their bees fly anywhere and buzz back exactly what they saw."
+      },
+      "flaw": "Hides inside the beekeeper veil whenever more than two people look at them.",
+      "roast": "Sunny has 60,000 bees who adore them. They still can't order a pizza over the phone.",
+      "visual": {
+        "anchor": "a lanky pear-shaped cartoon Indian-American beekeeper in their thirties, big curly hair squashed under a veiled beekeeper hat, round cheeks, shy hunched shoulders",
+        "outfit": "a baggy white beekeeper suit with honey stains and yellow gloves",
+        "palette": [
+          "honey gold",
+          "white",
+          "sage green"
+        ],
+        "prop": "a smoking bee smoker and a honeycomb frame, with a few friendly bees",
+        "expression": "peeking out nervously, blushing"
+      }
+    }
+  },
+  {
+    "id": "pigeon",
+    "pitch": "A pigeon who rides the night bus and knows everyone's secrets",
+    "hero": {
+      "name": "Lou",
+      "epithet": "of the Night Bus",
+      "pronouns": "he/him",
+      "concept_status": "ok",
+      "concept_note": "",
+      "stats": {
+        "brave": -1,
+        "clever": 3,
+        "charming": 1
+      },
+      "ability": {
+        "name": "Heard It on the Bus",
+        "text": "Knows one secret about every person, and every place, on the route."
+      },
+      "flaw": "Trades secrets for french fries, no matter whose secret.",
+      "roast": "Lou has ridden the night bus every night for six years. He has never paid.",
+      "visual": {
+        "anchor": "a plump round cartoon city pigeon standing upright like a little man, puffed iridescent chest, one bent foot, tiny reading glasses, a scruffy feather sticking up on his head",
+        "outfit": "a tiny knitted scarf and a bus transfer ticket tucked under one wing",
+        "palette": [
+          "pigeon grey",
+          "iridescent teal",
+          "french-fry yellow"
+        ],
+        "prop": "one big french fry carried proudly under his wing",
+        "expression": "knowing side-eye, leaning in to whisper"
+      }
+    }
+  },
+  {
+    "id": "retired-magician",
+    "pitch": "A retired magician who knows exactly one trick",
+    "hero": {
+      "name": "Mrs. Tanaka",
+      "epithet": "Retired Magician, One Trick",
+      "pronouns": "she/her",
+      "concept_status": "ok",
+      "concept_note": "",
+      "stats": {
+        "brave": 3,
+        "clever": -1,
+        "charming": 1
+      },
+      "ability": {
+        "name": "Now You Don't",
+        "text": "Makes any one thing vanish. Getting it back depends on whether she remembers where she put it."
+      },
+      "flaw": "Has made her own reading glasses disappear and cannot find them.",
+      "roast": "Mrs. Tanaka made a truck disappear in 1971. It is still missing.",
+      "visual": {
+        "anchor": "a tiny stooped cartoon Japanese-American retired magician in her eighties, a sharp silver bob, sharp eyes, a sly smile, a cane",
+        "outfit": "a sparkly sequined jacket over a cozy cardigan and house slippers",
+        "palette": [
+          "sequin purple",
+          "silver",
+          "cream"
+        ],
+        "prop": "a battered magic wand and an empty top hat",
+        "expression": "sly, one eyebrow up, about to make something vanish"
+      }
+    }
   }
 ]
