@@ -38,6 +38,12 @@ Open `https://groupproject-game.vercel.app/tv?bots=1` and play to the first turn
       isn't bought yet)? Then in the voiceover say "The narrator is OpenAI", and tell Claude so DEVPOST and the deck
       get switched back.
 
+## Rollback
+
+**Rollback** (only if a deploy misbehaves): the known-good build is `once-upon-a-roll-ggknns93n` (tag `judge-safe-1`).
+Away from judges, in a terminal at `C:\Users\oclab\AppData\Local\Temp\gpd\game`:
+`npx vercel promote https://once-upon-a-roll-ggknns93n-bl4ck-b0mb.vercel.app` (or `npx vercel rollback`). Then F5.
+
 ## 2. The live take (about 15 min for 2 takes)
 
 Setup (VIDEO_SCRIPT.md, "Shot list"): `/tv?judge=1&bots=1` (a saved, tested true story), **Quick · Odd news · Adults** (judge mode sets these),

@@ -41,6 +41,9 @@ anything in *italics with brackets*.
       https://claude.ai/artifact/Aehk1tVCwhGP9ydNnXxFD3
 
 ## If something goes wrong
+- **Rollback** (only if a deploy misbehaves): the known-good build is `once-upon-a-roll-ggknns93n` (tag `judge-safe-1`).
+  Away from judges, in a terminal at `C:\Users\oclab\AppData\Local\Temp\gpd\game`:
+  `npx vercel promote https://once-upon-a-roll-ggknns93n-bl4ck-b0mb.vercel.app` (or `npx vercel rollback`). Then F5.
 - **Video not ready by 11:15:** submit without it, then edit the project to add the link before 11:30 (edits are
   allowed until the deadline).
 - **An image won't upload:** skip it; 5 images are plenty. Devpost takes JPG/PNG up to 5 MB.

@@ -65,6 +65,10 @@ the TV runs."
   backup video (laptop + phone) and talk over it; hand out the QR card.
 - **Freeze:** F5 on the TV, everyone rescans. Twice = video.
 - **Judge in a hurry:** 30-second pitch + deck reveal slide + QR card.
+- **Rollback** (only if a deploy misbehaves): the known-good build is `once-upon-a-roll-ggknns93n` (tag `judge-safe-1`).
+  Away from judges, in a terminal at `C:\Users\oclab\AppData\Local\Temp\gpd\game`:
+  `npx vercel promote https://once-upon-a-roll-ggknns93n-bl4ck-b0mb.vercel.app` (or `npx vercel rollback`). Then F5.
+- Running it alone: `pitch/PARTNER_JUDGING.md` (one page).
 
 ## HackTX general judging (Best Overall)
 - **Technology:** real-time multi-phone rooms run by the TV; 4 Muse jobs (judge plans, write turns, paint your heroes
