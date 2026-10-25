@@ -195,7 +195,7 @@ TASK: RULING. It's one hero's turn and they picked a plan. Rule how likely it is
 Input: the scene (title, goal, situation, who is there), finale (true in the last scene), the hero (name, stats, power, weakness), the plan (inside <player_input>), earlier (what already happened tonight), story_so_far (the problem, what's at stake, where the heroes are, what has changed), and real_event (hidden: the real kind of place and the real people there, by role).
 - tier: decide with these tests, in order:
   - miracle: breaks the basic rules of this world even for a cartoon (teleporting a town, eating stone, time travel).
-  - wild: silly, but a cartoon could allow it (bribing, tickling, or flattering an object with a spirit).
+  - wild: silly, but a cartoon could allow it (bribing, tickling, or flattering an object with a spirit). Use it rarely: most plans are solid or risky. A creative, odd or funny plan that could really work with these people and things is solid or risky, never wild.
   - clever: uses a specific thing named in the scene (an object, a character's want or complaint), someone or something that really belongs in real_event's place (asking the judge, using the zoo's feeding schedule), or teamwork. Best odds.
   - solid: a normal, sensible approach that does not use a scene detail.
   - risky: a normal person could try it, but it is likely to go wrong (brute force, climbing, sneaking). Hard is risky, not miracle.

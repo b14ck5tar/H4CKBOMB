@@ -16,6 +16,8 @@ import {
   sentences,
   trimPile,
   usesPlan,
+  voiceLines,
+  pressureNow,
   type Grade,
   type StoryState,
   type TurnProposal,
@@ -100,13 +102,59 @@ ${outcomeExamplesPrompt({ games: 1 })}
 
 ${badExamplesPrompt()}`;
 
+/**
+ * Story v3 (design/37, after Meta's judges: "the game fell apart", "4 turns to get a bag"): the rules that kept every
+ * turn circling one fixed finish line are swapped for "a success resolves the situation for good, the story moves to
+ * the NEW circumstance it created", plus pressures for momentum and a story clock instead of task progress.
+ */
+const V3_SWAPS: [string, string][] = [
+  [
+    "finish_line = what solved looks like, progress 0-100,",
+    "problem = what is wrong RIGHT NOW (it changes every turn), original_problem = how the story started, suggested_goal = a SUGGESTION only (players may go anywhere), pressures = things getting worse on their own, pressure_now = the one that gets worse THIS turn,",
+  ],
+  [
+    "4. PROGRESS: progress_range is the guaranteed range for this grade. Pick progress_gain inside it by logic: the top when the plan hit the heart of the problem, the bottom when it barely touched it. Say why in progress_why (one plain line).",
+    "4. THE STORY MOVES (the most important rule): a success RESOLVES the current problem for good; then the story is in a NEW situation that grew out of it (a new place, a new person, a new problem). A miss makes something ELSE go wrong (a person shows up, a pressure bites, a new problem starts), never the same thing a little further away (the bag climbing one floor higher is the SAME problem). Three turns about the same thing is a failure. problem_now = that new situation in one plain sentence (20 words max) anyone who just walked up gets. Never the same objective twice: problem_now and right_now never repeat anything in goals_done or problems_seen. If the players go beyond suggested_goal (they become detectives, they invest in the gold, they start a band), follow them; never steer back to suggested_goal or to how the real story went. progress_gain: any number (code runs the clock).",
+  ],
+  [
+    "9. RIGHT NOW: the next obstacle in plain words anyone gets on first read (a verb, then one plain thing: \"Tuck the ice hand into the snow\", never \"Calm the cone juggling ice hand\"), one concrete step, 8 words max, verb first, that follows from what just happened and leads toward finish_line. Never a repeat of right_now or anything already done, never \"again\". If finale_next is true, it is the final push toward finish_line.",
+    "9. RIGHT NOW: the next thing to do in the NEW situation, in plain words anyone gets on first read (a verb, then one plain thing: \"Tuck the ice hand into the snow\"), 8 words max, verb first. Never a repeat of right_now or anything already done, never \"again\". If finale_next is true, it is the moment of truth for the situation as it is NOW (not the original goal).",
+  ],
+  [
+    "15. A SUCCESS CAN FINISH THE STEP: if this plan solved right_now, set step_solved true; it is solved, it stays solved (it becomes a fact), and the next twist arrives BECAUSE of it: the problem escalates into something NEW and bigger, never the same step again (\"corner the pig again\" is banned). Nothing achieved is ever undone, not even by a later miss: every fact that starts with \"Done:\" stays true, so a backfire hurts something else.\nTHE FINISH LINE STAYS OPEN until the grand finale (CD: \"it's already off the bridge, so what's the final move?\"): a success solves the current STEP, never finish_line itself. Unless finale_next is true, the outcome and scene never say or imply that finish_line is done; the big problem is still there, bigger or closer, for the finale to settle.",
+    "15. A SUCCESS IS FOR GOOD: on a success set step_solved true. What it solved stays solved (it becomes a fact), and the next situation arrives BECAUSE of it, never the same thing again (\"get the bag\" four turns in a row is the failure we are fixing). Nothing achieved is ever undone, not even by a later miss: every fact that starts with \"Done:\" stays true, so a backfire hurts something else.\nPRESSURE (momentum whatever happens): pressure_now is one thing getting worse on its own this turn; the TV shows it on screen. A miss makes pressure_now bite (it causes the new problem). Mention it only if it fits in a few words; every line stays short.",
+  ],
+  [
+    "7. CLARITY: outcome is 2 sentences at most, 30 words at most,",
+    "7. CLARITY (FOLLOWABLE: someone who just walked up to the table gets every line): outcome is 2 short sentences, what happened, then what is different now, 30 words at most,",
+  ],
+  ["WRITE: outcome, scene, right_now,", "REPEAT CHECK: repeat_of = the item in goals_done that right_now is the same goal as, even reworded (\"Free the bus\" and \"Unstick the bus\" are the same goal), or \"\" if it is a new goal. Be honest: a repeat gets rewritten.\nAFTER A MISS: the next right_now is never cleaning up the mess the hero's own plan just made (no \"free the mayor from the dough\" after a dough plan backfires); a pressure gets worse or a NEW problem starts.\nWRITE: outcome, scene, problem_now, repeat_of, right_now,"],
+];
+
+function v3(base: string) {
+  let s = base;
+  for (const [a, b] of V3_SWAPS) {
+    if (!s.includes(a)) console.warn(`[turn] v3 prompt: rule not found: ${a.slice(0, 50)}`);
+    s = s.replace(a, b);
+  }
+  return s;
+}
+
 function turnSystem(avoid: string) {
   // The examples block is stable unless an example game overlaps the live story (then it is left out).
-  return TURN_BASE.replace(outcomeExamplesPrompt({ games: 1 }), outcomeExamplesPrompt({ games: 1, avoid }));
+  const ex = TURN_BASE.replace(outcomeExamplesPrompt({ games: 1 }), outcomeExamplesPrompt({ games: 1, avoid }));
+  const base = FEATURES.storyV3 ? v3(ex) : ex;
+  return FEATURES.castVoices ? `${base}
+
+${DIALOGUE_RULE}` : base;
 }
+
+/** Character voices (CD, FEATURES.castVoices): quoted lines are listed so the TV can read them in the speaker's voice. */
+const DIALOGUE_RULE = `DIALOGUE: when it is funnier said out loud, ONE person here (a cast member, or the acting hero) may say ONE short line, 8 words max, inside double quotes, in the outcome, and it still fits the outcome's word limit. Most turns have none. quotes lists every line said inside quote marks: speaker = their name exactly as in state.cast (or the hero's name), text = the exact words inside the quote marks. No quoted line: quotes [].`;
 
 const str = { type: "string" } as const;
 const obj = (properties: Record<string, unknown>) => ({ type: "object", additionalProperties: false, required: Object.keys(properties), properties });
+const QUOTES_FIELD = { type: "array", items: obj({ speaker: str, text: str }) };
 export const TURN_SCHEMA = obj({
   outcome: str,
   scene: str,
@@ -120,6 +168,8 @@ export const TURN_SCHEMA = obj({
   memorable: str,
   step_solved: { type: "boolean" },
   sfx: { type: "array", items: obj({ id: str, word: { type: "integer" } }) },
+  ...(FEATURES.castVoices ? { quotes: QUOTES_FIELD } : {}),
+  ...(FEATURES.storyV3 ? { problem_now: str, repeat_of: str } : {}),
 });
 
 const GRADES: Grade[] = ["DISASTER", "SETBACK", "PARTIAL", "PROGRESS", "GREAT", "LEGENDARY"];
@@ -157,14 +207,18 @@ export async function runTurn(i: TurnInput, rating: Rating): Promise<TurnResult>
   const grade = gradeOf(i.grade);
   const idea = WONISH(grade) ? clip(i.idea_from, 40) : "";
   const nextPlayer = clip(i.next_player, 40);
-  const finaleNext = !nextPlayer || state.progress >= 75;
+  // v3: progress is the story clock, so only the turn order says when the finale is next.
+  const finaleNext = FEATURES.storyV3 ? !nextPlayer : !nextPlayer || state.progress >= 75;
   const planRaw = String(i.plan_raw ?? i.plan ?? "").replace(/<[^>]*>/g, " ");
   const ctx = { state, hero, idea_from: clip(i.idea_from, 40), grade, next_player: nextPlayer, plan: planRaw, hook_due: state.act >= 2 || finaleNext };
   // Will the act clock move after this turn? (applyTurn also moves it when a success solves the step.)
   const t1 = state.turn + 1;
   const clockNext = actClock(t1, state.turns_total);
   const user = {
-    state: { ...state, credits: undefined, goals_done: state.goals_done.slice(-6) },
+    state: FEATURES.storyV3
+      ? { ...state, credits: undefined, finish_line: undefined, suggested_goal: state.finish_line, pressures: (state.pressures ?? []).map((x) => ({ name: x.name, now: x.stages[Math.min(x.level, x.stages.length - 1)] })), goals_done: state.goals_done.slice(-8), problems_seen: (state.problems_seen ?? []).slice(-8) }
+      : { ...state, credits: undefined, goals_done: state.goals_done.slice(-6) },
+    ...(FEATURES.storyV3 && pressureNow(state) ? { pressure_now: { name: pressureNow(state)!.name, gets_worse: pressureNow(state)!.stage } } : {}),
     hero: { name: hero, power: clip(i.hero?.power, 140), pronouns: clip(i.hero?.pronouns || state.pronouns[hero], 20) },
     plan: i.plan,
     attempt: clip(i.attempt, 160),
@@ -174,7 +228,7 @@ export async function runTurn(i: TurnInput, rating: Rating): Promise<TurnResult>
     turns_left: Number(i.turns_left ?? 0),
     finale_next: finaleNext,
     tier: clip(i.tier, 10),
-    progress_range: progressRange(grade, state.turns_total),
+    ...(FEATURES.storyV3 ? {} : { progress_range: progressRange(grade, state.turns_total) }),
     act_changes_next: clockNext > state.act && !finaleNext,
     ...(FEATURES.storySfx && STORY_SFX_IDS.length ? { sfx_ids: STORY_SFX_IDS } : {}),
     // The storyteller's dry aside (CD): at most 2 per game, on turns 2 and 5.
@@ -253,11 +307,14 @@ export async function runTurn(i: TurnInput, rating: Rating): Promise<TurnResult>
   // Soft problems are fixed in code: clamp the outcome, hand the scene to the next player.
   p.outcome = clampOutcome(p.outcome);
   if (nextPlayer && !new RegExp(`\\b${nextPlayer.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`).test(p.scene)) p.scene = p.scene ? `${nextPlayer}, ${p.scene.charAt(0).toLowerCase()}${p.scene.slice(1)}` : `${nextPlayer}, you're up.`;
+  // v3: the scene is the pressure, then the hand-off (2 sentences); before, the hand-off alone.
   p.scene = sentences(p.scene)[0] ?? p.scene;
   p.right_now = trimPile(p.right_now);
   const applied = applyTurn(state, p, { hero, attempt: i.attempt, grade, depth: i.depth });
   console.log(`[turn] ${grade} ${hero} ${Date.now() - t0}ms progress ${state.progress}->${applied.state.progress}${fallback ? " FALLBACK" : ""}${edited ? " EDITED" : ""}${probs.length ? ` problems: ${probs.join(" | ")}` : ""}`);
-  return { sfx: pickStorySfxCues(p.sfx), outcome: p.outcome, scene: p.scene, right_now: applied.state.right_now, progress: applied.state.progress, progress_delta: applied.delta, progress_why: String(p.progress_why ?? "").slice(0, 140), finale: applied.finale, act: applied.state.act, act_changed: applied.act_changed, state: applied.state, problems: probs, fallback };
+  const lines = FEATURES.castVoices ? voiceLines(p.outcome, p.quotes, [...applied.state.cast.map((c) => c.name), hero]) : undefined;
+  if (lines && lines.length > 1) console.log(`[turn] voices: ${lines.map((l) => `${l.speaker || "narrator"}: ${l.text}`).join(" | ")}`);
+  return { lines, sfx: pickStorySfxCues(p.sfx), outcome: p.outcome, scene: p.scene, right_now: applied.state.right_now, progress: applied.state.progress, progress_delta: applied.delta, progress_why: String(p.progress_why ?? "").slice(0, 140), finale: applied.finale, act: applied.state.act, act_changed: applied.act_changed, state: applied.state, problems: probs, fallback };
 }
 
 // The editor pass: only if the draft is in by EDIT_BY_MS (the die lands ~8-12 s after the ruling), capped at
@@ -335,12 +392,18 @@ Input: state (where, problem, finish_line, progress, cast, facts, memorable = th
 
 ${callbackExamplesPrompt()}`;
 
-export const STORY_END_SCHEMA = obj({ ending: str, line: str, recap: str, skills: { type: "array", items: obj({ id: str, phrase: str }) }, sfx: { type: "array", items: obj({ id: str, word: { type: "integer" } }) }, sfx_buildup: str, sfx_payoff: str, bridge: str });
+export const STORY_END_SCHEMA = obj({ ending: str, line: str, recap: str, skills: { type: "array", items: obj({ id: str, phrase: str }) }, sfx: { type: "array", items: obj({ id: str, word: { type: "integer" } }) }, sfx_buildup: str, sfx_payoff: str, bridge: str, ...(FEATURES.castVoices ? { quotes: QUOTES_FIELD } : {}) });
+/** Story v3 (design/37): the ending is the climax of the situation the players created, never the original goal. */
+const END_V3 = `STORY v3 (these override anything above about finish_line):
+- The ending settles the situation as it is NOW (state.problem and state.right_now), which may be far from where the story started. It is the moment of truth for what the players built. Never steer back to suggested_goal or to how the real story went.
+- won = the final plan worked (recap: say plainly whether it worked).
+- recent_endings = endings from earlier games at this table: yours is a different picture, never the same result or image.`;
+const END_DIALOGUE = DIALOGUE_RULE.replace("in the outcome, and it still fits the outcome's word limit", "in the ending, and it still fits the ending's word limit");
 
 export async function runEnding(input: Any, rating: Rating) {
   const s: StoryState = input.state;
   const user = {
-    state: { where: s?.where, problem: s?.problem, finish_line: s?.finish_line, progress: s?.progress, right_now: s?.right_now, last_moments: (s?.last_moments ?? []).slice(-3), open_thread: s?.open_thread, hook: s?.hook, cast: s?.cast, facts: s?.facts, memorable: s?.memorable, credits: s?.credits, pronouns: s?.pronouns, real_event: s?.real_event },
+    state: { where: s?.where, problem: s?.problem, ...(FEATURES.storyV3 ? { suggested_goal: s?.finish_line, original_problem: s?.original_problem } : { finish_line: s?.finish_line, progress: s?.progress }), right_now: s?.right_now, last_moments: (s?.last_moments ?? []).slice(-3), open_thread: s?.open_thread, hook: s?.hook, cast: s?.cast, facts: s?.facts, memorable: s?.memorable, credits: s?.credits, pronouns: s?.pronouns, real_event: s?.real_event },
     real_story: input.real_story ? { headline: clip(input.real_story.headline, 200), how_it_really_ended: clip(`${input.real_story.summary ?? ""} ${input.real_story.now ?? ""}`, 500) } : undefined,
     winner: { name: clip(input.winner?.name ?? input.winner_hero?.name ?? input.winner, 40), pronouns: clip(input.winner?.pronouns ?? input.winner_hero?.pronouns, 20) },
     attempt: clip(input.attempt, 160),
@@ -348,9 +411,10 @@ export async function runEnding(input: Any, rating: Rating) {
     grade: gradeOf(input.grade),
     won: !!input.won,
     players: Array.isArray(input.players) ? input.players.slice(0, 8) : [],
+    ...(FEATURES.storyV3 && Array.isArray(input.recent_endings) ? { recent_endings: input.recent_endings.slice(0, 5).map((x: unknown) => clip(x, 240)) } : {}),
     ...(FEATURES.storySfx && STORY_SFX_IDS.length ? { sfx_ids: STORY_SFX_IDS } : {}),
   };
-  const call = (extra = "", timeoutMs = 12_000) => museJSON<Any>({ task: `story-end-${rating}`, model: TURN_MODEL, effort: TURN_EFFORT, system: withRating(STORY_END_SYSTEM, rating), schema: STORY_END_SCHEMA, user: JSON.stringify(user) + extra, timeoutMs, maxTokens: 2500 });
+  const call = (extra = "", timeoutMs = 12_000) => museJSON<Any>({ task: `story-end-${rating}`, model: TURN_MODEL, effort: TURN_EFFORT, system: withRating([STORY_END_SYSTEM, FEATURES.storyV3 ? END_V3 : "", FEATURES.castVoices ? END_DIALOGUE : ""].filter(Boolean).join("\n\n"), rating), schema: STORY_END_SCHEMA, user: JSON.stringify(user) + extra, timeoutMs, maxTokens: 2500 });
   // The final plan is the cause, and the ending stays 2 plain sentences: one retry with the problems if not.
   const planRaw = String(input.plan_raw ?? input.plan ?? "").replace(/<[^>]*>/g, " ");
   const check = (d: Any) => {
@@ -360,16 +424,19 @@ export async function runEnding(input: Any, rating: Rating) {
     if (sentences(e).length > 2 || e.split(/\s+/).length > 37) out.push("exactly 2 sentences, 35 words max");
     return out;
   };
+  // Character voices: the ending's quoted lines, split for the TV (speaker "" = the narrator).
+  const speakers = [...(s?.cast ?? []).map((c) => c.name), ...Object.keys(s?.pronouns ?? {}), user.winner.name];
+  const voiced = (x: Any) => (FEATURES.castVoices && x?.ending ? { ...x, lines: voiceLines(String(x.ending), x.quotes, speakers) } : x);
   const t0 = Date.now();
   const d = await call();
   // The host waits 15 s in all: retry only a hard miss (the plan, the length) and only inside ~13.5 s.
   const probs = check(d);
   const left = 13_500 - (Date.now() - t0);
-  if (!probs.length || left < 4_000) return d;
+  if (!probs.length || left < 4_000) return voiced(d);
   try {
     const again = await call(`\n\nYour last answer had problems. Fix them.\nLAST ANSWER: ${JSON.stringify(d)}\nPROBLEMS:\n${probs.map((x) => `- ${x}`).join("\n")}`, left);
-    return check(again).length < probs.length ? again : d;
+    return voiced(check(again).length < probs.length ? again : d);
   } catch {
-    return d;
+    return voiced(d);
   }
 }

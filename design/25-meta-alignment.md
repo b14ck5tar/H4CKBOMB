@@ -4,6 +4,8 @@ Goal: a top-3 finish in Meta's "Bringing people closer together with AI".
 Sources: the Meta track brief, the opening ceremony deck, the Meta judge's own words (design/22), DECISIONS.md
 (latest = Sat ~8 PM core loop), design/24, design/23, DEVPOST.md, and the code on `rebuild-around-the-table`.
 
+> **Update Sun ~8 AM:** the official rules weight Execution & Demo Quality at **25%** (not 20) and require a public code repo; see PITCH_KIT.md.
+
 **The judge's three lenses (design/22):** (1) the flow works really well, not feature count; (2) the AI feels like "a
 magical experience" and is essential, not an afterthought; (3) how the team used AI to build it, and whether we
 learned what it's good and bad at.
@@ -15,7 +17,7 @@ learned what it's good and bad at.
 | Human connection | 30 | 21 | 25 | The turn loop is built around helping a friend. Judges need to *see* it in the first 2 minutes, and "Our stories" (our best connection beat) is not in the demo. |
 | AI essential + integrated | 25 | 18 | 21 | Muse is in every core spot. But the word "Muse" never appears on the TV or phones, and DM's Notes still lists cut features. |
 | Originality | 20 | 15 | 16 | Real odd news or your own true story, retold, then "this really happened". Plus a Muse connector. Clear and memorable. |
-| Technical execution / working demo | 20 | 12 | 16 | The new build is solid locally, but **the public site still runs the old build** from `main`. |
+| Execution & demo quality | 25 | 12 | 16 | The new build is solid locally, but **the public site still runs the old build** from `main`. |
 | **Total** | 100 | **~66** | **~78** | Top-3 range needs the P0s done and one clean, rehearsed 4-minute run. |
 
 Submission: the video script is rewritten for this build (VIDEO_SCRIPT.md). DEVPOST.md has stale and wrong lines (below).
@@ -67,7 +69,7 @@ suggestion gets picked with "+ name's idea", a roll with "Needs 12+", the shake-
 - **P2 (CD call):** a one-line "Ask them about it" prompt on the reveal for Our stories (e.g. "Ava, what happened
   next?"). It stays inside the game, so it respects "no real-life stuff outside the game".
 
-## 2. AI essential and well integrated (25%)
+## 2. AI centrality (25%)
 
 **Is Muse essential in the core loop? Yes.** Without it there is no story, no ruling, no art and no narrator cast.
 
@@ -129,7 +131,7 @@ a ruling that reads their exact words, and DM's Notes (press N) showing every ca
 **Fix (P0, done in PITCH_CARD/VIDEO_SCRIPT):** "Every story really happened, to the world or to one of you. You find
 out how it really ended at the end."
 
-## 4. Technical execution / working demo (20%)
+## 4. Execution & demo quality (25%)
 
 **What we have:** TV-authoritative host (`lib/host.ts`), Supabase broadcast with a BroadcastChannel fallback,
 self-resyncing phones, a canned fallback for every AI call (`server/fallbacks.ts`), "never wait" art (outcome shows

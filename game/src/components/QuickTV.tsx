@@ -854,6 +854,18 @@ const GRADE_COLOR: Record<string, string> = { DISASTER: "#ff3b4e", SETBACK: "#ff
 
 /** The HUD under the top bar: progress as 3 act dots and the crown, Right now, the goal. One meter only. */
 function SkinHud({ s }: { s: GameState }) {
+  if (FEATURES.storyV3) {
+    // Story v3: progress is a turn clock (3 acts + the finale), never "% done"; the goal is only a suggestion.
+    if (!s.nowGoal && !s.goal) return null;
+    const act = Math.max(1, Math.min(3, s.act ?? 1));
+    const total = s.turnOrder.length;
+    const clock = s.finale ? "Finale" : `Act ${act}${total ? ` · Turn ${Math.min(total, s.turnIndex + 1)} of ${total}` : ""}`;
+    return (
+      <HudStrip
+        ladder={{ steps: 4, at: s.finale ? 3 : act - 1, now: s.nowGoal || s.goal, goal: s.nowGoal ? s.goal : undefined, goalLabel: "Maybe:", clock, pressure: (s as GameState & { pressureNow?: string }).pressureNow || undefined }}
+      />
+    );
+  }
   if (!s.goal) return null;
   return (
     <HudStrip
@@ -882,6 +894,7 @@ function SkinTurn({ host, s }: { host: Stage; s: GameState }) {
         // Talk-out-loud cue (design/35 rule 14): while the owner types, the TV invites them to tell the table.
         prompt={s.typing.includes(owner.id) ? `${speakableName(owner.name)}, tell the table your plan.` : "Everyone else: suggest a move on your phone"}
         k={`${owner.id}-${s.turnIndex}`}
+        power={owner.hero?.ability?.name ? `${owner.hero.ability.name}${owner.hero.ability.text ? ` · ${owner.hero.ability.text}` : ""}` : undefined}
       />
       <SuggestionBubbles items={items} />
     </>
@@ -960,6 +973,13 @@ function SkinOutcome({ s }: { s: GameState }) {
 /** The ending montage ("Because of you"), then "Based on a true story" and the keepsake QR. One instance across the
  *  epilogue, reveal and keepsake phases, so it never restarts. */
 function SkinEnding({ host, s }: { host: Stage; s: GameState }) {
+  // Manual ending: the viewer's slides drive the host (epilogue -> reveal -> storybook), only ever forward, and only
+  // once the host has a step waiting (deadlineAt), so an early key press is never lost.
+  const [want, setWant] = useState(0);
+  useEffect(() => {
+    if (!FEATURES.manualEnding || host.readOnly || !host.deadlineAt) return;
+    if ((want >= 1 && s.phase === "epilogue") || (want >= 2 && s.phase === "reveal")) host.skip();
+  }, [want, s.phase, host, host.deadlineAt]);
   const rs = host.realStory;
   const seed = host.questSeed;
   const data = host.montage();
@@ -988,7 +1008,12 @@ function SkinEnding({ host, s }: { host: Stage; s: GameState }) {
       panels={panels}
       start={start}
       panelMs={MONTAGE_PANEL_MS}
+      manual={FEATURES.manualEnding}
+      onEnterReveal={() => setWant((w) => Math.max(w, 1))}
+      onReachEnd={() => setWant(2)}
       reveal={{
+        // Where the story came from (design/37 §4): the start's problem really happened.
+        originalProblem: (s as GameState & { originalProblem?: string; original_problem?: string }).originalProblem || (s as GameState & { original_problem?: string }).original_problem || s.goal || undefined,
         headline: real.headline,
         source: real.source,
         date: real.date,
@@ -1611,8 +1636,14 @@ export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameS
           Skip ▸
         </button>
       )}
+      {/* The story is over (keepsake up): another round, same room, same heroes (CD). */}
+      {FEATURES.playAgain && s.phase === "storybook" && !host.readOnly && (
+        <button className="qt-continue qt-again" onClick={() => host.playAgain()} title="Same room, same heroes">
+          Back to lobby ▸
+        </button>
+      )}
       {/* The ending stretch (montage + reveal) runs on timers; the table can always move on (CD playtest). */}
-      {["epilogue", "reveal"].includes(s.phase) && host.deadlineAt > 0 && !s.busy && !host.readOnly && (
+      {!FEATURES.manualEnding && ["epilogue", "reveal"].includes(s.phase) && host.deadlineAt > 0 && !s.busy && !host.readOnly && (
         <button className="qt-continue" onClick={() => host.skip()} title="Spacebar works too">
           Continue ▸
         </button>

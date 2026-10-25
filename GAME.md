@@ -9,11 +9,11 @@ DECISIONS.md and `design/`. If this file and older docs disagree, this file wins
 brings friends together. The laptop/TV is the table, phones are the controllers, Meta's Muse is the Dungeon Master, and
 every story really happened, to the world (odd news) or to one of you ("Our stories"). The end reveals: "Based on a true story".
 
-Built to win Meta's track:
+Built to win Meta's track (official weights: 30 / 25 / 20 / 25; required: video, public repo, description):
 - **Human connection (30%):** friends suggest moves on your turn and get +1 and their name on screen when used; the TV hands the turn over by name; "tell the table your plan"; one shared shake-together finale die; Our stories.
-- **AI essential (25%):** Muse judges every plan, writes every turn, writes the openers, gates the news, paints the heroes into each scene. DM's Notes shows every call.
+- **AI centrality (25%):** Muse judges every plan, writes every turn, writes the openers, gates the news, paints the heroes into each scene. DM's Notes shows every call.
 - **Originality (20%):** you play a real event, then "Based on a true story" flips it; your own heroes appear in the art.
-- **Working demo (20%):** the flow just works. Every AI call has a fallback, art never makes you wait, Wi-Fi drops pause the game.
+- **Execution & demo quality (25%):** the flow just works. Every AI call has a fallback, art never makes you wait, Wi-Fi drops pause the game.
 
 **The CD's non-negotiables:**
 - **Players' ideas drive the story.**

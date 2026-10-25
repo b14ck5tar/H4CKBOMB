@@ -37,8 +37,8 @@ import { QUICK, coldOpenTimeline } from "./quick";
 import { FEATURES } from "./features";
 import { pickStorySfx, pickStorySfxCues, type StorySfxCue } from "./storySfx";
 import { Bots } from "./bots";
-import { TIER_SHIFT, gradeRoll } from "./grade";
-import { applyTurn, fallbackProposal, quipOk, stateFromOpener, type StoryState, type TurnResult } from "./procedural";
+import { TIER_SHIFT, gradeRoll, isMiss } from "./grade";
+import { applyTurn, fallbackProposal, pressureNow, quipOk, stateFromOpener, type StoryState, type TurnResult, type VoiceLine } from "./procedural";
 import { speakableName } from "./now";
 import { DEFAULT_CAST, VOICES, isVoice } from "./voices";
 import { ART_STYLES, isArtStyle } from "./artStyles";
@@ -67,7 +67,9 @@ import type {
   Verdict,
 } from "./types";
 
-const SEEDS = seedsJson as QuestSeed[];
+// Out of every pool (CD, Sun 11 AM): the opera snake failed the 8-box story gate (Batman's seed is deleted).
+const EXCLUDED_SEEDS = new Set(["opera-snake", "norwich-batman"]);
+const SEEDS = (seedsJson as QuestSeed[]).filter((q) => !EXCLUDED_SEEDS.has(q.id));
 /** Ready-made characters for fast onboarding; portraits are pre-painted in public/heroes/<id>.webp. */
 export const QUICK_HEROES = quickHeroes as { id: string; pitch: string; hero: Hero }[];
 
@@ -119,10 +121,14 @@ const AWAY_AFTER_TIMEOUTS = 2;
 export const MONTAGE_PANEL_MS = 3600; // one ending-montage panel on the TV (was 4.8 s: the CD waited ~70 s across montage + reveal)
 /** design/35 rule 4: progress is decided by code from the grade, never by the AI. */
 /** The house ranking of the hand-made stories (Quick Tale opens on the first one a table hasn't played). */
-const JUDGE_TOP = 3; // judge mode (/tv?judge=1) rotates through the first 3 FEATURED stories only
+const JUDGE_TOP = 2; // judge mode (/tv?judge=1) rotates through the first 2 FEATURED stories only (CD, Sun 11 AM: the shark and the gold)
 // galactic-signal is last: its premise ("radio glow", "the catalog stays wrong") made 2 of 3 unfollowable lines in the Sun eval.
-// The judge top 3 (CD, Sun): the canal shark, the gold in the wall, the Norwich Batman; then the opera snake and the old three.
-const FEATURED = ["canal-shark", "wall-gold", "norwich-batman", "opera-snake","rust-wyrm", "hanging-boulder", "cornfield-dome", "billion-pearls", "idle-island", "returned-otter", "littlest-gardener", "galactic-signal"];
+// Judge mode (CD, Sun 11 AM): the canal shark and the gold in the wall only (both pass the 8-box gate). Batman is gone
+// from every pool (a one-person chase, no group dilemma), and the opera snake failed the gate, so it is not featured.
+/** Manual ending: the safety timer behind the TV's own slide steps (it never fires in a normal game). */
+const MANUAL_SAFETY_MS = 10 * 60_000;
+
+const FEATURED = ["canal-shark", "wall-gold", "rust-wyrm", "hanging-boulder", "cornfield-dome", "billion-pearls", "idle-island", "returned-otter", "littlest-gardener", "galactic-signal"];
 const PRESENCE_ONLY = new Set(["hello", "ping", "away"]); // these don't count as "I'm back"
 /** Every phone silent this long = the table pauses ("Reconnecting phones…"). Phones ping every 3 s. */
 const ALL_QUIET_MS = 8000;
@@ -143,9 +149,16 @@ function speakerRef(s: string) {
  * What the narrator reads for the opener: a storyteller's lead-in, the narration, then the character's line (CD: a
  * storyteller talking to the table). The judge openers are pre-voiced from exactly this text (game/voice-cache).
  */
+/** A line as the narrator reads it (and its audio cache key): one line, no doubled words. */
+function voiceText(text: string) {
+  // "door door", "through through": a doubled word reads badly aloud.
+  return text.replace(/\s+/g, " ").trim().replace(/\b(\w+)(\s+\1\b)+/gi, "$1");
+}
+
 function openerText(sc: SeedScene) {
   const npc = sc.npc_line?.speaker && sc.npc_line?.line ? ` And ${speakerRef(sc.npc_line.speaker)}? Very calmly: "${sc.npc_line.line}"` : "";
-  return `Okay, everyone… gather in. ${sc.narration}${npc}`;
+  // v3 (CD): the story comes from a REAL article, said up front; the narration's first line is the real problem.
+  return FEATURES.storyV3 ? `This really happened… mostly. Tonight, you're in it. ${sc.narration}${npc}` : `Okay, everyone… gather in. ${sc.narration}${npc}`;
 }
 
 /** The narrator's sign-off after the ending (the same text wherever it's voiced, so the early clip is the one that plays). */
@@ -180,6 +193,9 @@ interface OpenerRes {
     threat?: { name?: string; pronoun?: string; want?: string };
     problem?: { name?: string; stakes?: string; pronoun?: string };
     beats?: string[];
+    /** Story v3: the starting problem in one plain sentence, and 2-3 things that get worse on their own. */
+    original_problem?: string;
+    pressures?: { name: string; stages: string[]; fix: string }[];
   };
   ending_facts?: { kind: "news"; whats_happening_now?: string; official_line?: string } | { kind: "personal"; real_ending?: string };
   safe?: boolean;
@@ -247,6 +263,8 @@ function newsSeed(id: string, c: NewsCand, o: OpenerRes): QuestSeed {
     art_style_hint: o.opener.situation,
     rating: "teens",
     opener: openerScene(o.opener, c.place),
+    original_problem: o.opener.original_problem,
+    pressures: o.opener.pressures,
   };
 }
 
@@ -266,6 +284,8 @@ function personalSeed(id: string, pid: string, author: string, st: { title: stri
     art_style_hint: o.opener.situation,
     rating: "teens",
     opener: openerScene(o.opener, ""),
+    original_problem: o.opener.original_problem,
+    pressures: o.opener.pressures,
     author: { pid, name: author },
   };
 }
@@ -334,7 +354,6 @@ const SAFETY_NOTES: Record<string, string> = {
   "canal-shark": "Good animal news: the shark swam back to sea. No one hurt. No real people in the story.",
   "opera-snake": "A real opera casting call for a snake. No one hurt. No real people in the story.",
   "wall-gold": "Found treasure, handed to the police. No one hurt, nothing stolen. No real people in the story.",
-  "norwich-batman": "A bag snatch with a happy ending: the bag came back with everything inside. No one hurt. The thief is never named or shown. Adults rating.",
   "galactic-signal": "Nobody involved at all: a radio source 49,000+ light-years away. No danger. No real people in the story.",
   "littlest-gardener": "Happy local news: a festival pumpkin win. No one hurt. The young grower is never named or shown.",
   "idle-island": "Nothing happened to anyone: it was a computer simulation in a research study. No real people in the story.",
@@ -376,6 +395,22 @@ function shortGoal(text: string) {
   return words.length > 16 ? words.slice(0, 16).join(" ") + "…" : first;
 }
 
+/** The last few endings on this TV (v3: the ending prompt avoids repeating them). */
+function recentEndings(): string[] {
+  try {
+    return JSON.parse(localStorage.getItem("gp-endings") ?? "[]").slice(0, 5);
+  } catch {
+    return [];
+  }
+}
+function rememberEnding(text: string) {
+  try {
+    if (text) localStorage.setItem("gp-endings", JSON.stringify([text, ...recentEndings()].slice(0, 5)));
+  } catch {
+    /* a nice-to-have */
+  }
+}
+
 export function loadShelf(): ShelfBook[] {
   try {
     return JSON.parse(localStorage.getItem("ouar-shelf") ?? "[]");
@@ -414,6 +449,84 @@ function questOptionsFor(rating: Rating) {
   }));
 }
 
+/** A room's state before any story: the constructor's, and Play again's (which keeps the room, players and heroes). */
+function freshState(code: string, rating: Rating = DEFAULT_RATING): GameState {
+  return {
+    code,
+    rating,
+    phase: "lobby",
+    mode: "full",
+    partyName: "",
+    players: [],
+    questId: "",
+    questOptions: questOptionsFor(rating),
+    scenes: [],
+    sceneIndex: 0,
+    hope: HOPE_START,
+    hopeMax: HOPE_MAX,
+    question: "",
+    lastTime: "",
+    sceneTitle: "",
+    goal: "",
+    nowGoal: "",
+    ladder: [],
+    step: 0,
+    fling: null,
+    progress: 0,
+    sceneArt: "",
+    narration: "",
+    situation: "",
+    banner: "",
+    npcLine: { speaker: "", line: "" },
+    suggestions: {},
+    clues: {},
+    clueBecause: {},
+    rescue: null,
+    pitches: [],
+    votes: {},
+    winnerId: "",
+    wins: {},
+    outcome: "",
+    endingLine: "",
+    recap: "",
+    storyOptions: [],
+    source: "news",
+    written: [],
+    turnOrder: [],
+    turnIndex: 0,
+    ideas: {},
+    finale: false,
+    cast: null,
+    voice: null,
+    narrated: false,
+    typing: [],
+    paused: false,
+    artKey: -1,
+    boosts: {},
+    rolls: [],
+    revealed: [],
+    catchers: [],
+    saves: [],
+    round: null,
+    beatIndex: 0,
+    ready: [],
+    deadline: 0,
+    final: null,
+    finalMoves: {},
+    epilogue: "",
+    storybook: null,
+    wards: {},
+    mirrorMoments: {},
+    mirror: [],
+    mirrorIndex: 0,
+    thanks: {},
+    log: [],
+    solvedBy: "",
+    notes: emptyNotes(),
+    busy: "",
+  };
+}
+
 export class GameHost {
   state: GameState;
   deadlineAt = 0;
@@ -439,7 +552,7 @@ export class GameHost {
   private finalPitch: Pitch | null = null;
   private artP = new Map<string, Promise<void>>(); // `${questId}:${scene}` -> hero-painted scene art in flight
   private artSeq = 10; // keys for per-decision paintings in sceneImages (0-2 are the plates)
-  private epilogueP: Promise<{ ending: string; line: string; recap: string; skills: Record<string, string> | null; sfx?: StorySfxCue[]; buildup?: string; payoff?: string; bridge?: string }> | null = null;
+  private epilogueP: Promise<{ ending: string; line: string; recap: string; skills: Record<string, string> | null; sfx?: StorySfxCue[]; buildup?: string; payoff?: string; bridge?: string; lines?: VoiceLine[] }> | null = null;
   private endingAt = 0;
   private storybookP: Promise<Storybook> | null = null;
   private reactionId = 0;
@@ -476,80 +589,7 @@ export class GameHost {
   endedAt = 0;
 
   constructor(code: string) {
-    this.state = {
-      code,
-      rating: DEFAULT_RATING,
-      phase: "lobby",
-      mode: "full",
-      partyName: "",
-      players: [],
-      questId: "",
-      questOptions: questOptionsFor(DEFAULT_RATING),
-      scenes: [],
-      sceneIndex: 0,
-      hope: HOPE_START,
-      hopeMax: HOPE_MAX,
-      question: "",
-      lastTime: "",
-      sceneTitle: "",
-      goal: "",
-      nowGoal: "",
-      ladder: [],
-      step: 0,
-      fling: null,
-      progress: 0,
-      sceneArt: "",
-      narration: "",
-      situation: "",
-      banner: "",
-      npcLine: { speaker: "", line: "" },
-      suggestions: {},
-      clues: {},
-      clueBecause: {},
-      rescue: null,
-      pitches: [],
-      votes: {},
-      winnerId: "",
-      wins: {},
-      outcome: "",
-      endingLine: "",
-      recap: "",
-      storyOptions: [],
-      source: "news",
-      written: [],
-      turnOrder: [],
-      turnIndex: 0,
-      ideas: {},
-      finale: false,
-      cast: null,
-      voice: null,
-      narrated: false,
-      typing: [],
-      paused: false,
-      artKey: -1,
-      boosts: {},
-      rolls: [],
-      revealed: [],
-      catchers: [],
-      saves: [],
-      round: null,
-      beatIndex: 0,
-      ready: [],
-      deadline: 0,
-      final: null,
-      finalMoves: {},
-      epilogue: "",
-      storybook: null,
-      wards: {},
-      mirrorMoments: {},
-      mirror: [],
-      mirrorIndex: 0,
-      thanks: {},
-      log: [],
-      solvedBy: "",
-      notes: emptyNotes(),
-      busy: "",
-    };
+    this.state = freshState(code);
     this.t = openRoom(code);
     this.t.on((m) => this.handle(m));
     if (typeof window !== "undefined") this.loadNews();
@@ -962,6 +1002,8 @@ export class GameHost {
         return this.pickHero(m.pid, m.heroId, m.name);
       case "redraw":
         return this.redraw(m.pid);
+      case "newhero":
+        return this.onNewHero(m.pid);
       case "truth":
         return this.onTruth(m.pid, m.text);
       case "real":
@@ -1001,8 +1043,11 @@ export class GameHost {
     const existing = this.player(pid);
     if (existing) return this.patchPlayer(pid, { name });
     if (this.state.phase !== "lobby" || this.state.players.length >= 6) return;
-    const color = PLAYER_COLORS[this.state.players.length % PLAYER_COLORS.length];
+    // A free color (a kick can leave a gap), else the usual rotation.
+    const used = new Set(this.state.players.map((p) => p.color));
+    const color = PLAYER_COLORS.find((c) => !used.has(c)) ?? PLAYER_COLORS[this.state.players.length % PLAYER_COLORS.length];
     this.set({
+      kicked: (this.state.kicked ?? []).filter((x) => x !== pid), // Rejoin after a kick
       players: [
         ...this.state.players,
         { id: pid, name, color, status: "joined", hasPortrait: false, abilityAvailable: true, heart: 1, titles: [], peril: "" },
@@ -1300,6 +1345,34 @@ export class GameHost {
     this.patchPlayer(pid, { status: "joined", hero: undefined, pick: undefined, hasPortrait: false });
   }
 
+  /** Play again (FEATURES.playAgain): back in the lobby, "Make a new hero" drops the kept one. Their join answers stay. */
+  private onNewHero(pid: string) {
+    const p = this.player(pid);
+    if (!FEATURES.playAgain || !p?.hero || p.status === "building" || this.state.phase !== "lobby") return;
+    delete this.portraits[pid];
+    delete this.thumbs[pid];
+    delete this.basePowers[pid];
+    this.patchPlayer(pid, { status: "joined", hero: undefined, pick: undefined, concept: undefined, hasPortrait: false, titles: [] });
+  }
+
+  /**
+   * The TV host removes a player or a test player (FEATURES.kick, lobby only). Their phone sees its id in
+   * state.kicked and offers Rejoin (a normal join, which takes it off the list).
+   */
+  kick(pid: string) {
+    const p = this.player(pid);
+    if (!FEATURES.kick || !p || this.state.phase !== "lobby") return;
+    this.bots.remove(pid);
+    for (const m of [this.portraits, this.thumbs, this.reals, this.truths, this.basePowers, this.lastSeen, this.timeouts, this.awayWhy]) delete m[pid];
+    this.set({
+      players: this.state.players.filter((x) => x.id !== pid),
+      kicked: [...(this.state.kicked ?? []).filter((x) => x !== pid), pid],
+      ready: this.state.ready.filter((x) => x !== pid),
+      typing: this.state.typing.filter((x) => x !== pid),
+    });
+    this.note("hero", p.hero?.name ?? p.name, "Removed from the lobby by the host.");
+  }
+
   /** "One true thing about the real you" (optional, "" = skipped). Private; only for one gentle nod and the storybook. */
   private onTruth(pid: string, text: string) {
     const p = this.player(pid);
@@ -1519,6 +1592,7 @@ export class GameHost {
     this.endedAt = 0;
     this.set({
       players,
+      kicked: [], // a removed phone that never rejoined sees the game in progress, like any late phone
       sceneIndex: 0,
       wards: !this.quick && FEATURES.mirror ? this.assignWards(players.map((p) => p.id)) : {},
       mirrorMoments: {},
@@ -1706,14 +1780,23 @@ export class GameHost {
         // A plain problem name ("the ice hand"), never the invented title ("The Ice Age Grip").
         problem: { name: (quick && seed.quick_scene?.problem_name) || seed.the_threat.name, stakes: seed.problem?.stakes ?? "" },
         real_setting: seed.real_event,
+        // Story v3: the starting problem (the reveal refers back to it) and the pressures (the live opener writes them).
+        original_problem: seed.original_problem,
+        pressures: seed.pressures,
         // Quick Tale's opener already answers the full story's first mystery, so its first step comes from the quick scene.
         beats: quick && seed.quick_scene?.first_step ? [seed.quick_scene.first_step] : seed.beats ?? (seed.scenes ?? []).map((sc) => sc.goal),
       },
       this.heroes().map((p) => ({ name: p.hero!.name, pronouns: p.hero!.pronouns })),
       this.state.turnOrder.length,
     );
-    this.set({ ladder: [], step: 0, progress: 0, act: 1 });
-    this.note("scene", "The finish line", `${this.story.finish_line}. No script: every turn's plan is what happens, and the roll sets how well. Progress fills from 0 to 100 over 3 acts.`);
+    this.set({ ladder: [], step: 0, progress: 0, act: 1, originalProblem: FEATURES.storyV3 ? this.story.original_problem || "" : undefined });
+    if (FEATURES.storyV3)
+      this.note(
+        "scene",
+        "The story",
+        `It starts with: ${this.story.original_problem || this.story.problem}. Suggested goal: ${this.story.finish_line} (players can go anywhere). Every success settles the situation for good and the story moves on; ${(this.story.pressures ?? []).map((p) => p.name).join(", ")} get worse on their own. The meter is a story clock: Act 1, 2, 3, then the finale.`,
+      );
+    else this.note("scene", "The finish line", `${this.story.finish_line}. No script: every turn's plan is what happens, and the roll sets how well. Progress fills from 0 to 100 over 3 acts.`);
     this.note("safety", "Why it's safe", SAFETY_NOTES[seed.id] ?? SAFETY_GENERIC);
     this.note(
       "source",
@@ -1731,7 +1814,7 @@ export class GameHost {
     this.getSceneArt(0);
     this.askCast(seed);
     this.openerAsked = Date.now();
-    this.voiceFor(openerText(opener));
+    this.voiceFor(this.openerLine(opener));
     const ms = TITLE_CARD_MS; // a title card for every story: the real headline waits for the reveal
     this.setTimer(ms, () => this.openStory());
   }
@@ -1787,7 +1870,7 @@ export class GameHost {
     const sc = this.sceneList[0];
     if (!sc) return;
     // The opener's audio was asked for at the title card; wait at most 5 s from then, else text only.
-    const clip = await this.voiceBy(openerText(sc), this.openerAsked + 8500);
+    const clip = await this.voiceBy(this.openerLine(sc), this.openerAsked + 8500);
     if (this.state.phase !== "quest") return;
     this.set({
       phase: "narrating",
@@ -1837,7 +1920,7 @@ export class GameHost {
     }
     if (k >= order.length) return this.startFinale();
     if (this.finaleNext) {
-      this.note("turn", "Grand finale", "The finish line is in reach, so the finale comes now.");
+      this.note("turn", "Grand finale", FEATURES.storyV3 ? "The story clock ran out, so the finale comes now." : "The finish line is in reach, so the finale comes now.");
       return this.startFinale();
     }
     this.verdicts.clear();
@@ -1988,7 +2071,8 @@ export class GameHost {
   private startFinale() {
     this.clearTimer();
     this.verdicts.clear();
-    this.set({ phase: "pitch", finale: true, nowGoal: this.state.goal, pitches: [], votes: {}, winnerId: "", outcome: "", rolls: [], revealed: [], ready: [], busy: "", typing: [] });
+    // v3: the finale is the moment of truth for the situation as it is NOW, never a snap back to the original goal.
+    this.set({ phase: "pitch", finale: true, nowGoal: FEATURES.storyV3 ? this.story?.right_now || this.state.nowGoal : this.state.goal, pitches: [], votes: {}, winnerId: "", outcome: "", rolls: [], revealed: [], ready: [], busy: "", typing: [] });
     this.note("turn", "Grand finale", "Everyone proposes the final move, everyone backs a friend's plan (never their own), and the winning plan gets one shared die.");
     const line = `Alright, everyone… time for the grand finale. ${this.state.situation} So. What's the final move?`;
     this.voiceBy(line, Date.now() + 4000).then((clip) => this.state.phase === "pitch" && this.play(clip));
@@ -2197,10 +2281,13 @@ export class GameHost {
     this.turnP = this.turnFor(judged, roll);
     this.turnP.then((d) => {
       this.outcomeAt = Date.now();
+      this.castLine(d.outcome, d.lines);
       this.voiceFor(d.outcome);
       // A new painting every turn (CD, Sun): what just happened, in the place the story has moved to. A new act or
       // the finale frames the whole party; any other turn frames the hero and the friend whose idea it was.
-      this.paintDecision(judged, v, d.outcome, d.scene || this.state.situation, d.finale ? "finale" : d.act_changed ? "act" : "win");
+      // Dynamic paintings (look, art prompt v8): a miss gets its own camera; a half-success is tense.
+      const g = gradeRoll(roll.total, roll.kept).grade;
+      this.paintDecision(judged, v, d.outcome, d.scene || this.state.situation, d.finale ? "finale" : d.act_changed ? "act" : g === "PARTIAL" ? "tense" : isMiss(g) ? "miss" : "win");
       if (d.scene) this.voiceFor(d.finale || !this.nextOwner() ? `Alright, everyone… time for the grand finale. ${d.scene} So. What's the final move?` : d.scene);
     });
     this.setTimer(this.judge ? 1800 : this.quick ? 2200 : RULING_MS, () => this.startRoll());
@@ -2211,7 +2298,7 @@ export class GameHost {
    * muse-image edits the CURRENT picture: the heroes, doing this action, in this situation. ~15 s; the outcome shows
    * over the previous art and the TV crossfades when it lands. Never waited on. Steered plans are never painted.
    */
-  private paintDecision(pitch: Pitch, v: Verdict, moment = v.interpretation, where = this.state.situation, beat: "act" | "win" | "finale" = "finale") {
+  private paintDecision(pitch: Pitch, v: Verdict, moment = v.interpretation, where = this.state.situation, beat: "act" | "win" | "miss" | "tense" | "finale" = "finale") {
     if (!FEATURES.heroArt || !this.seed || v.moderation !== "ok") return;
     const questId = this.seed.id;
     const plate = this.plateFor(this.state.turnIndex);
@@ -2528,7 +2615,7 @@ export class GameHost {
     if (!seed || !FEATURES.voice) return;
     const cp = this.castRaw(seed).then((r) => r.cast);
     const sc = this.seedScenes(seed, this.quick)[0];
-    if (sc) void this.voiceFor(openerText(sc), cp);
+    if (sc) void this.voiceFor(this.openerLine(sc), cp);
   }
 
   /** At game start: the story's narrator, plus what its threat wants (for the story spine). */
@@ -2551,7 +2638,7 @@ export class GameHost {
    */
   private voiceFor(text: string, castP = this.castP) {
     // "door door", "through through": a doubled word reads badly aloud.
-    const clean = text.replace(/\s+/g, " ").trim().replace(/\b(\w+)(\s+\1\b)+/gi, "$1");
+    const clean = voiceText(text);
     if (!clean || !FEATURES.voice) return Promise.resolve(null);
     const hit = this.voiceClips.get(clean);
     if (hit) return hit;
@@ -2559,10 +2646,12 @@ export class GameHost {
       const cast = await (castP ?? Promise.resolve(null));
       if (!cast) return null;
       try {
+        // Character voices (FEATURES.castVoices): the line's narration and quotes, plus who is who; /api/tts may ignore them.
+        const lines = this.castLines.get(clean);
         const res = await fetch("/api/tts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: clean, voice: cast.voice, style: cast.style }),
+          body: JSON.stringify({ text: clean, voice: cast.voice, style: cast.style, ...(lines ? { lines, cast: this.speakers() } : {}) }),
         });
         if (!res.ok) return null;
         // Gemini's calm reads slowly, so the TV plays it at 1.25x; OpenAI's pace is already natural (1x).
@@ -2581,6 +2670,34 @@ export class GameHost {
     })();
     this.voiceClips.set(clean, p);
     return p;
+  }
+
+  /** The opener as read aloud; with castVoices on, its character line is marked for that character's voice. */
+  private openerLine(sc: SeedScene) {
+    const text = openerText(sc);
+    const npc = sc.npc_line;
+    if (npc?.speaker && npc?.line) {
+      const quote = `"${npc.line}"`;
+      this.castLine(text, [{ speaker: "", text: text.slice(0, text.lastIndexOf(quote)).trim() }, { speaker: npc.speaker, text: quote }]);
+    }
+    return text;
+  }
+
+  /** Lines that have a cast member's quote in them (FEATURES.castVoices), by the text voiceFor reads. */
+  private castLines = new Map<string, VoiceLine[]>();
+
+  /** Remember a line's narration/quote split for its audio (only when some piece isn't the narrator's). */
+  private castLine(text: string, lines?: VoiceLine[]) {
+    if (!FEATURES.castVoices || !Array.isArray(lines) || !lines.some((l) => l?.speaker)) return;
+    this.castLines.set(voiceText(text), lines);
+  }
+
+  /** Who can speak in a line: the story's side characters and the heroes (for /api/tts to pick voices). */
+  private speakers() {
+    return [
+      ...(this.story?.cast ?? []).map((c) => ({ name: c.name, role: c.role })),
+      ...this.heroes().map((p) => ({ name: p.hero!.name, role: `a hero at the table: ${(p.concept ?? "").slice(0, 80)}`, pronouns: p.hero!.pronouns || "they/them" })),
+    ];
   }
 
   /** Wait for a clip at most until `deadline` (ms since epoch). null = read it as text. */
@@ -2741,6 +2858,8 @@ export class GameHost {
     const onScreen = this.sceneImages[this.state.artKey] ?? this.sceneImages[this.plateFor(this.state.turnIndex)];
     if (onScreen) this.seenArt.set(this.state.turnIndex, onScreen);
     const g = gradeRoll(roll.total, roll.kept);
+    // v3: the pressure that got worse this turn, for the TV's small chip (the narration stays one short sentence).
+    if (FEATURES.storyV3 && this.story) this.set({ pressureNow: pressureNow(this.story)?.stage ?? "" });
     this.story = d.state;
     this.finaleNext = d.finale;
     this.recordWin(pitch, roll, d.outcome);
@@ -2873,10 +2992,10 @@ export class GameHost {
     const sc = this.sceneList[this.state.sceneIndex];
     const heroes = this.heroes().map((p) => ({ id: p.id, name: p.hero!.name }));
     const winner = this.heroName(pitch.playerId);
-    const fb = () => ({ ending: fallbackEnding(ending, winner, pitch.verdict && !pitch.verdict.fallback ? pitch.verdict.interpretation : "", this.story?.finish_line ?? ""), line: FALLBACK_LINE[ending], recap: "", skills: null as Record<string, string> | null, sfx: [] as StorySfxCue[], buildup: "", payoff: "", bridge: "" });
+    const fb = () => ({ ending: fallbackEnding(ending, winner, pitch.verdict && !pitch.verdict.fallback ? pitch.verdict.interpretation : "", (FEATURES.storyV3 ? this.story?.right_now : this.story?.finish_line) ?? ""), line: FALLBACK_LINE[ending], recap: "", skills: null as Record<string, string> | null, sfx: [] as StorySfxCue[], buildup: "", payoff: "", bridge: "" });
     this.epilogueP = this.viaAI(
       "The ending",
-      this.ask<{ ending: string; line: string; recap: string; skills?: { id: string; phrase: string }[]; sfx?: unknown; sfx_buildup?: string; sfx_payoff?: string; bridge?: string }>("story_end", {
+      this.ask<{ ending: string; line: string; recap: string; skills?: { id: string; phrase: string }[]; sfx?: unknown; sfx_buildup?: string; sfx_payoff?: string; bridge?: string; lines?: unknown }>("story_end", {
         state: this.story,
         winner_hero: { name: winner, pronouns: this.player(pitch.playerId)?.hero?.pronouns || "they/them" },
         real_story: this.seed?.the_real_story ? { headline: this.seed.the_real_story.headline, summary: this.seed.the_real_story.summary, now: this.seed.the_real_story.now ?? "" } : undefined,
@@ -2896,6 +3015,7 @@ export class GameHost {
         situation: this.state.situation,
         earlier: this.state.log.map((l) => l.narration),
         finale_plan: pitch.verdict?.interpretation ?? "",
+        recent_endings: FEATURES.storyV3 ? recentEndings() : undefined,
         quick_tale: this.quick || undefined,
       }),
       15_000,
@@ -2912,6 +3032,7 @@ export class GameHost {
               buildup: pickStorySfx(d.sfx_buildup),
               bridge: String(d.bridge ?? "").trim().slice(0, 200),
               payoff: pickStorySfx(d.sfx_payoff),
+              lines: Array.isArray(d.lines) ? (d.lines as VoiceLine[]) : undefined,
             }
           : null,
       fb,
@@ -2919,7 +3040,9 @@ export class GameHost {
     this.endingAt = 0;
     this.epilogueP.then((e) => {
       this.endingAt = Date.now();
+      if (FEATURES.storyV3) rememberEnding(e.ending);
       // The final scene reads the ending; the montage closes on the sign-off alone (never the ending twice).
+      this.castLine(e.ending, e.lines);
       this.voiceFor(e.ending);
       this.voiceFor(SIGN_OFF);
       if (pitch.verdict) this.paintDecision(pitch, pitch.verdict, e.ending, e.line || this.state.situation);
@@ -3241,6 +3364,9 @@ export class GameHost {
     // its panel, and the reveal follows once it's been said.
     const lead = Math.max(0, this.montage().length - 1) * MONTAGE_PANEL_MS;
     const spoken = this.play(clip, lead);
+    // Manual ending (look, design/37 §4): the TV's slides move only on a key press; it calls skip() to go on. A long
+    // safety timer keeps a pending step for skip() to run.
+    if (FEATURES.manualEnding) return this.setTimer(MANUAL_SAFETY_MS, done);
     this.setTimer(lead + (spoken ? Math.max(spoken + 1200, MONTAGE_PANEL_MS) : Math.min(11_000, Math.max(7000, ending.split(/\s+/).length * 320 + 3000))), done);
   }
 
@@ -3298,14 +3424,21 @@ export class GameHost {
     if (rsr) {
       // "based on a true story" is said ONCE in the game, here (the on-screen banner stays). Never "this really happened":
       // the game's story is based on it, it didn't happen (CD).
-      const said = this.seed?.author ? `Here's the twist… it's based on ${speakableName(this.seed.author.name)}'s true story. ${rsr.summary}` : `Now, here's the strange part… it's based on a true story. ${rsr.headline}.`;
+      // v3 (design/37 §4): the story started from a real article, and the problem at the start really happened.
+      const orig = FEATURES.storyV3 ? this.state.originalProblem?.replace(/[.!]+$/, "") ?? "" : "";
+      const said = this.seed?.author
+        ? `Here's the twist… it's based on ${speakableName(this.seed.author.name)}'s true story. ${rsr.summary}`
+        : orig
+        ? `Here's the twist… your story started from a real article. That first problem really happened: ${orig.charAt(0).toLowerCase()}${orig.slice(1)}. ${rsr.headline}.`
+        : `Now, here's the strange part… it's based on a true story. ${rsr.headline}.`;
       // The bridge links the table's ending to the real one, after a beat of breathing room (CD: the grand ending).
       const bridge = this.state.revealData?.bridge ?? "";
       // It starts on the real-story beat (look: ~5 s of WHAT YOU DID first), so the result lands before she speaks.
-      this.voiceBy(bridge ? `${said} ... ${bridge}` : said, Date.now() + 2500).then((clip) => this.state.phase === "reveal" && this.play(clip, 5000));
+      this.voiceBy(bridge ? `${said} ... ${bridge}` : said, Date.now() + 2500).then((clip) => this.state.phase === "reveal" && this.play(clip, FEATURES.manualEnding ? 600 : 5000));
     }
     const text = `${this.seed?.the_real_story.headline ?? ""} ${this.seed?.the_real_story.summary ?? ""}`;
     // Room to breathe: the headline plus the bridge line (CD's grand ending); Continue still skips.
+    if (FEATURES.manualEnding) return this.setTimer(MANUAL_SAFETY_MS, () => this.showStorybook());
     if (this.quick) return this.reading(text, () => this.showStorybook(), Math.max(QUICK.revealMs, 20_000), Math.max(QUICK.revealMs, 20_000));
     this.reading(text, () => this.showStorybook(), 15000);
   }
@@ -3316,7 +3449,9 @@ export class GameHost {
     const players = this.state.players.map((p) => (this.truths[p.id] ? { ...p, truth: this.truths[p.id] } : p));
     this.set({ phase: "storybook", busy: "Putting your story together…", players });
     if (this.startedAt && !this.endedAt) this.endedAt = Date.now();
+    const game = this.state.game;
     const book = await this.storybookP!;
+    if (this.state.game !== game || this.state.phase !== "storybook") return; // Play again came first
     this.set({ storybook: book, busy: "" });
     this.saveToShelf(book);
   }
@@ -3354,8 +3489,85 @@ export class GameHost {
     return this.seed;
   }
 
-  /** "Next chapter": same heroes and titles, new story. */
+  /** "Play another": the full Play again when it's on, else the old reset (same heroes and titles, new story). */
   nextTale() {
+    if (FEATURES.playAgain) return this.playAgain();
+    this.backToLobby();
+  }
+
+  /**
+   * Play again (CD, FEATURES.playAgain): after the ending, back to the lobby with the same room code. Everyone stays
+   * joined and ready with their hero, so the host can press Start at once (a phone can still send "newhero"). All of
+   * the last story is cleared, the state and the host's own bookkeeping, and `game` goes up so screens can reset.
+   */
+  playAgain() {
+    if (!FEATURES.playAgain || this.state.phase === "lobby") return;
+    const keep = this.state;
+    // The old reset (timers, the seed, art, mirror, the next Quick Tale) first, then everything it didn't cover.
+    this.backToLobby();
+    if (this.nudgeTimer) clearTimeout(this.nudgeTimer);
+    this.nudgeTimer = null;
+    Object.values(this.preRuleTimers).forEach((t) => clearTimeout(t));
+    this.preRuleTimers = {};
+    this.bots.reset();
+    this.story = null;
+    this.finaleNext = false;
+    this.sceneList = [];
+    this.turnP = null;
+    this.pendingRoll = null;
+    this.finalRoll = null;
+    this.finalPitch = null;
+    this.epilogueP = null;
+    this.storybookP = null;
+    this.endingFor = null;
+    this.endingQueue = [];
+    this.endingAt = 0;
+    this.outcomeAt = 0;
+    this.verdicts.clear();
+    this.preRuled.clear();
+    this.quipsSaid = [];
+    this.castLines.clear();
+    this.turnArt.clear();
+    this.seenArt.clear();
+    this.cleanSkills = null;
+    this.typingAt = {};
+    this.lastArtAsked = 0;
+    this.castP = null;
+    this.ourStories = {};
+    this.artSeq = 10;
+    this.deadlineAt = 0;
+    this.endedAt = 0;
+    this.reactionCounts = {};
+    const players = keep.players.map((p) => ({
+      ...p,
+      status: p.hero ? ("ready" as const) : p.status,
+      peril: "",
+      heart: 1 as const,
+      abilityAvailable: true,
+      away: false,
+      catchUp: undefined,
+      truth: p.truth === undefined ? undefined : "", // the storybook put the text on the wire; back to "answered"
+    }));
+    this.set({
+      ...freshState(keep.code, keep.rating),
+      mode: keep.mode,
+      partyName: keep.partyName,
+      source: keep.source,
+      questOptions: keep.questOptions,
+      players,
+      act: undefined,
+      sfx: undefined,
+      revealData: undefined,
+      nudge: undefined,
+      timeWarn: undefined,
+      kicked: [],
+      game: (keep.game ?? 0) + 1,
+    });
+    this.note("hero", "Play again", "Back to the lobby: same room, same heroes, a fresh story.");
+  }
+
+  /** The reset to the lobby (before Play again existed): same heroes and titles, new story. */
+  private backToLobby() {
     this.clearTimer();
     this.lobbyAt = Date.now();
     if (this.finalSafety) clearTimeout(this.finalSafety);

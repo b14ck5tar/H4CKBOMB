@@ -3238,3 +3238,138 @@
   12%, 85% { opacity: 1; transform: none; }
   100% { opacity: 0; transform: translateY(-20%); }
 }
+
+/* Manual ending (CD after Meta): the slides move only on ←/→ / Space or these buttons. Bottom center, out of the art's way. */
+.tvx-end-nav {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--u, 1vw) * 1.4);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u, 1vw) * 1.2);
+  transform: translateX(-50%);
+}
+.tvx-end-btn {
+  width: calc(var(--u, 1vw) * 4.2);
+  height: calc(var(--u, 1vw) * 4.2);
+  display: grid;
+  place-items: center;
+  border: calc(var(--u, 1vw) * 0.22) solid #c6ff2e;
+  border-radius: 50%;
+  background: rgba(10, 6, 18, 0.8);
+  color: #c6ff2e;
+  font-size: calc(var(--u, 1vw) * 3);
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: calc(var(--u, 1vw) * 0.3) calc(var(--u, 1vw) * 0.3) 0 #000;
+}
+.tvx-end-btn:hover:not(:disabled),
+.tvx-end-btn:focus-visible { background: #c6ff2e; color: #0a0612; outline: none; }
+.tvx-end-btn:disabled { opacity: 0.25; cursor: default; }
+.tvx-end-count {
+  min-width: calc(var(--u, 1vw) * 5);
+  text-align: center;
+  font-family: var(--font-heading), sans-serif;
+  font-weight: 800;
+  font-size: calc(var(--u, 1vw) * 1.5);
+  color: #f2ecff;
+  text-shadow: 0 0 calc(var(--u, 1vw) * 0.6) #000;
+}
+/* The origin slide: where the story came from, before "What you did". */
+.tvx-origin {
+  position: absolute;
+  left: calc(var(--u) * 8);
+  right: calc(var(--u) * 8);
+  top: calc(var(--u) * 13);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(var(--u) * 2);
+  text-align: center;
+  animation: tvx-rise 0.7s cubic-bezier(0.25, 1.4, 0.45, 1) both 0.2s;
+}
+.tvx-origin-lead {
+  margin: 0;
+  font-family: var(--font-display), Impact, sans-serif;
+  font-size: calc(var(--u) * 4.4);
+  line-height: 1.05;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: calc(var(--u) * 0.35) calc(var(--u) * 0.35) 0 #000;
+}
+.tvx-origin-line {
+  margin: 0;
+  max-width: calc(var(--u) * 70);
+  font-family: var(--font-heading), sans-serif;
+  font-weight: 700;
+  font-size: calc(var(--u) * 2.8);
+  line-height: 1.3;
+  color: #f2ecff;
+  text-shadow: 0 0 calc(var(--u) * 1) #000;
+}
+.tvx-origin-line b { color: var(--gold); }
+.tvx-origin-src {
+  margin: 0;
+  font-family: var(--font-heading), sans-serif;
+  font-weight: 800;
+  font-size: calc(var(--u) * 1.6);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #c6ff2e;
+}
+
+/* The turn owner's power on the turn card, so friends' ideas can use it (CD). */
+.tvx-turn-power {
+  margin: calc(var(--u) * 0.4) 0 0;
+  max-width: calc(var(--u) * 30);
+  font-family: var(--font-heading), sans-serif;
+  font-weight: 700;
+  font-size: calc(var(--u) * 1.45);
+  line-height: 1.25;
+  color: #f2ecff;
+  text-shadow: 0 0 calc(var(--u) * 0.6) #000, 0 calc(var(--u) * 0.1) 0 #000;
+  animation: tvx-rise 0.5s ease both;
+}
+.tvx-turn-power b { color: #c6ff2e; text-transform: uppercase; letter-spacing: 0.04em; }
+/* The newspaper beat, read from a couch: bigger clipping text and a BIG QR to the real article. */
+.is-real .tvx-clip-solo .tvx-clip-head { font-size: calc(var(--u) * var(--hs) * 1.12); }
+.is-real .tvx-clip-solo .tvx-clip-sum,
+.is-real .tvx-clip-solo .tvx-clip-now { font-size: calc(var(--u) * 2.25); line-height: 1.35; }
+.tvx-read .tvx-take-head { color: #ffd23f; }
+.tvx-read-qr { width: calc(var(--u) * 19) !important; height: calc(var(--u) * 19) !important; }
+/* Keep the bigger clipping above the ‹ › buttons even with a long real ending. */
+.is-real .tvx-clip-solo { top: calc(var(--u) * 13); }
+.is-real .tvx-clip-solo .tvx-clip-sum,
+.is-real .tvx-clip-solo .tvx-clip-now { font-size: calc(var(--u) * 2.05); line-height: 1.3; }
+.is-real .tvx-clip-solo .tvx-clip-head { font-size: calc(var(--u) * var(--hs) * 1.05); }
+
+/* Story v3: the HUD shows story time ("Act 2 · Turn 3 of 6"), never a % done; the goal is a small "Maybe:". */
+.tvx-ladder-clock {
+  margin: 0 0 calc(var(--u) * 0.2);
+  font-family: var(--font-heading), sans-serif;
+  font-weight: 800;
+  font-size: calc(var(--u) * 1.1);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #c6ff2e;
+}
+/* Story v3: the scene's pressure as a small amber chip under "Right now" ("⏳ The tide is rising"). */
+.tvx-ladder-pressure {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--u) * 0.4);
+  align-self: flex-start;
+  margin: calc(var(--u) * 0.3) 0 0;
+  padding: calc(var(--u) * 0.2) calc(var(--u) * 0.8) calc(var(--u) * 0.15);
+  border-radius: calc(var(--u) * 0.4);
+  background: rgba(255, 173, 59, 0.16);
+  border: calc(var(--u) * 0.1) solid rgba(255, 173, 59, 0.6);
+  font-family: var(--font-heading), sans-serif;
+  font-weight: 800;
+  font-size: calc(var(--u) * 1.15);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: #ffd29a;
+  animation: tvx-rise 0.4s ease both;
+}

@@ -17,7 +17,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  let body: { text?: unknown; voice?: unknown; style?: unknown; ahead?: unknown };
+  let body: { text?: unknown; voice?: unknown; style?: unknown; ahead?: unknown; lines?: unknown; cast?: unknown };
   try {
     body = await req.json();
   } catch {
@@ -27,7 +27,14 @@ export async function POST(req: Request) {
   const style = String(body.style ?? "").replace(/[\r\n]+/g, " ").trim().slice(0, 240);
   if (!text || !isVoice(body.voice)) return new Response("need text and a cast voice", { status: 400 });
   try {
-    const clip = await speak(body.voice, style, text, { ahead: typeof body.ahead === "boolean" ? body.ahead : undefined });
+    // optional cast dialogue: [{ speaker, text }] in order; speaker "" = the narrator (character voices, behind the flag)
+    const lines = Array.isArray(body.lines)
+      ? body.lines.slice(0, 12).map((l: { speaker?: unknown; text?: unknown }) => ({ speaker: String(l?.speaker ?? "").slice(0, 60), text: String(l?.text ?? "").slice(0, 400) }))
+      : undefined;
+    const cast = Array.isArray(body.cast)
+      ? body.cast.slice(0, 12).map((c: { name?: unknown; role?: unknown }) => ({ name: String(c?.name ?? "").slice(0, 60), role: String(c?.role ?? "").slice(0, 120) }))
+      : undefined;
+    const clip = await speak(body.voice, style, text, { ahead: typeof body.ahead === "boolean" ? body.ahead : undefined, lines, cast });
     return new Response(new Uint8Array(clip.wav), {
       headers: { "Content-Type": "audio/wav", "X-Audio-Ms": String(clip.ms), "X-Voice-Rate": String(clip.rate), "X-Voice-Provider": clip.provider, "Cache-Control": "private, max-age=86400" },
     });

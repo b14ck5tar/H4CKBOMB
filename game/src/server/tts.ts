@@ -3,6 +3,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { FEATURES } from "@/lib/features";
 import { VOICE_DIRECTION, VOICES, type VoiceId } from "@/lib/voices";
 
 // The narrator's voice (design/24 P5). Meta has no TTS model, so this is the one job that leaves Meta.
@@ -254,11 +255,11 @@ const ELEVEN_MAX_AT_ONCE = 3;
 let elevenActive = 0;
 const elevenQueue: (() => void)[] = [];
 
-async function eleven(voice: VoiceId, model: ElevenModel, text: string, timeoutMs: number): Promise<Buffer | null> {
+async function eleven(voice: VoiceId, model: ElevenModel, text: string, timeoutMs: number, voiceIdOverride?: string): Promise<Buffer | null> {
   if (elevenActive >= ELEVEN_MAX_AT_ONCE) await new Promise<void>((r) => elevenQueue.push(r));
   elevenActive++;
   try {
-    return await elevenOnce(voice, model, text, timeoutMs);
+    return await elevenOnce(voice, model, text, timeoutMs, voiceIdOverride);
   } finally {
     elevenActive--;
     elevenQueue.shift()?.();
@@ -266,7 +267,7 @@ async function eleven(voice: VoiceId, model: ElevenModel, text: string, timeoutM
 }
 
 /** Streams 24 kHz PCM; aborts if the first audio byte takes over 4 s. null on any failure. */
-async function elevenOnce(voice: VoiceId, model: ElevenModel, text: string, timeoutMs: number): Promise<Buffer | null> {
+async function elevenOnce(voice: VoiceId, model: ElevenModel, text: string, timeoutMs: number, voiceIdOverride?: string): Promise<Buffer | null> {
   const k = process.env.ELEVENLABS_API_KEY;
   if (!k || Date.now() < elevenOffUntil) return null;
   const cfg = ELEVEN[voice];
@@ -274,7 +275,7 @@ async function elevenOnce(voice: VoiceId, model: ElevenModel, text: string, time
   const whole = setTimeout(() => ctrl.abort(new Error(`no full clip in ${timeoutMs} ms`)), timeoutMs);
   const first = setTimeout(() => ctrl.abort(new Error(`no first byte in ${ELEVEN_FIRST_BYTE_MS} ms`)), ELEVEN_FIRST_BYTE_MS);
   try {
-    const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${cfg.voiceId}/stream?output_format=pcm_24000`, {
+    const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceIdOverride ?? cfg.voiceId}/stream?output_format=pcm_24000`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "xi-api-key": k },
       signal: ctrl.signal,
@@ -327,7 +328,8 @@ async function call(model: string, voice: VoiceId, style: string, text: string, 
 }
 
 /** `ahead: true` asks for v3 (nothing sends it today: every live line reads with the Combo Flash settings). */
-export type SpeakOpts = { ahead?: boolean; timeoutMs?: number };
+export type SpeakLine = { speaker: string; text: string };
+export type SpeakOpts = { ahead?: boolean; timeoutMs?: number; characterVoices?: boolean; lines?: SpeakLine[]; cast?: { name: string; role: string }[] };
 
 /** Reads a clip from memory, then disk, else makes it once (concurrent asks share one call) and caches it. */
 async function cached(id: string, provider: Clip["provider"], make: () => Promise<Clip | null>): Promise<Clip | null> {
@@ -373,14 +375,14 @@ function toClip(pcm: Buffer, provider: Clip["provider"]): Clip {
 }
 
 /** ElevenLabs, cached by (voice, model, settings, text): the style line doesn't change its read, so it's not in the key. */
-async function elevenClip(voice: VoiceId, text: string, model: ElevenModel, timeoutMs: number, onlyIfMade = false) {
-  const cfg = ELEVEN[voice];
+async function elevenClip(voice: VoiceId, text: string, model: ElevenModel, timeoutMs: number, onlyIfMade = false, as?: { voiceId: string; voice: string }) {
+  const cfg = as ? { ...ELEVEN[voice], ...as } : ELEVEN[voice];
   const body = elevenText(model, text);
   const id = crypto.createHash("sha1").update(`el3|${cfg.voiceId}|${model}|${JSON.stringify(cfg.settings[model] ?? FLASH)}|${body}`).digest("hex");
   return cached(id, "elevenlabs", async () => {
     if (onlyIfMade) return null; // a lookup only: is this line already voiced (committed or cached)?
     const t0 = Date.now();
-    const pcm = await eleven(voice, model, text, timeoutMs);
+    const pcm = await eleven(voice, model, text, timeoutMs, as?.voiceId);
     if (!pcm) return null;
     const clip = toClip(pcm, "elevenlabs");
     console.log(`[tts] elevenlabs ${model} ${cfg.voice} ${clip.ms}ms of audio in ${Date.now() - t0}ms (${body.length} chars)`);
@@ -444,7 +446,7 @@ async function elevenLive(voice: VoiceId, text: string, timeoutMs: number) {
  * throws (that line is text only): it never falls back to OpenAI mid-game, so the voice never switches. An
  * out-of-credits error stops ElevenLabs for 10 minutes, so the next game picks OpenAI. On OpenAI: OpenAI, then Gemini.
  */
-export async function speak(voice: VoiceId, style: string, text: string, opts: SpeakOpts = {}): Promise<Clip> {
+async function speakOne(voice: VoiceId, style: string, text: string, opts: SpeakOpts = {}): Promise<Clip> {
   const timeoutMs = opts.timeoutMs ?? 20_000;
   if ((await gameProvider()).provider === "elevenlabs") {
     const cfg = ELEVEN[voice];
@@ -473,4 +475,112 @@ export async function speak(voice: VoiceId, style: string, text: string, opts: S
     throw new Error("elevenlabs could not read this line: text only (no mid-game switch to another voice)");
   }
   return openaiClip(voice, style, text, timeoutMs);
+}
+
+// ---- character voices (CD, Sun AM; FEATURES.characterVoices) ----
+// Sarah reads the narration; each "quoted" line reads in its speaker's own voice, as ONE clip (back to back, never
+// overlapping, so the TV's text sync stays right). The speaker is the few words before the quote ("And the bridge
+// inspector? Very calmly:" -> "bridge inspector"); the same name always gets the same voice, in every game.
+const CHAR_VOICES = {
+  m: [
+    { voiceId: "nPczCjzI2devNBz1zQrb", voice: "Brian" }, // deep, resonant
+    { voiceId: "IKne3meq5aSn9XLyUdCD", voice: "Charlie" }, // young, natural
+  ],
+  f: [
+    { voiceId: "cgSgspJ2msm6clMCkdW9", voice: "Jessica" }, // playful
+    { voiceId: "pFZP5JQG7iQjIQuC4Bku", voice: "Lily" }, // British, velvety
+  ],
+};
+const FEMALE = /\b(she|her|woman|lady|girl|queen|princess|mother|mom|mum|grandma|granny|aunt|sister|wife|daughter|mrs|ms|miss|madam|ivy|nun)\b/i;
+const MALE = /\b(he|him|man|guy|boy|king|prince|father|dad|grandpa|uncle|brother|husband|son|mr|mister|sir|batman|monk|foreman)\b/i;
+
+export function speakerOf(before: string) {
+  let t = before.replace(/\s+/g, " ").trim();
+  for (let i = 0; i < 3; i++) {
+    t = t.replace(/[\s:;,.!?…]+$/, "");
+    t = t.replace(/\s*\b(?:very|so|quite)?\s*(?:calmly|softly|quietly|loudly|slowly|sadly|proudly|gently|firmly|brightly|flatly)$/i, "");
+    t = t.replace(/\s*\b(?:says|said|asks|asked|shouts|shouted|whispers|whispered|replies|replied|adds|added|yells|yelled|mutters|muttered|calls|called)$/i, "");
+  }
+  // only the last sentence ("…it can find. And Batman" -> "And Batman")
+  t = t.slice(Math.max(t.lastIndexOf(". "), t.lastIndexOf("! "), t.lastIndexOf("? "), t.lastIndexOf("; ")) + 1).trim();
+  const w = t.split(" ").slice(-3);
+  while (w.length > 1 && /^(and|then|the|a|an|but|so|while|now)$/i.test(w[0])) w.shift();
+  return w.join(" ").toLowerCase();
+}
+
+export function voiceForSpeaker(name: string, near = "") {
+  const h = parseInt(crypto.createHash("sha1").update(name || "someone").digest("hex").slice(0, 8), 16);
+  const nf = FEMALE.test(near) && !MALE.test(near);
+  const nm = MALE.test(near) && !FEMALE.test(near);
+  const g: "f" | "m" = FEMALE.test(name) ? "f" : MALE.test(name) ? "m" : nf ? "f" : nm ? "m" : h % 2 ? "f" : "m";
+  const pool = CHAR_VOICES[g];
+  return pool[h % pool.length];
+}
+
+type Part = { text: string; as?: { voiceId: string; voice: string } };
+
+/** Story's structured dialogue: speaker "" = the narrator, anyone else reads in their own stable voice. */
+function partsFromLines(lines: SpeakLine[], cast: { name: string; role: string }[] = []): Part[] {
+  const roleOf = (who: string) => cast.find((c) => c.name.toLowerCase() === who.toLowerCase())?.role ?? "";
+  return lines
+    .map((l) => ({ text: String(l.text ?? "").replace(/\s+/g, " ").trim(), speaker: String(l.speaker ?? "").trim() }))
+    .filter((l) => l.text)
+    .map((l) => (l.speaker ? { text: l.text.replace(/^["\u201c\u201d]+|["\u201c\u201d]+$/g, "").trim(), as: voiceForSpeaker(l.speaker.toLowerCase(), `${l.speaker} ${roleOf(l.speaker)}`) } : { text: l.text }));
+}
+
+async function speakWithCharacters(voice: VoiceId, style: string, text: string, opts: SpeakOpts): Promise<Clip | null> {
+  if (opts.lines?.length) return speakParts(voice, style, partsFromLines(opts.lines, opts.cast), opts);
+  const parts: Part[] = [];
+  const re = /["\u201c]([^"\u201c\u201d]{2,})["\u201d]/g;
+  let last = 0;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text))) {
+    const before = text.slice(last, m.index);
+    if (before.trim()) parts.push({ text: before.trim() });
+    const who = speakerOf(text.slice(Math.max(0, m.index - 80), m.index));
+    parts.push({ text: m[1].trim(), as: voiceForSpeaker(who, text.slice(Math.max(0, m.index - 160), m.index)) });
+    last = m.index + m[0].length;
+  }
+  const after = text.slice(last);
+  if (after.trim()) parts.push({ text: after.trim() });
+  return speakParts(voice, style, parts, opts);
+}
+
+/** Reads the parts in order (narration in Sarah, each speaker in their voice) as one clip. null = no speakers in it. */
+async function speakParts(voice: VoiceId, style: string, parts: Part[], opts: SpeakOpts): Promise<Clip | null> {
+  const timeoutMs = opts.timeoutMs ?? 20_000;
+  if (!parts.some((p) => p.as)) return null;
+  const pcm: Buffer[] = [];
+  const gap = Buffer.alloc(Math.floor(RATE * 0.14) * 2); // a breath between speakers
+  for (const p of parts) {
+    let clip: Clip | null = null;
+    if (p.as) {
+      // already voiced in one of the character voices (the judge openers): that clip wins over the gender guess
+      for (const v of [p.as, ...CHAR_VOICES.m, ...CHAR_VOICES.f]) {
+        clip = await elevenClip(voice, p.text, ELEVEN[voice].live, timeoutMs, true, v);
+        if (clip) break;
+      }
+      if (!clip) clip = await elevenClip(voice, p.text, ELEVEN[voice].live, timeoutMs, false, p.as);
+      if (!clip) clip = await speakOne(voice, style, `"${p.text}"`, opts).catch(() => null); // Sarah reads it rather than lose it
+    } else clip = await speakOne(voice, style, p.text, opts); // narration: throws = this line is text only
+    if (!clip) continue;
+    if (pcm.length) pcm.push(gap);
+    pcm.push(clip.wav.subarray(44));
+  }
+  if (!pcm.length) return null;
+  const wav = wavFromPcm(Buffer.concat(pcm));
+  return { wav, ms: Math.round(((wav.length - 44) / (RATE * 2)) * 1000), rate: 1, provider: "elevenlabs" };
+}
+
+/**
+ * One narrator line as WAV (see speakOne). With character voices on (and ElevenLabs for this game), any "quoted"
+ * dialogue reads in its speaker's own voice, joined into the same clip.
+ */
+export async function speak(voice: VoiceId, style: string, text: string, opts: SpeakOpts = {}): Promise<Clip> {
+  const on = opts.characterVoices ?? (FEATURES.characterVoices || FEATURES.castVoices);
+  if (on && (opts.lines?.length || /["\u201c][^"\u201c\u201d]{2,}["\u201d]/.test(text)) && (await gameProvider()).provider === "elevenlabs") {
+    const clip = await speakWithCharacters(voice, style, text, opts);
+    if (clip) return clip;
+  }
+  return speakOne(voice, style, text, opts);
 }

@@ -86,9 +86,9 @@ working demo (the live swipe and the QR on 8).
 | Criterion | Weight | Say it | Where they see it |
 |---|---|---|---|
 | Human connection | 30% | "The best move is using a friend's idea." | Friends' suggestion bubbles, "+ Sam's idea +1", the TV's "tell the table your plan", the hand-off by name, the shake-together finale, "Solved by" with their secret strength |
-| AI essential + integrated | 25% | "Muse writes the story from your plans, judges every plan and paints your heroes into every decision." | The outcome uses the player's own words, progress + 3 acts, new painting per decision, narrator, DM's Notes (N) |
+| AI centrality | 25% | "Muse writes the story from your plans, judges every plan and paints your heroes into every decision." | The outcome uses the player's own words, progress + 3 acts, new painting per decision, narrator, DM's Notes (N) |
 | Originality | 20% | "It's based on a true story, and you find out at the end." | The reveal: "What you did", then "What really happened" |
-| Working demo | 20% | "You just played it on your own phone." | Their phone, real dice, nothing frozen |
+| Execution & demo quality | 25% | "You just played it on your own phone." | Their phone, real dice, nothing frozen |
 
 ## Judge Q&A
 

@@ -7,3 +7,7 @@ node_modules/
 next-env.d.ts
 .next*/
 game/public/art-review/
+
+devpost-media/video/cache/
+devpost-media/video/out/
+devpost-media/video/raw/

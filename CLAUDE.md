@@ -11,7 +11,7 @@ Read `GAME.md` first (all main ideas; SPEC.md is stale), then `design/` for the 
 ## Deadlines (Austin time)
 - Soft submission: Sat 11:30 PM on hacktx26.devpost.com. Final: Sun 11:30 AM. Feature freeze: Sun 10 AM.
 - Judging: Sun 2–5 PM (WEL). Meta's track needs a 2–3 min demo video (see `VIDEO_SCRIPT.md`).
-- Meta scores: human connection 30%, AI essential and well integrated 25%, originality 20%, working demo 20%.
+- Meta scores (official rules PDF): human connection 30%, AI centrality 25%, originality 20%, execution & demo quality 25%. Required: 2-3 min video, PUBLIC code repo, written description incl. the role of AI.
 
 ## Keys (read this before touching anything)
 - Keys live ONLY in `.env.local` at the repo root (git-ignored). `.env.example` lists the names.
@@ -51,7 +51,7 @@ Read `GAME.md` first (all main ideas; SPEC.md is stale), then `design/` for the 
 Winning Meta's track is the #1 goal. Before calling anything done, check it against Meta's brief and judges:
 - **Human connection (30%)**: does it make people turn to each other, visibly, within a 2-minute demo?
 - **AI essential + well integrated (25%)**: is Muse doing real work in the core loop (not decoration)? Is it "a magical experience"?
-- **Originality (20%)** and **working demo (20%)**: does the flow "just work really well"? Fewer features, executed well.
+- **Originality (20%)** and **execution & demo quality (25%)**: does the flow "just work really well"? Fewer features, executed well.
 - Prefer Meta models where they fit (Muse Spark, Muse Image, Muse Voice Transcribe, the Muse connector); non-Meta only where Meta has no model or a test showed a clear win, and say why.
 - Submission: a 2-3 min video (~30 s problem/connection, ~90 s demo, ~30 s AI role, ~30 s tools/harnesses and how they helped the build).
 Scorecard and gaps: `design/25-meta-alignment.md`.

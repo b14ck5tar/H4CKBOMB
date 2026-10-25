@@ -36,6 +36,10 @@ export type Opener = {
   beats: string[];
   /** The REAL event, spoiler-free (no names, numbers or punchline), for the story director to feed every turn. */
   real_setting: RealSetting;
+  /** Story v3 (design/37): the starting problem in one plain sentence (the reveal refers back to it). */
+  original_problem?: string;
+  /** Story v3: 2-3 things that get worse on their own. */
+  pressures?: { name: string; stages: string[]; fix: string }[];
 };
 export type RealSetting = { place_type: string; roles: string[]; situation: string; stakes: string; arc: string[] };
 export const PRONOUNS = ["she", "he", "they", "it"] as const;
@@ -161,6 +165,10 @@ WRITE:
   concrete things they could touch, use or talk to.
 - npc_line: one person or creature who is there, with one short, tired, funny line (12 words max). speaker is
   a plain role ("Gate agent", "Park ranger", "The dog"), never an invented name. Use "" for both if nobody fits.
+- pressures: 2 or 3 things in this story that get WORSE ON THEIR OWN, whatever the heroes do (the press arrives,
+  the tide goes out, the boss is on his way). Each: name (2-4 plain words, "the reporters"), stages (3 short plain
+  sentences, each worse than the last: "A reporter calls the office.", "A TV van parks outside.", "The reporters are
+  at the door."), fix (a verb-first step, 8 words max: "Keep the reporters out"). Funny, never scary or violent.
 
 WRITING RULES (hard):
 - Short sentences and everyday words. Average under 12 words per sentence.
@@ -223,7 +231,7 @@ const str = { type: "string" } as const;
 export const OPENER_SCHEMA = {
   type: "object",
   additionalProperties: false,
-  required: ["safe", "unsafe_message", "punchline_words", "quest_title", "teaser", "mood", "scene_line", "problem_line", "stakes_line", "goal", "situation", "npc_speaker", "npc_line", "official_line", "whats_happening_now", "real_ending", "problem_name", "problem_pronoun", "problem_stakes", "beats", "real_place_type", "real_roles", "real_situation", "real_stakes", "real_arc"],
+  required: ["safe", "unsafe_message", "punchline_words", "quest_title", "teaser", "mood", "scene_line", "problem_line", "stakes_line", "goal", "situation", "npc_speaker", "npc_line", "official_line", "whats_happening_now", "real_ending", "problem_name", "problem_pronoun", "problem_stakes", "beats", "real_place_type", "real_roles", "real_situation", "real_stakes", "real_arc", "pressures"],
   properties: {
     safe: { type: "boolean" },
     unsafe_message: str,
@@ -250,6 +258,7 @@ export const OPENER_SCHEMA = {
     real_situation: str,
     real_stakes: str,
     real_arc: { type: "array", items: str },
+    pressures: { type: "array", items: { type: "object", additionalProperties: false, required: ["name", "stages", "fix"], properties: { name: str, stages: { type: "array", items: str }, fix: str } } },
   },
 } as const;
 
@@ -269,6 +278,7 @@ type Draft = {
   real_situation: string;
   real_stakes: string;
   real_arc: string[];
+  pressures?: { name: string; stages: string[]; fix: string }[];
   title: string; // = quest_title, set in code
   scene_line: string;
   problem_line: string;
@@ -653,6 +663,12 @@ function finish(d: Draft): Opener {
   };
   o.threat = { name: o.problem.name, pronoun: pron ?? "it", want: o.problem.stakes }; // alias for one release
   if (d.npc_speaker.trim() && d.npc_line.trim()) o.npc_line = { speaker: sanitize(d.npc_speaker), line: sanitize(d.npc_line) };
+  // The REAL starting problem (the scene line: the real place and situation, no twist): the reveal says it really happened.
+  o.original_problem = sanitize(d.scene_line ?? "");
+  o.pressures = (Array.isArray(d.pressures) ? d.pressures : [])
+    .map((x) => ({ name: sanitize(String(x?.name ?? "")), stages: (Array.isArray(x?.stages) ? x.stages : []).map((y) => sanitize(String(y ?? ""))).filter(Boolean).slice(0, 4), fix: sanitize(String(x?.fix ?? "")).replace(/[.!]+$/, "") }))
+    .filter((x) => x.name && x.stages.length && x.fix)
+    .slice(0, 3);
   return o;
 }
 

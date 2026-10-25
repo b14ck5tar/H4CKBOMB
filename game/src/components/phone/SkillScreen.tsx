@@ -36,7 +36,7 @@ export function SkillScreen({ me, portrait, onAnswer }: { me?: Player | null; po
           ))}
         </span>
       </label>
-      <p className="pk-hint">It stays secret until the very end, when the TV reveals who solved it.</p>
+      <p className="pk-hint">Your secret strength becomes your power in the story. It stays secret until the very end, when the TV reveals who solved it.</p>
       <div className="pk-bottom">
         <GameButton type="submit" tone="lime" disabled={!skill.trim()}>
           Save my strength

@@ -78,6 +78,9 @@ export class WatchSource {
   }
   async begin() {}
   nextTale() {}
+  // A read-only watcher never kicks or restarts.
+  kick() {}
+  playAgain() {}
   setMode() {}
   setRating() {}
   setSource() {}

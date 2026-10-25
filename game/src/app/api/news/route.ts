@@ -1,8 +1,14 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { unstable_cache } from "next/cache";
 import { getNewsCandidates, lastStats, type NewsCandidate } from "@/server/news/candidates";
-import { fillFromLibrary } from "@/server/news/library";
-import { DEFAULT_RATING, isRating } from "@/lib/rating";
+import { fillFromLibrary, isExcluded } from "@/server/news/library";
+import { DEFAULT_RATING, isRating, questAllowed } from "@/lib/rating";
+import SEEDS from "@/data/seed_quests.json";
+import type { Rating } from "@/lib/types";
+
+/** The vote shows 3 cards; below this the hand-written seeds top the list up (played ones last). */
+const MIN_STORIES = 3;
+type SeedLike = { id: string; quest_title?: string; realm_name?: string; rating?: Rating; the_real_story?: { headline?: string; summary?: string; source?: string; link?: string; date?: string } };
 
 // GET /api/news?rating=kids|teens|adults&played=id1,id2
 //   → { quests: [{id, origin, headline, snippet, source, url, date, place, rating, storyability, scores, has_opener}], generatedAt }
@@ -28,7 +34,7 @@ const cached = unstable_cache(
     if (!list.length) throw new Error("no candidates (not caching)");
     return { list, generatedAt: new Date().toISOString() };
   },
-  ["story-news-candidates-v4"],
+  ["story-news-candidates-v6-checklist"],
   { revalidate: 14400, tags: ["news-candidates"] },
 );
 
@@ -51,9 +57,52 @@ export async function GET(req: NextRequest) {
     console.warn(`[api/news] ${error}`);
   }
   const quests = fillFromLibrary(live, rating, played);
+  // Never run out (the vote needs 3, the Quick Tale needs 1): top up from the hand-written seeds, gated or not.
+  if (quests.length < MIN_STORIES) {
+    const have = new Set(quests.map((q) => q.id));
+    const seeds = (SEEDS as SeedLike[]).filter((x) => !have.has(x.id) && !isExcluded({ id: x.id, headline: x.the_real_story?.headline }) && questAllowed(x.rating ?? "teens", rating));
+    const fresh = seeds.filter((x) => !played.has(x.id));
+    for (const x of [...fresh, ...seeds.filter((x) => played.has(x.id))]) {
+      if (quests.length >= MIN_STORIES) break;
+      const r = x.the_real_story ?? {};
+      quests.push({ id: x.id, origin: "curated", headline: r.headline ?? x.quest_title ?? x.id, snippet: r.summary ?? "", source: r.source ?? "", url: r.link ?? "", date: r.date ?? "", place: x.realm_name ?? "", rating: x.rating ?? "teens", storyability: 3, checklist: null, one_sentence_setup: "", dilemma: "", has_opener: false });
+      have.add(x.id);
+    }
+    // Still short (a table that played almost everything): bring back gated stories it already played.
+    for (const q of fillFromLibrary(live, rating, new Set())) {
+      if (quests.length >= MIN_STORIES) break;
+      if (!have.has(q.id)) quests.push(q), have.add(q.id);
+    }
+  }
   const body: Record<string, unknown> = { quests, generatedAt };
   if (debug) Object.assign(body, { stats: lastStats(), all: live, ...(error ? { error } : {}) });
   return NextResponse.json(body, {
     headers: { "Cache-Control": live.length && !played.size ? "public, s-maxage=3600, stale-while-revalidate=14400" : "no-store" },
   });
+}
+
+// POST (dev only): the design/37 8-box checklist outside the live pipeline. No SerpApi calls.
+//   {action: "check", stories: [{id, headline, source, date, text}]} → each story's boxes (judge seeds, spot checks)
+//   {action: "rescore"} → re-check every library story; failures are dropped from story_library.json
+export async function POST(req: NextRequest) {
+  if (process.env.NODE_ENV === "production") return NextResponse.json({ error: "dev only" }, { status: 404 });
+  const b = (await req.json().catch(() => ({}))) as { action?: string; stories?: { id: string; headline: string; source?: string; date?: string; text?: string }[] };
+  const { checkStories, checklistOf, failedBoxes, passes, blocked } = await import("@/server/news/candidates");
+  const { allStories, applyChecklist } = await import("@/server/news/library");
+  const items =
+    b.action === "rescore"
+      ? allStories().map((s) => ({ id: s.id, headline: s.headline, source: s.source, date: s.date, text: s.snippet }))
+      : (b.stories ?? []).slice(0, 40).map((s) => ({ id: s.id, headline: s.headline, source: s.source ?? "", date: s.date ?? "", text: s.text ?? "" }));
+  const gates = await checkStories(items);
+  const results = items.map((it, i) => {
+    const g = gates[i];
+    const regex = blocked(`${it.headline} ${it.text}`);
+    if (!g) return { id: it.id, headline: it.headline, pass: false, error: "no answer", regex };
+    const checklist = checklistOf(g);
+    const pass = passes(g) && !regex;
+    return { id: it.id, headline: it.headline, pass, safe: g.safe && !regex, safety_reason: regex ? `regex: ${regex}` : g.safety_reason, failed: failedBoxes(checklist), checklist, one_sentence_setup: g.one_sentence_setup, dilemma: g.dilemma, talk: g.talk };
+  });
+  // Re-score only applies stories that got an answer (a failed batch never empties the library).
+  const applied = b.action === "rescore" ? applyChecklist(results.filter((r) => !("error" in r)) as Parameters<typeof applyChecklist>[0]) : undefined;
+  return NextResponse.json({ results, applied });
 }

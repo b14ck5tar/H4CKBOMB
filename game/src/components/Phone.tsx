@@ -3,7 +3,8 @@
  * The phone: a controller, never a second TV. Every screen is ONE big instruction (the same words as the TV's
  * "Now:" banner, lib/now.ts), a timer when there is one, the scene's art blurred behind it, and one control.
  */
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { FEATURES } from "@/lib/features";
 import { usePhone } from "@/lib/usePhone";
 import { TYPE_MAX, QUICK_TURN_MS, REACTIONS, STAT_LABEL, TURN_MS, stampText } from "@/lib/rules";
 import { eligibleIds, heroFirst, nowText, plateFor, turnOwner, winnerPid } from "@/lib/now";
@@ -12,6 +13,8 @@ import { playSfx } from "@/lib/sound";
 import {
   BackPlanScreen,
   TalkScreen,
+  RemovedScreen,
+  AgainScreen,
   FinalePitchScreen,
   GameButton,
   JoinScreen,
@@ -70,7 +73,12 @@ const KICKER: Record<string, string> = {
 const SEND_SFX: Record<string, string> = { pitch: "submit", idea: "submit", story: "submit", concept: "submit", real: "submit", join: "submit", vote: "vote", pick: "pick", arm: "tap", react: "tap", redraw: "tap" };
 
 export function Phone({ code }: { code: string }) {
-  const { state, me, portrait, deadlineAt, send: rawSend } = usePhone(code);
+  const { state, me, pid, portrait, deadlineAt, send: rawSend } = usePhone(code);
+  // Kick + play again (CD): remember my name for a one-tap Rejoin; "Keep my hero" once per new game.
+  const lastName = useRef("");
+  if (me?.name) lastName.current = me.name;
+  const [forceJoin, setForceJoin] = useState(false);
+  const [keptGame, setKeptGame] = useState(-1);
   const send = useCallback<Send>(
     (t, d) => {
       const fx = SEND_SFX[t];
@@ -101,6 +109,13 @@ export function Phone({ code }: { code: string }) {
     );
   }
   if (!me) {
+    // The host removed me from the lobby: say so, one tap to rejoin (a normal join takes me off state.kicked).
+    if (FEATURES.kick && state.phase === "lobby" && state.kicked?.includes(pid) && !forceJoin)
+      return (
+        <PhoneFrame onPointerDown={() => sfx.unlock()}>
+          <RemovedScreen onRejoin={() => (lastName.current ? send("join", { name: lastName.current }) : setForceJoin(true))} />
+        </PhoneFrame>
+      );
     if (state.phase !== "lobby")
       return (
         <PhoneFrame art={artFor(state)}>
@@ -161,7 +176,10 @@ export function Phone({ code }: { code: string }) {
   } else
     switch (state.phase) {
       case "lobby":
-        if (me.status === "building" && !me.hero) body = <LobbyScreen me={me} players={state.players} />;
+        // Back from a finished story with my hero: another round with it, or make a new one ("newhero").
+        if (FEATURES.playAgain && (state.game ?? 0) > 0 && me.hero && keptGame !== state.game)
+          body = <AgainScreen me={me} portrait={heroImg(me, portrait)} onKeep={() => setKeptGame(state.game ?? 0)} onNewHero={() => send("newhero")} />;
+        else if (me.status === "building" && !me.hero) body = <LobbyScreen me={me} players={state.players} />;
         else if (me.hero && me.real === undefined) body = <SkillScreen me={me} portrait={heroImg(me, portrait)} onAnswer={(skill) => send("real", { skill, fear: "" })} />;
         else if (me.hero) body = <LobbyScreen me={me} portrait={heroImg(me, me.hasPortrait ? portrait : undefined)} players={state.players} onRedraw={() => send("redraw")} />;
         else

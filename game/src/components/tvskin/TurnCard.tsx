@@ -11,6 +11,8 @@ export interface TurnCardProps {
   turn?: { n: number; of: number };
   /** One short instruction line, e.g. "Everyone else: suggest a move on your phone". */
   prompt?: string;
+  /** The hero's power (their secret strength, turned into the story), so friends' ideas can use it. */
+  power?: string;
   /** Key the slam-in to the turn (pass the player id) so it replays each turn. */
   k?: string;
   /** Play the slam sound (default true). */
@@ -27,7 +29,7 @@ export function TurnCard(props: TurnCardProps) {
   return <TurnCardInner key={props.k ?? props.hero.name} {...props} />;
 }
 
-function TurnCardInner({ hero, playedBy, turn, prompt, sound = true }: TurnCardProps) {
+function TurnCardInner({ hero, playedBy, turn, prompt, power, sound = true }: TurnCardProps) {
   const name = possessive(hero.name).toUpperCase();
   // Shrink long names so the title never collides with the suggestion column (title box is ~30u wide, in the
   // bottom-left corner so the middle of the painting stays clear).
@@ -70,6 +72,11 @@ function TurnCardInner({ hero, playedBy, turn, prompt, sound = true }: TurnCardP
         <p className="tvx-turn-by" style={{ animationDelay: `${wordAt + 0.25}s` }}>
           played by <b>{playedBy}</b>
         </p>
+        {power && (
+          <p className="tvx-turn-power" style={{ animationDelay: `${wordAt + 0.35}s` }}>
+            <b>Power:</b> {power}
+          </p>
+        )}
         {prompt && (
           <p className="tvx-turn-prompt" style={{ animationDelay: `${wordAt + 0.5}s` }}>
             {prompt}

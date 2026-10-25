@@ -41,5 +41,6 @@ export { YourTurnScreen } from "./YourTurnScreen";
 export { ThrowScreen, type Bonus } from "./ThrowScreen";
 export { WatchingScreen } from "./WatchingScreen";
 export { FinalePitchScreen, BackPlanScreen, ShakeScreen, TalkScreen } from "./FinaleScreens";
+export { RemovedScreen, AgainScreen } from "./RoundScreens";
 export { RevealScreen, KeepsakeScreen } from "./RevealScreen";
 export { StoryWriteScreen } from "./StoryWriteScreen";

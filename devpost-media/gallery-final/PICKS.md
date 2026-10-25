@@ -2,7 +2,7 @@
 
 | # | File | Why |
 |---|---|---|
-| 1 | `1-lobby-and-phone.jpg` (cover) | The table and the controller in one frame: the lobby QR, "Tonight's story is real", and the phone's hero form (captured before the rename: it still reads "secret talent"; reshoot the phone after the deploy if there's time) |
+| 1 | `1-lobby-and-phone.jpg` (cover) | The table and the controller in one frame: the lobby QR, "Tonight's story is real", and the phone's hero form asking "What's your secret strength?" (rebuilt with look's capture) |
 | 2 | `2-friends-ideas-best-move.jpg` | The connection loop in one picture: friends suggest, you pick (+1), swipe to throw |
 | 3 | `3-heroes-painted-in.jpg` | Muse Image painting the players' own heroes into the scene |
 | 4 | `4-new-painting-read-aloud.jpg` | A new painting every turn, one ElevenLabs narrator |

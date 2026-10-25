@@ -53,10 +53,5 @@
     "/quests/wall-gold/scene_1.webp",
     "/quests/wall-gold/scene_2.webp",
     "/quests/wall-gold/scene_3.webp"
-  ],
-  "norwich-batman": [
-    "/quests/norwich-batman/scene_1.webp",
-    "/quests/norwich-batman/scene_2.webp",
-    "/quests/norwich-batman/scene_3.webp"
   ]
 }

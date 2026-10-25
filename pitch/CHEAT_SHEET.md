@@ -5,6 +5,8 @@ TV: `groupproject-game.vercel.app/tv?judge=1&bots=1` (Quick · Odd news · Adult
 then the finale. About 5 min from Start. Judge stories: the Busan canal shark, the €9M gold in a Dendermonde cellar
 wall, the Norwich Batman.
 
+Meta scores: Human Connection 30 · AI Centrality 25 · Originality 20 · **Execution & Demo Quality 25**.
+
 ## Opener B (10 s, say it first) ⭐ then A
 "Our application to HackTX got denied. My teammate never even applied. We walked in anyway, and built the one group project where everyone actually shows up."
 
@@ -36,7 +38,7 @@ the TV runs."
    typed." "Take it home."
 8. Close: "Your friends' ideas were your best move. Muse wrote, judged and painted every decision; code rolled the
    dice. It was based on a true story. And you just played it."
-9. For Meta judges, last: "Every brain in this game is Meta's Muse: it writes, judges every plan, paints you in, and listens. The only thing it borrowed is a voice."
+9. For Meta judges, last: "Every brain in this game is Meta's Muse: it writes, judges every plan, paints you in, listens, and even picks the sound effects. All it borrowed is a voice and a box of sounds."
 
 ## 3 lines to memorize
 1. "The one group project where everyone actually shows up."

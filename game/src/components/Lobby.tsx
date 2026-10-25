@@ -52,6 +52,8 @@ export interface LobbyProps {
   localMode?: boolean;
   /** Dev only: adds a test player. */
   onAddBot?: () => void;
+  /** Host only: remove a player or test player from the lobby (a small ✕ on their card). */
+  onKick?: (playerId: string) => void;
   /** Attract-mode pitch line (nobody joined yet). */
   pitch?: string;
   /** Start the lobby music (default true). */
@@ -173,7 +175,7 @@ function SceneLoop() {
 // ---------- hero cards ----------
 const fmt = (n: number) => (n > 0 ? `+${n}` : n < 0 ? `−${-n}` : "0");
 
-function HeroCardTile({ p, i, portrait }: { p: Player; i: number; portrait?: string }) {
+function HeroCardTile({ p, i, portrait, onKick }: { p: Player; i: number; portrait?: string; onKick?: (id: string) => void }) {
   const h = p.hero;
   const flipped = !h; // card back until the hero exists
   const style = { ["--c" as string]: p.color, ["--tilt" as string]: `${TILTS[i % TILTS.length]}deg`, ["--i" as string]: i } as React.CSSProperties;
@@ -219,6 +221,11 @@ function HeroCardTile({ p, i, portrait }: { p: Player; i: number; portrait?: str
       </div>
       </div>
       <span className="lb-who">{shortName(mask(p.name), 12)}</span>
+      {onKick && (
+        <button type="button" className="lb-kick" onClick={() => onKick(p.id)} aria-label={`Remove ${p.name} from the lobby`} title="Remove from the lobby">
+          ✕
+        </button>
+      )}
     </div>
   );
 }
@@ -290,7 +297,7 @@ export function Lobby(props: LobbyProps) {
   const {
     code, players, mode, source, rating, portraitOf, readOnly = false,
     onMode, onSource, onRating, canStart = false, onStart, countdown = true, minPlayers = 2,
-    localMode = false, onAddBot, music = true,
+    localMode = false, onAddBot, onKick, music = true,
     pitch = "The news is real. The heroes are your friends.",
   } = props;
   useMusic(music ? "lobby" : null, 0); // starts on the first tap anywhere (browsers need one)
@@ -467,8 +474,8 @@ export function Lobby(props: LobbyProps) {
         </h1>
 
         <p className="lb-tag">
-          <span className="lb-tag-a">Grab your phone.</span>
-          <span className="lb-tag-b">Tonight’s story is real.</span>
+          <span className="lb-tag-a">Real news. Dramatized.</span>
+          <span className="lb-tag-b">You’re the heroes.</span>
         </p>
 
         <ol className="lb-how" aria-label="How it works">
@@ -501,7 +508,7 @@ export function Lobby(props: LobbyProps) {
         ) : (
           <div className="lb-cards" aria-label="Who's here">
             {cards.map((p, i) => (
-              <HeroCardTile key={p.id} p={p} i={i} portrait={p.hero ? portraitOf?.(p) : undefined} />
+              <HeroCardTile key={p.id} p={p} i={i} portrait={p.hero ? portraitOf?.(p) : undefined} onKick={onKick} />
             ))}
             {cards.length < MAX_PLAYERS && <JoinGhost i={cards.length} />}
           </div>

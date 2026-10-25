@@ -1,0 +1,431 @@
+{
+ "out": "group-project",
+ "notes": "v3: footage from the live site (scripts/video/capture.mjs take3: TV + phone, shark story), the CD's cut (logo, phones), deck slides. No game audio (headless capture); Sarah + SFX.",
+ "beats": [
+  {
+   "id": "h1",
+   "part": "hook",
+   "vo": "What would YOU do?",
+   "min": 3.0,
+   "shots": [
+    {
+     "img": "devpost-media/video/stills/headline-shark.png",
+     "slam": true,
+     "zoom": 1.05
+    }
+   ],
+   "lead": 1.1,
+   "pad": 0.6,
+   "sfx": [
+    {
+     "file": "game/public/sfx/whoosh.mp3",
+     "at": 0,
+     "vol": 0.5
+    },
+    {
+     "file": "game/public/sfx/brass-hit.mp3",
+     "at": 0.15,
+     "vol": 0.7
+    }
+   ],
+   "gameVol": 0
+  },
+  {
+   "id": "h2",
+   "part": "hook",
+   "gameVol": 0,
+   "shots": [
+    {
+     "src": "devpost-media/video-source-cd.mp4",
+     "in": 58.2,
+     "dur": 1.7
+    },
+    {
+     "src": "devpost-media/video/raw/take3-tv.mp4",
+     "in": 189.3
+    }
+   ],
+   "caption": "",
+   "min": 3.2,
+   "sfx": [
+    {
+     "file": "game/public/sfx/whoosh.mp3",
+     "at": 1.6,
+     "vol": 0.35
+    }
+   ]
+  },
+  {
+   "id": "h3",
+   "part": "hook",
+   "min": 2.6,
+   "gameVol": 0,
+   "shots": [
+    {
+     "src": "devpost-media/video-source-cd.mp4",
+     "in": 10.2
+    }
+   ],
+   "sfx": [
+    {
+     "file": "game/public/sfx/magic-burst.mp3",
+     "at": 0.0,
+     "vol": 0.35
+    }
+   ]
+  },
+  {
+   "id": "p1",
+   "part": "problem",
+   "vo": "When friends hang out, a lot of the night is everyone on their own phone.",
+   "shots": [
+    {
+     "img": "devpost-media/broll/deck-slide-2.png",
+     "zoom": 1.05
+    }
+   ],
+   "gameVol": 0
+  },
+  {
+   "id": "p2",
+   "part": "problem",
+   "vo": "Tabletop games fix that. But someone has to run the game, so most groups never play.",
+   "shots": [
+    {
+     "img": "devpost-media/broll/deck-slide-2.png",
+     "zoom": 1.04
+    }
+   ],
+   "gameVol": 0
+  },
+  {
+   "id": "p3",
+   "part": "problem",
+   "vo": "So Meta's Muse runs it. The TV is the table, your phones are the controllers, and every story really happened.",
+   "gameVol": 0,
+   "shots": [
+    {
+     "src": "devpost-media/video/raw/take3-tv.mp4",
+     "in": 30
+    }
+   ],
+   "pad": 1.5
+  },
+  {
+   "id": "d1",
+   "part": "demo",
+   "vo": "Scan the code. No app, no account. Name your character, describe them in one line, and add your secret strength.",
+   "gameVol": 0,
+   "shots": [
+    {
+     "pair": 1.5,
+     "dur": 3.4
+    },
+    {
+     "pair": 9.0
+    }
+   ],
+   "pad": 1.0
+  },
+  {
+   "id": "d2",
+   "part": "demo",
+   "vo": "Your hero is exactly what you typed, painted in by Muse.",
+   "gameVol": 0,
+   "shots": [
+    {
+     "pair": 48.5
+    }
+   ],
+   "pad": 1.5
+  },
+  {
+   "id": "d3",
+   "part": "demo",
+   "vo": "Muse turns a real, odd news story into tonight's adventure.",
+   "pad": 5.0,
+   "gameVol": 0,
+   "shots": [
+    {
+     "src": "devpost-media/video/raw/take3-tv.mp4",
+     "in": 60.5,
+     "dur": 2.6
+    },
+    {
+     "src": "devpost-media/video/raw/take3-tv.mp4",
+     "in": 70
+    }
+   ]
+  },
+  {
+   "id": "d4",
+   "part": "demo",
+   "vo": "On your turn, you tell the table your plan.",
+   "gameVol": 0,
+   "shots": [
+    {
+     "src": "devpost-media/video/raw/take3-tv.mp4",
+     "in": 89.5
+    }
+   ],
+   "pad": 1.5
+  },
+  {
+   "id": "d5",
+   "part": "demo",
+   "vo": "Your friends throw in ideas, and the best part is arguing over which one to use.",
+   "pad": 2.5,
+   "gameVol": 0,
+   "shots": [
+    {
+     "src": "devpost-media/video/raw/take3-tv.mp4",
+     "in": 95.5,
+     "dur": 4.2
+    },
+    {
+     "src": "devpost-media/video/raw/take3-tv.mp4",
+     "in": 102.3
+    }
+   ]
+  },
+  {
+   "id": "d6",
+   "part": "demo",
+   "vo": "Every hero has Guts, Brains and Charm: force, tricks and talk.",
+   "shots": [
+    {
+     "pair": 53.5
+    }
+   ],
+   "pad": 1.0,
+   "gameVol": 0
+  },
+  {
+   "id": "d7",
+   "part": "demo",
+   "vo": "Swipe up to throw. Code rolls the dice, never the AI.",
+   "gameVol": 0,
+   "shots": [
+    {
+     "pair": 104.0
+    }
+   ],
+   "pad": 2.5,
+   "sfx": [
+    {
+     "file": "game/public/sfx/whoosh.mp3",
+     "at": 1.0,
+     "vol": 0.45
+    },
+    {
+     "file": "game/public/sfx/brass-hit.mp3",
+     "at": 5.0,
+     "vol": 0.4
+    }
+   ]
+  },
+  {
+   "id": "d8",
+   "part": "demo",
+   "vo": "Muse takes your plan literally, writes what happens next, and paints a new scene.",
+   "pad": 5.0,
+   "gameVol": 0,
+   "shots": [
+    {
+     "src": "devpost-media/video/raw/take3-tv.mp4",
+     "in": 114.5,
+     "dur": 5.5
+    },
+    {
+     "src": "devpost-media/video/raw/take3-tv.mp4",
+     "in": 128.5
+    }
+   ]
+  },
+  {
+   "id": "d9",
+   "part": "demo",
+   "vo": "For the finale, everyone gets thirty seconds to convince each other.",
+   "pad": 3.0,
+   "shots": [
+    {
+     "pair": 140.0
+    }
+   ],
+   "gameVol": 0
+  },
+  {
+   "id": "d10",
+   "part": "demo",
+   "vo": "Then you back a plan, and the whole table shakes their phones at once.",
+   "pad": 3.0,
+   "gameVol": 0,
+   "shots": [
+    {
+     "pair": 168.5,
+     "dur": 2.6
+    },
+    {
+     "pair": 179.5,
+     "dur": 2.4
+    },
+    {
+     "src": "devpost-media/video/raw/take3-tv.mp4",
+     "in": 186.0
+    }
+   ],
+   "sfx": [
+    {
+     "file": "game/public/sfx/drumroll-build.mp3",
+     "at": 2.6,
+     "vol": 0.35
+    },
+    {
+     "file": "game/public/sfx/crowd-cheer.mp3",
+     "at": 6.6,
+     "vol": 0.35
+    }
+   ]
+  },
+  {
+   "id": "r1",
+   "part": "reveal",
+   "vo": "And the twist. Here's what you did.",
+   "pad": 4.0,
+   "gameVol": 0,
+   "shots": [
+    {
+     "src": "devpost-media/video/raw/take3-tv.mp4",
+     "in": 212.5
+    }
+   ]
+  },
+  {
+   "id": "r2",
+   "part": "reveal",
+   "vo": "And here's what really happened.",
+   "pad": 6.0,
+   "gameVol": 0,
+   "shots": [
+    {
+     "src": "devpost-media/video/raw/take3-tv.mp4",
+     "in": 219.0,
+     "dur": 6.5
+    },
+    {
+     "src": "devpost-media/video/raw/take3-tv.mp4",
+     "in": 230.0
+    }
+   ],
+   "sfx": [
+    {
+     "file": "game/public/sfx/magic-shimmer.mp3",
+     "at": 0.0,
+     "vol": 0.4
+    }
+   ]
+  },
+  {
+   "id": "a1",
+   "part": "ai",
+   "vo": "Muse runs the night. Muse Spark picks odd news that makes a good, safe story, judges every plan, and writes every turn.",
+   "shots": [
+    {
+     "img": "devpost-media/broll/deck-slide-7.png",
+     "zoom": 1.05
+    }
+   ],
+   "pad": 1.5,
+   "gameVol": 0
+  },
+  {
+   "id": "a2",
+   "part": "ai",
+   "vo": "Muse Image paints your heroes into every scene. Code rolls the dice, and the AI judges ideas, never people.",
+   "shots": [
+    {
+     "src": "devpost-media/video/raw/take3-tv.mp4",
+     "in": 246.5
+    }
+   ],
+   "pad": 3.0,
+   "gameVol": 0
+  },
+  {
+   "id": "a3",
+   "part": "ai",
+   "vo": "Every brain in this game is Meta's Muse: it writes, judges every plan, paints you in, listens, and even picks the sound effects. All it borrowed is a voice and a box of sounds.",
+   "caption": "Every brain in this game is Meta's Muse: it writes, judges every plan, paints you in, listens, and even picks the sound effects. All it borrowed is a voice and a box of sounds. (ElevenLabs.)",
+   "shots": [
+    {
+     "img": "devpost-media/broll/deck-slide-7.png",
+     "zoom": 1.08
+    }
+   ],
+   "pad": 1.0,
+   "gameVol": 0
+  },
+  {
+   "id": "t1",
+   "part": "tools",
+   "vo": "It was built by a first-time hacker making every creative call, with Claude Code as lead engineer, running a team of agents.",
+   "shots": [
+    {
+     "img": "devpost-media/broll/deck-slide-7.png",
+     "zoom": 1.1
+    }
+   ],
+   "pad": 1.0,
+   "gameVol": 0
+  },
+  {
+   "id": "t2",
+   "part": "tools",
+   "vo": "They watched our playtests frame by frame. Our worst run is why we rebuilt the story around the players' choices.",
+   "shots": [
+    {
+     "src": "devpost-media/playtests/playtest-0631-judge.mp4",
+     "in": 150,
+     "crop": [
+      0,
+      52,
+      1905,
+      903
+     ]
+    }
+   ],
+   "pad": 1.0,
+   "gameVol": 0
+  },
+  {
+   "id": "t3",
+   "part": "tools",
+   "vo": "A test harness plays whole games with real Muse calls, and a better rubric took Muse Spark from five of eight fair rulings to eight.",
+   "shots": [
+    {
+     "img": "devpost-media/broll/deck-slide-7.png",
+     "zoom": 1.12
+    }
+   ],
+   "pad": 1.0,
+   "gameVol": 0
+  },
+  {
+   "id": "e1",
+   "part": "end",
+   "vo": "Play free at groupproject-game dot vercel dot app.",
+   "caption": "",
+   "min": 5,
+   "pad": 2.5,
+   "shots": [
+    {
+     "card": "end"
+    }
+   ],
+   "gameVol": 0
+  }
+ ],
+ "tv": "devpost-media/video/raw/take3-tv.mp4",
+ "phone": "devpost-media/video/raw/take3-phone.mp4",
+ "phoneOffset": 0
+}

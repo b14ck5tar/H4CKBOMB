@@ -80,7 +80,7 @@ export function MakeHeroScreen({
             What’s your secret strength? <small>optional</small>
           </span>
           <input className="pk-input" value={skill} onChange={(e) => setSkill(e.target.value)} maxLength={80} placeholder="parallel parking, finding lost things" autoComplete="off" />
-          <span className="pk-hint">It becomes your hero’s power. Your real answer stays secret until the end.</span>
+          <span className="pk-hint">Your secret strength becomes your power in the story. Your real answer stays secret until the end.</span>
         </label>
         <GameButton type="submit" disabled={!text.trim()}>
           Make my hero
