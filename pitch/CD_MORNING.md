@@ -51,6 +51,8 @@ Away from judges, in a terminal at `C:\Users\oclab\AppData\Local\Temp\gpd\game`:
 
 The video session builds and cuts the video by script, with Sarah's ElevenLabs voice. **You only record**; there's no
 voiceover to read and no editing to do.
+- [ ] **Record only on a deploy that shows "What's your secret strength?"** on the phone's hero screen. An older
+      build shows "secret talent" in the phone shot (S2).
 - [ ] Safety check (§0) again right before you press record.
 - [ ] Laptop TV on `/tv?judge=1&bots=1`, full screen (F11), your real phone + 2 test players (press **B** twice).
 - [ ] Start the laptop recording (Win+Alt+R or Snipping Tool, system audio on) and the phone's screen recorder (mic
