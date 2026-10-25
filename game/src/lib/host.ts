@@ -1036,7 +1036,7 @@ export class GameHost {
     const recent = new Set(this.recentStories());
     const pool = this.newsCands.filter((c) => !recent.has(c.headline));
     if (!pool.length) return;
-    const c = pool[randInt(pool.length)];
+    const c = pool[0]; // /api/news sends only stories that pass the storyability gate, best first
     const optionId = `news-${c.id}`;
     const prep: { seed: QuestSeed | null; ready: boolean } = { seed: null, ready: false };
     this.quickPrep = prep;
@@ -1057,8 +1057,9 @@ export class GameHost {
   private prepareVote() {
     if (!FEATURES.liveNews || this.state.source !== "news" || this.pinned || this.votePrep.length || this.state.phase !== "lobby") return;
     const recent = new Set(this.recentStories());
-    const pool = shuffle(this.newsCands.filter((c) => !recent.has(c.headline))).slice(0, 3);
-    if (pool.length < 3) return;
+    // Only gated stories (best first); empty cards are filled from the curated quests at vote time.
+    const pool = this.newsCands.filter((c) => !recent.has(c.headline)).slice(0, 3);
+    if (!pool.length) return;
     this.votePrep = pool.map((c) => {
       const optionId = `news-${c.id}`;
       if (!this.openerP.has(optionId)) this.prepareStory(optionId, { mode: "news", source: { headline: c.headline, snippet: c.snippet, source: c.source, url: c.url, date: c.date } }, (o) => newsSeed(optionId, c, o));
@@ -1069,7 +1070,7 @@ export class GameHost {
   /** The vote's live quest cards, once written: the quest title and teaser, never the headline. */
   private async liveVoteOptions(): Promise<{ id: string; title: string; teaser: string }[]> {
     if (!this.votePrep.length) this.prepareVote();
-    if (this.votePrep.length < 3) return [];
+    if (!this.votePrep.length) return [];
     this.set({ phase: "story_vote", storyOptions: [], votes: {}, busy: "Writing tonight's quests…" });
     const seeds = await Promise.all(this.votePrep.map((v) => withTimeout(this.openerP.get(v.optionId) ?? Promise.resolve(null), 10_000, () => null)));
     this.set({ busy: "" });
@@ -1502,9 +1503,11 @@ export class GameHost {
     if (!given) {
       const live = FEATURES.liveNews ? await this.liveVoteOptions() : [];
       if (this.state.phase !== "story_vote" && this.state.phase !== "lobby") return;
-      if (live.length >= 2) {
-        storyOptions = live;
-        this.note("source", "Odd news", "Three quests from this week's real news. The real headlines stay hidden until the reveal.");
+      if (live.length) {
+        // Live quests first; any empty card is a curated quest (never a story that didn't pass the gate).
+        const fill = shuffle(this.state.questOptions).slice(0, Math.max(0, 3 - live.length));
+        storyOptions = [...live, ...fill];
+        this.note("source", "Odd news", `${live.length} quest${live.length > 1 ? "s" : ""} from this week's real news${fill.length ? ` and ${fill.length} curated` : ""}. The real headlines stay hidden until the reveal.`);
       } else {
         if (this.votePrep.length) this.note("fallback", "Backup used", "The live quests weren't written in time, so curated quests stand in.");
         storyOptions = shuffle(this.state.questOptions).slice(0, 3);
