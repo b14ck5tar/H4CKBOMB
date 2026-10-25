@@ -1973,8 +1973,8 @@ export class GameHost {
 
   /** Wait for a clip at most until `deadline` (ms since epoch). null = read it as text. */
   private async voiceBy(text: string, deadline: number) {
-    const left = deadline - Date.now();
-    if (left <= 0) return null;
+    // A clip that's already in still plays even if its deadline passed long ago (it was asked for early).
+    const left = Math.max(150, deadline - Date.now());
     return withTimeout(this.voiceFor(text), left, () => null);
   }
 
