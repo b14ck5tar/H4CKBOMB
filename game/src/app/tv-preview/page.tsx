@@ -36,6 +36,16 @@ const PANELS: MontagePanel[] = [
   { image: ART[1], line: "Mr. Han's lullaby echoed up the elevator shaft and woke the whole county.", who: [{ name: "Mr. Han", color: "#ffad3b", portrait: "/heroes/v2/librarian.webp" }] },
   { image: ART[2], line: "Bea hugged the giant pillow, fell asleep, and accidentally hit the off switch.", who: [{ name: "Bea", color: "#ff2e7e", portrait: "/heroes/v2/skater-grandma.webp" }, { name: "Rosa", color: "#3de7ff" }] },
 ];
+/** The grand ending's extra data (state.revealData), for &grand=1. */
+const GRAND = {
+  moves: [
+    { name: "Rosa", move: "I ask the park ranger what it wants" },
+    { name: "Mr. Han", move: "I hum it a slow lullaby, really loud" },
+    { name: "Bea", move: "I give it a giant pillow to hug" },
+  ],
+  realEnding: "The dome turned out to be a piece of a Chinese rocket. It was hauled away safely and nobody was hurt.",
+  bridge: "You sent the hatchling home before sunrise. The real one went home too: on a flatbed truck.",
+};
 const REVEAL: RevealData = {
   headline: "'Space object' found in rural Minnesota cornfield came from Chinese rocket, experts say",
   source: "Bring Me The News",
@@ -249,7 +259,7 @@ export default function TvPreview() {
   if (piece === "montage" || piece === "reveal")
     return (
       <div key={run} style={{ position: "fixed", inset: 0, background: "#07040d" }}>
-        <EndingMontage panels={PANELS} reveal={q.get("author") ? { ...REVEAL, author: q.get("author")! } : REVEAL} keepsakeUrl="https://groupproject-game.vercel.app/tale#demo" start={piece === "reveal" ? PANELS.length : Number(q.get("at") ?? 0)} />
+        <EndingMontage panels={PANELS} reveal={{ ...(q.get("author") ? { ...REVEAL, author: q.get("author")! } : REVEAL), ...(q.has("grand") ? GRAND : {}) }} keepsakeUrl="https://groupproject-game.vercel.app/tale#demo" start={piece === "reveal" ? PANELS.length : Number(q.get("at") ?? 0)} />
       </div>
     );
 

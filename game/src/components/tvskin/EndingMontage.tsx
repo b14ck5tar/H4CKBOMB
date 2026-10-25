@@ -35,6 +35,12 @@ export interface RevealData {
   /** Ending stamp ("YOU DID IT") and its color. */
   ending?: string;
   endingColor?: string;
+  /** The grand ending (state.revealData): each hero's key move in their own words... */
+  moves?: { name: string; move: string }[];
+  /** ...how the real story really ended... */
+  realEnding?: string;
+  /** ...and one line linking ours to the real one, shown big at the end. */
+  bridge?: string;
 }
 
 export interface EndingMontageProps {
@@ -144,6 +150,8 @@ function crewOf(panels: MontagePanel[]) {
   return [...seen.values()].slice(0, 6);
 }
 
+type Beat = "did" | "real" | "bridge";
+
 /** How long "WHAT YOU DID" holds before "WHAT REALLY HAPPENED" (the reveal reads 10-20 s; the second beat stays). */
 const DID_MS = 5000;
 
@@ -154,19 +162,60 @@ const DID_MS = 5000;
 function Reveal({ r, keepsake, keepsakeUrl, crew }: { r: RevealData; keepsake?: React.ReactNode; keepsakeUrl?: string; crew: MontagePanel["who"] }) {
   const article = useQr(r.articleUrl, "#16110a", "#f3ecdc");
   const take = useQr(keepsake ? undefined : keepsakeUrl);
-  const [beat, setBeat] = useState<"did" | "real">("did");
+  const grand = !!r.moves?.length;
+  const order: Beat[] = grand && r.bridge ? ["did", "real", "bridge"] : ["did", "real"];
+  const [k, setK] = useState(0);
+  const beat = order[Math.min(k, order.length - 1)];
+  // Paced to breathe: your moves get time per hero, the real story 7 s, the bridge stays. A click moves on.
+  const holdMs = beat === "did" ? (grand ? Math.min(9000, 3500 + 1300 * r.moves!.length) : DID_MS) : 7000;
   useEffect(() => {
-    const t = setTimeout(() => setBeat("real"), DID_MS);
+    if (k >= order.length - 1) return;
+    const t = setTimeout(() => setK((n) => n + 1), holdMs);
     return () => clearTimeout(t);
-  }, []);
+  }, [k, holdMs, order.length]);
+  const crewByName = new Map(crew.map((w) => [w.name, w]));
   const headSize = r.headline.length > 95 ? 2.6 : r.headline.length > 65 ? 3 : 3.6;
   return (
-    <section className={`tvx-reveal is-${beat}`}>
+    <section className={`tvx-reveal is-${beat}`} onClick={() => setK((n) => Math.min(order.length - 1, n + 1))}>
       <p key={beat} className="tvx-beat-label">
-        {beat === "did" ? "What you did" : "What really happened"}
+        {beat === "did" ? "What you did" : beat === "real" ? "What really happened" : "Based on a true story"}
       </p>
 
-      {beat === "did" ? (
+      {beat === "did" && grand ? (
+        <div className={`tvx-moves n-${Math.min(6, r.moves!.length)}`}>
+          {r.moves!.slice(0, 6).map((m, i) => {
+            const w = crewByName.get(m.name);
+            return (
+              <article key={m.name + i} className="tvx-move" style={{ ["--c" as string]: w?.color ?? "#ff2e7e", ["--i" as string]: i } as Css}>
+                <header className="tvx-move-who">
+                  <Face src={w?.portrait} name={m.name} color={w?.color ?? "#ff2e7e"} size={4.6} />
+                  <span>{m.name}</span>
+                </header>
+                <p className="tvx-move-txt">&ldquo;{m.move}&rdquo;</p>
+              </article>
+            );
+          })}
+          {r.ending && (
+            <span className="tvx-yours-stamp tvx-moves-stamp" style={{ ["--ec" as string]: r.endingColor ?? "#ffd23f" } as Css}>
+              {r.ending}
+            </span>
+          )}
+        </div>
+      ) : beat === "bridge" ? (
+        <>
+          <p className="tvx-bridge">{r.bridge}</p>
+          <aside className="tvx-take tvx-take-bridge">
+            <p className="tvx-take-head">Take your tale home</p>
+            {keepsake ?? (
+              <span className="tvx-take-qr">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                {take ? <img src={take} alt="QR code: your storybook" /> : <span className="tvx-take-wait">Binding your storybook…</span>}
+              </span>
+            )}
+            <p className="tvx-take-sub">Scan for your storybook</p>
+          </aside>
+        </>
+      ) : beat === "did" ? (
         <article className="tvx-yours tvx-yours-solo">
           <p className="tvx-yours-kicker">Your story</p>
           <h3 className="tvx-yours-title">{r.yourTitle}</h3>
@@ -203,9 +252,9 @@ function Reveal({ r, keepsake, keepsakeUrl, crew }: { r: RevealData; keepsake?: 
             </p>
             <h3 className="tvx-clip-head">{r.headline}</h3>
             {r.summary && <p className="tvx-clip-sum">{r.summary}</p>}
-            {r.now && (
+            {(r.realEnding || r.now) && (
               <p className="tvx-clip-now">
-                <b>How it really ended:</b> {r.now}
+                <b>How it really ended:</b> {r.realEnding || r.now}
               </p>
             )}
             {article && (

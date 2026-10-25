@@ -3161,3 +3161,59 @@
 .tvx-fin-talk .tvx-vcard-txt { font-size: calc(var(--u) * 2.5); }
 .tvx-fin-talk .tvx-vcard-txt.is-long { font-size: calc(var(--u) * 2); }
 .tvx-fin-talk .tvx-vcard.is-ready .tvx-vcard-in { box-shadow: 0 0 0 calc(var(--u) * 0.3) #c6ff2e, 0 0 calc(var(--u) * 2) rgba(198, 255, 46, 0.4); }
+
+/* Grand ending, beat 1: a card per hero with their key move, in their own words. */
+.tvx-moves {
+  position: absolute;
+  left: calc(var(--u) * 4);
+  right: calc(var(--u) * 4);
+  top: calc(var(--u) * 10);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(calc(var(--u) * 26), 1fr));
+  gap: calc(var(--u) * 1.6);
+  align-content: start;
+}
+.tvx-move {
+  padding: calc(var(--u) * 1.4) calc(var(--u) * 1.8);
+  background: linear-gradient(180deg, #170b26, #0b0614);
+  border: calc(var(--u) * 0.28) solid var(--c);
+  border-radius: calc(var(--u) * 0.9);
+  box-shadow: calc(var(--u) * 0.45) calc(var(--u) * 0.45) 0 #000, 0 0 calc(var(--u) * 1.6) color-mix(in srgb, var(--c) 35%, transparent);
+  transform: rotate(calc((var(--i) - 1) * 0.8deg));
+  animation: tvx-rise 0.6s cubic-bezier(0.25, 1.4, 0.45, 1) both calc(0.3s + var(--i) * 0.9s);
+}
+.tvx-move-who {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--u) * 0.8);
+  font-family: var(--font-display), Impact, sans-serif;
+  font-size: calc(var(--u) * 2.4);
+  text-transform: uppercase;
+  color: var(--c);
+}
+.tvx-move-txt {
+  margin: calc(var(--u) * 0.8) 0 0;
+  font-family: var(--font-heading), sans-serif;
+  font-weight: 700;
+  font-size: calc(var(--u) * 2.1);
+  line-height: 1.3;
+  color: #fff;
+}
+.tvx-moves-stamp { position: static; grid-column: 1 / -1; justify-self: center; margin-top: calc(var(--u) * 1); }
+/* Grand ending, beat 3: the line that links ours to the real one, big, with the take-home QR. */
+.tvx-bridge {
+  position: absolute;
+  left: calc(var(--u) * 5);
+  top: calc(var(--u) * 14);
+  width: calc(var(--u) * 60);
+  margin: 0;
+  font-family: var(--font-display), Impact, sans-serif;
+  font-size: calc(var(--u) * 4.6);
+  line-height: 1.08;
+  text-transform: uppercase;
+  color: #fff;
+  text-shadow: calc(var(--u) * 0.35) calc(var(--u) * 0.35) 0 #000, 0 0 calc(var(--u) * 2) rgba(255, 210, 63, 0.35);
+  animation: tvx-rise 0.8s cubic-bezier(0.25, 1.4, 0.45, 1) both 0.3s;
+}
+.is-bridge .tvx-beat-label { color: var(--gold); }
+.tvx-take-bridge { left: calc(var(--u) * 70) !important; top: calc(var(--u) * 14) !important; width: calc(var(--u) * 20) !important; animation-delay: 0.6s !important; }

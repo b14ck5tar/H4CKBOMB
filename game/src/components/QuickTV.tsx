@@ -1001,6 +1001,20 @@ function SkinEnding({ host, s }: { host: Stage; s: GameState }) {
         solvedBy: s.solvedBy || undefined,
         ending: f ? ENDING_LABEL[f.ending] : undefined,
         endingColor: f?.ending === "TRIUMPHANT" ? "#ffd23f" : f?.ending === "BITTERSWEET" ? "#2cf5c0" : "#ff2e7e",
+        // The grand ending (story's state.revealData): each hero's move, the real ending, the bridge line.
+        ...(s.revealData
+          ? {
+              moves: s.revealData.moves.map((m) => {
+                const p = s.players.find((x) => x.id === m.heroId);
+                return { name: shortName(p?.hero?.name ?? m.name), move: m.move };
+              }),
+              realEnding: s.revealData.real.ending || undefined,
+              bridge: s.revealData.bridge || undefined,
+              headline: s.revealData.real.what || real.headline,
+              source: s.revealData.real.source || real.source,
+              date: s.revealData.real.date || real.date,
+            }
+          : {}),
       }}
       keepsake={s.storybook || s.recap || s.epilogue ? <KeepsakeQR host={host} s={s} size={260} bare /> : undefined}
     />
