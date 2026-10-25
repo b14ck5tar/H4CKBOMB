@@ -364,9 +364,7 @@ export function Lobby(props: LobbyProps) {
           : source === "ours"
             ? "First, everyone writes one small true story."
             : mode === "quick"
-              ? players.filter((p) => !p.id.startsWith("bot-")).length >= 5
-                ? "One turn each. About five minutes."
-                : "Two turns each, then the grand finale."
+              ? "One turn each, then the grand finale."
               : "You’ll vote on tonight’s story first.";
 
   const cards = useMemo(() => players.slice(0, MAX_PLAYERS), [players]);
