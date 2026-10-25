@@ -3,6 +3,7 @@ import { museJSON, type Effort } from "@/server/muse";
 import { RATING_GUIDE } from "@/lib/rating";
 import type { Rating } from "@/lib/types";
 import { fetchArticleFacts } from "@/server/news/sources";
+import { attachOpener, libraryStory } from "@/server/news/library";
 import { openerExamplesPrompt } from "@/server/story-examples";
 import { fkGrade, inventedNames, sanitize, styleProblems, wordCount } from "./readability";
 
@@ -51,7 +52,7 @@ export type OpenerResult = {
   safe: boolean;
   fallback: boolean;
   message?: string; // when safe is false: a gentle line for the author's phone
-  meta: { grade: number; attempts: number; ms: number; problems: string[]; facts_fetched?: boolean };
+  meta: { grade: number; attempts: number; ms: number; problems: string[]; facts_fetched?: boolean; cached?: boolean };
 };
 
 const DEADLINE_MS = 22_500; // + article fetch overhead and JSON stays under 25 s
@@ -111,6 +112,10 @@ fantasy twist. At the reveal they say "wait, that really happened?"
   dinosaur with giant claws", keep the museum and the forgotten bone, hide that it is a new kind of dinosaur with
   giant claws). Put the punchline's words in punchline_words (2 to 5 words) and never use them, or the GIVEAWAY
   WORDS in the user message, outside official_line and whats_happening_now.
+- SAY WHAT IT IS AND WHERE (design/29 #4): name the real thing and place plainly (owls, a pumpkin festival, a
+  city roof, a zoo's baby animals). Hide ONLY how it turned out. Never coin kennings or riddle names ("pale fliers",
+  "soft white faces", "the loud street" are banned: say "owls", "the owls' faces", "the busy street"). Never give
+  the real ending away in the opener ("it won the fair" is banned; say "the weigh-in is tomorrow morning").
 - real_setting describes the REAL event (not the fantasy), spoiler-free with the same HIDE rules: place_type,
   roles (2 to 4 people or groups, by role), situation (one plain sentence), stakes (what was really at risk), and
   arc (3 or 4 short steps of what really happened, in order).
@@ -641,6 +646,11 @@ export async function makeOpener(input: {
 
   if (mode === "news") {
     news = input.source as NewsSource;
+    const stored = libraryStory(news.headline);
+    if (stored?.opener && stored.opener_rating === rating) {
+      meta.cached = true;
+      return done({ opener: stored.opener as Opener, ending_facts: (stored.ending_facts as EndingFacts) ?? newsFacts(news), safe: true, fallback: false });
+    }
     const n = news;
     let facts = "";
     if (/^https?:\/\//.test(n.url) && n.snippet.length < 700) {
@@ -681,7 +691,7 @@ ${RATING_GUIDE[rating]}`;
       user: userPrompt(mode, rating, party, body, authorHero, prev, giveaway, keyNouns),
       schema: OPENER_SCHEMA,
       effort,
-      maxTokens: effort === "high" ? 16000 : 8000, // reasoning tokens count against this
+      maxTokens: effort === "high" ? 16000 : effort === "minimal" ? 4000 : 8000, // reasoning tokens count against this
       timeoutMs: Math.max(3_000, left() - 900),
     }).then((d) => {
       d.title = d.quest_title;
@@ -693,15 +703,24 @@ ${RATING_GUIDE[rating]}`;
   // 1) "high" effort (the contract) and a "low" backup start together. The disguise prompt makes high run 15-25 s
   //    and low 10-13 s, so waiting to start the backup meant both missed the 25 s limit. Prefer high if it
   //    answers by PREFER_HIGH_MS, otherwise take whichever answered.
+  //    A "minimal" call runs too, as the last safety net: when Muse is slow (Sun 1 AM: ~60 tokens/s, 4x slower than
+  //    Sat evening) high and low both miss the deadline, and minimal (little reasoning) still lands. Preference
+  //    is always high > low > minimal; minimal is used only when neither of the others has answered.
   let first: { d: Draft; effort: Effort } | null = null;
   const high = call("high");
   const low = call("low");
-  high.catch((e) => console.warn(`[opener] high failed: ${(e as Error).message}`));
-  low.catch((e) => console.warn(`[opener] low backup failed: ${(e as Error).message}`));
+  const min = call("minimal");
+  const got: Partial<Record<Effort, { d: Draft; effort: Effort }>> = {};
+  for (const [p, name] of [[high, "high"], [low, "low"], [min, "minimal"]] as const) {
+    p.then((r) => (got[name] = r)).catch((e) => console.warn(`[opener] ${name} failed: ${(e as Error).message}`));
+  }
   const wait = Math.max(0, PREFER_HIGH_MS - (Date.now() - t0));
   const h = await Promise.race([high.catch(() => null), new Promise<"late">((r) => setTimeout(() => r("late"), wait))]);
   if (h && h !== "late") first = h;
-  else first = await Promise.any([high, low]).catch(() => null);
+  else {
+    const any = await Promise.any([high, low, min]).catch(() => null);
+    first = got.high ?? got.low ?? any;
+  }
 
   // Hero names that the source itself never mentions: they must never appear in anything we write.
   const rawSource = news ? `${news.headline} ${news.snippet} ${body}` : personal ? `${personal.title} ${personal.setup} ${[personal.steps].flat().join(" ")} ${personal.real_ending}` : "";
@@ -742,7 +761,11 @@ ${RATING_GUIDE[rating]}`;
       mode === "news"
         ? newsFacts(news!, best.d)
         : { kind: "personal", author_id: clip(personal!.author_id, 80), real_ending: sanitize(best.d.real_ending) || clip(personal!.real_ending, 600) };
-    return done({ opener: scrubNames(finish(best.d), partyNames), ending_facts: scrubNames(ending, partyNames), safe: true, fallback: false });
+    const opener = scrubNames(finish(best.d), partyNames);
+    const facts = scrubNames(ending, partyNames);
+    // Party-independent parts only would be ideal; the opener never names heroes, so it is safe to keep as is.
+    if (news && !best.probs.length) attachOpener(news.headline, opener, facts, rating); // only clean drafts are reused
+    return done({ opener, ending_facts: facts, safe: true, fallback: false });
   }
 
   // Canned fallback: the table never waits on a failed AI call.
