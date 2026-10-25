@@ -11,8 +11,8 @@ import {
   clampOutcome,
   fallbackProposal,
   fixPronouns,
-  plainProblems,
   sentences,
+  trimPile,
   usesPlan,
   type Grade,
   type StoryState,
@@ -209,6 +209,7 @@ export async function runTurn(i: TurnInput, rating: Rating): Promise<TurnResult>
   p.outcome = clampOutcome(p.outcome);
   if (nextPlayer && !new RegExp(`\\b${nextPlayer.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`).test(p.scene)) p.scene = p.scene ? `${nextPlayer}, ${p.scene.charAt(0).toLowerCase()}${p.scene.slice(1)}` : `${nextPlayer}, you're up.`;
   p.scene = sentences(p.scene)[0] ?? p.scene;
+  p.right_now = trimPile(p.right_now);
   const applied = applyTurn(state, p, { hero, attempt: i.attempt, grade, depth: i.depth });
   console.log(`[turn] ${grade} ${hero} ${Date.now() - t0}ms progress ${state.progress}->${applied.state.progress}${fallback ? " FALLBACK" : ""}${probs.length ? ` problems: ${probs.join(" | ")}` : ""}`);
   return { outcome: p.outcome, scene: p.scene, right_now: applied.state.right_now, progress: applied.state.progress, progress_delta: applied.delta, progress_why: String(p.progress_why ?? "").slice(0, 140), finale: applied.finale, act: applied.state.act, act_changed: applied.act_changed, state: applied.state, problems: probs, fallback };
@@ -283,7 +284,7 @@ export async function runEnding(input: Any, rating: Rating) {
     won: !!input.won,
     players: Array.isArray(input.players) ? input.players.slice(0, 8) : [],
   };
-  const call = (extra = "") => museJSON<Any>({ task: `story-end-${rating}`, model: TURN_MODEL, effort: TURN_EFFORT, system: withRating(STORY_END_SYSTEM, rating), schema: STORY_END_SCHEMA, user: JSON.stringify(user) + extra, timeoutMs: 12_000, maxTokens: 2500 });
+  const call = (extra = "", timeoutMs = 12_000) => museJSON<Any>({ task: `story-end-${rating}`, model: TURN_MODEL, effort: TURN_EFFORT, system: withRating(STORY_END_SYSTEM, rating), schema: STORY_END_SCHEMA, user: JSON.stringify(user) + extra, timeoutMs, maxTokens: 2500 });
   // The final plan is the cause, and the ending stays 2 plain sentences: one retry with the problems if not.
   const planRaw = String(input.plan_raw ?? input.plan ?? "").replace(/<[^>]*>/g, " ");
   const check = (d: Any) => {
@@ -291,15 +292,16 @@ export async function runEnding(input: Any, rating: Rating) {
     const out: string[] = [];
     if (!usesPlan(e, planRaw)) out.push("the ending must use the final plan's own key word");
     if (sentences(e).length > 2 || e.split(/\s+/).length > 32) out.push("exactly 2 short sentences, 30 words max");
-    out.push(...plainProblems(e, `${planRaw} ${user.winner.name}`));
     return out;
   };
   const t0 = Date.now();
   const d = await call();
+  // The host waits 15 s in all: retry only a hard miss (the plan, the length) and only inside ~13.5 s.
   const probs = check(d);
-  if (!probs.length || Date.now() - t0 > 7_000) return d;
+  const left = 13_500 - (Date.now() - t0);
+  if (!probs.length || left < 4_000) return d;
   try {
-    const again = await call(`\n\nYour last answer had problems. Fix them.\nLAST ANSWER: ${JSON.stringify(d)}\nPROBLEMS:\n${probs.map((x) => `- ${x}`).join("\n")}`);
+    const again = await call(`\n\nYour last answer had problems. Fix them.\nLAST ANSWER: ${JSON.stringify(d)}\nPROBLEMS:\n${probs.map((x) => `- ${x}`).join("\n")}`, left);
     return check(again).length < probs.length ? again : d;
   } catch {
     return d;
