@@ -15,6 +15,7 @@ export interface BotPersona {
   friendIdea: number; // chance they pick a friend's idea on their own turn
   typo: number; // chance of one small typo
   canned: string[]; // fallbacks if the AI call fails
+  story: { title: string; setup: string; steps: string; ending: string }; // their "Our stories" entry
 }
 
 export const BOT_PEOPLE: BotPersona[] = [
@@ -26,6 +27,7 @@ export const BOT_PEOPLE: BotPersona[] = [
     friendIdea: 0.35,
     typo: 0.25,
     canned: ["distract it with a terrible dance", "yell for help lol", "offer it my last snack", "poke it with a stick"],
+    story: { title: "The locked-out barbecue", setup: "I locked my keys in the car at a family barbecue with the burgers inside", steps: "my cousin tried a coat hanger and my uncle tried a tennis ball trick", ending: "my little sister climbed in through the sunroof and the burgers were fine" },
   },
   {
     name: "Sam",
@@ -35,6 +37,7 @@ export const BOT_PEOPLE: BotPersona[] = [
     friendIdea: 0.6,
     typo: 0.05,
     canned: ["ask someone nearby what they saw", "look for another way around", "check what's blocking it first", "use a rope to pull it free"],
+    story: { title: "The wrong bus", setup: "I took the wrong bus on my first day at a new job", steps: "I ended up at the end of the line and the driver was on his lunch break", ending: "the driver drove me back on his break and I was only five minutes late" },
   },
   {
     name: "Jo",
@@ -44,6 +47,7 @@ export const BOT_PEOPLE: BotPersona[] = [
     friendIdea: 0.45,
     typo: 0.15,
     canned: ["sing to it until it calms down", "ask it nicely what it wants", "build a tiny ramp out of boxes", "follow the strange glow"],
+    story: { title: "The dog that took my sandwich", setup: "A neighbor's dog stole my sandwich at the park and ran off with it", steps: "I chased it across the whole park and through a kids' soccer game", ending: "the dog dropped it at its owner's feet and the owner bought me a new one" },
   },
 ];
 
@@ -162,6 +166,9 @@ export class Bots {
         this.once(b, `sv-${s.storyOptions.map((o) => o.id).join()}`, rnd(3000, 9000), () => this.host.state().phase === "story_vote", () =>
           this.host.inject({ type: "vote", pid: b.pid, id: pick(this.host.state().storyOptions).id }),
         );
+      }
+      if (phase === "story_write" && !s.written.includes(b.pid)) {
+        this.once(b, `sw-${tag}`, rnd(6000, 15000), () => this.host.state().phase === "story_write", () => this.host.inject({ type: "story", pid: b.pid, ...b.who.story }));
       }
       if (phase === "turn") this.turn(b, s, tag);
       if (phase === "pitch") {

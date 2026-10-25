@@ -62,7 +62,7 @@ export function nowText(s: GameState, me?: string): string {
       return mine ? "The DM is ruling on your plan" : `The DM rules on ${heroFirst(s, w)}'s plan`;
     case "roll":
       if (s.revealed.length) return "Here it comes";
-      return mine ? "Tap ROLL!" : `${heroFirst(s, w)}, tap ROLL on your phone`;
+      return mine ? "Swipe up to throw!" : `${heroFirst(s, w)}: swipe up on your phone to throw`;
     case "outcome":
       return "Here's what happened";
     case "final_roll": {

@@ -123,7 +123,7 @@ export function Presenter({ host, s, onNotes, onCloseNotes }: { host: Stage; s: 
     <>
       {attract && <Attract code={s.code} />}
       <button
-        className="fixed bottom-2 right-3 z-50 font-ui text-sm text-parchment/25 hover:text-parchment/80 w-7 h-7 rounded-full border border-parchment/15"
+        className="fixed bottom-2 left-3 z-50 font-ui text-sm text-parchment/25 hover:text-parchment/80 w-7 h-7 rounded-full border border-parchment/15"
         onClick={(e) => {
           e.stopPropagation();
           setHelp((v) => !v);

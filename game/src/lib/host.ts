@@ -1524,9 +1524,19 @@ export class GameHost {
     }
     const p = this.openerP.get(optionId);
     if (p) {
-      this.set({ busy: "Writing tonight's story…" });
-      const seed = await withTimeout(p, 15_000, () => null);
+      // A player's own story is worth the wait (the writer takes 20-40 s); a news story falls back sooner.
+      const ours = optionId.startsWith("ours-");
+      this.set({ busy: ours ? "Writing your story…" : "Writing tonight's story…" });
+      let seed = await withTimeout(p, ours ? 40_000 : 15_000, () => null);
       this.set({ busy: "" });
+      if (!seed && ours) {
+        const local = this.ourFallback.get(optionId)?.();
+        if (local) {
+          this.builtSeeds.set(local.id, local);
+          this.note("fallback", "Story writer", "The writer was slow, so their story plays from their own words.");
+          seed = local;
+        }
+      }
       if (seed) {
         this.note("source", "Story writer", seed.author ? "Opener written from their true story; the real ending is kept for the reveal." : "Opener written from the article's facts only.");
         this.useQuest(seed.id);
@@ -1570,10 +1580,9 @@ export class GameHost {
     const goal = scenes[scenes.length - 1].goal;
     this.sceneList = [{ ...opener, goal }];
     this.rememberStory(seed);
-    const ladder = this.buildLadder(seed, goal);
-    this.set({ ladder, step: 0, danger: 0 });
-    if (ladder.length) this.note("scene", "The ladder", `${ladder.map((x, i) => `${i + 1}. ${x}`).join(" → ")}. A hit climbs a step, a miss stays put; the top step is the finale.`);
-    this.spine = { problem: seed.the_threat.name, pronoun: seed.problem?.pronoun ?? "", stakes: seed.problem?.stakes ?? "", where: opener.location || "", facts: [], prop: "", memorable: [] };
+    // Where the heroes are: the real kind of place (never a real place name, which would leak into story_so_far).
+    const placeType = typeof seed.real_event?.place_type === "string" ? (seed.real_event.place_type as string) : "";
+    this.spine = { problem: seed.the_threat.name, pronoun: seed.problem?.pronoun ?? "", stakes: seed.problem?.stakes ?? "", where: placeType || (seed.real_event ? "" : opener.location || ""), facts: [], prop: "", memorable: [] };
     this.set({
       scenes: [{ kind: "hook", location: opener.location, description: opener.situation, twist: "", hasImage: !!this.sceneImages[this.plateFor(0)] }],
       turnOrder: this.makeTurnOrder(),
@@ -1587,6 +1596,9 @@ export class GameHost {
       paused: false,
       artKey: -1,
     });
+    const ladder = this.buildLadder(seed, goal, this.state.turnOrder.length);
+    this.set({ ladder, step: 0, danger: 0 });
+    if (ladder.length) this.note("scene", "The ladder", `${ladder.length} steps: one per turn, then the finale. ${ladder.filter(Boolean).map((x, k) => `${k + 1}. ${x}`).join(" → ")}. Every turn climbs one step; the roll picks a better or worse way up.`);
     this.note("safety", "Why it's safe", SAFETY_NOTES[seed.id] ?? SAFETY_GENERIC);
     this.note(
       "source",
@@ -1614,12 +1626,14 @@ export class GameHost {
    * The story ladder: planned steps up to the goal (the writer's beats, or a curated story's scene goals), the top
    * step being the goal itself (the finale). Quick Tale scales with the table (2-4 steps), Full Story has up to 4.
    */
-  private buildLadder(seed: QuestSeed, goal: string) {
+  private buildLadder(seed: QuestSeed, goal: string, turns: number) {
+    // One step per turn, then the finale on top: every turn climbs one dot. The writer's beats (or a curated story's
+    // scene goals) are spread over the turns; the outcome rewords each step for what the table actually did.
     const src = (seed.beats?.length ? seed.beats : (seed.scenes ?? []).map((sc) => sc.goal)).map((x) => String(x ?? "").replace(/[.!]+$/, "").trim()).filter(Boolean);
-    if (src.length < 2 || !goal) return [];
-    const n = this.quick ? Math.max(2, Math.min(4, this.heroes().length)) : 4;
-    const lower = src.slice(0, -1).slice(0, n - 1);
-    return [...lower, goal.replace(/[.!]+$/, "")];
+    if (!goal || turns < 1) return [];
+    const lower = src.length > 1 ? src.slice(0, -1) : src;
+    const steps = Array.from({ length: turns }, (_, i) => (lower.length ? lower[Math.min(lower.length - 1, Math.floor((i * lower.length) / turns))] : ""));
+    return [...steps, goal.replace(/[.!]+$/, "")];
   }
   private cleanSkills: Record<string, string> | null = null;
 
@@ -1990,7 +2004,7 @@ export class GameHost {
             body: JSON.stringify({
               questId,
               sceneIndex: this.quick ? "quick" : plate,
-              heroes: heroes.map((h) => ({ id: `${h.id}-plain`, name: "", visual: "a friendly cartoon hero in everyday clothes" })),
+              heroes: heroes.map((h) => ({ ...h, id: `${h.id}-plain`, name: "", visual: "a friendly cartoon hero in everyday clothes" })),
               rating: this.state.rating,
               sceneUrl: prev,
               sceneText: where,
@@ -2102,11 +2116,12 @@ export class GameHost {
     if (!story.title) story.title = story.setup.split(/[.!?]/)[0].slice(0, 50);
     // The story stays on the TV: the wire only says who has written one. The real ending is hidden until the reveal.
     this.ourStories[pid] = story;
+    this.prepareOurs(pid); // its opener starts writing now (they take 20-40 s), not when the phase ends
     const written = [...new Set([...this.state.written, pid])];
     this.set({ written });
     this.note("source", this.player(pid)?.name ?? "A player", "Wrote a true story. Its real ending stays hidden until the reveal.");
-    // Everyone who can write has written (test players never do): the vote starts now, not when the timer ends.
-    if (this.state.players.filter((p) => !p.away && !this.bots.isBot(p.id)).every((p) => written.includes(p.id))) this.endStoryWrite();
+    // Everyone has written: the vote starts now, not when the timer ends.
+    if (this.state.players.filter((p) => !p.away).every((p) => written.includes(p.id))) this.endStoryWrite();
   }
 
   private endStoryWrite() {
@@ -2119,18 +2134,26 @@ export class GameHost {
       return this.startStoryVote();
     }
     const options = ids.map((pid) => {
-      const st = this.ourStories[pid];
-      const optionId = `ours-${pid}`;
-      const author = this.player(pid)?.name ?? "Someone";
-      this.prepareStory(
-        optionId,
-        { mode: "personal", source: { author_id: pid, title: st.title, setup: st.setup, steps: st.steps, real_ending: st.ending } },
-        (o) => personalSeed(optionId, pid, speakableName(author), st, o),
-        () => localOpener(st),
-      );
-      return { id: optionId, title: st.title, teaser: "A true story from someone at this table." };
+      if (!this.openerP.has(`ours-${pid}`)) this.prepareOurs(pid);
+      return { id: `ours-${pid}`, title: this.ourStories[pid].title, teaser: "A true story from someone at this table." };
     });
     this.startStoryVote(options);
+  }
+
+  /** One player's true story: ask the writer for its opener; if the writer never answers, it plays from their own words. */
+  private ourFallback = new Map<string, () => QuestSeed>();
+  private prepareOurs(pid: string) {
+    const st = this.ourStories[pid];
+    if (!st) return;
+    const optionId = `ours-${pid}`;
+    const author = speakableName(this.player(pid)?.name ?? "Someone");
+    this.ourFallback.set(optionId, () => personalSeed(optionId, pid, author, st, localOpener(st)));
+    this.prepareStory(
+      optionId,
+      { mode: "personal", source: { author_id: pid, title: st.title, setup: st.setup, steps: st.steps, real_ending: st.ending } },
+      (o) => personalSeed(optionId, pid, author, st, o),
+      () => localOpener(st),
+    );
   }
 
   // ---------- the narrator's voice (design/24 P5) ----------

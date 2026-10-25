@@ -611,8 +611,8 @@ function Vote({ host, s }: { host: Stage; s: GameState }) {
   const el = eligibleIds(s);
   const cols = Math.min(s.pitches.length, s.pitches.length === 4 ? 2 : 3);
   return (
-    <div className="qt-stage qt-center !gap-8">
-      <h2 className="qt-question text-center qt-rise">Which final move?</h2>
+    <div className="qt-stage qt-center !gap-4 gp-vote">
+      <h2 className="qt-question text-center qt-rise !text-[3rem]">Which final move?</h2>
       <div className="grid gap-5 w-full max-w-[100rem]" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
         {s.pitches.map((p, i) => {
           const pl = s.players.find((x) => x.id === p.playerId);
@@ -625,7 +625,7 @@ function Vote({ host, s }: { host: Stage; s: GameState }) {
                 <span className="font-heading text-2xl uppercase flex-1">{pl.hero?.name}</span>
                 {!ok && <span className="font-ui text-sm uppercase tracking-widest text-parchment/70">hung back</span>}
               </div>
-              <p className="text-[1.7rem] leading-snug">{p.auto ? "…" : p.verdict?.interpretation && !p.verdict.fallback ? p.verdict.interpretation : `“${planText(p)}”`}</p>
+              <p className="text-[1.35rem] leading-snug">{p.auto ? "…" : p.verdict?.interpretation && !p.verdict.fallback ? p.verdict.interpretation : `“${planText(p)}”`}</p>
             </div>
           );
         })}
@@ -770,7 +770,7 @@ function Roll({ host, s }: { host: Stage; s: GameState }) {
           !shown && (
             <>
               <ShiftBadge s={s} r={r} />
-              <p className="font-heading text-2xl uppercase text-parchment/80 qt-throb">{pl.hero?.name}: swipe up on your phone to throw</p>
+
             </>
           )
         )}
@@ -1017,7 +1017,9 @@ function RevealCard({ host, s }: { host: Stage; s: GameState }) {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             {qr ? <img src={qr} alt="QR code to the real article" className="w-24 h-24 shrink-0" /> : <div className="w-24 h-24 shrink-0" />}
           </div>
-          <p className="text-[1.2rem] leading-snug mt-3 line-clamp-3">{dedupeSentences(rs.summary)}</p>
+          <p className="leading-snug mt-3 overflow-y-auto min-h-0 shrink" style={{ fontSize: dedupeSentences(rs.summary).length > 260 ? "1rem" : "1.2rem" }}>
+            {dedupeSentences(rs.summary)}
+          </p>
           {knownNow(rs.now) ? (
             <p className="text-[1.05rem] leading-snug mt-3 line-clamp-3">
               <b>What&apos;s happening now:</b> {knownNow(rs.now)}

@@ -707,3 +707,7 @@
 .gp-danger { display: inline-flex; align-items: center; gap: 0.3rem; margin-left: 0.9rem; font-size: 0.7rem; letter-spacing: 0.2em; color: rgba(255, 120, 150, 0.85); vertical-align: middle; }
 .gp-danger i { width: 0.55rem; height: 0.85rem; border-radius: 2px; border: 1.5px solid rgba(255, 46, 126, 0.6); }
 .gp-danger i.on { background: var(--crimson); border-color: var(--crimson); box-shadow: 0 0 8px var(--crimson); }
+
+/* Centered stages never push their top under the goal bar: overflow goes down, and the vote cards stay compact. */
+.qt-center { justify-content: safe center; }
+.gp-vote .qt-plan { padding-top: 0.8rem; padding-bottom: 0.8rem; }
