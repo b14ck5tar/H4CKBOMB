@@ -147,7 +147,7 @@ function openerText(sc: SeedScene) {
 }
 
 /** The narrator's sign-off after the ending (the same text wherever it's voiced, so the early clip is the one that plays). */
-const signOff = (ending: string) => `${ending} And that, friends, is how the story goes.`;
+const SIGN_OFF = "And that, friends, is how the story goes.";
 
 type OutcomeData = { progress_hint?: "low" | "mid" | "high"; step_solved?: boolean; text: string; situation?: string; why?: string; now_goal?: string; where?: string; changed?: string; new_fact?: string; new_prop?: string; memorable?: string; scene?: string; open_thread?: string };
 
@@ -1804,7 +1804,13 @@ export class GameHost {
     this.setTimer(this.turnMs(), () => this.endTurn(true));
     // "Jay, the lodger is…": the narrator reads the turn start if the clip is ready (it was asked for with the outcome).
     const line = this.turnLine(owner);
-    this.voiceBy(line, Date.now() + 4000).then((clip) => this.state.phase === "turn" && this.state.turnIndex === k && this.play(clip));
+    // The clock restarts once the narrator has finished the line (CD playtest: "is it my turn?" while it was still
+    // talking), so the turn owner always gets the full time after the story stops speaking.
+    this.voiceBy(line, Date.now() + 4000).then((clip) => {
+      if (this.state.phase !== "turn" || this.state.turnIndex !== k) return;
+      const ms = this.play(clip);
+      if (ms) this.setTimer(this.turnMs() + ms, () => this.endTurn(true));
+    });
     this.note("turn", this.heroName(owner), `Turn ${k + 1} of ${order.length}. Everyone else can suggest one action; ${this.heroName(owner)} picks.`);
   }
 
@@ -2779,7 +2785,9 @@ export class GameHost {
     this.endingAt = 0;
     this.epilogueP.then((e) => {
       this.endingAt = Date.now();
-      this.voiceFor(signOff(e.ending));
+      // The final scene reads the ending; the montage closes on the sign-off alone (never the ending twice).
+      this.voiceFor(e.ending);
+      this.voiceFor(SIGN_OFF);
       if (pitch.verdict) this.paintDecision(pitch, pitch.verdict, e.ending, e.line || this.state.situation);
     });
     const images = this.artCount().map((i) => `scene_${i + 1}`);
@@ -2830,7 +2838,25 @@ export class GameHost {
     this.set({ phase: "final_result", rolls: [r], revealed: [r.playerId], players: this.state.players.map((p) => ({ ...p, peril: "" })), ready: [] });
     this.recordWin(pitch, r, `The finale: ${ENDING_LABEL[ending].toLowerCase()}.`);
     this.note("roll", "The ending", `${r.kept} ${fmtMod(r.statBonus)}${r.bonus ? ` +${r.bonus}` : ""} = ${r.total} → ${BAND_LABEL[r.band]} → ${ENDING_LABEL[ending]}. Below the target fails; reaching it works with a cost; 3 over works cleanly.`);
-    this.setTimer(FINAL_RESULT_MS, () => this.runEnding(this.endingPlan[this.state.mode] ?? ["epilogue"]));
+    this.setTimer(FINAL_RESULT_MS, () => this.startFinalScene());
+  }
+
+  /**
+   * The final scene (CD playtest 10:17: "there was no final scene"): the finale's result gets its own narrated beat over
+   * the finale painting, like every turn's outcome, before the "Because of you" montage. The ending was written while
+   * everyone shook, so this never waits long.
+   */
+  private async startFinalScene() {
+    this.clearTimer();
+    const plan = this.endingPlan[this.state.mode] ?? ["epilogue"];
+    const e = await withTimeout(this.epilogueP ?? Promise.resolve(null), 4000, () => null);
+    if (this.state.phase !== "final_result") return;
+    if (!e?.ending) return this.runEnding(plan);
+    const clip = await this.voiceBy(e.ending, (this.endingAt || Date.now()) + 3000);
+    if (this.state.phase !== "final_result") return;
+    this.set({ phase: "outcome", outcome: e.ending, busy: "", ready: [] });
+    const spoken = this.play(clip);
+    this.setTimer(spoken ? Math.max(spoken + 1200, 4500) : outcomeMs(e.ending), () => this.runEnding(plan));
   }
 
   // ---------- ending modules ----------
@@ -3064,7 +3090,8 @@ export class GameHost {
     const { ending, line, recap, skills } = await this.epilogueP!;
     this.cleanSkills = skills;
     if (this.state.phase !== "epilogue") return;
-    const clip = await this.voiceBy(signOff(ending), (this.endingAt || Date.now()) + 8000);
+    // The ending was already read as the final scene; the montage closes on the sign-off.
+    const clip = await this.voiceBy(SIGN_OFF, Date.now() + 3000);
     if (this.state.phase !== "epilogue") return;
     this.set({ epilogue: ending, endingLine: line, recap: recap || this.state.log.map((l) => l.narration).slice(0, 1).join(" "), busy: "" });
     // The finale's log line becomes the real ending, for the keepsake.

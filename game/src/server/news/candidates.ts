@@ -3,7 +3,7 @@ import { createHash } from "node:crypto";
 import { museJSON } from "@/server/muse";
 import type { Rating } from "@/lib/types";
 import { dedupe, fetchArticleFacts, fetchSerpApiFixture, fetchSerpApiParams, normalizeTitle, serpApiCalls, type NewsItem } from "./sources";
-import { HARD_BLOCK, SOURCE_DENYLIST, softMatch } from "./filter";
+import { ADULT_ONLY, HARD_BLOCK, SOURCE_DENYLIST, softMatch } from "./filter";
 import { addToLibrary } from "./library";
 
 // "Odd news" story candidates for the story vote and the Quick Tale (design/24).
@@ -13,7 +13,7 @@ import { addToLibrary } from "./library";
 // (muse-spark-1.3, low, parallel batches of 15) → top 10, also saved to the story library (library.ts).: 7 scores
 // 1-5, keep avg >= 4 with no score below 3 → top 10 by score. Never throws; [] on failure (client uses seeds).
 
-export const SCORE_KEYS = ["situation", "problem", "setting", "arc", "roles", "payoff", "fantasy_fit"] as const;
+export const SCORE_KEYS = ["situation", "problem", "setting", "arc", "roles", "payoff", "fantasy_fit", "talk"] as const;
 export type ScoreKey = (typeof SCORE_KEYS)[number];
 export type Scores = Record<ScoreKey, number>;
 
@@ -133,11 +133,15 @@ For each numbered story, score 1 to 5 (5 = perfect, 3 = workable, 1 = missing):
 - roles: real people involved, by role, that heroes could talk to (the farmer, the zookeeper, the volunteers).
 - payoff: an ending that pays off at the reveal ("wait, that really happened?").
 - fantasy_fit: one fantasy twist makes it better and stays easy to follow, not confusing.
+- talk: would adults talk about this at a party? 5 = everyone leans in ("a shark became a city's mascot", "workers found 9 million euros of gold in a wall"); 1 = nobody would repeat it. Routine news scores 1-2 here: a road or bridge reopening, repairs, construction, routine government, ordinary business, weather.
 
-SAFETY: usable=false (and every score 1) if anyone died, is missing without being found, was hurt, sick or in
-danger now; any disaster or accident with victims; violence, real crime with victims or named suspects (a silly,
-harmless heist of an odd object with nobody hurt is fine); war, the military, politics, protests; health scares or
-medical stories; a named private person who could be embarrassed; a child named.
+SAFETY: usable=false (and every score 1) if anyone died, is missing without being found, was seriously hurt, sick
+or in danger now; any disaster or accident with victims; violence against people; sexual content; children involved;
+hate; war, the military, tragedies; partisan hot-button politics or protests; health scares or medical stories; a
+named private person who could be embarrassed or mocked.
+ADULTS ONLY (usable, rating "adults"): non-violent crime (heists, cons, scams, smuggling, fraud, bizarre thefts),
+weird court cases, scandals of public figures, companies or institutions, absurd local-government drama, and
+dark-funny or uncomfortable topics, as long as nobody was hurt and no private person is mocked.
 Also score low (these are not stories): pure statistics or rankings, policy, business, earnings, product launches,
 obituaries, opinion, a science paper with no scene, celebrity gossip, sports results.
 
@@ -339,7 +343,8 @@ async function run(stats: CandidateStats): Promise<NewsCandidate[]> {
     url: c.item.link,
     date: c.item.date,
     place: String(g.place ?? "").trim(),
-    rating: g.rating,
+    // Crime, cons and court stories are adults-only, whatever the gate said (CD: the safety tier follows the rating).
+    rating: ADULT_ONLY.test(`${c.item.title} ${c.item.snippet} ${c.facts}`) ? ("adults" as const) : g.rating,
     storyability: avg,
     scores: s,
     thumbnail: c.item.thumbnail,

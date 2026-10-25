@@ -150,7 +150,10 @@ WRITE:
   - problem_line: the ONE fantasy twist: WHAT the problem is, in plain words, and why it is happening. It
     secretly explains the real event. Anything named in the goal MUST be explained here.
   - stakes_line: WHY the goal matters: what goes wrong if the group fails ("if the new railing goes soft too,
-    nobody crosses the river for years"). Cause and effect, said plainly.
+    nobody crosses the river for years"). Cause and effect, said plainly. The stakes must be concrete and FELT by an
+    adult: money, a job, a crowd, a deadline someone named, an embarrassment in public ("a million people are coming
+    this weekend", "the whole crew ends up in the newspaper"). Never an abstract clock nobody explains ("before the sky
+    gets lighter"): if there is a deadline, say what happens at it.
   A tired adult at a party must be able to retell the problem after hearing these three sentences once.
 - goal: what the group must do, 10 words max, starting with a verb ("Get", "Find", "Put", "Help", "Stop").
   It must be clear when the goal is done. Use only things already explained in the three lines.

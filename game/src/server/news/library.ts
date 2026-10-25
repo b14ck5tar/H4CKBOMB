@@ -129,9 +129,10 @@ export function fillFromLibrary(live: NewsCandidate[], rating: Rating, played: S
     seen.add(s.id);
     out.push(serve(s, origin));
   };
-  for (const c of live) take(c, "live");
+  // Live and library news compete on score (CD: prefer the curated top 10 when today's live news is weak); a tie goes live.
   const all = [...lib().values()];
-  for (const s of all.filter((x) => x.origin === "news").sort((a, b) => b.storyability - a.storyability)) take(s, "library");
+  const pool = [...live.map((c) => ({ s: c as LibraryStory | NewsCandidate, o: "live" as const })), ...all.filter((x) => x.origin === "news").map((s) => ({ s: s as LibraryStory | NewsCandidate, o: "library" as const }))];
+  for (const { s, o } of pool.sort((a, b) => b.s.storyability - a.s.storyability || (a.o === "live" ? -1 : 1))) take(s, o);
   for (const s of all.filter((x) => x.origin === "curated").sort((a, b) => b.storyability - a.storyability)) take(s, "curated");
   return out;
 }
