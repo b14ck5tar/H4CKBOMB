@@ -40,6 +40,8 @@ export type SceneArtRequest = Common & {
   sceneIndex: number | "quick";
   /** Optional one-line action for the heroes, e.g. the outcome narration. Changes the cache key. */
   moment?: string;
+  /** design/24 P5b: one art style per story (lib/artStyles.ts). Missing = Neon Uncanny. Changes the cache key. */
+  style?: string;
 };
 
 export type PosterRequest = Common & {

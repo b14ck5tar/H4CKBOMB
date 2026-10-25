@@ -1,5 +1,6 @@
 import { NEGATIVE, STYLE } from "@/server/prompts";
 import type { ArtHero } from "./types";
+import { ART_STYLES, isArtStyle } from "@/lib/artStyles";
 
 // Edit prompts for /v1/images/edits. Images are captioned by index (Muse reads parts in order).
 // Bump PROMPT_VERSION whenever the wording changes: it is part of the cache key.
@@ -25,7 +26,9 @@ function heroList(heroes: ArtHero[]) {
   return heroes.map((h, i) => `Image ${i + 2}: ${describeHero(h)}.`).join(" ");
 }
 
-export function sceneEditPrompt(o: { heroes: ArtHero[]; sceneText: string; moment?: string; rating?: string }) {
+export function sceneEditPrompt(o: { heroes: ArtHero[]; sceneText: string; moment?: string; rating?: string; style?: string }) {
+  // design/24 P5b: a story can be painted in its own style. Neon Uncanny (the plates' style) keeps the original wording.
+  const st = isArtStyle(o.style) && o.style !== "neon" ? ART_STYLES[o.style] : null;
   const n = o.heroes.length;
   const last = n + 1;
   const place = o.sceneText ? ` (${o.sceneText})` : "";
@@ -34,11 +37,15 @@ export function sceneEditPrompt(o: { heroes: ArtHero[]; sceneText: string; momen
     : "Each hero is caught mid-reaction to the glowing impossible element in an expressive, funny pose that fits their personality and uses their signature prop (aiming it, holding it up, hiding behind it), and at least one of them points at it";
   return [
     `Image 1 is a finished painting of a story scene${place}. Image${n > 1 ? `s 2 to ${last} are reference portraits` : " 2 is a reference portrait"} of our cartoon hero${n > 1 ? "es" : ""}.`,
-    `Edit Image 1 by adding ${n === 1 ? "this hero" : `these ${n} heroes`} into it. Keep Image 1's composition, camera angle, background, lighting and color palette the same: deep indigo night, warm sodium-orange lamplight, and the glowing magenta-and-cyan impossible element still the brightest thing in the frame and not covered by anyone.`,
+    st
+      ? `Repaint Image 1 completely in this style: ${st.prompt}. Keep Image 1's place, composition and camera angle, and add ${n === 1 ? "this hero" : `these ${n} heroes`} into it. The impossible element stays the focal point and is not covered by anyone.`
+      : `Edit Image 1 by adding ${n === 1 ? "this hero" : `these ${n} heroes`} into it. Keep Image 1's composition, camera angle, background, lighting and color palette the same: deep indigo night, warm sodium-orange lamplight, and the glowing magenta-and-cyan impossible element still the brightest thing in the frame and not covered by anyone.`,
     `The heroes, from left to right: ${heroList(o.heroes)}`,
     `Draw each hero full body, about a third of the frame height, standing together as a small group on solid ground in the lower middle of the frame (not at the edges), a little apart so they don't overlap, each casting a soft shadow on the ground. ${action}.`,
-    `Each hero must look exactly like their portrait: same face, body shape, proportions, colors, outfit and prop, in the same flat cartoon style with bold ink outlines. Paint them into the scene, not pasted on top: the same ink linework, halftone shading and lighting as Image 1, warm orange lamplight on one side and a magenta-cyan rim light from the impossible element on the other.${ratingLine(o.rating)}`,
-    `${STYLE}. ${NEGATIVE}`,
+    st
+      ? `Each hero must be clearly recognizable from their portrait: same face, body shape, proportions, colors, outfit and prop, but painted in the same style as the whole picture, not pasted on top.${ratingLine(o.rating)}`
+      : `Each hero must look exactly like their portrait: same face, body shape, proportions, colors, outfit and prop, in the same flat cartoon style with bold ink outlines. Paint them into the scene, not pasted on top: the same ink linework, halftone shading and lighting as Image 1, warm orange lamplight on one side and a magenta-cyan rim light from the impossible element on the other.${ratingLine(o.rating)}`,
+    st ? `Style: ${st.prompt}. ${NEGATIVE}` : `${STYLE}. ${NEGATIVE}`,
   ].join("\n");
 }
 

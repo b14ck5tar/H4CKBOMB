@@ -330,7 +330,7 @@ function ColdOpen({ host, s }: { host: Stage; s: GameState }) {
           </h1>
         </div>
       )}
-      {title && <TitleCard s={s} kicker={s.cast ? `Tonight: ${s.cast.kind}` : "Tonight we find out why"} sub={s.cast ? `A quick tale · narrated by ${s.cast.name}` : "A quick tale · about four minutes"} />}
+      {title && <TitleCard s={s} kicker={s.cast ? `Tonight: ${s.cast.kind}` : "Tonight we find out why"} sub={s.cast ? `Narrated by ${s.cast.name} · painted in ${s.cast.artName}` : "A quick tale · about four minutes"} />}
     </div>
   );
 }
@@ -898,7 +898,7 @@ function Keepsake({ host, s, onNotes }: { host: Stage; s: GameState; onNotes?: (
             )}
             {!host.readOnly && (
               <div className="flex items-center gap-4">
-                <button className="btn btn-crimson text-xl" onClick={() => host.nextTale()}>
+                <button className="btn btn-crimson text-xl whitespace-nowrap" onClick={() => host.nextTale()}>
                   Play another
                 </button>
                 {onNotes && (
@@ -983,7 +983,7 @@ export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameS
           <ColdOpen host={host} s={s} />
         ) : (
           <div className="qt-stage qt-cold">
-            <TitleCard s={s} kicker={s.cast ? `Tonight: ${s.cast.kind}` : "Tonight's story"} sub={s.cast ? `Narrated by ${s.cast.name}` : "\u00a0"} />
+            <TitleCard s={s} kicker={s.cast ? `Tonight: ${s.cast.kind}` : "Tonight's story"} sub={s.cast ? `Narrated by ${s.cast.name} · painted in ${s.cast.artName}` : "\u00a0"} />
           </div>
         );
       break;

@@ -36,6 +36,7 @@ import { mask } from "./mask";
 import { QUICK, coldOpenTimeline } from "./quick";
 import { FEATURES } from "./features";
 import { DEFAULT_CAST, VOICES, isVoice } from "./voices";
+import { ART_STYLES, isArtStyle } from "./artStyles";
 import { DEFAULT_RATING, isRating, questAllowed } from "./rating";
 import { HEAVY, fearPhrase, realOf, skillPhrase, solvedByLine } from "./real";
 import type {
@@ -1038,11 +1039,14 @@ export class GameHost {
       .map((p) => ({ id: p.pick ?? p.id, name: p.hero!.name, portraitUrl: p.pick ? `/heroes/${p.pick}.webp` : this.portraits[p.id], visual: p.hero!.visual }));
     if (!heroes.length) return;
     const t0 = Date.now();
-    const p = fetch("/api/scene-art", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ questId, sceneIndex: this.quick ? "quick" : plate, heroes, rating: this.state.rating }),
-    })
+    const p = (this.castP ?? Promise.resolve(null))
+      .then((cast) =>
+        fetch("/api/scene-art", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ questId, sceneIndex: this.quick ? "quick" : plate, heroes, rating: this.state.rating, style: cast?.art ?? "neon" }),
+        }),
+      )
       .then((r) => (r.ok ? r.json() : null))
       .then((res: { url?: string; fallback?: boolean; cached?: boolean } | null) => {
         if (!res?.url || res.fallback || this.state.questId !== questId) return;
@@ -1526,6 +1530,7 @@ export class GameHost {
         sceneUrl: prev,
         sceneText: this.state.situation,
         moment: v.interpretation,
+        style: this.state.cast?.art ?? "neon",
       }),
     })
       .then((r) => (r.ok ? r.json() : null))
@@ -1560,21 +1565,25 @@ export class GameHost {
 
   /** At game start the AI casts one narrator for the story's mood and writes how to read it. */
   private askCast(seed: QuestSeed) {
-    const fb = () => ({ voice: DEFAULT_CAST.voice, name: VOICES[DEFAULT_CAST.voice].name, style: DEFAULT_CAST.style, kind: "a strange true story" });
+    const fb = () => ({ voice: DEFAULT_CAST.voice, name: VOICES[DEFAULT_CAST.voice].name, style: DEFAULT_CAST.style, kind: "a strange true story", art: "neon", artName: ART_STYLES.neon.name });
     this.castP = this.viaAI(
       "Casting the narrator",
-      this.ask<{ voice: string; style: string; kind: string }>("cast", {
+      this.ask<{ voice: string; style: string; kind: string; art: string }>("cast", {
         title: seed.quest_title,
         premise: seed.fairytale_premise,
         category: seed.category ?? "",
         tone: seed.tone ?? "",
       }),
       8000,
-      (d, f) => (f || !isVoice(d?.voice) ? fb() : { voice: d.voice, name: VOICES[d.voice].name, style: String(d.style ?? "").slice(0, 160) || DEFAULT_CAST.style, kind: String(d.kind ?? "").slice(0, 60) || "a strange true story" }),
+      (d, f) => {
+        if (f || !isVoice(d?.voice)) return fb();
+        const art = FEATURES.artStyles && isArtStyle(d.art) ? d.art : "neon";
+        return { voice: d.voice, name: VOICES[d.voice].name, style: String(d.style ?? "").slice(0, 160) || DEFAULT_CAST.style, kind: String(d.kind ?? "").slice(0, 60) || "a strange true story", art, artName: ART_STYLES[art].name };
+      },
       fb,
     ).then((cast) => {
       this.set({ cast });
-      this.note("hero", "Narrator", `Cast ${cast.name} (${VOICES[cast.voice as keyof typeof VOICES]?.gemini ?? cast.voice} voice) for ${cast.kind}: "${cast.style}".`);
+      this.note("hero", "Narrator", `Cast ${cast.name} (${VOICES[cast.voice as keyof typeof VOICES]?.gemini ?? cast.voice} voice) for ${cast.kind}: "${cast.style}". Painted in ${cast.artName}.`);
       return cast;
     });
     return this.castP;

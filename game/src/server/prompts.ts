@@ -157,12 +157,20 @@ Rules: a creepy story gets a hushed ghost-story telling; nature gets a warm docu
 - voice: one id from the list.
 - style: 18 words max, starting "Read this as", how to read it (mood, tone). Never ask for slow reading or long pauses.
 - kind: 6 words max, lowercase, what kind of story this is, for a title card ("a spooky small-town mystery").
+- art: the ONE painting style for the whole story:
+  - neon: the house style, strange news at night with a glowing impossible thing (the default when unsure).
+  - comic: city weirdness, urban legends, tech gone strange.
+  - watercolor: nature, animals, rivers, forests, weather.
+  - retro: space, signals, science, the sky.
+  - noir: mysteries, disappearances, secrets, the unexplained.
+  - gouache: gentle and kids' stories, festivals, happy news, small towns.
 Return ONLY the JSON the schema asks for.`;
 
 export const CAST_SCHEMA = obj({
   voice: { type: "string", enum: ["vesper", "ash", "juniper", "hollis", "wren"] },
   style: str,
   kind: str,
+  art: { type: "string", enum: ["neon", "comic", "watercolor", "retro", "noir", "gouache"] },
 });
 
 // ---------- Ruling (one winning plan) ----------

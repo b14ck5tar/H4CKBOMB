@@ -114,7 +114,7 @@ function fallback(task: string, input: Any) {
     case "verdict":
       return fallbackRuling(STATS.includes(input?.hero?.best_stat) ? input.hero.best_stat : "brave");
     case "cast":
-      return { voice: "ash", style: "Read this as a low, smoky, mysterious late-night storyteller", kind: "a strange true story" };
+      return { voice: "ash", style: "Read this as a low, smoky, mysterious late-night storyteller", kind: "a strange true story", art: "neon" };
     case "outcome":
       return fallbackOutcome(cleanText(input?.hero?.name, 40), input?.band);
     case "round":

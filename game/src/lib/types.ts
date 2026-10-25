@@ -325,7 +325,7 @@ export interface GameState {
   ideas: Record<string, string>; // suggester id -> their one-action idea for the owner this turn
   finale: boolean; // the grand finale: everyone proposes, everyone votes (not your own), one shared die
   /** The narrator the AI cast for this story (design/24 P5): a voice, a style line, and the kind of story. */
-  cast: { voice: string; name: string; style: string; kind: string } | null;
+  cast: { voice: string; name: string; style: string; kind: string; art: string; artName: string } | null;
   /** The line being read aloud right now (TV only plays it; phones ignore it). ms = its length at play speed. */
   voice: { id: number; ms: number; delay: number } | null;
   artKey: number; // the latest painting of what the heroes just did (a key into the TV's sceneImages), -1 = the plate

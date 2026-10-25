@@ -24,6 +24,8 @@ export const FEATURES = {
   aiScenes: false,
   /** The narrator reads the story aloud (Gemini TTS, /api/tts). Off or failing = text only. */
   voice: true,
+  /** One AI-picked painting style per story (lib/artStyles.ts). Off = always Neon Uncanny. */
+  artStyles: true,
   /** Paint the party's heroes into each scene (server/art, muse-image edits, ~$0.01 each, cached). */
   heroArt: true,
   /** AI plan suggestions on phones (they made everyone's plans the same). */

@@ -79,8 +79,9 @@ export async function paintArt(req: ArtRequest, origin?: string): Promise<ArtRes
     .sort()
     .join(",");
   const extras = poster ? "" : (req as { moment?: string }).moment ?? "";
+  const style = poster ? "" : String((req as { style?: string }).style ?? "");
   const key = hash(
-    [PROMPT_VERSION, poster ? "poster" : "scene", req.questId, String(scene), hash(plateBuf).slice(0, 8), heroKey, req.rating ?? "", extras, req.quality ?? ""].join("|"),
+    [PROMPT_VERSION, poster ? "poster" : "scene", req.questId, String(scene), hash(plateBuf).slice(0, 8), heroKey, req.rating ?? "", extras, req.quality ?? "", style].join("|"),
   ).slice(0, 24);
 
   const hit = await getCached(key);
@@ -99,7 +100,7 @@ export async function paintArt(req: ArtRequest, origin?: string): Promise<ArtRes
     ];
     const prompt = poster
       ? posterEditPrompt({ heroes: withPortrait, sceneText, rating: req.rating })
-      : sceneEditPrompt({ heroes: withPortrait, sceneText, moment: extras || undefined, rating: req.rating });
+      : sceneEditPrompt({ heroes: withPortrait, sceneText, moment: extras || undefined, rating: req.rating, style });
     const t1 = Date.now();
     store.stats.calls++;
     const tag = `${poster ? "poster" : "scene"} ${req.questId}/${String(scene)} heroes=${withPortrait.map((h) => h.id).join(",")} q=${quality} key=${key}`;
