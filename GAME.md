@@ -40,14 +40,14 @@ loop before any new feature.
 | # | Question | Final answer |
 |---|---|---|
 | 1 | Becoming a hero | One line + "What's your secret talent?" (optional). Ready-made heroes as backup (18, Neon Ink). Power scaling: nobody massively out- or underperforms. |
-| 2 | Whose action | One owner per turn; everyone else suggests, the owner picks. 2-4 players: 2 turns each; 5+: 1 each. Humans only (bots never own turns). Then the grand finale. |
+| 2 | Whose action | One owner per turn; everyone else suggests, the owner picks. Full: 2-4 players get 2 turns each, 5+ get 1. Quick: 1 each. Humans only (bots never own turns). Then the grand finale. |
 | 3 | Dice | One d20 per action plus modifiers; one shared shake die for the finale. No pass line: every total is its own outcome. Wild plans need big rolls. |
 | 4 | Who judges a plan | Muse, literally and at face value, as a playful label (CLEVER … ONLY A MIRACLE). No "Convince the DM". No pass-line numbers shown. |
 | 5 | Story sources | Odd news from the past week (then month), worldwide, little-known, through a storyability gate; or players' own true stories. |
 | 6 | Picking the story | 3 quest cards and a vote, or Our stories (everyone writes, the table votes). |
 | 7 | How the text is written | Procedural story rules (section 4) from a fixed real start. |
 | 8 | Using a hero's power | Only for the turn owner, only when the plan truly uses it: at most one tier easier, never wins alone. |
-| 9 | Length | Full 10-15 min. Quick ~5 min. Judge mode (`/tv?judge=1`): 1 turn each, max 3 turns, then the finale, ~5 min. |
+| 9 | Length | Full 10-15 min. Quick ~5 min (1 turn each). Judge mode (`/tv?judge=1`): 1 turn each, max 3 turns, then the finale, ~5 min. |
 | 10 | Connection moments | Talk to convince the owner; +1 when the owner uses a friend's idea; one action only (no "if that fails"); shake together for the finale. |
 | 11 | Stakes | Team vs. the story: win or lose together, with a clear ending card. |
 | 12 | The ending | "Because of you" montage, then "Based on a true story" + what's happening now + keepsake. |
