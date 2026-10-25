@@ -80,7 +80,7 @@ const NARRATIVE =
 
 /** Not stories: sports, business, promos, interviews and opinion. Ranked down before the gate (the gate still decides). */
 const NOT_STORY =
-  /(football|rugby|cricket|league|match|score[ds]?|derby|tournament|season|coach|preview|interview|q&a|review|commentary|opinion|column|announces?|launch\w*|stock|deal|brand|sale|podcast|episode|trailer|album|tour)/gi;
+  /\b(football|rugby|cricket|league|match|score[ds]?|derby|tournament|season|coach|preview|interview|q&a|review|commentary|opinion|column|announces?|launch\w*|stock|deal|brand|sale|podcast|episode|trailer|album|tour)\b/gi;
 
 // Hard blocks for this mode. filter.ts HARD_BLOCK minus its "missing / arrest / trial" rule (a lost tortoise found
 // after years is exactly what we want), plus our own court/crime rule and heavy topics. The gate judges the rest.

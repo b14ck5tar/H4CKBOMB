@@ -1,6 +1,6 @@
 {
  "version": 1,
- "updated": "2026-10-25T07:45:22.036Z",
+ "updated": "2026-10-25T08:21:18.138Z",
  "stories": [
   {
    "id": "news-7f3160a2ba",
@@ -103,53 +103,54 @@
    "thumbnail": "https://cdn.abcotvs.com/dip/images/19935915_101326-wabc-cute-kitty-img.jpg",
    "added_at": "2026-10-25T06:43:26.698Z",
    "opener": {
-    "title": "The Cat Ride Service",
-    "quest_title": "The Cat Ride Service",
-    "teaser": "A missing house cat keeps getting rides from a big sleepy dog.",
+    "title": "The Bossy Pigeon Taxi",
+    "quest_title": "The Bossy Pigeon Taxi",
+    "teaser": "A gray cat visits at night with a bossy pigeon guide.",
     "mood": "cozy",
-    "narration": "A family and a helper check porch cameras for their missing cat. A big sleepy dog loves cat naps and carries cats far. If he rides again, the cat lands too far to walk home.",
-    "goal": "Get the cat off the dog and home",
-    "situation": "A door, a food bowl, a camera, and a dog with a cat.",
+    "narration": "An owner and a helper watch a house for a gray cat. A bossy pigeon rides the cat and gives bad directions home. If the cat turns wrong again, then he cannot find home.",
+    "goal": "Get the bossy pigeon off the cat",
+    "situation": "A porch, a fish bowl, a small camera, a gray cat and a pigeon.",
     "problem": {
-     "name": "The Sleepy Ride Dog",
-     "stakes": "the cat ends up too far to walk home",
-     "pronoun": "he"
+     "name": "The Mixed Up Pigeon",
+     "stakes": "the cat walks off again",
+     "pronoun": "they"
     },
     "threat": {
-     "name": "The Sleepy Ride Dog",
-     "pronoun": "he",
-     "want": "the cat ends up too far to walk home"
+     "name": "The Mixed Up Pigeon",
+     "pronoun": "they",
+     "want": "the cat walks off again"
     },
     "beats": [
-     "Check the porch cameras at night",
-     "Spot the cat visiting near the cage",
-     "Coax the cat away from the dog",
-     "Carry the tired cat back inside"
+     "Watch the screen door at night",
+     "Set up small cameras by the porch",
+     "Follow the pigeon past wrong porches",
+     "Lift the pigeon off the cat"
     ],
     "real_setting": {
-     "place_type": "a quiet suburb with porches and screen doors",
+     "place_type": "a house in a small town",
      "roles": [
-      "a family with a missing house cat",
-      "an animal helper with night cameras"
+      "a cat owner",
+      "a helper with cameras",
+      "neighbors"
      ],
-     "situation": "A house cat slipped out and will not go in a cage.",
-     "stakes": "If the cat keeps roaming, the family may never see him again",
+     "situation": "A gray house cat slips out and keeps visiting at night.",
+     "stakes": "the family may never see their shy cat again",
      "arc": [
-      "A house cat slips out the door",
-      "A helper sets night cameras",
-      "The cat visits nightly but fears cages",
-      "The cat is found far away and brought home"
+      "A cat slips out a screen door",
+      "A helper sets cameras near the house",
+      "The cat visits at night but avoids cages",
+      "The cat roams far and at last returns"
      ]
     },
     "npc_line": {
      "speaker": "Helper",
-     "line": "He smiles for the camera, then runs from the cage."
+     "line": "He visits each night but hates my cage."
     }
    },
    "ending_facts": {
     "kind": "news",
-    "official_line": "Turtle the cat came home in Greenwich after 571 days roaming 2 states.",
-    "whats_happening_now": "Turtle slipped out a screen door at Kelly Moore's home in Greenwich. Rocco Autero of Rocket Lost Pet Rescue saw him on night cameras.",
+    "official_line": "A cat named Turtle was reunited with family in Greenwich, USA after 571 days across 2 states.",
+    "whats_happening_now": "He came from Tennessee and lived with Kelly Moore. He slipped out a screen door in March 2025.",
     "headline": "Missing cat found after 571 days and 2-state adventure",
     "source": "ABC7 New York",
     "url": "https://abc7ny.com/post/missing-cat-found-571-days-2-state-adventure/19935936/",
@@ -240,54 +241,54 @@
    "scores": null,
    "added_at": "2026-10-25T06:54:06.718Z",
    "opener": {
-    "title": "Turtle Needs a Scratch",
-    "quest_title": "Turtle Needs a Scratch",
-    "teaser": "A giant tired turtle keeps dumping tiny white beads on the beach to scratch its shell.",
+    "title": "The Crab With The Sack",
+    "quest_title": "The Crab With The Sack",
+    "teaser": "Tiny white beads keep washing up, and a giant crab will not drop his sack.",
     "mood": "silly",
-    "narration": "Cleaners scoop tiny white beads off a windy beach. A giant sea turtle carried sticky beads here on its shell and scratches them off. If it keeps scratching, beads will pile up and hurt birds.",
-    "goal": "Get the beads off the turtle shell safely",
-    "situation": "Piles of beads, a cleaner with a long scoop, and a big sleepy turtle rubbing on the sand.",
+    "narration": "Volunteers with buckets pick up tiny plastic beads on a windy beach. A van-sized crab hauled a sack of beads from a distant dock for lunch, and it leaks. If it leaks, beads bury beaches.",
+    "goal": "Patch the sack and clean the beach",
+    "situation": "Buckets, a volunteer with a scoop, and a van-sized crab holding a sack.",
     "problem": {
-     "name": "The Itchy Turtle",
-     "stakes": "the beads pile up and hurt sea birds",
-     "pronoun": "it"
+     "name": "The Leaky Sack Crab",
+     "stakes": "the beach gets buried in beads",
+     "pronoun": "he"
     },
     "threat": {
-     "name": "The Itchy Turtle",
-     "pronoun": "it",
-     "want": "the beads pile up and hurt sea birds"
+     "name": "The Leaky Sack Crab",
+     "pronoun": "he",
+     "want": "the beach gets buried in beads"
     },
     "beats": [
-     "Scoop the beads before the tide",
-     "Help the cleaners fill the buckets",
-     "Track the beads stuck on the shell",
-     "Wash the shell and clean the beach"
+     "Follow the beads to the crab's sack",
+     "Scoop beads before the tide returns",
+     "Show testers the distant dock sack",
+     "Patch the sack and clean the beach"
     ],
     "real_setting": {
-     "place_type": "a windy beach coast",
+     "place_type": "a windy beach town",
      "roles": [
-      "beach cleaners",
-      "lab testers",
-      "a walker who found them first"
+      "volunteers with buckets",
+      "testers studying the beads",
+      "a spotter walking the shore"
      ],
-     "situation": "tiny white plastic beads are washing up by the million",
-     "stakes": "the beads hurt sea animals and must be cleaned up",
+     "situation": "tiny white plastic beads are washing up in huge piles.",
+     "stakes": "the beads can hurt sea birds and fish if left alone",
      "arc": [
       "Tiny beads wash up on the beach",
-      "Cleaners scoop them up by the bucket",
-      "Tests show where they came from",
-      "Both shores work to clean up"
+      "Volunteers scoop them up by the bucket",
+      "Tests show they came from far away",
+      "Both shores plan the clean up"
      ]
     },
     "npc_line": {
-     "speaker": "Beach cleaner",
-     "line": "I filled this bucket twice already today."
+     "speaker": "Beach volunteer",
+     "line": "I filled this bucket twice today."
     }
    },
    "ending_facts": {
     "kind": "news",
-    "official_line": "Beads in Denmark probably came from the River Tyne spill.",
-    "whats_happening_now": "Lab tests link the beads to the Tyne pellets. Currents carried them about 390 miles, and Signe Simonsen saw them first on Mandø.",
+    "official_line": "Denmark's environment agency says coastal plastic pellets likely originated from a July spill in England's River Tyne.",
+    "whats_happening_now": "Lab results tie the shore beads to the billion lost in the Tyne, and the 390 mile trip lines up with sea flow. Signe Simonsen saw the first clump on Mandø on 26 September.",
     "headline": "Denmark nurdles may be from Tyne spill, agency says",
     "source": "BBC News",
     "url": "https://www.bbc.co.uk/news/articles/cqy43xv1jwv2o",
@@ -309,54 +310,54 @@
    "scores": null,
    "added_at": "2026-10-25T06:54:06.718Z",
    "opener": {
-    "title": "The Spider Let Go",
-    "quest_title": "The Spider Let Go",
-    "teaser": "A giant spider's old webs are tearing over a busy trail.",
+    "title": "The Boulder That Let Go",
+    "quest_title": "The Boulder That Let Go",
+    "teaser": "A hanging stone slips while a tiny tired troll holds it up.",
     "mood": "tense",
-    "narration": "Guides lead visitors on a trail under a hanging boulder. A giant spider holds the boulder, but her webs are tearing. If it drops, the trail never opens again.",
-    "goal": "Get the boulder down gently and keep the trail open",
-    "situation": "A dusty trail, a guide with a whistle, and a sleepy spider.",
+    "narration": "At a stone trail, staff lead families under a hanging boulder. A tiny tired troll holds the boulder up, but his arms give out. If it drops on the wood path, the trail stays closed.",
+    "goal": "Help the troll set the boulder down gently",
+    "situation": "A dusty boulder, a cracked path, and a tiny troll.",
     "problem": {
-     "name": "The Tired Spider",
-     "stakes": "the boulder drops and the trail closes",
-     "pronoun": "she"
+     "name": "The Tired Troll",
+     "stakes": "the trail stays closed",
+     "pronoun": "he"
     },
     "threat": {
-     "name": "The Tired Spider",
-     "pronoun": "she",
-     "want": "the boulder drops and the trail closes"
+     "name": "The Tired Troll",
+     "pronoun": "he",
+     "want": "the trail stays closed"
     },
     "beats": [
-     "Spot the tearing webs above",
-     "Clear visitors from under the boulder",
-     "Help the spider lower the boulder",
-     "Reopen the path with no harm"
+     "Spot the troll holding the boulder",
+     "Lead families clear of the boulder",
+     "Catch the boulder with the troll",
+     "Set the boulder beside the path"
     ],
     "real_setting": {
-     "place_type": "a natural stone trail with a hanging boulder",
+     "place_type": "a family trail between big stones",
      "roles": [
-      "guides leading walks",
-      "visitors on the trail",
-      "staff closing the site"
+      "attraction staff",
+      "families on the trail",
+      "a trail guide"
      ],
-     "situation": "a huge boulder hangs above a busy trail on the last day of the season",
-     "stakes": "a drop could break the trail and stop visits for a long time",
+     "situation": "A giant boulder hangs above a busy trail on the last day.",
+     "stakes": "the busy trail could close for a long time",
      "arc": [
-      "Visitors walk under the hanging boulder",
-      "Staff clear the trail as it slips",
-      "The boulder lands on the trail below",
-      "The season ends with no harm done"
+      "A boulder hangs above the trail",
+      "Crowds visit on the last day",
+      "The boulder falls to the path",
+      "Staff find everyone is safe"
      ]
     },
     "npc_line": {
-     "speaker": "Guide",
-     "line": "Mind the creaking. I stopped looking up."
+     "speaker": "Trail guide",
+     "line": "It hung there forever. I just swept under it yesterday."
     }
    },
    "ending_facts": {
     "kind": "news",
-    "official_line": "An 80-ton boulder that hung for over a century fell at Polar Caves in Rumney on Oct. 18.",
-    "whats_happening_now": "It hit a walkway for thousands on the final day of the season. No one was hurt.",
+    "official_line": "An 80-ton boulder that hung above visitors fell at Polar Caves in Rumney, New Hampshire on Oct. 18.",
+    "whats_happening_now": "It hit a walkway, and no one was injured.",
     "headline": "Massive 80-ton boulder comes crashing down after more than a century at New Hampshire attraction",
     "source": "FOX Weather",
     "url": "https://www.foxweather.com/earth-space/historic-hanging-boulder-falls-new-hampshire",
@@ -378,54 +379,54 @@
    "scores": null,
    "added_at": "2026-10-25T06:54:06.718Z",
    "opener": {
-    "title": "The Sleepy Sky Moth",
-    "quest_title": "The Sleepy Sky Moth",
-    "teaser": "A giant moth naps past the stars, and its wings blink on a slow timer.",
+    "title": "The Shy Space Clam",
+    "quest_title": "The Shy Space Clam",
+    "teaser": "A shy giant clam in deep space keeps opening and shutting its shell.",
     "mood": "wondrous",
-    "narration": "At a desert observatory, stargazers track a deep sky radio glow. A giant sky moth naps by the dishes and snores out the glow. If the glow keeps blinking, the stargazers lose it for good.",
-    "goal": "Help the sky moth nap without snoring out the glow",
-    "situation": "Cold sand, humming dishes, a sleepy moth as big as a bus, and a screen showing the blinking glow.",
+    "narration": "Sky watchers at a desert dish field track a distant radio buzz. A giant space clam opens and shuts its shell to show off. If it keeps blinking, the buzz list stays unfinished.",
+    "goal": "Get the clam to hold its shell open",
+    "situation": "A control room with headsets, paper charts of the buzz, and a door open to cold desert air.",
     "problem": {
-     "name": "The Sleepy Sky Moth",
-     "stakes": "the glow is lost for good",
+     "name": "The Giant Space Clam",
+     "stakes": "the buzz never gets logged",
      "pronoun": "it"
     },
     "threat": {
-     "name": "The Sleepy Sky Moth",
+     "name": "The Giant Space Clam",
      "pronoun": "it",
-     "want": "the glow is lost for good"
+     "want": "the buzz never gets logged"
     },
     "beats": [
-     "Spot the new glow on screens",
-     "Track the glow while it dims",
-     "Calm the moth as glow brightens",
-     "Tuck in moth and keep watch"
+     "Spot the new buzz on the charts",
+     "Track the clam during quiet years",
+     "Coax the clam to open again",
+     "Log the clam show with stargazers"
     ],
     "real_setting": {
-     "place_type": "a desert observatory with big dishes",
+     "place_type": "a desert observatory with big dish antennas",
      "roles": [
-      "stargazers tracking the glow",
-      "dish crew keeping screens on",
-      "students sorting old sky notes"
+      "astronomers tracking distant buzzes",
+      "archivists keeping old sky charts",
+      "students checking buzz logs"
      ],
-     "situation": "A deep sky radio glow shows up, dims, then grows bright once more.",
-     "stakes": "losing track of a new glow that could teach a lot",
+     "situation": "A distant radio buzz appeared, faded, and brightened again over many years.",
+     "stakes": "A new kind of sky object could go unlogged and unexplained.",
      "arc": [
-      "A new glow shows on the dishes",
-      "The glow dims until it seems gone",
-      "The glow grows bright once more",
-      "Stargazers stay puzzled and keep watch"
+      "A new distant buzz shows up",
+      "The buzz fades from view",
+      "The buzz brightens again after years",
+      "Sky watchers compare old charts to log it"
      ]
     },
     "npc_line": {
-     "speaker": "Stargazer",
-     "line": "I swear I blinked first that time."
+     "speaker": "Sky watcher",
+     "line": "It buzzed last spring. I missed lunch for that."
     }
    },
    "ending_facts": {
     "kind": "news",
-    "official_line": "Astronomers with the Very Large Array in New Mexico found a distant radio source called VT J1906+0849 beyond the Norma Cygnus arm that acts like nothing else in the Milky Way.",
-    "whats_happening_now": "It appeared, faded, then grew bright again over decades in blazing radio light. It matches no known object type.",
+    "official_line": "Astronomers at the Very Large Array in New Mexico found a strange radio signal far out in the Milky Way that acts like nothing else in the galaxy.",
+    "whats_happening_now": "The source called VT J1906+0849 came into view, faded, then grew bright again over decades beyond the Norma-Cygnus arm, matching no known type.",
     "headline": "A Strange Radio Signal in The Far Reaches of The Milky Way Is Behaving Like Nothing Else in The Galaxy",
     "source": "ScienceAlert",
     "url": "https://www.sciencealert.com/a-strange-radio-signal-in-the-far-reaches-of-the-milky-way-is-behaving-like-nothing-else-in-the-galaxy",
@@ -516,54 +517,54 @@
    "scores": null,
    "added_at": "2026-10-25T06:54:06.718Z",
    "opener": {
-    "title": "The Rock Wants Playmates",
-    "quest_title": "The Rock Wants Playmates",
-    "teaser": "A lonely rock kid keeps starting new games and will not nap.",
+    "title": "Crab Lost His Ring",
+    "quest_title": "Crab Lost His Ring",
+    "teaser": "A lonely crab keeps losing his ring during beach games.",
     "mood": "silly",
-    "narration": "Helpers with no jobs sit on a desert island while researchers watch. A lonely rock child lost his ring so he keeps starting new games. If the games never stop, the helpers never finish stacking practice.",
-    "goal": "Help the rock child find his ring",
-    "situation": "A tall rock, scattered toys, and a rock child with a box.",
+    "narration": "On a pretend desert island, idle helpers wait for watchers. A small lonely crab keeps losing his ring and starts shell games. If the ring stays lost, games never end and set jobs fail.",
+    "goal": "Help the crab find his lost ring",
+    "situation": "Warm sand holds scattered shells, a flat stone, and a sad crab.",
     "problem": {
-     "name": "The Lonely Rock Child",
-     "stakes": "the helpers never finish stacking practice",
+     "name": "The Ringless Crab",
+     "stakes": "games never end and set jobs fail",
      "pronoun": "he"
     },
     "threat": {
-     "name": "The Lonely Rock Child",
+     "name": "The Ringless Crab",
      "pronoun": "he",
-     "want": "the helpers never finish stacking practice"
+     "want": "games never end and set jobs fail"
     },
     "beats": [
-     "Watch the helpers start a new game",
-     "Play the rock child's hiding game",
-     "Stack toys on the tall rock",
-     "Help the rock child find his ring"
+     "Wait with bored helpers on warm sand",
+     "Play the crab's find and carry shell games",
+     "Pile shells on the high flat stone",
+     "Find the lost ring and finish set jobs"
     ],
     "real_setting": {
-     "place_type": "a pretend desert island in a computer test",
+     "place_type": "a pretend desert island",
      "roles": [
-      "researchers watching the test",
-      "helpers left alone with no tasks",
+      "researchers watching the island",
+      "computer helpers left with no task",
       "helpers who never visited the island"
      ],
-     "situation": "Helpers with no tasks are left alone on the island.",
-     "stakes": "if play teaches nothing, the helpers stay poor at set jobs",
+     "situation": "Computer helpers were left alone on a pretend island with no task.",
+     "stakes": "If play did not build real skill, the long test of learning without goals would fail.",
      "arc": [
-      "Helpers are left alone with no tasks",
-      "Helpers make up their own games",
-      "Helpers try set jobs on the tall rock",
-      "Playing helpers do well on set jobs"
+      "Helpers wait alone with no job",
+      "Helpers invent games to pass time",
+      "Helpers start the set jobs on high ground",
+      "Playful helpers finish jobs well"
      ]
     },
     "npc_line": {
-     "speaker": "Researcher",
-     "line": "They were quiet for an hour. Now this."
+     "speaker": "Watcher",
+     "line": "We gave them no job, and now this."
     }
    },
    "ending_facts": {
     "kind": "news",
-    "official_line": "MIT researchers left 13 Eko agents with no tasks on a simulated desert island for 30 hours.",
-    "whats_happening_now": "The playing agents made up their own games. They generally beat identical agents that never played.",
+    "official_line": "Researchers from MIT put 13 Eko AIs with no job on a pretend desert island for 30 hours.",
+    "whats_happening_now": "The playful AIs invented games and then beat identical agents on tasks like moving objects onto the tallest rock spire.",
     "headline": "Left alone with nothing to do, AI agents started playing",
     "source": "TechCrunch",
     "url": "https://techcrunch.com/2026/10/22/left-alone-with-nothing-to-do-ai-agents-started-playing/",

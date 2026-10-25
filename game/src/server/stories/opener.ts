@@ -74,8 +74,8 @@ const EXAMPLES = `EXAMPLES (NEWS). Each keeps the real place, people, situation,
    problem_line "A giant snake that eats metal ate the old bridge, and tonight she is nibbling the new railing."
    stakes_line "If the inspector finds bite marks at sunrise, the bridge fails and the town stays cut off."
    goal "Get the snake off the bridge before inspection"
-   situation "Orange barriers, a shiny railing with fresh bite marks, and a dark river that hums."
-   npc_line {"speaker": "Bridge inspector", "line": "Good morning! Is the bridge supposed to be humming?"}
+   situation "Orange barriers, a shiny railing with fresh bite marks, and a dark river full of bubbles."
+   npc_line {"speaker": "Bridge inspector", "line": "Good morning! Why does my railing have teeth marks?"}
    problem {"name": "The Hungry River Snake", "stakes": "the bridge fails and the town stays cut off", "pronoun": "she"}
    beats ["Find what is nibbling the railing", "Lead the snake away from the bridge", "Find her something else to eat", "Pass the sunrise inspection"]
 2. REAL: "Plastic pellets on a country's beaches likely came from a river spill in another country 390 miles away"
@@ -121,6 +121,9 @@ fantasy twist. At the reveal they say "wait, that really happened?"
   roles (2 to 4 people or groups, by role), situation (one plain sentence), stakes (what was really at risk), and
   arc (3 or 4 short steps of what really happened, in order).
 - Every story needs its OWN twist that fits ITS real facts. Never reuse the examples' twists.
+- WORN-OUT MOTIFS (banned unless the real event is literally about them): sleep, sleepy, naps, snoring, yawning,
+  lullabies, humming, glowing, whispering, pale things. Too many stories became "the sleepy glowing thing". Pick
+  a twist with a different kind of energy (hungry, homesick, showing off, ticklish, stubborn, confused, a mix-up).
 - The twist must make plain sense on its own: anyone can picture it right away. Use whole, natural phrases.
   One strange thing, not a pile of riddles. Never add random extra characters.
 
@@ -291,6 +294,18 @@ function contentWords(s: string) {
 
 /** CD: "we don't need a villain, we need a problem." */
 const VILLAIN = /\b(defeat|destroy|fight|battle|villain|enemy|evil|monster|kill|banish|vanquish|trap the|capture the)\b/i;
+/** design/29 #6: the motifs that kept coming back. Each family is one regex so "sleepy" and "asleep" count as sleep. */
+const MOTIFS: [string, RegExp][] = [
+  ["sleep", /\b(sleep\w*|slept|asleep)\b/i],
+  ["snore", /\bsnor\w*/i],
+  ["nap", /\b(naps?|napping|napped)\b/i],
+  ["lullaby", /\blullab\w*/i],
+  ["hum", /\b(hums?|humm\w*)\b/i],
+  ["yawn", /\byawn\w*/i],
+  ["glow", /\bglow\w*/i],
+  ["whisper", /\bwhisper\w*/i],
+  ["pale", /\bpale\b/i],
+];
 const STAKES = /\b(if|unless|or|otherwise|will|won't|can't|cannot|never|forever|before|until|so)\b/i;
 const GOAL_VERBS = new Set(
   "stop find bring keep help catch calm guide leave return clean fix save send stay sleep tonight before after first without close open carry lead move push pull lift wake tell show finish reach patch seal fill empty count give hide wash cool warm feed tidy sort pick climb cross drive ride follow free gather settle protect rescue".split(" "),
@@ -452,6 +467,11 @@ function problems(d: Draft, mode: "news" | "personal", sourceText: string, perso
     if (VILLAIN.test(`${d.problem_name} ${d.problem_line} ${d.goal} ${(Array.isArray(d.beats) ? d.beats : []).join(" ")}`)) list.push("this reads like a villain to defeat: make it a problem to solve (stuck, lost, broken, spreading)");
   }
   for (const p of styleProblems(all)) list.push(p);
+  // Worn-out motifs, unless the source itself is about them (a story about a sleep study may say "sleep").
+  // Only the headline and snippet count as "about it", not the whole article (a stray "humming" there doesn't).
+  const motifSource = sourceText.split("\nARTICLE:")[0];
+  const motifs = [...new Set(MOTIFS.filter(([, re]) => re.test(all) && !re.test(motifSource)).map(([name]) => name))];
+  if (motifs.length) list.push(`worn-out motif (${motifs.join(", ")}): pick a twist with a different kind of energy`);
   const coined = inventedNames(all, sourceText);
   if (coined.length) list.push(`invented names (${coined.join(", ")}): describe things in plain words instead`);
   if (/\byou(r|'re)?\b/i.test(`${d.narration} ${d.situation}`)) list.push(`do not say "you"`);
