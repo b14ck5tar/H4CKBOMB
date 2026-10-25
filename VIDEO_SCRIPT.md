@@ -27,8 +27,8 @@ settings), generated per line by `node scripts/video/vo.mjs` (only changed lines
 | Part | Meta's ask | Time | Criterion |
 |---|---|---|---|
 | Hook + 1 | The problem and how it brings people closer | 0:00-0:30 | Human connection (30%) |
-| 2 | Working demo of the key features | 0:30-2:00 | Working demo (20%), Originality (20%), connection again |
-| 3 | How AI plays a role | 2:00-2:30 | AI essential + well integrated (25%) |
+| 2 | Working demo of the key features | 0:30-2:00 | Execution & demo quality (25%), Originality (20%), connection again |
+| 3 | How AI plays a role | 2:00-2:30 | AI centrality (25%) |
 | 4 | Tools and harnesses | 2:30-2:55 | How AI helped build it |
 
 Criterion chips (small, in the caption band): *Human connection* · *Working demo* · *Based on a true story* ·
