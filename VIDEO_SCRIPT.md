@@ -12,7 +12,7 @@ settings), generated per line by `node scripts/video/vo.mjs` (only changed lines
 |---|---|
 | First 10 s hook weak and irrelevant | The CD's pick: the real headline cold open (below) |
 | The 20 on the die moves weird | No old-teaser die. The die shot comes only from the new build's recording (one die number, f7b1f48) |
-| "Some of them are genius, others not so much" | Gone. Now: "Use one, and their name goes up on screen." (the AI judges ideas, never people) |
+| "Some of them are genius, others not so much" | Gone. Now (CD pick): "Your friends throw in ideas, and the best part is arguing over which one to use." (the AI judges ideas, never people) |
 | "Weirdly good at" | "What's your secret strength?" (CD, everywhere; the game copy is changing to match) |
 | Final words | End card: **PLAY FREE AT groupproject-game.vercel.app** + a QR (checked: it decodes to that URL) |
 | Harsh S and crackle | Sarah on ElevenLabs, de-essed, low-passed at 11 kHz, true peak limited to -2 dB, no time-stretching |
@@ -50,8 +50,8 @@ someone has to run the game, so most groups never play. / So Meta's Muse runs it
 are the controllers, and every story really happened.
 **Part 2:** Scan the code. No app, no account. Name your character, describe them in one line, and add your secret
 strength. / Your hero is exactly what you typed, painted in by Muse. / Muse turns a real, odd news story into tonight's
-adventure. / On your turn, you tell the table your plan, and your friends pitch ideas from their phones. / Use one,
-and their name goes up on screen. / Every hero has Guts, Brains and Charm: force, tricks and talk. / Swipe up to
+adventure. / On your turn, you tell the table your plan. / Your friends
+throw in ideas, and the best part is arguing over which one to use. / Every hero has Guts, Brains and Charm: force, tricks and talk. / Swipe up to
 throw. Code rolls the dice, never the AI. / Muse takes your plan literally, writes what happens next, and paints a
 new scene. / For the finale, everyone gets thirty seconds to convince each other. / Then you back a plan, and the
 whole table shakes their phones at once. / And the twist. Here's what you did. / And here's what really happened.

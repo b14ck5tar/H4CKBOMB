@@ -25,9 +25,9 @@ Narrator: Sarah (ElevenLabs, the game's Combo settings) for every line. The hars
 out. Captions sit in a band under the footage.
 
 ## Replacing "Some of them are genius, others not so much"
-1. ⭐ "Your friends pitch ideas from their phones. **Use one, and their name goes up on screen.**"
+1. "Your friends pitch ideas from their phones. **Use one, and their name goes up on screen.**"
 2. "Everyone gets a say. The wilder the idea, the bigger the laugh."
-3. "Your friends throw in ideas, and the best part is arguing over which one to use."
+3. ⭐ **CD pick:** "Your friends throw in ideas, and the best part is arguing over which one to use."
 
 ## What changes from the CD's cut (each note + what is now out of date)
 - **The first 10 s:** the Minnesota "egg" opener is replaced by the headline cold open (that story isn't in judge mode).

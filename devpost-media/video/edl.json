@@ -173,7 +173,7 @@
   {
    "id": "d4",
    "part": "demo",
-   "vo": "On your turn, you tell the table your plan, and your friends pitch ideas from their phones.",
+   "vo": "On your turn, you tell the table your plan.",
    "gameVol": 0.3,
    "shots": [
     {
@@ -192,7 +192,7 @@
   {
    "id": "d5",
    "part": "demo",
-   "vo": "Use one, and their name goes up on screen.",
+   "vo": "Your friends throw in ideas, and the best part is arguing over which one to use.",
    "pad": 2.5,
    "gameVol": 0.4,
    "shots": [
