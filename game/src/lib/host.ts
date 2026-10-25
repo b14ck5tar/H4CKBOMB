@@ -229,6 +229,15 @@ export function firstAction(text: string): { action: string; cut: boolean } {
   return { action: text, cut: false };
 }
 
+/** Camera directions for decision paintings, rotated so consecutive pictures are clearly different shots. */
+const SHOTS = [
+  "close-up on the heroes' faces and hands in the middle of the action",
+  "wide shot showing the whole place and how small the heroes are in it",
+  "low angle looking up past the heroes at the impossible thing",
+  "over-the-shoulder shot from behind one hero, looking at what they face",
+  "high angle looking down on the heroes and the scene around them",
+];
+
 /** One action, ~140 characters, one line. */
 function cleanPlan(text: unknown) {
   return String(text ?? "").replace(/[<>]/g, "").replace(/\s+/g, " ").trim().slice(0, PLAN_MAX);
@@ -1384,7 +1393,10 @@ export class GameHost {
     // Full Story: the table votes, unless one was picked by link.
     if (this.quick && !this.pinned && this.state.source !== "ours") {
       const prep = this.quickPrep;
-      if (prep?.ready && prep.seed) this.useQuest(prep.seed.id);
+      if (prep?.ready && prep.seed) {
+        this.useQuest(prep.seed.id);
+        this.quickPrep = null; // used: the next group gets a fresh one
+      }
       else {
         if (prep) this.note("source", "Quick Tale", "The live story wasn't ready in time, so a curated story stands in.");
         this.useQuest(this.freshCurated());
@@ -1867,7 +1879,8 @@ export class GameHost {
         rating: this.state.rating,
         sceneUrl: prev,
         sceneText: where,
-        moment,
+        // A different camera every time, so consecutive pictures never look like the same shot.
+        moment: `${moment} Camera: ${SHOTS[this.artSeq % SHOTS.length]}.`,
         style: this.state.cast?.art ?? "neon",
         newScene: true,
       }),
@@ -2776,7 +2789,8 @@ export class GameHost {
     this.mirrorFate.clear();
     // Quick Tale: the next live story starts being made right away, so the next group just hits Start.
     void prev;
-    this.quickPrep = null;
+    // A live story made ready during this game (and not played) waits for the next group.
+    if (!this.quickPrep?.ready) this.quickPrep = null;
     this.prepareQuick();
   }
 
