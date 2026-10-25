@@ -22,7 +22,7 @@ import { Reactions } from "./Reactions";
 import { Avatar, Hope, ThankHearts, useFastNow } from "./TV";
 import { KeepsakeQR } from "./Keepsake";
 import { FEATURES } from "@/lib/features";
-import { dice, music, playSfx, playStorySfx, useMusic } from "@/lib/sound";
+import { dice, music, playSfx, playStorySfxCues, useMusic } from "@/lib/sound";
 import { EndingMontage, FinalePitch, FinaleShake, FinaleVote, HudStrip, OutcomeCaption, Particles, PhaseSwap, PlanCard, QualityMeter, SuggestionBubbles, TurnCard, TvStage, TIER_LOOK } from "@/components/tvskin";
 import { QUICK_TURN_MS, TURN_MS, VOTE_MS } from "@/lib/rules";
 import type { CardHero, MontagePanel } from "@/components/tvskin";
@@ -1359,11 +1359,11 @@ function moodFor(s: GameState, title: boolean): Mood {
   return "scene";
 }
 
-/** The slide's one story sound (Muse's pick, state.sfx), under the narration. Silent unless FEATURES.storySfx. */
+/** The slide's story sounds (Muse's 1-3 cues, state.sfx), each near its word in the narration. Silent unless FEATURES.storySfx. */
 function useStorySfx(s: GameState) {
   const at = s.sfx?.at ?? 0;
   useEffect(() => {
-    if (at && s.sfx) void playStorySfx(s.sfx.id);
+    if (at && s.sfx) void playStorySfxCues(s.sfx.cues?.length ? s.sfx.cues : [{ id: s.sfx.id, word: 0 }]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [at]);
 }
