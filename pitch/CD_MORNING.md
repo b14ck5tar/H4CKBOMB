@@ -1,13 +1,13 @@
 # CD morning: record the video, submit Devpost, leave at 11
 
 For the CD. Everything here happens after the final build is deployed. The shot list and the full spoken script are
-in VIDEO_SCRIPT.md; this page is the order to do it in. **You record 8:00-8:30 and leave ~8:30. The partner submits
-Devpost by 11:30 with `pitch/PARTNER_SUBMIT.md`.**
+in VIDEO_SCRIPT.md; this page is the order to do it in. **You record 9:00-9:45, submit Devpost by ~10:15, and leave
+~10:20. The partner is the backup submitter (`pitch/PARTNER_SUBMIT.md`).**
 
-**Schedule (laptop clock, the CD's call):** freeze **7:20**, deploy **~7:30**, timed judge games **7:30-8:00**
-(`pitch/REHEARSAL.md`), **you record the video 8:00-8:30**, you leave **~8:30**. Everything for Devpost is paste-ready
-already (DEVPOST.md, `devpost-media/gallery-final/`). Before you leave, hand the partner the raw recordings + this page;
-whoever finishes the edit/upload follows §6-7, and the partner submits with `pitch/PARTNER_SUBMIT.md`.
+**Schedule (laptop clock, the CD's call):** features frozen from **7:20**; playtest → fix cycles until **9:00**
+(`pitch/REHEARSAL.md`); **video 9:00-9:45**; **Devpost submitted by ~10:15**; you leave **~10:20**. Everything for
+Devpost is paste-ready already (DEVPOST.md, `devpost-media/gallery-final/`). If the edit or the upload isn't done by
+10:15, submit anyway and hand the partner the files + `pitch/PARTNER_SUBMIT.md`: they add the video link before 11:30.
 
 **Recording on localhost:3000** (the partner's take) is fine: full screen (F11) so the address bar is hidden, and
 check the TV doesn't show "Local mode" (it means the rooms aren't connected).
@@ -106,13 +106,14 @@ Never on screen: hotkeys, the "?" help, "Local mode", the address bar, any key, 
 - [ ] YouTube, **Unlisted**. Open the link in a private window: it plays without a login.
 - [ ] Copy the MP4 to your phone: it's the backup video for the judge table.
 
-## 8. Devpost: the partner submits (`pitch/PARTNER_SUBMIT.md`)
+## 8. Devpost: submit by ~10:15 (follow `pitch/PARTNER_SUBMIT.md` §2-3; it works for you too)
 
 Everything is paste-ready: the text (DEVPOST.md, your Accomplishments line is filled in), the gallery
-(`devpost-media/gallery-final/`, upload 1-6 in order), tracks (Meta, Most Entertaining, SerpApi). Before you leave:
-- [ ] Add the partner as a teammate on the Devpost project (they can't edit it otherwise).
+(`devpost-media/gallery-final/`, upload 1-6 in order), tracks (Meta, Most Entertaining, SerpApi).
+- [ ] Add the partner as a teammate on the Devpost project (the backup path needs it).
+- [ ] Submit, then screenshot the "submitted" page into the team hub notes.
 
-## 9. Before you leave (~8:30)
+## 9. Before you leave (~10:20)
 
 - [ ] Message the partner: the video link (or "the edit isn't done, the files are in …"), and where the MP4 is.
 - [ ] The partner has `pitch/CHEAT_SHEET.md` (or the team hub's Judging section) on their phone.

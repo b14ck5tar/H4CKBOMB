@@ -1,6 +1,7 @@
-# Partner: submit Devpost (by 11:30 AM, aim for 11:00)
+# Devpost submit (the CD by ~10:15; the partner is the backup, by 11:30)
 
-One page, in order. Everything you paste is already written. Never paste a key, and close Discord, DMs and key files
+The CD plans to press Submit before leaving at ~10:20. Use this page if they couldn't, or to add the video link
+after. One page, in order. Everything you paste is already written. Never paste a key, and close Discord, DMs and key files
 before sharing your screen with anyone.
 
 ## 0. Before you start (2 min)
