@@ -25,10 +25,10 @@ export const STORY_SFX_ENGINE: Record<string, SfxName> = {
   drumroll: "drumroll",
 };
 
-// Loudness targets (RMS, dBFS). The narrator's speech sits near -20: line cues ~9 dB under her, the finale build-up a
-// touch quieter, the payoff hit the loudest story sound. Peaks are capped so nothing ever clips.
-const TARGET_DB = { line: -29, buildup: -31, payoff: -22 } as const;
-const PEAK_CAP = { line: 0.35, buildup: 0.35, payoff: 0.8 } as const;
+// Loudness targets (RMS, dBFS). The narrator's speech measures -13 to -16 dBFS: line cues ~10 dB under her, the
+// finale build-up a touch quieter, the payoff hit the loudest story sound (it lands right after her line). Peaks capped.
+const TARGET_DB = { line: -24, buildup: -26, payoff: -17 } as const;
+const PEAK_CAP = { line: 0.45, buildup: 0.45, payoff: 0.9 } as const;
 type Kind = keyof typeof TARGET_DB;
 function gainFor(id: string, kind: Kind) {
   const l = level.get(id);
