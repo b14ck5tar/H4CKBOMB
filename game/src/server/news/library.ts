@@ -43,9 +43,19 @@ const canWrite = () => process.env.NODE_ENV !== "production" && process.env.STOR
 
 const g = globalThis as unknown as { __storyLibrary?: Map<string, LibraryStory>; __storyLibraryWrite?: Promise<void> };
 
+/**
+ * Stories that must never be picked again (CD decisions), by id or headline. Checked on load, on every add, in the
+ * /api/news fill, the seed fallback and the live pipeline, so no refresh can bring them back.
+ */
+export const EXCLUDED_IDS = new Set(["norwich-batman"]);
+const EXCLUDED_HEADLINES = [/\bbatman\b/i]; // the Norwich Batman handbag chase (CD, Sun 10:50)
+export function isExcluded(s: { id?: string; headline?: string }) {
+  return EXCLUDED_IDS.has(String(s.id ?? "")) || EXCLUDED_HEADLINES.some((re) => re.test(String(s.headline ?? "")));
+}
+
 function lib(): Map<string, LibraryStory> {
   if (!g.__storyLibrary) {
-    g.__storyLibrary = new Map((seedLibrary as LibraryFile).stories.map((s) => [s.id, s as LibraryStory]));
+    g.__storyLibrary = new Map((seedLibrary as LibraryFile).stories.filter((s) => !isExcluded(s)).map((s) => [s.id, s as LibraryStory]));
   }
   return g.__storyLibrary;
 }
@@ -69,6 +79,7 @@ function persist() {
 export function addToLibrary(list: NewsCandidate[]) {
   let changed = false;
   for (const c of list) {
+    if (isExcluded(c)) continue;
     const old = lib().get(c.id);
     if (old && old.storyability >= c.storyability) continue;
     lib().set(c.id, {
@@ -133,7 +144,7 @@ export function fillFromLibrary(live: NewsCandidate[], rating: Rating, played: S
   const out: ServedStory[] = [];
   const seen = new Set<string>();
   const take = (s: LibraryStory | NewsCandidate, origin: ServedStory["origin"]) => {
-    if (out.length >= want || seen.has(s.id) || played.has(s.id) || !questAllowed(s.rating, rating)) return;
+    if (out.length >= want || seen.has(s.id) || played.has(s.id) || isExcluded(s) || !questAllowed(s.rating, rating)) return;
     seen.add(s.id);
     out.push(serve(s, origin));
   };

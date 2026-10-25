@@ -508,55 +508,6 @@
    },
    "one_sentence_setup": "In Dendermonde, Belgium, workers found millions in gold hidden in a cellar wall and must decide its fate.",
    "dilemma": "Keep the gold or hand it in"
-  },
-  {
-   "id": "norwich-batman",
-   "origin": "curated",
-   "headline": "Pow! Man in Batman costume chases down suspected Norwich handbag thief",
-   "snippet": "On a night out in Norwich, England, a man dressed as Batman chased a suspected handbag thief, with friends dressed as Poison Ivy and Mister Fantastic. Nobody was hurt, and the bag came back with everything inside.",
-   "source": "Irish Examiner",
-   "url": "https://www.irishexaminer.com/world/arid-41915671.html",
-   "date": "2026-09-19",
-   "place": "An old cathedral city in England",
-   "rating": "adults",
-   "storyability": 5,
-   "added_at": "2026-10-25T15:41:31.022Z",
-   "checklist": {
-    "box1": {
-     "yes": true,
-     "why": "Tracking thief across town needs crew"
-    },
-    "box2": {
-     "yes": true,
-     "why": "Catch, release, or call police"
-    },
-    "box3": {
-     "yes": true,
-     "why": "Costumed nighttime chase flows well"
-    },
-    "box4": {
-     "yes": true,
-     "why": "Speed, tracking, distraction powers fit chase"
-    },
-    "box5": {
-     "yes": true,
-     "why": "Chase can split many ways"
-    },
-    "box6": {
-     "yes": true,
-     "why": "Real Batman caught thief surprises everyone"
-    },
-    "box7": {
-     "yes": true,
-     "why": "Clear chase with clear stakes"
-    },
-    "box8": {
-     "yes": true,
-     "why": "Catch thief or let police handle"
-    }
-   },
-   "one_sentence_setup": "In Norwich, England, a costumed crew chases a handbag thief through town to get the bag back.",
-   "dilemma": "Catch the thief yourselves or let police handle it"
   }
  ]
 }

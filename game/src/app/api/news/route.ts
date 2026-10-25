@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { unstable_cache } from "next/cache";
 import { getNewsCandidates, lastStats, type NewsCandidate } from "@/server/news/candidates";
-import { fillFromLibrary } from "@/server/news/library";
+import { fillFromLibrary, isExcluded } from "@/server/news/library";
 import { DEFAULT_RATING, isRating, questAllowed } from "@/lib/rating";
 import SEEDS from "@/data/seed_quests.json";
 import type { Rating } from "@/lib/types";
@@ -60,7 +60,7 @@ export async function GET(req: NextRequest) {
   // Never run out (the vote needs 3, the Quick Tale needs 1): top up from the hand-written seeds, gated or not.
   if (quests.length < MIN_STORIES) {
     const have = new Set(quests.map((q) => q.id));
-    const seeds = (SEEDS as SeedLike[]).filter((x) => !have.has(x.id) && questAllowed(x.rating ?? "teens", rating));
+    const seeds = (SEEDS as SeedLike[]).filter((x) => !have.has(x.id) && !isExcluded({ id: x.id, headline: x.the_real_story?.headline }) && questAllowed(x.rating ?? "teens", rating));
     const fresh = seeds.filter((x) => !played.has(x.id));
     for (const x of [...fresh, ...seeds.filter((x) => played.has(x.id))]) {
       if (quests.length >= MIN_STORIES) break;

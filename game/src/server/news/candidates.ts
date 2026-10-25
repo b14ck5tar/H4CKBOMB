@@ -4,7 +4,7 @@ import { museJSON } from "@/server/muse";
 import type { Rating } from "@/lib/types";
 import { dedupe, fetchArticleFacts, fetchSerpApiFixture, fetchSerpApiParams, normalizeTitle, serpApiCalls, type NewsItem } from "./sources";
 import { ADULT_ONLY, HARD_BLOCK, SOURCE_DENYLIST, softMatch } from "./filter";
-import { addToLibrary } from "./library";
+import { addToLibrary, isExcluded } from "./library";
 
 // "Odd news" story candidates for the story vote and the Quick Tale (design/24).
 // CD: "only choose ones that can be storytold/dramatized; otherwise we're grasping at straws."
@@ -316,7 +316,7 @@ async function gatePhase(raw: NewsItem[], stats: CandidateStats, live: boolean, 
       stats.rejected.push({ title: item.title, reason: `regex: ${hit}` });
       continue;
     }
-    if (SOURCE_DENYLIST.test(item.source)) continue;
+    if (SOURCE_DENYLIST.test(item.source) || isExcluded({ headline: item.title })) continue;
     const t = Date.parse(item.date);
     if (live && !Number.isNaN(t) && now - t > MAX_AGE_MS) continue;
     if (/^(live|watch|listen|quiz|photos?|video|opinion)\b[:|-]/i.test(item.title) || /\?$/.test(item.title)) continue;
