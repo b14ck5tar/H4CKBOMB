@@ -156,8 +156,14 @@ def render_shot(shot, dur, beat, chip, seg, vol):
         z = shot.get("zoom", 1.06)
         n = int(dur * FPS)
         inputs = ["-i", img]
+        if shot.get("slam"):  # lands from 2.4x in 5 frames, shakes, a white flash on impact, then a slow push
+            zexp = f"if(lt(on,5),2.4-1.4*on/5,1+({z}-1)*(on-5)/{n})"
+            sx = "if(between(on,5,12),18*sin(on*2.4),0)"
+            post = ",drawbox=x=0:y=0:w=iw:h=ih:color=white@0.55:t=fill:enable='between(n,5,6)'"
+        else:
+            zexp, sx, post = f"1+({z}-1)*on/{n}", "0", ""
         fg = (f"[0:v]scale={W*2}:{H*2}:force_original_aspect_ratio=increase,crop={W*2}:{H*2},"
-              f"zoompan=z='1+({z}-1)*on/{n}':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d={n}:s={W}x{H}:fps={FPS}[pic];" + framed(cap))
+              f"zoompan=z='{zexp}':x='iw/2-(iw/zoom/2)+{sx}':y='ih/2-(ih/zoom/2)':d={n}:s={W}x{H}:fps={FPS}{post}[pic];" + framed(cap))
         has_audio = False
     elif shot.get("card"):
         inputs, fg = card_filter(shot["card"], seg, dur)
@@ -191,7 +197,7 @@ def main():
     edl = json.load(open(edl_path, encoding="utf-8"))
     EDL.update(edl)
     only = sys.argv[sys.argv.index("--only") + 1] if "--only" in sys.argv else None
-    segs, vo_marks, t = [], [], 0.0
+    segs, vo_marks, sfx_marks, t = [], [], [], 0.0
     for beat in edl["beats"]:
         vo_path = os.path.join(VID, "vo", f"{beat['id']}.wav")
         words = len(re.findall(r"\w+", beat.get("vo", "")))
@@ -205,6 +211,8 @@ def main():
             continue
         if os.path.exists(vo_path):
             vo_marks.append((t + lead, vo_path))
+        for fx in beat.get("sfx", []):
+            sfx_marks.append((t + fx.get("at", 0), p(fx["file"]), fx.get("vol", 0.6)))
         shots, left = beat["shots"], dur
         for i, shot in enumerate(shots):
             d = left if i == len(shots) - 1 else min(shot["dur"], left)
@@ -233,10 +241,16 @@ def main():
             ins += ["-i", path]
             chains.append(f"[{k+1}:a]aresample=48000,aformat=channel_layouts=stereo,adelay={int(at*1000)}:all=1[v{k}]")
         mix = "".join(f"[v{k}]" for k in range(len(vo_marks)))
+        k0 = len(vo_marks)
+        for j, (at, path, vol) in enumerate(sfx_marks):
+            ins += ["-i", path]
+            chains.append(f"[{k0+j+1}:a]aresample=48000,aformat=channel_layouts=stereo,volume={vol},adelay={int(at*1000)}:all=1[s{j}]")
+        fxmix = "".join(f"[s{j}]" for j in range(len(sfx_marks)))
+        fxn = len(sfx_marks)
         fg = (";".join(chains) + f";{mix}amix=inputs={len(vo_marks)}:normalize=0,"
-              "highpass=f=80,deesser=i=0.45:m=0.5:f=0.5,lowpass=f=11000,volume=1.0,asplit[vo][sc];"
-              "[0:a]volume=0.9[game];[game][sc]sidechaincompress=threshold=0.03:ratio=6:attack=20:release=350[duck];"
-              "[duck][vo]amix=inputs=2:normalize=0,loudnorm=I=-16:TP=-2:LRA=11,alimiter=limit=0.79[a]")
+              f"highpass=f=80,deesser=i=0.45:m=0.5:f=0.5,lowpass=f=11000,volume=1.0,asplit[vo][sc];"
+              f"[0:a]volume=0.9[game];[game][sc]sidechaincompress=threshold=0.03:ratio=6:attack=20:release=350[duck];"
+              f"[duck][vo]{fxmix}amix=inputs={2 + fxn}:normalize=0,loudnorm=I=-16:TP=-2:LRA=11,aresample=48000,alimiter=limit=0.75:level=0[a]")
         run([*ins, "-filter_complex", fg, "-map", "0:v", "-map", "[a]", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k",
              "-ar", "48000", "-movflags", "+faststart", final])
     else:

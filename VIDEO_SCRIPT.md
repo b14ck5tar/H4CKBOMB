@@ -10,10 +10,10 @@ settings), generated per line by `node scripts/video/vo.mjs` (only changed lines
 
 | Note | Fix |
 |---|---|
-| First 10 s hook weak and irrelevant | New hook (options below, ⭐ A) |
+| First 10 s hook weak and irrelevant | The CD's pick: the real headline cold open (below) |
 | The 20 on the die moves weird | No old-teaser die. The die shot comes only from the new build's recording (one die number, f7b1f48) |
 | "Some of them are genius, others not so much" | Gone. Now: "Use one, and their name goes up on screen." (the AI judges ideas, never people) |
-| "Weirdly good at" | "Secret talent" (the game's wording; the CD may pick "secret strength", then 1 line is re-voiced) |
+| "Weirdly good at" | "What's your secret strength?" (CD, everywhere; the game copy is changing to match) |
 | Final words | End card: **PLAY FREE AT groupproject-game.vercel.app** + a QR (checked: it decodes to that URL) |
 | Harsh S and crackle | Sarah on ElevenLabs, de-essed, low-passed at 11 kHz, true peak limited to -2 dB, no time-stretching |
 
@@ -32,27 +32,24 @@ game's own text.
 
 Never on screen or in the words: danger meter, Needs 12+, Catch, Boost, Mirror, clues, Convince the DM, Hope,
 "fairytale", "Once Upon a Roll", "weirdly good at", "the one group project where everyone actually shows up" (as the
-last words), "some of them are genius", hotkeys, the "?" help, "Local mode", the address bar, any key or DM.
+last words), "some of them are genius", "secret talent", hotkeys, the "?" help, "Local mode", the address bar, any key or DM.
 `how-it-works.png` and `deck-slide-4.png` are out (they still show "Convince the DM", "Secret clue", "Gus's turn").
 
-## Hook options (first 10 s)
+## The hook (first 10 s), the CD's pick
 
-- **A ⭐ "This really happened":** the real clipping on black, Sarah: "This really happened." Fast cuts: a friend's
-  idea with their name and +1, an outcome. Sarah: "Tonight, your friends decide what happens next." Title card:
-  Group Project, *based on a true story*. Opens on what nobody else has, and it is the game's real payoff.
-- **B "Phones out, for once":** deck slide 2, "Every hangout ends with everyone on their own phone." The same phones
-  scan the QR and a hero pops onto the TV: "So we turned the phones into controllers."
-- **C "Your friend's idea saved us":** the +1 card, the die lands high: "Your friend's idea just saved the whole
-  table." Needs a lucky high roll in the take.
+The real headline slams onto black (whoosh + brass hit), taken from this morning's own reveal so it matches the story
+the footage plays (judge mode rotates the shark, the gold and the Batman stories). Sarah: **"What would YOU do?"**
+Cut: the phones light up (the "Shake!" phones from the CD's cut, `video-source-cd.mp4` 0:58), the TV, then the logo
+sting from the CD's cut (0:10). The headline is the real clipping; nothing claims the game's events happened.
 
 ## The voiceover (Sarah; one line per beat, as in edl.json)
 
-**Hook:** This really happened. / Tonight, your friends decide what happens next.
+**Hook:** What would YOU do?
 **Part 1:** When friends hang out, a lot of the night is everyone on their own phone. / Tabletop games fix that. But
 someone has to run the game, so most groups never play. / So Meta's Muse runs it. The TV is the table, your phones
 are the controllers, and every story really happened.
 **Part 2:** Scan the code. No app, no account. Name your character, describe them in one line, and add your secret
-talent. / Your hero is exactly what you typed, painted in by Muse. / Muse turns a real, odd news story into tonight's
+strength. / Your hero is exactly what you typed, painted in by Muse. / Muse turns a real, odd news story into tonight's
 adventure. / On your turn, you tell the table your plan, and your friends pitch ideas from their phones. / Use one,
 and their name goes up on screen. / Every hero has Guts, Brains and Charm: force, tricks and talk. / Swipe up to
 throw. Code rolls the dice, never the AI. / Muse takes your plan literally, writes what happens next, and paints a
@@ -83,7 +80,7 @@ One full judge game (~6 min) gives everything below. Then send me the two files.
 | # | Where | Shot | Notes |
 |---|---|---|---|
 | S1 | TV | Lobby: QR, heroes arrive | |
-| S2 | Phone | Type the character name, the one-line hero, the secret talent; tap Make my hero | Type slowly; one clear noun ("a night-shift baker who argues with her sourdough") |
+| S2 | Phone | Type the character name, the one-line hero, the secret strength; tap Make my hero | Type slowly; one clear noun ("a night-shift baker who argues with her sourdough") |
 | S3 | TV | The hero card pops in, painted, matching what you typed | |
 | S4 | TV | Opener painting + Sarah reading | Let it play |
 | S5 | Phone + TV | Your turn: quips, the friend's-idea card, tap a friend's (test player's) idea; TV shows "+ name +1" | The money shot |

@@ -1,25 +1,44 @@
 {
  "out": "group-project",
- "notes": "Draft: PT = playtests/playtest-0631-judge.mp4 (old build, placeholder footage). Swap in raw/tv.mp4 and raw/phone.mp4 from the 9:00 take. TV crop of PT = [0,52,1295,903], phone = [1300,45,605,910], both = [0,52,1905,903].",
+ "notes": "Draft v2 on the CD's cut (video-source-cd.mp4, muted, its still-valid pieces only) + the 6:31 playtest (old build) + placeholders. Swap in raw/tv.mp4 + raw/phone.mp4 after 9:00; the hook headline comes from the take's own reveal (S12).",
  "beats": [
   {
    "id": "h1",
    "part": "hook",
-   "vo": "This really happened.",
-   "min": 2.6,
+   "vo": "What would YOU do?",
+   "min": 3.0,
    "shots": [
     {
-     "img": "devpost-media/video/stills/clipping-draft.png",
-     "zoom": 1.1
+     "img": "devpost-media/video/stills/headline-slam.png",
+     "slam": true,
+     "zoom": 1.05
+    }
+   ],
+   "lead": 1.1,
+   "pad": 0.6,
+   "sfx": [
+    {
+     "file": "game/public/sfx/whoosh.mp3",
+     "at": 0,
+     "vol": 0.5
+    },
+    {
+     "file": "game/public/sfx/brass-hit.mp3",
+     "at": 0.15,
+     "vol": 0.7
     }
    ]
   },
   {
    "id": "h2",
    "part": "hook",
-   "vo": "Tonight, your friends decide what happens next.",
-   "gameVol": 0.35,
+   "gameVol": 0,
    "shots": [
+    {
+     "src": "devpost-media/video-source-cd.mp4",
+     "in": 58.2,
+     "dur": 1.8
+    },
     {
      "src": "devpost-media/playtests/playtest-0631-judge.mp4",
      "in": 234.5,
@@ -28,29 +47,28 @@
       52,
       1295,
       903
-     ],
-     "dur": 1.6
-    },
-    {
-     "src": "devpost-media/playtests/playtest-0631-judge.mp4",
-     "in": 316.5,
-     "crop": [
-      0,
-      52,
-      1295,
-      903
      ]
+    }
+   ],
+   "caption": "",
+   "min": 3.2,
+   "sfx": [
+    {
+     "file": "game/public/sfx/magic-burst.mp3",
+     "at": 0.1,
+     "vol": 0.5
     }
    ]
   },
   {
    "id": "h3",
    "part": "hook",
-   "min": 3.2,
+   "min": 2.6,
    "gameVol": 0,
    "shots": [
     {
-     "card": "title"
+     "src": "devpost-media/video-source-cd.mp4",
+     "in": 10.2
     }
    ]
   },
@@ -98,7 +116,7 @@
   {
    "id": "d1",
    "part": "demo",
-   "vo": "Scan the code. No app, no account. Name your character, describe them in one line, and add your secret talent.",
+   "vo": "Scan the code. No app, no account. Name your character, describe them in one line, and add your secret strength.",
    "gameVol": 0.3,
    "shots": [
     {
@@ -229,7 +247,7 @@
    "part": "demo",
    "vo": "Muse takes your plan literally, writes what happens next, and paints a new scene.",
    "pad": 5.0,
-   "gameVol": 0.7,
+   "gameVol": 0.0,
    "shots": [
     {
      "src": "devpost-media/playtests/playtest-0631-judge.mp4",
@@ -239,7 +257,12 @@
       52,
       1295,
       903
-     ]
+     ],
+     "dur": 6.6
+    },
+    {
+     "src": "devpost-media/video-source-cd.mp4",
+     "in": 53.3
     }
    ]
   },
