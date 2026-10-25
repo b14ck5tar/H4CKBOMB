@@ -106,7 +106,7 @@ const FINAL_TUMBLE_MS = 2000;
 const FINAL_LAND_MS = 1400;
 const FINAL_RESULT_MS = 3500;
 const TITLE_CARD_MS = 5200; // Full Story: the title card before scene 1
-const ROLL_HOLD_MS = 1400; // after the die lands: its math stays up for a beat
+const ROLL_HOLD_MS = 3400; // after the die lands: the quality meter fills and its grade reads (~3 s)
 /** The outcome stays up long enough to read it out loud, and no longer. */
 const outcomeMs = (text: string) => Math.min(12_000, Math.max(6500, text.split(/\s+/).length * 330 + 3200));
 // Autopilot: a phone that's said nothing for this long (mid-story) is away; its hero keeps playing on its own.
@@ -128,6 +128,26 @@ const BAND_RANK: Record<Band, number> = { LEGENDARY: 0, SUCCESS: 1, YES_BUT: 2, 
 function openerText(sc: SeedScene) {
   const npc = sc.npc_line?.speaker && sc.npc_line?.line ? ` ${sc.npc_line.speaker} says: "${sc.npc_line.line}"` : "";
   return `${sc.narration}${npc}`;
+}
+
+type OutcomeData = { text: string; situation?: string; why?: string; now_goal?: string; where?: string; changed?: string; new_prop?: string; memorable?: string; scene?: string };
+
+/** In a sentence that names a they/them hero, "he/she/his/her/him" become "they/their/them" (a cheap post-check). */
+function fixPronouns(text: string, heroes: { name: string; pronouns: string }[]) {
+  const they = heroes.filter((h) => /^they/i.test(h.pronouns)).map((h) => h.name);
+  if (!they.length) return text;
+  const others = heroes.filter((h) => !/^they/i.test(h.pronouns)).map((h) => h.name);
+  return text
+    .split(/(?<=[.!?])\s+/)
+    .map((sent) => {
+      if (!they.some((n) => sent.includes(n)) || others.some((n) => sent.includes(n))) return sent;
+      return sent
+        .replace(/\b(he|she)\b/g, "they")
+        .replace(/\b(He|She)\b/g, "They")
+        .replace(/\b(his|her)\b(?=\s+\w)/g, "their")
+        .replace(/\b(him|her)\b/g, "them");
+    })
+    .join(" ");
 }
 
 /** A live odd-news candidate (GET /api/news). */
@@ -1908,6 +1928,7 @@ export class GameHost {
         earlier: this.state.log.map((l) => `${l.hero} (${l.band}): ${l.narration}`).slice(-4),
         story_so_far: this.storySoFar(),
         real_event: this.seed?.real_event,
+        pronouns: this.pronounMap(),
       }),
       10_000,
       (d, f): Verdict | null => (f || !d?.tier ? fb() : { ...fb(), ...d, fallback: false, interpretation: d.interpretation || `${h.name} tries their plan` }),
@@ -1953,7 +1974,7 @@ export class GameHost {
     if (finale) return this.setTimer(this.quick ? 2800 : RULING_MS, () => this.startFinalRoll(judged, roll));
     this.pendingRoll = roll;
     this.outcomeAt = 0;
-    this.outcomeP = this.askOutcome(judged, roll);
+    this.outcomeP = this.outcomeFor(judged, roll);
     this.outcomeP.then((o) => {
       this.outcomeAt = Date.now();
       this.voiceFor(o.text);
@@ -2407,6 +2428,8 @@ export class GameHost {
     // Nobody swiped: the table throws it with an ordinary toss.
     this.set({ revealed: [roll.playerId], fling: this.state.fling ?? { power: 0.5, angle: Math.random() * 0.6 - 0.3 } });
     this.noteRoll(roll, ROLL_ANIM_MS, timedOut);
+    const res = this.landedRes;
+    setTimeout(res, ROLL_ANIM_MS);
     // The die tumbles, lands, shows its math for a beat, then the outcome.
     this.setTimer(ROLL_ANIM_MS + ROLL_HOLD_MS, () => this.showOutcome());
   }
@@ -2416,64 +2439,108 @@ export class GameHost {
    * The branching writer (design/24): what the action did, plus the NEW situation the next hero faces, plus the
    * cause and effect for DM's Notes. Fixed start, fixed goal, open middle.
    */
-  private askOutcome(pitch: Pitch, roll: RollResult) {
+  /** Everything the outcome writer needs (the roll is left out for the pre-written branches). */
+  private outcomeInput(pitch: Pitch, roll: RollResult | null) {
     const h = this.player(pitch.playerId)!.hero!;
-    const fb = () => ({ text: FALLBACK_OUTCOME[roll.band].replaceAll("{name}", h.name), situation: "", why: "", nowGoal: "", where: "", changed: "", prop: "", memorable: "", scene: "" });
-    const g = gradeRoll(roll.total, roll.kept);
-    const won = g.branch === "better" || g.branch === "legendary";
+    const g = roll ? gradeRoll(roll.total, roll.kept) : null;
+    const won = !g || g.branch === "better" || g.branch === "legendary";
+    const worse = !!g && g.branch === "worse";
     const L = this.state.ladder;
     const target = this.state.step + 1 < L.length - 1 ? L[this.state.step + 1] : "";
     const nextId = this.state.turnOrder[this.state.turnIndex + 1];
     const npc = this.sceneList[0]?.npc_line;
-    return this.viaAI(
-      "What happened",
-      this.ask<{ text: string; situation: string; why: string; now_goal: string; where?: string; changed?: string; new_prop?: string; memorable?: string; scene?: string }>("outcome", {
-        story: { title: this.state.quest?.title ?? this.state.sceneTitle, goal: this.state.goal },
-        story_so_far: this.storySoFar(),
-        situation: this.state.situation,
-        right_now: this.state.nowGoal || this.state.goal,
-        last_prop: this.spine.prop,
-        ladder: this.state.ladder.length ? { steps: this.state.ladder, current: this.state.ladder[this.state.step] ?? "", next: this.state.step + 1 < this.state.ladder.length - 1 ? this.state.ladder[this.state.step + 1] : "" } : undefined,
-        target,
-        real_event: this.seed?.real_event,
-        hero: { name: h.name, power: h.ability?.text ?? "", weakness: h.flaw },
-        attempt: pitch.verdict?.interpretation ?? "",
-        plan: firstAction(pitch.text).action,
-        idea_from: pitch.creditId && won ? this.heroName(pitch.creditId) : "", // a friend is credited, never blamed
-        heroes: this.heroes().map((p) => p.hero!.name),
-        next_hero: nextId ? this.heroName(nextId) : "",
-        side_character: npc?.speaker ? { speaker: npc.speaker, line: npc.line } : undefined,
-        roll: { total: g.total, grade: g.grade, branch: g.branch, meaning: g.meaning, depth: Math.round(g.depth * 100) / 100 },
-        band: roll.band,
-        natural: roll.kept === 1 || roll.kept === 20 ? roll.kept : null,
-        earlier: this.state.log.map((l) => l.narration).slice(-4),
-        turns_left: Math.max(0, this.state.turnOrder.length - this.state.turnIndex - 1),
-        short: this.quick || undefined,
-      }),
-      12_000,
-      (d, f) =>
-        f
-          ? fb()
-          : d?.text?.trim()
-          ? {
-              text: d.text.trim(),
-              situation: (d.situation ?? "").trim(),
-              why: (d.why ?? "").trim(),
-              nowGoal: (d.now_goal ?? "").trim(),
-              where: String(d.where ?? "").trim(),
-              changed: String(d.changed ?? "").trim(),
-              prop: String(d.new_prop ?? "").trim(),
-              memorable: String(d.memorable ?? "").trim(),
-              scene: String(d.scene ?? "").trim(),
-            }
-          : null,
-      fb,
-    );
+    return {
+      story: { title: this.state.quest?.title ?? this.state.sceneTitle, goal: this.state.goal },
+      story_so_far: this.storySoFar(),
+      situation: this.state.situation,
+      right_now: this.state.nowGoal || this.state.goal,
+      last_prop: this.spine.prop,
+      ladder: L.length ? { steps: L, current: L[this.state.step] ?? "", next: target } : undefined,
+      target,
+      real_event: this.seed?.real_event,
+      // The weakness only goes in on a worse branch (and the branches decide that themselves).
+      hero: { name: h.name, power: h.ability?.text ?? "", ...(roll && !worse ? {} : { weakness: h.flaw }), pronouns: h.pronouns || "they/them" },
+      pronouns: this.pronounMap(),
+      attempt: pitch.verdict?.interpretation ?? "",
+      plan: firstAction(pitch.text).action,
+      idea_from: pitch.creditId && won ? this.heroName(pitch.creditId) : "", // a friend is credited, never blamed
+      heroes: this.heroes().map((p) => p.hero!.name),
+      next_hero: nextId ? this.heroName(nextId) : "",
+      side_character: npc?.speaker ? { speaker: npc.speaker, line: npc.line } : undefined,
+      ...(roll && g
+        ? {
+            roll: { total: g.total, grade: g.grade, branch: g.branch, meaning: g.meaning, depth: Math.round(g.depth * 100) / 100 },
+            band: roll.band,
+            natural: roll.kept === 1 || roll.kept === 20 ? roll.kept : null,
+          }
+        : {}),
+      earlier: this.state.log.map((l) => l.narration).slice(-4),
+      turns_left: Math.max(0, this.state.turnOrder.length - this.state.turnIndex - 1),
+      short: this.quick || undefined,
+    };
   }
+
+  /** {hero name: pronouns} for every writing call, so nobody gets the wrong pronoun. */
+  private pronounMap() {
+    return Object.fromEntries(this.heroes().map((p) => [p.hero!.name, p.hero!.pronouns || "they/them"]));
+  }
+
+  /** One outcome, cleaned; a they/them hero never gets "he" or "she" in a sentence that names them. */
+  private readOutcome(d: OutcomeData | null | undefined) {
+    if (!d?.text?.trim()) return null;
+    const fix = (t: string) => fixPronouns(String(t ?? "").trim(), this.heroes().map((p) => ({ name: p.hero!.name, pronouns: p.hero!.pronouns || "they/them" })));
+    return {
+      text: fix(d.text),
+      situation: fix(d.situation ?? ""),
+      why: String(d.why ?? "").trim(),
+      nowGoal: String(d.now_goal ?? "").trim(),
+      where: String(d.where ?? "").trim(),
+      changed: String(d.changed ?? "").trim(),
+      prop: String(d.new_prop ?? "").trim(),
+      memorable: String(d.memorable ?? "").trim(),
+      scene: String(d.scene ?? "").trim(),
+    };
+  }
+
+  private askOutcome(pitch: Pitch, roll: RollResult) {
+    const h = this.player(pitch.playerId)!.hero!;
+    const fb = () => ({ text: FALLBACK_OUTCOME[roll.band].replaceAll("{name}", h.name), situation: "", why: "", nowGoal: "", where: "", changed: "", prop: "", memorable: "", scene: "" });
+    return this.viaAI("What happened", this.ask<OutcomeData>("outcome", this.outcomeInput(pitch, roll)), 12_000, (d, f) => (f ? fb() : this.readOutcome(d)), fb);
+  }
+
+  /**
+   * The story director's fast path: the three branches (worse, mixed, better) are written while the table rolls; the
+   * die picks one when it lands (legendary uses better). If the branch isn't in within 3 s of the landing, the live
+   * outcome call writes it with the real roll.
+   */
+  private outcomeFor(pitch: Pitch, roll: RollResult) {
+    const branchesP = withTimeout(
+      this.ask<Record<string, OutcomeData | null>>("outcome_branches", this.outcomeInput(pitch, null)).then((r) => (r.fallback ? null : r.data)),
+      30_000,
+      () => null,
+    ).catch(() => null);
+    this.landed = new Promise<void>((res) => (this.landedRes = res));
+    return (async () => {
+      const g = gradeRoll(roll.total, roll.kept);
+      const key = g.branch === "legendary" ? "better" : g.branch;
+      await this.landed;
+      const b = await withTimeout(branchesP, 3000, () => null);
+      const pick = this.readOutcome(b?.[key]);
+      if (pick) {
+        this.note("ruling", "What happened", `Pre-written ${key} branch, picked by the die (${g.total}, ${g.label.toLowerCase()}).`);
+        return pick;
+      }
+      return this.askOutcome(pitch, roll);
+    })();
+  }
+
+  private landed: Promise<void> = Promise.resolve();
+  private landedRes: () => void = () => {};
 
   private async showOutcome() {
     if (this.state.phase !== "roll") return;
     this.clearTimer();
+    this.landedRes(); // never wait on a landing that already happened
     const roll = this.state.rolls[0];
     const pitch = this.state.pitches.find((p) => p.playerId === roll.playerId)!;
     this.set({ phase: "outcome", outcome: "", ready: [], voice: null });
@@ -2643,6 +2710,7 @@ export class GameHost {
         won: ending !== "GRIM_BUT_HILARIOUS",
         story_so_far: this.storySoFar(),
         real_event: this.seed?.real_event,
+        pronouns: this.pronounMap(),
         players: this.heroes().map((p) => ({ id: p.id, said: `<player_input>${cleanText(this.reals[p.id]?.skill ?? "", 80)}</player_input>` })),
         heroes: heroes.map((h) => h.name),
         situation: this.state.situation,
