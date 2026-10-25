@@ -1,6 +1,6 @@
 {
  "version": 1,
- "updated": "2026-10-25T09:54:56.315Z",
+ "updated": "2026-10-25T10:45:41.000Z",
  "stories": [
   {
    "id": "news-30057bc8ac",
@@ -957,6 +957,167 @@
     "date": "2026-10-23"
    },
    "opener_rating": "teens"
+  },
+  {
+   "id": "news-2d576cc1da",
+   "origin": "news",
+   "headline": "Bear breaks into Mammoth Lakes library, raids honey on Winnie-the-Pooh centennial",
+   "snippet": "A bear walked into the Mammoth Lakes library before opening on Oct. 14, exactly 100 years after Winnie-the-Pooh was published. It ate peanut butter, peach cups, cookies and one jar of honey from the staff snacks, toured New Releases and the reference desk, and left on its own. No damage. The director said snacks are not part of the circulating collection.",
+   "source": "NBC Palm Springs",
+   "url": "https://www.nbcpalmsprings.com/ca-us-and-world/2026/10/19/bear-finds-honey-at-california-library-on-winniethepooh-anniversary",
+   "date": "2026-10-19T12:00:00Z",
+   "place": "Mammoth Lakes, USA",
+   "rating": "kids",
+   "storyability": 4.9,
+   "scores": {
+    "situation": 5,
+    "problem": 5,
+    "setting": 5,
+    "arc": 5,
+    "roles": 4,
+    "payoff": 5,
+    "fantasy_fit": 5
+   },
+   "added_at": "2026-10-25T10:45:41.000Z",
+   "curated": "top-10 odd news Aug-Oct 2026 (story-candidates.md)"
+  },
+  {
+   "id": "news-51c655aac5",
+   "origin": "news",
+   "headline": "Two goats join morning commute by hopping on bus in Portland",
+   "snippet": "Two goats boarded a city bus at rush hour in Portland. The ride lasted 20 seconds before two passengers walked them off, then the goats wandered into a shopping center and vanished from the cameras before police arrived. Their owner says they will go to anything that is green.",
+   "source": "KPTV",
+   "url": "https://kptv.com/2026/08/12/loose-goats-cause-stir-portland-bus-station",
+   "date": "2026-08-12T12:00:00Z",
+   "place": "Portland, USA",
+   "rating": "kids",
+   "storyability": 4.6,
+   "scores": {
+    "situation": 5,
+    "problem": 4,
+    "setting": 5,
+    "arc": 4,
+    "roles": 4,
+    "payoff": 5,
+    "fantasy_fit": 5
+   },
+   "added_at": "2026-10-25T10:45:41.000Z",
+   "curated": "top-10 odd news Aug-Oct 2026 (story-candidates.md)"
+  },
+  {
+   "id": "news-de5d04892c",
+   "origin": "news",
+   "headline": "Runaway Sheep Boarded a Bus in Germany and Had To Be Escorted by Police",
+   "snippet": "A runaway sheep climbed onto a parked bus inside a depot wash hall in Luedinghausen, Germany. Police found it friendly and cooperative and kept it on board while the bus rolled through the car wash to the yard. Its ear tag led to the farmer, who drove it home.",
+   "source": "UPI",
+   "url": "https://www.upi.com/Odd_News/2026/08/20/4781787240887/",
+   "date": "2026-08-20T12:00:00Z",
+   "place": "Luedinghausen, Germany",
+   "rating": "kids",
+   "storyability": 4.6,
+   "scores": {
+    "situation": 5,
+    "problem": 4,
+    "setting": 5,
+    "arc": 4,
+    "roles": 4,
+    "payoff": 5,
+    "fantasy_fit": 5
+   },
+   "added_at": "2026-10-25T10:45:41.000Z",
+   "curated": "top-10 odd news Aug-Oct 2026 (story-candidates.md)"
+  },
+  {
+   "id": "news-e5af271a18",
+   "origin": "news",
+   "headline": "2 pelicans rescued after escaping their enclosure at the Pittsburgh Zoo",
+   "snippet": "A gust of wind lifted two pelicans that cannot really fly out of their pen at the Pittsburgh Zoo and onto the Allegheny River. Staff, volunteers, River Rescue, the Army Corps of Engineers and the National Aviary chased them all afternoon. One was caught by 4 p.m., the other at 4:46. The zoo now keeps them inside on windy days.",
+   "source": "WPXI",
+   "url": "https://www.wpxi.com/news/local/two-pelicans-escape-their-pittsburgh-zoo-enclosure-search-underway-by-highland-park-bridge/ZXABE5VE4NAHNH3X2W5KYYO3SU/",
+   "date": "2026-10-17T12:00:00Z",
+   "place": "Pittsburgh, USA",
+   "rating": "kids",
+   "storyability": 4.6,
+   "scores": {
+    "situation": 5,
+    "problem": 5,
+    "setting": 5,
+    "arc": 5,
+    "roles": 5,
+    "payoff": 4,
+    "fantasy_fit": 4
+   },
+   "added_at": "2026-10-25T10:45:41.000Z",
+   "curated": "top-10 odd news Aug-Oct 2026 (story-candidates.md)"
+  },
+  {
+   "id": "news-7f5c466025",
+   "origin": "news",
+   "headline": "Exotic bird flies into Chicago airport, fights with passengers",
+   "snippet": "A green parrot got loose in the check-in hall at O'Hare Terminal 5, landing on heads and suitcases and pecking anyone who reached for it. A janitor finally caught it with a shirt. It went to a vet to be checked for a microchip; the owner is unknown.",
+   "source": "UPI",
+   "url": "https://www.upi.com/Odd_News/2026/10/20/parrot-chicago-ohare-airport/1791792511463/",
+   "date": "2026-10-20T12:00:00Z",
+   "place": "Chicago, USA",
+   "rating": "teens",
+   "storyability": 4.4,
+   "scores": {
+    "situation": 5,
+    "problem": 5,
+    "setting": 5,
+    "arc": 4,
+    "roles": 4,
+    "payoff": 5,
+    "fantasy_fit": 4
+   },
+   "added_at": "2026-10-25T10:45:41.000Z",
+   "curated": "top-10 odd news Aug-Oct 2026 (story-candidates.md)"
+  },
+  {
+   "id": "news-b4e2834fac",
+   "origin": "news",
+   "headline": "1,000 people buried their underwear across Switzerland. The unusual study helped researchers gauge soil health",
+   "snippet": "About 1,000 volunteers across Switzerland buried cotton underwear and dug it up two months later, to measure how alive the soil is. Garden soil ate the underwear fastest and lawns slowest. The team won the 2026 Ig Nobel Prize for soil science.",
+   "source": "Good Good Good",
+   "url": "https://www.goodgoodgood.co/articles/new-study-bury-underwear-soil-health",
+   "date": "2026-09-03T12:00:00Z",
+   "place": "Switzerland",
+   "rating": "teens",
+   "storyability": 4.3,
+   "scores": {
+    "situation": 5,
+    "problem": 4,
+    "setting": 4,
+    "arc": 5,
+    "roles": 4,
+    "payoff": 5,
+    "fantasy_fit": 4
+   },
+   "added_at": "2026-10-25T10:45:41.000Z",
+   "curated": "top-10 odd news Aug-Oct 2026 (story-candidates.md)"
+  },
+  {
+   "id": "news-4dd516f5a0",
+   "origin": "news",
+   "headline": "Live snake found under plane carpet in Japan, forcing flight cancellation",
+   "snippet": "A pilot at Fukuoka Airport saw something small slither across the cockpit, and it vanished. The flight was cancelled and 43 passengers got refunds. The next day a mechanic lifted the carpet at the back and found a 40 cm harmless striped snake. Nobody knows how it got on board.",
+   "source": "The Star",
+   "url": "https://www.thestar.com.my/aseanplus/2026/10/21/live-snake-found-under-plane-carpet-in-japan-forcing-flight-cancellation",
+   "date": "2026-10-21T12:00:00Z",
+   "place": "Fukuoka, Japan",
+   "rating": "teens",
+   "storyability": 4.4,
+   "scores": {
+    "situation": 5,
+    "problem": 5,
+    "setting": 5,
+    "arc": 4,
+    "roles": 4,
+    "payoff": 5,
+    "fantasy_fit": 4
+   },
+   "added_at": "2026-10-25T10:45:41.000Z",
+   "curated": "top-10 odd news Aug-Oct 2026 (story-candidates.md)"
   }
  ]
 }

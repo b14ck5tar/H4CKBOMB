@@ -38,5 +38,20 @@
     "/quests/cornfield-dome/scene_1.webp",
     "/quests/cornfield-dome/scene_2.webp",
     "/quests/cornfield-dome/scene_3.webp"
+  ],
+  "canal-shark": [
+    "/quests/canal-shark/scene_1.webp",
+    "/quests/canal-shark/scene_2.webp",
+    "/quests/canal-shark/scene_3.webp"
+  ],
+  "opera-snake": [
+    "/quests/opera-snake/scene_1.webp",
+    "/quests/opera-snake/scene_2.webp",
+    "/quests/opera-snake/scene_3.webp"
+  ],
+  "wall-gold": [
+    "/quests/wall-gold/scene_1.webp",
+    "/quests/wall-gold/scene_2.webp",
+    "/quests/wall-gold/scene_3.webp"
   ]
 }

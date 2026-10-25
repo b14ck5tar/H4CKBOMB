@@ -119,7 +119,8 @@ export const MONTAGE_PANEL_MS = 3600; // one ending-montage panel on the TV (was
 /** The house ranking of the hand-made stories (Quick Tale opens on the first one a table hasn't played). */
 const JUDGE_TOP = 3; // judge mode (/tv?judge=1) rotates through the first 3 FEATURED stories only
 // galactic-signal is last: its premise ("radio glow", "the catalog stays wrong") made 2 of 3 unfollowable lines in the Sun eval.
-const FEATURED = ["rust-wyrm", "hanging-boulder", "cornfield-dome", "billion-pearls", "idle-island", "returned-otter", "littlest-gardener", "galactic-signal"];
+// The judge top 3 (CD, Sun): the canal shark, the opera snake, the gold in the wall; the old three follow.
+const FEATURED = ["canal-shark", "opera-snake", "wall-gold", "rust-wyrm", "hanging-boulder", "cornfield-dome", "billion-pearls", "idle-island", "returned-otter", "littlest-gardener", "galactic-signal"];
 const PRESENCE_ONLY = new Set(["hello", "ping", "away"]); // these don't count as "I'm back"
 /** Every phone silent this long = the table pauses ("Reconnecting phones…"). Phones ping every 3 s. */
 const ALL_QUIET_MS = 8000;
@@ -322,6 +323,9 @@ const SAFETY_NOTES: Record<string, string> = {
   "rust-wyrm": "No one hurt. The bridge closed as a precaution and is reopening. No real people in the story.",
   "billion-pearls": "No one hurt. The spill was in July and the beach clean-up is underway. No real people in the story.",
   "hanging-boulder": "No one hurt. The rock fell on a closed walkway and the event is over. No real people in the story.",
+  "canal-shark": "Good animal news: the shark swam back to sea. No one hurt. No real people in the story.",
+  "opera-snake": "A real opera casting call for a snake. No one hurt. No real people in the story.",
+  "wall-gold": "Found treasure, handed to the police. No one hurt, nothing stolen. No real people in the story.",
   "galactic-signal": "Nobody involved at all: a radio source 49,000+ light-years away. No danger. No real people in the story.",
   "littlest-gardener": "Happy local news: a festival pumpkin win. No one hurt. The young grower is never named or shown.",
   "idle-island": "Nothing happened to anyone: it was a computer simulation in a research study. No real people in the story.",

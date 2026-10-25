@@ -19,7 +19,7 @@ export const COLOR =
 
 /** design/31 SCENE_RULE: every scene, lobby and moment prompt, right after the subject. */
 export const SCENE_RULE =
-  "The fantasy twist is a concrete physical object made of the scene's own material (vines knitting a sweater, a mailbox with teeth, a guardrail tied in a bow), drawn solid with ink outlines and flat color, funny and a little unsettling. At most ONE glowing light source in the whole image. No energy swirls, no rings, no beams, no auras, no magic sparkles, no glowing particles, no lightning, no glowing outlines.";
+  "The fantasy twist is the story's own creature or object, drawn as a concrete, solid physical thing in the scene with ink outlines and flat color, funny and a little unsettling. At most ONE glowing light source in the whole image. No energy swirls, no rings, no beams, no auras, no magic sparkles, no glowing particles, no lightning, no glowing outlines.";
 
 export const COMPOSITION =
   "Composition: one clear focal point in the upper two-thirds, one big bold readable silhouette against a simpler background, at most three major shapes, generous negative space, background crowds simplified into flat silhouette shapes; the lower third darker and calm. Include two or three ordinary, specific modern details of this exact place so it feels like a real local-news location.";
