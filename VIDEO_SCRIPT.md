@@ -69,6 +69,7 @@ cuts). Slower than feels natural. No trailer voice.
 > Muse runs the night. Muse Spark picks news that makes a good, safe story, writes the opening, judges every plan and
 > writes every turn. Muse Image paints your heroes into every scene. Code rolls the dice, and the AI judges ideas,
 > never people.
+> *(optional)* Its guardrails are precise, not broad: hard limits it can't cross, and room for grown-up stories.
 > Every brain in this game is Meta's Muse: it writes, judges every plan, paints you in, and listens. The only thing it
 > borrowed is a voice.
 >
@@ -80,14 +81,14 @@ cuts). Slower than feels natural. No trailer voice.
 > eight fair rulings to eight.
 
 About 345 words: ~2:35 of speech, leaving ~25 s of game sound (the narrator, the die, the laughs) inside 3:00. Part 1
-~60 words, Part 2 ~140, Part 3 ~60, Part 4 ~62. Too long? Drop, in this order: "running a team of agents"; "with real
+~60 words, Part 2 ~140, Part 3 ~60, Part 4 ~62. Too long? Drop, in this order: the *(optional)* guardrails line; "running a team of agents"; "with real
 Muse calls"; "Every number is its own outcome."
 
 ---
 
 ## Shot list (keyed to `pitch/CD_MORNING.md`)
 
-**The take (§2):** `/tv?judge=1&bots=1`, **Quick · Odd news · Teens**, the CD on a real phone (plus any real player
+**The take (§2):** `/tv?judge=1&bots=1`, **Quick · Odd news · Adults** (judge mode sets these), the CD on a real phone (plus any real player
 who's around) + 2 test players (press **B** twice in the lobby). Judge mode plays a saved, tested true story and gives
 each real player 1 turn, then the finale. All screen recordings (the TV and the phones). Test players only suggest
 ideas, never own a turn; never call one "my friend". A test player's idea can still be the "+1" pick.
@@ -129,7 +130,7 @@ With a second real player: B reads the plan to the table first, then sends it. P
 - "Tell the table your plan": `components/QuickTV.tsx`. "+1 with their name": `lib/host.ts`.
 - Grades 1 DISASTER … 20+ LEGENDARY, crypto dice: `lib/grade.ts`, `lib/rules.ts`.
 - A new painting every turn with the heroes in it: Muse Image edits, `server/art/sceneArt.ts`.
-- "Picks news that makes a good, safe story": the storyability gate, `server/news/candidates.ts` (7 scores, average 4+,
+- "Picks news that makes a good, safe story": the storyability gate, `server/news/candidates.ts` (8 scores, average 4+,
   none below 3). In judge mode the story comes from the saved, gated library: say "a real, odd news story", never
   "this week's".
 - Narrator: one ElevenLabs voice for everything (the CD's pick; Eleven v3 for the story beats, the same voice on Flash for instant turn lines); OpenAI TTS backup. No per-story casting (DECISIONS, db136e7).

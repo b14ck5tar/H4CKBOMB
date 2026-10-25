@@ -198,3 +198,5 @@ Full history and train of thought: `design/00-where-we-are.md`.
 ## Sun ~6:30 AM (laptop clock): final schedule (CD)
 - Feature freeze 7:20 (after it: crash or "hard to follow" fixes only) · 7:30 final merge to main + the CD deploys · 7:30-8:00 timed judge games + blind scorer · 8:00-8:30 the CD records the video · the CD leaves ~8:30 · Devpost final 11:30 (submitter: ⏳ ⭐ the partner).
 - Pitch framing for the Adults tier: "grown-up stories, with hard limits the AI can't cross."
+- Update (Sun ~6:30 AM): the CD leaves ~10:20, not 8:30. New plan: features stay frozen from 7:20; playtest → fix cycles (crash / hard-to-follow / feel) until 9:00; video 9:00-9:45; Devpost submitted by ~10:15, before the CD leaves (⏳ who presses Submit: ⭐ the CD, with the partner as backup).
+- ✅ CD voice pick: the Combo delivery (expressive Flash, instant) for every live line; the finale's "Alright, everyone…" in the party-host (B) style as a pre-voiced clip.

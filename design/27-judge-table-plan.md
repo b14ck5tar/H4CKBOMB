@@ -31,7 +31,7 @@ hotkeys, tech questions). Solo, the HOST does both: everything below works with 
 
 ### Browser tabs (all on the deployed site)
 1. **TV:** `https://groupproject-game.vercel.app/tv?judge=1&bots=1`, full screen (F11). Lobby: **Quick**, **Odd
-   news**, **Teens** (Adults only if judges ask).
+   news**, **Adults** (judge mode sets Quick and Adults).
 2. **Deck:** `https://groupproject-game.vercel.app/pitch/deck.html` (the reveal slide and the QR slide, for a judge in
    a hurry).
 3. **Backup:** the video file, ready to play.
@@ -109,7 +109,7 @@ game in five minutes. The best part is the last 30 seconds."
 
 1. On the reveal/keepsake screen, let the judges scan the keepsake QR first.
 2. Reload `/tv?judge=1&bots=1` (F5). New room code, empty lobby.
-3. Check the lobby came back as **Quick / Odd news / Teens**.
+3. Check the lobby came back as **Quick / Odd news / Adults**.
 4. Spare phones: reload `/play`, leave them on the join screen.
 5. Glance at battery: laptop on charger, hotspot phone > 40%.
 

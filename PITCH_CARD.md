@@ -115,10 +115,11 @@ as the automatic backup and plain text if both fail. Meta's team told us on Satu
 and we tested every job (design/23, design/26).
 
 ### Safety
-**"How do you keep tragic news out?"** A keyword block list, then the Muse Spark storyability gate, which also throws
-out anything unsafe: no deaths, injuries, missing people, disasters with victims, crime, politics or health scares,
-and no mocking private people. A story also has to score at least 4 of 5 on average for being storyable. The Kids / Teens / Adults
-setting narrows it further. Stories center on a problem (something stuck, lost or spreading), never a villain or a
+**"How do you keep tragic news out?"** Safety is precise, not broad. Hard limits the AI can't cross in any mode: no
+deaths, violence against people, sexual content, children, hate, disasters or partisan politics, and no mocking private
+people (a keyword block, then the Muse Spark gate). Inside those lines, Kids / Teens / Adults tunes the tone; Adults
+allows grown-up mischief like heists, cons and odd court cases. A story also has to average 4 of 5 on 8 storyability
+checks. We learned this the hard way: our first filter was so broad it blocked every story with an edge. Stories center on a problem (something stuck, lost or spreading), never a villain or a
 real group. Heroes are cartoons, so nobody is judged on their face.
 **"Can players break it?"** Player text goes in as in-world speech inside a strict JSON schema. "Ignore all previous
 instructions" just becomes something your hero shouts. Code computes every number; the AI only picks a tier. We

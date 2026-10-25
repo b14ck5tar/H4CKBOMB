@@ -1,7 +1,7 @@
 # Group Project: judge table cheat sheet (print me)
 
 Judging Sun 2-5 PM, WEL. Stage pitch 5:30 PM, GDC 2.216. Partner hosts alone until the CD is back ~4:45.
-TV: `groupproject-game.vercel.app/tv?judge=1&bots=1` (Quick · Odd news · Teens). Judge mode = 1 turn each, max 3,
+TV: `groupproject-game.vercel.app/tv?judge=1&bots=1` (Quick · Odd news · Adults, set by judge mode). Judge mode = 1 turn each, max 3,
 then the finale. About 5 min from Start. Judge stories: the Busan canal shark, the €9M gold in a Dendermonde cellar
 wall, the Norwich Batman.
 
@@ -45,8 +45,9 @@ the TV runs."
    Code rolls the dice. Take Muse away and there's no game."
 2. **Is the story real?** "The starting event is a real article, or a player's own true story. Today's table plays a
    saved one from our checked library, so you never wait. Everything after the start is your plans plus Muse."
-3. **What about dark news?** "A keyword block, then Muse scores every story: no deaths, injuries, crime, politics or
-   health scares. It has to score 4 of 5 on 7 storyability checks. Heavy news is a future opt-in mode."
+3. **What about dark news?** "Grown-up stories, with hard limits the AI can't cross. No deaths, violence against
+   people, sexual content, kids, hate, disasters or partisan politics, in any mode. Inside that, room for heists and
+   cons. Precise, not broad: guardrails should protect people, not flatten the story."
 4. **How did you use AI to build it?** "Claude Code ran a team of agents: builders, testers, reviewers. They watched
    our playtest videos frame by frame; our worst run is why we rebuilt the story around players' choices. A better
    rubric took Muse Spark from 5 of 8 fair rulings to 8 of 8."
@@ -70,7 +71,8 @@ the TV runs."
 - **Completion:** plays end to end on the live link; every AI call has a fallback. *Point at:* their own game.
 - **Learning (both of you):** "AI needs a director: left alone it drifts and writes stories you can't follow, so our
   engine gives Muse rules and code checks every move." "Build the prototype fast: our first playtest found problems no
-  plan would have." "AI makes things look good fast; making them feel good took playtesting." "First hackathon:
+  plan would have." "AI makes things look good fast; making them feel good took playtesting." "Guardrails should
+  protect people, not flatten the story: our filter was so broad it killed every fun story." "First hackathon:
   stressful, fun, worth it." (Never say "AI is bad at stories".)
 
 ## Never say

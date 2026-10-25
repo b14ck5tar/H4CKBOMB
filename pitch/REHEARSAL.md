@@ -1,7 +1,7 @@
 # Rehearsal: 10 minutes in the morning + the mock-judge drill
 
-Slot: **8:30-9:15 (laptop clock), 3 timed judge runs** on the final deploy (team schedule). Do the 10-minute plan
-once, then two more stopwatch runs of the judge visit. The partner does it again alone at ~1:30 PM at WEL, before the
+Slot: **playtest → fix cycles until 9:00 (laptop clock)** on the final deploy (team schedule). Make at least 3 of
+them timed judge visits: the 10-minute plan once, then two more stopwatch runs. The partner does it again alone at ~1:30 PM at WEL, before the
 first judge.
 
 ## The 10-minute plan
@@ -38,8 +38,9 @@ Answer in under 20 seconds. Bold = the line to land.
    you never wait.** At home, Quick Tale writes a live opener from this week's odd news."
 
 5. **"Real news can be dark. How is this safe?"**
-   "Two gates. A keyword block, then Muse scores each story: no deaths, injuries, crime, politics or health scares.
-   It has to average 4 of 5 on 7 storyability checks. **It's a problem to solve, never a villain or a victim.**"
+   "Precise, not broad. **Hard limits the AI can't cross in any mode:** no deaths, violence against people, sexual
+   content, kids, hate, disasters or partisan politics. Inside that, Adults allows heists and cons. Our first filter was
+   so broad it killed every fun story; guardrails should protect people, not flatten the story."
 
 6. **"What stops a player typing something awful?"**
    "Player text goes in as something your hero says, inside a strict format. **We threw 32 hostile scenarios at the

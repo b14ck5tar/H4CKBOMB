@@ -117,7 +117,7 @@ textarea { width: 100%; min-height: 70px; resize: vertical; }
 
     <div class="block">
       <h3>Setup</h3>
-      <p>TV: <code>groupproject-game.vercel.app/tv?judge=1&amp;bots=1</code>, full screen. Lobby: Quick, Odd news, Teens. Judge mode gives 1 turn each, at most 3, then the finale. About 5 minutes from Start, 6 from hello.</p>
+      <p>TV: <code>groupproject-game.vercel.app/tv?judge=1&amp;bots=1</code>, full screen. Lobby: Quick, Odd news, Adults (judge mode sets these). Judge mode gives 1 turn each, at most 3, then the finale. About 5 minutes from Start, 6 from hello.</p>
       <p>Bots: 1 judge, you join on a team phone and press <kbd>B</kbd> once. 2 judges, <kbd>B</kbd> once. 3 or more, none. Say "Riley is a test player the TV runs."</p>
     </div>
 
@@ -195,7 +195,7 @@ textarea { width: 100%; min-height: 70px; resize: vertical; }
     <div class="block">
       <details open><summary>What does the AI actually do?</summary><p>"Muse Spark picks odd news that's safe and playable, writes the opening, judges every plan and writes every turn. Muse Image paints your heroes into each new scene. Press N: every call and why. Code rolls the dice. Take Muse away and there's no game."</p></details>
       <details><summary>Is the story real?</summary><p>"The starting event is a real article, or a player's own true story. Today's table plays a saved one from our checked library, so you never wait. Everything after the start is your plans plus Muse."</p></details>
-      <details><summary>What about dark news?</summary><p>"A keyword block, then Muse scores every story: no deaths, injuries, crime, politics or health scares. It has to average 4 of 5 on 7 storyability checks. Heavy news is a future opt-in mode."</p></details>
+      <details><summary>What about dark news?</summary><p>"Grown-up stories, with hard limits the AI can't cross. No deaths, violence against people, sexual content, kids, hate, disasters or partisan politics, in any mode. Inside that, room for heists and cons. Precise, not broad: guardrails should protect people, not flatten the story."</p></details>
       <details><summary>How did you use AI to build it?</summary><p>"Claude Code ran a team of agents: builders, testers, reviewers. They watched our playtest videos frame by frame; our worst run is why we rebuilt the story around players' choices. A better rubric took Muse Spark from 5 of 8 fair rulings to 8 of 8."</p></details>
       <details><summary>What's next?</summary><p>"Campaign mode: your heroes carry over into the next story, like real D&amp;D. Then Our stories as the main mode, and an opt-in Real World mode with guardrails."</p></details>
     </div>
@@ -258,7 +258,7 @@ textarea { width: 100%; min-height: 70px; resize: vertical; }
       <li>API keys live only in the laptop's key file. Never paste them in chat, Discord or this page.</li>
       <li>Before any screen recording: close Discord, DMs, key files and API-key pages.</li>
       <li>SerpApi has 250 searches a month. Nobody calls it by hand; the app caches news.</li>
-      <li>No new features. Fixes until 8:00 AM, final deploy by 8:30, then only rehearsal, the video and Devpost.</li>
+      <li>Features frozen from 7:20 AM, playtest and fixes until 9:00, video 9:00-9:45, Devpost submitted by ~10:15 (the CD; the partner is the backup with pitch/PARTNER_SUBMIT.md).</li>
     </ul>
   </section>
 </div>
@@ -266,10 +266,10 @@ textarea { width: 100%; min-height: 70px; resize: vertical; }
 <script>
 // Deadlines in Austin time (CDT, UTC-5 on Oct 25 2026).
 const CLOCKS = [
-  { lbl: "Fixes end", at: "2026-10-25T13:00:00Z", when: "Sun 8:00 AM · no new features" },
-  { lbl: "Final deploy", at: "2026-10-25T13:30:00Z", when: "Sun 8:30 AM" },
-  { lbl: "Judge runs end", at: "2026-10-25T14:15:00Z", when: "Sun 8:30-9:15 · 3 timed runs" },
-  { lbl: "Video + submit", at: "2026-10-25T15:45:00Z", when: "Sun 9:15-10:45 AM" },
+  { lbl: "Freeze", at: "2026-10-25T12:20:00Z", when: "Sun 7:20 AM · features frozen" },
+  { lbl: "Playtest + fixes", at: "2026-10-25T14:00:00Z", when: "Sun until 9:00 AM" },
+  { lbl: "Video", at: "2026-10-25T14:45:00Z", when: "Sun 9:00-9:45 AM" },
+  { lbl: "Devpost submitted", at: "2026-10-25T15:15:00Z", when: "Sun ~10:15 AM · CD leaves ~10:20" },
   { lbl: "Final submission", at: "2026-10-25T16:30:00Z", when: "Sun 11:30 AM · Devpost" },
   { lbl: "Judging", at: "2026-10-25T19:00:00Z", when: "Sun 2-5 PM · WEL" },
   { lbl: "Stage pitch", at: "2026-10-25T22:30:00Z", when: "Sun 5:30 PM · GDC 2.216" },
