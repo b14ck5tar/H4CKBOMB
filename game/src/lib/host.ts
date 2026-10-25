@@ -106,8 +106,9 @@ const FINAL_SHAKE_MS = 5000;
 const FINAL_TUMBLE_MS = 2000;
 const FINAL_LAND_MS = 1400;
 const FINAL_RESULT_MS = 3500;
+const FULL_READ_CAP_MS = 20_000; // a reading screen never holds the table longer (Space or every phone skips sooner)
 const TITLE_CARD_MS = 5200; // Full Story: the title card before scene 1
-const ROLL_HOLD_MS = 3400; // after the die lands: the quality meter fills and its grade reads (~3 s)
+const ROLL_HOLD_MS = 2200; // after the die lands: the quality meter fills and its grade reads (was 3.4 s of dead air)
 /** The outcome stays up long enough to read it out loud, and no longer. */
 const outcomeMs = (text: string) => Math.min(12_000, Math.max(6500, text.split(/\s+/).length * 330 + 3200));
 // Autopilot: a phone that's said nothing for this long (mid-story) is away; its hero keeps playing on its own.
@@ -1167,7 +1168,8 @@ export class GameHost {
   /** Reading-screen safety timer; Quick Tale caps it so the demo stays under three minutes. */
   private readFor(text: string, minMs: number, capMs: number = QUICK.readCapMs) {
     const ms = readMs(text, minMs);
-    return this.quick ? Math.min(ms, Math.max(capMs, minMs)) : ms;
+    // Full Story caps too: a long article summary read at 0.4 s a word held the reveal for 70 s (CD playtest).
+    return Math.min(ms, Math.max(this.quick ? capMs : FULL_READ_CAP_MS, minMs));
   }
 
   setPartyName(name: string) {
@@ -1776,6 +1778,7 @@ export class GameHost {
       return this.startFinale();
     }
     this.verdicts.clear();
+    this.preRuled.clear();
     const owner = order[k];
     this.set({ phase: "turn", turnIndex: k, ideas: {}, pitches: [], votes: {}, winnerId: "", outcome: "", rolls: [], revealed: [], ready: [], busy: "", typing: [] });
     this.setTimer(this.turnMs(), () => this.endTurn(true));
@@ -1817,7 +1820,14 @@ export class GameHost {
     const clean = cleanPlan(text);
     if (!clean) return;
     this.set({ ideas: { ...this.state.ideas, [pid]: clean }, typing: this.state.typing.filter((x) => x !== pid) });
+    // Generate ahead: rule the idea now, as the owner's plan with this friend's credit, so if the owner takes it as
+    // written the plan card shows the moment they press Go (the "DM is reading" wait was 5-15 s in the CD playtest).
+    const owner = this.owner();
+    if (owner && !this.preRuled.has(norm(clean))) this.preRuled.set(norm(clean), this.askRuling({ id: `pre-${pid}`, playerId: owner, text: clean, useAbility: false, embraceFlaw: false, creditId: pid, idea: clean }));
   }
+
+  /** Rulings started early on friends' ideas (by their text), for the current turn only. */
+  private preRuled = new Map<string, Promise<Verdict>>();
 
   /** The owner picks: their own words, or a friend's suggestion (maybe edited). Using a friend's idea is +1 and credited. */
   private onPitch(pid: string, text: string, creditId = "", own?: unknown, idea?: unknown) {
@@ -2011,7 +2021,7 @@ export class GameHost {
     this.set({ phase: "ruling", winnerId: pitch.id, busy: "" });
     const turn = this.state.turnIndex;
     const finale = this.state.finale;
-    const vp = this.verdicts.get(pitch.id) ?? this.askRuling(pitch);
+    const vp = this.verdicts.get(pitch.id) ?? (!finale ? this.preRuled.get(norm(pitch.text)) : undefined) ?? this.askRuling(pitch);
     this.verdicts.set(pitch.id, vp);
     let settled = false;
     vp.then(() => (settled = true));
@@ -2040,7 +2050,7 @@ export class GameHost {
       this.paintDecision(judged, v, d.outcome, d.scene || this.state.situation, d.finale ? "finale" : d.act_changed ? "act" : "win");
       if (d.scene) this.voiceFor(d.finale || !this.nextOwner() ? `The grand finale. ${d.scene} Everyone, what's the final move?` : d.scene);
     });
-    this.setTimer(this.quick ? 3000 : RULING_MS, () => this.startRoll());
+    this.setTimer(this.quick ? 2200 : RULING_MS, () => this.startRoll());
   }
 
   /**
@@ -2475,7 +2485,7 @@ export class GameHost {
     this.set({ phase: "roll", rolls: [roll], revealed: [], fling: null });
     // Their phone shows a big ROLL button; after 10 s the table rolls for them (and their phone buzzes).
     if (this.player(roll.playerId)?.away) return this.setTimer(1500, () => this.revealRoll());
-    this.setTimer(this.quick ? 8000 : ROLL_MS, () => this.revealRoll(true));
+    this.setTimer(this.quick ? 6000 : ROLL_MS, () => this.revealRoll(true));
   }
 
   /** The roller swiped (or tapped). The swipe only shapes the throw on the TV; the number was decided in code. */
