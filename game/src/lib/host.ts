@@ -450,6 +450,8 @@ export class GameHost {
       sceneTitle: "",
       goal: "",
       nowGoal: "",
+      ladder: [],
+      step: 0,
       narration: "",
       situation: "",
       banner: "",
@@ -1562,6 +1564,9 @@ export class GameHost {
     const goal = scenes[scenes.length - 1].goal;
     this.sceneList = [{ ...opener, goal }];
     this.rememberStory(seed);
+    const ladder = this.buildLadder(seed, goal);
+    this.set({ ladder, step: 0 });
+    if (ladder.length) this.note("scene", "The ladder", `${ladder.map((x, i) => `${i + 1}. ${x}`).join(" → ")}. A hit climbs a step, a miss stays put; the top step is the finale.`);
     this.spine = { threat: seed.the_threat.name, pronoun: seed.threat?.pronoun ?? "", want: seed.threat?.want ?? "", where: opener.location || "", facts: [], prop: "" };
     this.set({
       scenes: [{ kind: "hook", location: opener.location, description: opener.situation, twist: "", hasImage: !!this.sceneImages[this.plateFor(0)] }],
@@ -1598,6 +1603,18 @@ export class GameHost {
   }
 
   private openerAsked = 0;
+
+  /**
+   * The story ladder: planned steps up to the goal (the writer's beats, or a curated story's scene goals), the top
+   * step being the goal itself (the finale). Quick Tale scales with the table (2-4 steps), Full Story has up to 4.
+   */
+  private buildLadder(seed: QuestSeed, goal: string) {
+    const src = (seed.beats?.length ? seed.beats : (seed.scenes ?? []).map((sc) => sc.goal)).map((x) => String(x ?? "").replace(/[.!]+$/, "").trim()).filter(Boolean);
+    if (src.length < 2 || !goal) return [];
+    const n = this.quick ? Math.max(2, Math.min(4, this.heroes().length)) : 4;
+    const lower = src.slice(0, -1).slice(0, n - 1);
+    return [...lower, goal.replace(/[.!]+$/, "")];
+  }
   private cleanSkills: Record<string, string> | null = null;
 
   /** What the narrator says when a turn starts: the owner's name, then where things stand. */
@@ -1629,7 +1646,7 @@ export class GameHost {
       sceneIndex: 0,
       sceneTitle: sc.title,
       goal: sc.goal,
-      nowGoal: "",
+      nowGoal: this.state.ladder.length > 1 ? this.state.ladder[0] : "",
       narration: sc.narration,
       situation: sc.situation,
       npcLine: sc.npc_line ?? { speaker: "", line: "" },
@@ -1777,7 +1794,7 @@ export class GameHost {
   private startFinale() {
     this.clearTimer();
     this.verdicts.clear();
-    this.set({ phase: "pitch", finale: true, nowGoal: this.state.goal, pitches: [], votes: {}, winnerId: "", outcome: "", rolls: [], revealed: [], ready: [], busy: "", typing: [] });
+    this.set({ phase: "pitch", finale: true, nowGoal: this.state.goal, step: Math.max(0, this.state.ladder.length - 1), pitches: [], votes: {}, winnerId: "", outcome: "", rolls: [], revealed: [], ready: [], busy: "", typing: [] });
     this.note("turn", "Grand finale", "Everyone proposes the final move, everyone backs a friend's plan (never their own), and the winning plan gets one shared die.");
     const line = `The grand finale. ${this.state.situation} Everyone, what's the final move?`;
     this.voiceBy(line, Date.now() + 4000).then((clip) => this.state.phase === "pitch" && this.play(clip));
@@ -2309,6 +2326,7 @@ export class GameHost {
         situation: this.state.situation,
         right_now: this.state.nowGoal || this.state.goal,
         last_prop: this.spine.prop,
+        ladder: this.state.ladder.length ? { steps: this.state.ladder, current: this.state.ladder[this.state.step] ?? "", next: this.state.step + 1 < this.state.ladder.length - 1 ? this.state.ladder[this.state.step + 1] : "" } : undefined,
         hero: { name: h.name, power: h.ability?.text ?? "", weakness: h.flaw },
         attempt: pitch.verdict?.interpretation ?? "",
         plan: firstAction(pitch.text).action,
@@ -2344,7 +2362,12 @@ export class GameHost {
     // Never backward: a miss keeps the same step (the threat twists the situation); only a hit moves the goal on.
     const missed = roll.band === "FAIL" || roll.band === "CATASTROPHE";
     const backward = /\b(again|start over|back to square)\b/i.test(asked);
-    const nowGoal = missed || backward ? this.state.nowGoal : asked;
+    const L = this.state.ladder;
+    // A hit climbs one step (never onto the top step: that's the finale); a miss stays on the same step.
+    const climb = !missed && L.length > 1 && this.state.step + 1 < L.length - 1;
+    const step = climb ? this.state.step + 1 : this.state.step;
+    const nowGoal = missed || backward ? this.state.nowGoal : asked || (climb ? L[step] : "");
+    if (climb) this.note("scene", "The ladder", `Climbed to step ${step + 1} of ${L.length}: ${L[step]}.`);
     if (asked && nowGoal !== asked) this.note("scene", "Right now", `Kept "${this.state.nowGoal || this.state.goal}": ${missed ? "a miss never moves the goal backward" : "a step can't go backward"}.`);
     // The story so far: where we are, the last few things that changed, and the one new prop (which then fades).
     if (where) this.spine.where = where;
@@ -2359,7 +2382,7 @@ export class GameHost {
     if (situation) this.note("scene", "Now", situation);
     // The story branches: the next turn starts from what just happened.
     if (nowGoal && nowGoal !== this.state.nowGoal) this.note("scene", "Right now", nowGoal);
-    this.set({ outcome: text, busy: "", situation: situation || this.state.situation, nowGoal: nowGoal || this.state.nowGoal });
+    this.set({ outcome: text, busy: "", situation: situation || this.state.situation, nowGoal: nowGoal || this.state.nowGoal, step });
     const spoken = this.play(clip);
     this.setTimer(spoken ? Math.max(spoken + 1000, 4500) : outcomeMs(text), () => this.startTurn(this.state.turnIndex + 1));
   }

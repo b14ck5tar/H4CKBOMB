@@ -667,3 +667,9 @@
 .gp-set-k { font-family: var(--font-heading), sans-serif; font-size: 1.35rem; text-transform: uppercase; color: var(--gilt-bright); white-space: nowrap; }
 .gp-set-v { display: flex; gap: 0.6rem; flex-wrap: wrap; }
 .gp-set-v .gp-pill { font-size: 1.15rem; padding: 0.5rem 1rem; }
+
+/* The story ladder: one dot per step, the current one lit, the top one is the finale. */
+.gp-ladder { display: inline-flex; gap: 0.35rem; margin-left: 0.8rem; vertical-align: middle; }
+.gp-ladder i { width: 0.6rem; height: 0.6rem; border-radius: 50%; border: 1.5px solid rgba(245, 241, 255, 0.45); }
+.gp-ladder i.done { background: rgba(245, 241, 255, 0.55); border-color: transparent; }
+.gp-ladder i.on { background: var(--gilt-bright); border-color: var(--gilt-bright); box-shadow: 0 0 10px var(--gilt-bright); }

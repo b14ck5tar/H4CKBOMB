@@ -252,7 +252,16 @@ function GoalBar({ s }: { s: GameState }) {
     <>
       <div className="gp-goal-row">
         <div className="gp-goal" key={now || s.goal}>
-          <span className="gp-goal-k">{[turn, now ? "Right now" : "The goal"].filter(Boolean).join(" · ")}</span>
+          <span className="gp-goal-k">
+            {[turn, now ? "Right now" : "The goal"].filter(Boolean).join(" · ")}
+            {s.ladder.length > 1 && (
+              <span className="gp-ladder" title={`Step ${s.step + 1} of ${s.ladder.length}`} aria-label={`Step ${s.step + 1} of ${s.ladder.length}`}>
+                {s.ladder.map((_, i) => (
+                  <i key={i} className={i < s.step ? "done" : i === s.step ? "on" : ""} />
+                ))}
+              </span>
+            )}
+          </span>
           <span className="gp-goal-t">{now || s.goal}</span>
         </div>
       </div>

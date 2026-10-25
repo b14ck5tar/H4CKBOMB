@@ -314,6 +314,8 @@ export interface GameState {
   sceneTitle: string;
   goal: string; // the story's final goal (small in the corner; reached in the finale)
   nowGoal: string; // "Right now:" the objective the players' own choices set (written after each outcome)
+  ladder: string[]; // the story ladder: 2-4 planned steps, the last one is the goal (the finale). [] = no ladder
+  step: number; // the step the table is on (0-based)
   narration: string;
   situation: string;
   banner: string;
