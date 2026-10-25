@@ -3,7 +3,7 @@ import { HERO_CONSISTENCY, NEGATIVE, SCENE_RULE } from "./style";
 
 // Edit prompts for /v1/images/edits. Images are captioned by index (Muse reads parts in order).
 // Bump PROMPT_VERSION whenever the wording changes: it is part of the cache key.
-export const PROMPT_VERSION = "v6"; // v6: every scene keeps the previous picture's art style, place and heroes (CD: "build off the last picture")
+export const PROMPT_VERSION = "v7"; // v7: SCENE_RULE without the "tied in a bow" example (it put a bow in every picture); v6: scenes keep the previous picture's look
 
 /**
  * Continuity (CD playtest: "completely different picture... needs to build off the last picture"). Scene pictures are
