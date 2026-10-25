@@ -29,7 +29,7 @@ export default function TVPage() {
       if (quest) h.chooseQuest(quest);
     } catch {}
     // Dev only: lets the playtest scripts read the table's phase and timings.
-    if (process.env.NODE_ENV !== "production") (window as unknown as { __host: GameHost }).__host = h;
+    if (process.env.NODE_ENV !== "production" || process.env.NEXT_PUBLIC_TEST_HOOKS === "1") (window as unknown as { __host: GameHost }).__host = h;
     setHost(h);
     return () => h.close();
   }, []);
