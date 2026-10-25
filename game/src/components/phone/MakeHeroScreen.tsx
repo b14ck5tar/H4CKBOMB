@@ -3,8 +3,9 @@
  * Make your hero: describe one in a line (+ the optional "What's your secret talent?"), or grab a ready-made trading
  * card from the rail (one tap, instant). Same messages as before:
  *   onCreate({ text, skill, name })  ->  send("real", { skill, fear: "" }); send("concept", { text, name })
- *   onPick(heroId, name)              ->  send("pick", { heroId, name })  (name only if the player edited it)
- * The hero name is pre-filled with the join name; the AI builds around it and never renames it (CD).
+ *   onPick(heroId, name)              ->  send("pick", { heroId, name })
+ * The join screen asks for the CHARACTER's name (CD), so `name` is always that: a custom hero is built around it
+ * and never renamed, and a ready-made hero takes it too.
  */
 import { useState } from "react";
 import type { Hero } from "@/lib/types";
@@ -41,7 +42,7 @@ export function MakeHeroScreen({
   seed,
   defaultName = "",
 }: {
-  /** the name they joined with: the hero name starts as this */
+  /** the character's name they joined with (the hero's name) */
   defaultName?: string;
   /** the room code: picks the placeholder hero line */
   seed?: string;
@@ -51,8 +52,7 @@ export function MakeHeroScreen({
   onCreate: (a: { text: string; skill: string; name: string }) => void;
   onPick: (heroId: string, name: string) => void;
 }) {
-  const [name, setName] = useState(defaultName);
-  const [nameEdited, setNameEdited] = useState(false);
+  const name = defaultName;
   const [text, setText] = useState("");
   const [skill, setSkill] = useState("");
   const [chosen, setChosen] = useState("");
@@ -71,20 +71,6 @@ export function MakeHeroScreen({
           onCreate({ text: text.trim(), skill: skill.trim(), name: name.trim() });
         }}
       >
-        <label className="pk-field">
-          <span className="pk-label">Hero name</span>
-          <input
-            className="pk-input"
-            value={name}
-            onChange={(e) => {
-              setName(e.target.value);
-              setNameEdited(true);
-            }}
-            maxLength={20}
-            placeholder="Your hero's name"
-            autoComplete="off"
-          />
-        </label>
         <label className="pk-field">
           <span className="pk-label">Describe them in one line</span>
           <textarea className="pk-input" style={{ minHeight: 92 }} value={text} onChange={(e) => setText(e.target.value)} maxLength={140} placeholder={ex} />
@@ -116,8 +102,8 @@ export function MakeHeroScreen({
             onPick={(id) => {
               vibrate(15);
               setChosen(id);
-              // A ready-made keeps its own name unless the player typed a different one.
-              onPick(id, nameEdited ? name.trim() : "");
+              // The character's name from the join screen goes on the ready-made card too.
+              onPick(id, name.trim());
             }}
           />
         ))}

@@ -79,14 +79,14 @@ export function JoinScreen({ code = "", onJoin }: { code?: string; onJoin: (name
 
       <label className="pk-field" style={{ width: "100%" }}>
         <span className="pk-label" style={{ justifyContent: "center" }}>
-          Your name
+          Your character’s name
         </span>
         <input
           className="pk-input pk-input-big"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          maxLength={16}
-          placeholder="Sam"
+          maxLength={20}
+          placeholder="Doug the Panda"
           autoComplete="off"
           enterKeyHint="go"
         />

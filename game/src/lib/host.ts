@@ -988,7 +988,7 @@ export class GameHost {
   }
 
   private onJoin(pid: string, rawName: string) {
-    const name = String(rawName ?? "").replace(/[<>]/g, "").trim().slice(0, 16) || "Player";
+    const name = String(rawName ?? "").replace(/[<>]/g, "").trim().slice(0, 20) || "Player"; // the character's name (join asks for it, CD)
     const existing = this.player(pid);
     if (existing) return this.patchPlayer(pid, { name });
     if (this.state.phase !== "lobby" || this.state.players.length >= 6) return;
