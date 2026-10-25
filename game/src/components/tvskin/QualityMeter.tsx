@@ -32,7 +32,7 @@ const ZONES: { grade: Grade; from: number; to: number; word: string; color: stri
   { grade: "LEGENDARY", from: 20, to: 20, word: "Legend", color: "#ffd23f" },
 ];
 const zoneOf = (n: number) => ZONES.find((z) => n >= z.from && n <= z.to) ?? ZONES[ZONES.length - 1];
-const FILL_S = 1.3;
+const FILL_S = 1.0; // the host holds 2.2 s after the die lands: the grade has to land by ~1.2 s and settle by ~1.75 s
 /** When segment i (0-based) lights, as a fraction of the fill: matches the marker's ease-out travel (quadratic). */
 const litAt = (i: number, shown: number) => 1 - Math.sqrt(Math.max(0, 1 - (i + 1) / Math.max(1, shown)));
 
