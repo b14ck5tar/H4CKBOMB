@@ -14,6 +14,7 @@ import { Presenter } from "./Presenter";
 import { QuickTV } from "./QuickTV";
 import { RATINGS, RATING_LABEL } from "@/lib/rating";
 import { FEATURES } from "@/lib/features";
+import { playSfx, useMusic } from "@/lib/sound";
 
 const initials = (s: string) => s.split(/\s+/).map((w) => w[0]).join("").slice(0, 2).toUpperCase();
 const READING = ["quest", "narrating", "outcome", "mirror_reveal", "epilogue", "reveal"];
@@ -150,6 +151,7 @@ function Footer() {
 
 // ---------- lobby ----------
 function Lobby({ host, s }: { host: Stage; s: GameState }) {
+  useMusic("lobby", 0); // starts on the first tap anywhere (browsers need one)
   const [qr, setQr] = useState("");
   const [joinUrl, setJoinUrl] = useState("");
   const known = useRef(new Set<string>());
@@ -162,7 +164,7 @@ function Lobby({ host, s }: { host: Stage; s: GameState }) {
     s.players.forEach((p) => {
       if (!known.current.has(p.id)) {
         known.current.add(p.id);
-        sfx.join();
+        playSfx("join");
       }
     });
   }, [s.players]);

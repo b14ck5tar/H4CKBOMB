@@ -21,6 +21,7 @@ import { Reactions } from "./Reactions";
 import { Avatar, Hope, ThankHearts, useFastNow } from "./TV";
 import { KeepsakeQR } from "./Keepsake";
 import { FEATURES } from "@/lib/features";
+import { music, playSfx, useMusic } from "@/lib/sound";
 
 const READING = ["quest", "narrating", "ruling", "outcome", "epilogue", "reveal"];
 const SCENE_PHASES = ["narrating", "turn", "pitch", "vote", "ruling", "roll", "outcome"];
@@ -1045,19 +1046,68 @@ function useNarrator(host: Stage, s: GameState) {
     const audio = new Audio(url);
     audio.playbackRate = s.voice.rate || 1;
     (audio as HTMLAudioElement & { preservesPitch?: boolean }).preservesPitch = true;
+    const unduck = music.duckWhile(audio); // the music dips under the narrator
     const t = setTimeout(() => {
       if (!sfx.muted()) audio.play().catch(() => {});
     }, s.voice.delay);
     return () => {
       clearTimeout(t);
       audio.pause();
+      unduck();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 }
 
+/**
+ * Something is always playing: the story's mood from the first scene to the end (the AI picks it with the narrator),
+ * brighter at the final roll, softer for the reveal. Plus the house SFX for the big moments.
+ */
+function useStorySound(s: GameState) {
+  const mood = s.phase === "story_vote" || s.phase === "story_write" ? "lobby" : s.cast?.music || "mysterious";
+  const intensity = s.phase === "final_roll" ? 0.8 : ["reveal", "storybook"].includes(s.phase) ? 0 : s.finale ? 0.5 : 0.2;
+  useMusic(mood, intensity);
+  const turnKey = s.phase === "turn" ? s.turnIndex : -1;
+  useEffect(() => {
+    if (turnKey >= 0) playSfx("turnStart");
+  }, [turnKey]);
+  const r = s.rolls[0];
+  const landed = (s.phase === "roll" && s.revealed.length > 0) || s.phase === "final_result";
+  const band = landed ? r?.band : undefined;
+  useEffect(() => {
+    if (!band) return;
+    const t = setTimeout(() => {
+      if (band === "LEGENDARY") {
+        playSfx("nat20");
+        music.swell(1, 4000);
+      } else if (band === "CATASTROPHE") playSfx("nat1");
+      else if (band === "SUCCESS") playSfx("success");
+      else if (band === "YES_BUT") playSfx("partial");
+      else playSfx("fail");
+    }, s.phase === "final_result" ? 0 : ROLL_ANIM_MS);
+    return () => clearTimeout(t);
+  }, [band, s.phase]);
+  useEffect(() => {
+    if (s.phase === "final_roll" && s.final?.stage === "shake") playSfx("finaleShake", { ms: 2000 });
+    if (s.phase === "final_roll" && s.final?.stage === "landed") music.swell(1, 3500);
+    if (s.phase === "reveal") playSfx("reveal");
+    if (s.phase === "storybook") playSfx("keepsake");
+  }, [s.phase, s.final?.stage]);
+}
+
+/** The last five seconds of any timer tick (TV). */
+function useTimerTicks(host: Stage) {
+  const now = useFastNow(!!host.deadlineAt);
+  const left = host.deadlineAt ? Math.ceil(Math.max(0, host.deadlineAt - now) / 1000) : 0;
+  useEffect(() => {
+    if (left >= 1 && left <= 5) playSfx("timerTick", { index: left, final: left === 1 });
+  }, [left]);
+}
+
 export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameState; onNotes?: () => void; notesOpen?: boolean }) {
   useNarrator(host, s);
+  useStorySound(s);
+  useTimerTicks(host);
   const [reactions, setReactions] = useState<{ id: number; emoji: string; color?: string }[]>([]);
   useEffect(
     () =>

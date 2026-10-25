@@ -164,6 +164,7 @@ Rules: a creepy story gets a hushed ghost-story telling (vesper); nature gets a 
   - retro: space, signals, science, the sky.
   - noir: mysteries, disappearances, secrets, the unexplained.
   - gouache: gentle and kids' stories, festivals, happy news, small towns.
+- music: the ONE music mood for the story: mysterious (secrets, mysteries), eerie (spooky, creepy), playful (silly, odd), warm (nature, kind, gentle), tense (danger, races against time). For KIDS never eerie or tense.
 Return ONLY the JSON the schema asks for.`;
 
 export const CAST_SCHEMA = obj({
@@ -171,6 +172,7 @@ export const CAST_SCHEMA = obj({
   style: str,
   kind: str,
   art: { type: "string", enum: ["neon", "comic", "watercolor", "retro", "noir", "gouache"] },
+  music: { type: "string", enum: ["mysterious", "eerie", "playful", "warm", "tense"] },
 });
 
 // ---------- Ruling (one winning plan) ----------

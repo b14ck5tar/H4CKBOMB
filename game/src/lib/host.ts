@@ -2017,10 +2017,10 @@ export class GameHost {
 
   /** At game start the AI casts one narrator for the story's mood and writes how to read it. */
   private askCast(seed: QuestSeed) {
-    const fb = () => ({ voice: DEFAULT_CAST.voice, name: VOICES[DEFAULT_CAST.voice].name, style: DEFAULT_CAST.style, kind: "a strange true story", art: "neon", artName: ART_STYLES.neon.name });
+    const fb = () => ({ voice: DEFAULT_CAST.voice, name: VOICES[DEFAULT_CAST.voice].name, style: DEFAULT_CAST.style, kind: "a strange true story", art: "neon", artName: ART_STYLES.neon.name, music: "" });
     this.castP = this.viaAI(
       "Casting the narrator",
-      this.ask<{ voice: string; style: string; kind: string; art: string }>("cast", {
+      this.ask<{ voice: string; style: string; kind: string; art: string; music: string }>("cast", {
         title: seed.quest_title,
         premise: seed.fairytale_premise,
         category: seed.category ?? "",
@@ -2030,12 +2030,12 @@ export class GameHost {
       (d, f) => {
         if (f || !isVoice(d?.voice)) return fb();
         const art = FEATURES.artStyles && isArtStyle(d.art) ? d.art : "neon";
-        return { voice: d.voice, name: VOICES[d.voice].name, style: String(d.style ?? "").slice(0, 160) || DEFAULT_CAST.style, kind: String(d.kind ?? "").slice(0, 60) || "a strange true story", art, artName: ART_STYLES[art].name };
+        return { voice: d.voice, name: VOICES[d.voice].name, style: String(d.style ?? "").slice(0, 160) || DEFAULT_CAST.style, kind: String(d.kind ?? "").slice(0, 60) || "a strange true story", art, artName: ART_STYLES[art].name, music: String(d.music ?? "") };
       },
       fb,
     ).then((cast) => {
       this.set({ cast });
-      this.note("hero", "Narrator", `Cast by Muse Spark: ${cast.name} (${VOICES[cast.voice as keyof typeof VOICES]?.gemini ?? cast.voice} voice) for ${cast.kind}: "${cast.style}". Painted in ${cast.artName}.`);
+      this.note("hero", "Narrator", `Cast by Muse Spark: ${cast.name} (${VOICES[cast.voice as keyof typeof VOICES]?.gemini ?? cast.voice} voice) for ${cast.kind}: "${cast.style}". Painted in ${cast.artName}. Music: ${cast.music || "rotating"}.`);
       return cast;
     });
     return this.castP;

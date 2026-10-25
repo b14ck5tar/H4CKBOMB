@@ -3,11 +3,12 @@
  * The phone: a controller, never a second TV. Every screen is ONE big instruction (the same words as the TV's
  * "Now:" banner, lib/now.ts), a timer when there is one, the scene's art blurred behind it, and one control.
  */
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useCountdown, usePhone } from "@/lib/usePhone";
 import { PLAN_MAX, QUICK_TURN_MS, REACTIONS, TURN_MS } from "@/lib/rules";
 import { eligibleIds, nowText, plateFor, turnOwner, winnerPid, shortName } from "@/lib/now";
 import { sfx } from "@/lib/sfx";
+import { playSfx } from "@/lib/sound";
 import { HeroCard } from "./HeroCard";
 import { MicButton } from "./MicButton";
 import type { GameState, Hero, Player } from "@/lib/types";
@@ -682,8 +683,27 @@ function Keepsake({ state, me, portrait }: { state: GameState; me: Player; portr
   );
 }
 
+/** Every message from this phone gets its sound: send = submit, back = vote, pick = pick, the rest a tap. */
+const SEND_SFX: Record<string, string> = { pitch: "submit", idea: "submit", story: "submit", concept: "submit", real: "submit", join: "submit", vote: "vote", pick: "pick", arm: "tap", react: "tap", redraw: "tap" };
+
 export function Phone({ code }: { code: string }) {
-  const { state, me, portrait, deadlineAt, send } = usePhone(code);
+  const { state, me, portrait, deadlineAt, send: rawSend } = usePhone(code);
+  const send = useCallback<Send>(
+    (t, d) => {
+      const fx = SEND_SFX[t];
+      if (fx) playSfx(fx);
+      rawSend(t, d);
+    },
+    [rawSend],
+  );
+  // Your turn: the phone chimes (and buzzes) the moment it's yours.
+  const myTurn = !!state && !!me && state.phase === "turn" && state.turnOrder[state.turnIndex] === me.id;
+  useEffect(() => {
+    if (myTurn) {
+      playSfx("turnStart");
+      vibrate([30, 40, 30]);
+    }
+  }, [myTurn]);
   // Your plan won: buzz once, so you look down at the ROLL button.
   const won = !!state && !!me && winnerPid(state) === me.id && ["ruling", "roll"].includes(state.phase);
   useEffect(() => {
