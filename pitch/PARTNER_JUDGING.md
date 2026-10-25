@@ -3,6 +3,9 @@
 - [ ] **Before 2 PM: play the final build once**, start to "What really happened".
 - [ ] **Hygiene:** Do Not Disturb on the laptop and phone. Quit Discord, Slack and every terminal. No `.env`, key or
       Vercel page open. One fresh TV tab, full screen: `https://groupproject-game.vercel.app/tv?judge=1&bots=1`.
+- [ ] **Rollback ready:** in a terminal at `C:\Users\oclab\AppData\Local\Temp\gpd\game`, run `npx vercel whoami`
+      (it should print the team's Vercel account), then close the terminal. The rollback only works on THIS laptop
+      (the export folder and the CLI login live here). Judging from another machine? Run `npx vercel login` there first.
 - [ ] Lines and answers if you want them: `pitch/CHEAT_SHEET.md`.
 
 **Rollback** (only if a deploy misbehaves): the known-good build is `once-upon-a-roll-ggknns93n` (tag `judge-safe-1`).

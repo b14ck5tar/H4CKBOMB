@@ -44,6 +44,10 @@ Open `https://groupproject-game.vercel.app/tv?bots=1` and play to the first turn
 Away from judges, in a terminal at `C:\Users\oclab\AppData\Local\Temp\gpd\game`:
 `npx vercel promote https://once-upon-a-roll-ggknns93n-bl4ck-b0mb.vercel.app` (or `npx vercel rollback`). Then F5.
 
+- [ ] **Before you leave, check the rollback works:** in a terminal at `C:\Users\oclab\AppData\Local\Temp\gpd\game`, run `npx vercel whoami`
+      (it should print the team's Vercel account), then close the terminal. The rollback only works on THIS laptop
+      (the export folder and the CLI login live here). Judging from another machine? Run `npx vercel login` there first.
+
 ## 2. The live take (about 15 min for 2 takes)
 
 Setup (VIDEO_SCRIPT.md, "Shot list"): `/tv?judge=1&bots=1` (a saved, tested true story), **Quick · Odd news · Adults** (judge mode sets these),
