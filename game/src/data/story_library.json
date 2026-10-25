@@ -1,7 +1,154 @@
 {
  "version": 1,
- "updated": "2026-10-25T08:21:18.138Z",
+ "updated": "2026-10-25T09:54:56.315Z",
  "stories": [
+  {
+   "id": "news-30057bc8ac",
+   "origin": "news",
+   "headline": "Luna, a small dog missing for over a month in Yellowstone, is reunited with her owners",
+   "snippet": "A small dog named Luna has been found after more than a month on the loose in Yellowstone National Park. (AP) - For over a month, Luna, a Jack Russell terrier that bolted from her family’s cabin during a vacation at Yellowstone National Park, eluded capture as fears for her survival mounted and winter weather approached.",
+   "source": "KPLC 7 News",
+   "url": "https://www.kplctv.com/2026/10/15/luna-small-dog-missing-over-month-yellowstone-is-reunited-with-her-owners/",
+   "date": "2026-10-15T02:40:00Z",
+   "place": "Yellowstone, USA",
+   "rating": "kids",
+   "storyability": 4.6,
+   "scores": {
+    "situation": 5,
+    "problem": 5,
+    "setting": 5,
+    "arc": 4,
+    "roles": 4,
+    "payoff": 5,
+    "fantasy_fit": 4
+   },
+   "thumbnail": "https://gray-kplc-prod.gtv-cdn.com/resizer/v2/GSPNMAYKB5H7VJ2X6TENPIV7WU.png?auth=18d46dbdd194197c111f5e1ac0831248cc391a6f802dafccc5b430c99b9975c1&width=1200&height=600&smart=true",
+   "added_at": "2026-10-25T08:36:36.064Z"
+  },
+  {
+   "id": "news-dfe2305248",
+   "origin": "news",
+   "headline": "Dog reunited with owner after being rescued from Florida sinkhole",
+   "snippet": "A border collie is safe after falling into a 10-foot-deep sinkhole Friday morning in Chiefland. First responders and local community members pose with the rescued border collie and her owner in front of Chiefland Fire Rescue Engine 71 following the successful rescue. Courtesy: Chiefland Fire Rescue. CHIEFLAND,Fla. Chiefland Fire received a call around 5:55 a.m.",
+   "source": "FOX 13 Tampa Bay",
+   "url": "https://www.fox13news.com/news/dog-reunited-owner-after-being-rescued-from-florida-sinkhole",
+   "date": "2026-10-20T12:58:22Z",
+   "place": "Chiefland, USA",
+   "rating": "kids",
+   "storyability": 4.6,
+   "scores": {
+    "situation": 5,
+    "problem": 5,
+    "setting": 5,
+    "arc": 4,
+    "roles": 4,
+    "payoff": 5,
+    "fantasy_fit": 4
+   },
+   "thumbnail": "https://images.foxtv.com/static.fox13news.com/www.fox13news.com/content/uploads/2026/10/764/432/resized-dog8.jpg?ve=1&tl=1",
+   "added_at": "2026-10-25T08:36:36.064Z"
+  },
+  {
+   "id": "news-7139ab9963",
+   "origin": "news",
+   "headline": "10-Year-Old Dog Found After a Month Lost in Yellowstone",
+   "snippet": "A 10-year-old dog survived more than a month alone in Yellowstone National Park before being rescued by tireless volunteers. A 10-year-old Jack Russell terrier named Luna was happily reunited with her owners after surviving more than a month on her own in Yellowstone National Park. ⁠ Luna escaped on Sept. 10 from a locked cabin in the Canyon Village area.",
+   "source": "Good News Network",
+   "url": "https://www.goodnewsnetwork.org/10-year-old-dog-found-month-lost-in-yellowstone/",
+   "date": "2026-10-21T11:00:41Z",
+   "place": "Yellowstone, USA",
+   "rating": "kids",
+   "storyability": 4.6,
+   "scores": {
+    "situation": 5,
+    "problem": 5,
+    "setting": 5,
+    "arc": 4,
+    "roles": 4,
+    "payoff": 5,
+    "fantasy_fit": 4
+   },
+   "thumbnail": "https://www.goodnewsnetwork.org/wp-content/uploads/2026/10/849575391_1127940682909652_807340687886918863_n-e1792414065589.jpg",
+   "added_at": "2026-10-25T08:36:36.068Z",
+   "opener": {
+    "title": "The Wind Stole The Dog",
+    "quest_title": "The Wind Stole The Dog",
+    "teaser": "A little lost dog keeps riding a family-smelling wind between warm lodges.",
+    "mood": "tense",
+    "narration": "In a big mountain forest with cabins, staff and volunteers hunt an old small dog lost for weeks. A stubborn family-smelling wind tugs her along old trails, so she never stays put. If she roams cold nights with bears near, she will grow too weak.",
+    "goal": "Keep the little dog still and warm until morning",
+    "situation": "A cabin porch with an open door, a dropped leash, some paw prints, and a shivering small dog half hidden under a bench.",
+    "problem": {
+     "name": "The Tugging Family Wind",
+     "stakes": "the dog keeps roaming in the cold",
+     "pronoun": null
+    },
+    "threat": {
+     "name": "The Tugging Family Wind",
+     "pronoun": "it",
+     "want": "the dog keeps roaming in the cold"
+    },
+    "beats": [
+     "Chase paw prints from the cabin",
+     "Track her past lodges and roads",
+     "Leave warm food for cold nights",
+     "Calm the wind and keep her still"
+    ],
+    "real_setting": {
+     "place_type": "a big mountain forest with cabins and lodges",
+     "roles": [
+      "cabin staff",
+      "the visiting family",
+      "search volunteers"
+     ],
+     "situation": "an old small dog slipped out of a cabin and is roaming alone for weeks",
+     "stakes": "the cold, wild animals and hunger could end her",
+     "arc": [
+      "Dog slips out of cabin",
+      "Sightings near family stops continue",
+      "Volunteers search cold forest",
+      "Dog comes to safety"
+     ]
+    },
+    "npc_line": {
+     "speaker": "Lodge worker",
+     "line": "That pup uses my door more than guests do."
+    }
+   },
+   "ending_facts": {
+    "kind": "news",
+    "official_line": "A 10-year-old Jack Russell named Luna survived more than a month alone in Yellowstone National Park before being found.",
+    "whats_happening_now": "She slipped from a cabin in Canyon Village on Sept. 10 and was seen near lodges and roads. She was reunited with her owners from California after volunteers brought her in.",
+    "headline": "10-Year-Old Dog Found After a Month Lost in Yellowstone",
+    "source": "Good News Network",
+    "url": "https://www.goodnewsnetwork.org/10-year-old-dog-found-month-lost-in-yellowstone/",
+    "date": "2026-10-21T11:00:41Z"
+   },
+   "opener_rating": "teens"
+  },
+  {
+   "id": "news-0048323f2b",
+   "origin": "news",
+   "headline": "In 2005, villagers mistook a stray female Sumatran rhino for a shape-shifting pig. Now she and her daughter are both pregnant",
+   "snippet": "Ratu, a Sumatran rhino rescued from a village in 2005, and her daughter Delilah are both pregnant, with 34 to 47 left in the wild. On Tuesday, September 20, 2005, at 4 a.m., a Sumatran rhino was seen in the neighborhood of Braja Asri village, about 0.6 miles (1 kilometer) from the boundary of Way Kambas National Park in Sumatra.",
+   "source": "Earth.com",
+   "url": "https://www.earth.com/animals/sumatran-rhinos-ratu-delilah-pregnant/",
+   "date": "2026-10-21T14:33:10Z",
+   "place": "Sumatra, Indonesia",
+   "rating": "kids",
+   "storyability": 4.6,
+   "scores": {
+    "situation": 5,
+    "problem": 4,
+    "setting": 4,
+    "arc": 5,
+    "roles": 4,
+    "payoff": 5,
+    "fantasy_fit": 5
+   },
+   "thumbnail": "https://www.earth.com/assets/_next/image/?url=%2Fimg%2F16x9%2F1920%2Fmedia-2026%2F2026%2F10%2F15105412%2Fratu-sumatran-rhino-way-kambas-sanctuary.jpg&w=1920&q=75",
+   "added_at": "2026-10-25T08:36:36.068Z"
+  },
   {
    "id": "news-7f3160a2ba",
    "origin": "news",
@@ -157,6 +304,107 @@
     "date": "2026-10-13T07:00:00Z"
    },
    "opener_rating": "kids"
+  },
+  {
+   "id": "news-9c43baecb3",
+   "origin": "news",
+   "headline": "Lost pet kangaroo found safe in Mount Pleasant",
+   "snippet": "A pet kangaroo named Ollie escaped his pen in Mount Pleasant, Tennessee, and neighbors are searching for him after sightings placed him miles from home. Original Story: MOUNT PLEASANT, Tenn. (WSMV) - A pet kangaroo is on the run after escaping from its pen in Mount Pleasant Tuesday, and neighbors are working to track it down.",
+   "source": "WSMV",
+   "url": "https://www.wsmv.com/2026/10/21/pet-kangaroo-loose-mount-pleasant/",
+   "date": "2026-10-21T23:55:00Z",
+   "place": "Mount Pleasant, USA",
+   "rating": "kids",
+   "storyability": 4.1,
+   "scores": {
+    "situation": 5,
+    "problem": 4,
+    "setting": 4,
+    "arc": 3,
+    "roles": 4,
+    "payoff": 4,
+    "fantasy_fit": 5
+   },
+   "thumbnail": "https://gray-wsmv-prod.gtv-cdn.com/resizer/v2/WI62YF33MFCILNAUX3ZIKE4VNY.png?auth=ae5dc0ceacd38cabb63b87229a3e8c698cd8aae94f83668ef247a65b2f0321fb&width=1200&height=600&smart=true",
+   "added_at": "2026-10-25T08:36:36.068Z"
+  },
+  {
+   "id": "news-c69a3801cf",
+   "origin": "news",
+   "headline": "Sew down! Villagers knit fake cameras and cops to stop speeders",
+   "snippet": "Locals reckon the sign is working with many drivers falling for the mock speed cameras. Villagers in Fillongley, Warwickshire, have created knitted traffic officers in a bid to fool reckless drivers. (Emma Trimble via SWNS) Lorna Rosser, former Lollipop Lady in Fillongley village. (Emma Trimble via SWNS) Tom Decker with knitted traffic officer in Fillongley, Warwickshire, England.",
+   "source": "ttownmedia.com",
+   "url": "https://www.ttownmedia.com/news/national/sew-down-villagers-knit-fake-cameras-and-cops-to-stop-speeders/article_d76b692d-6168-5d9c-b718-2e0c02c71058.html",
+   "date": "2026-10-20T08:15:14Z",
+   "place": "Fillongley, United Kingdom",
+   "rating": "kids",
+   "storyability": 4.1,
+   "scores": {
+    "situation": 4,
+    "problem": 4,
+    "setting": 4,
+    "arc": 4,
+    "roles": 4,
+    "payoff": 4,
+    "fantasy_fit": 5
+   },
+   "thumbnail": "https://bloximages.chicago2.vip.townnews.com/ttownmedia.com/content/tncms/assets/v3/editorial/8/b1/8b1186cf-2a93-5a52-8560-dec40cd5db5f/6ad67a6893cb3.image.jpg?resize=1200%2C900",
+   "added_at": "2026-10-25T09:50:48.095Z",
+   "opener": {
+    "title": "The Yarn Traffic Cop",
+    "quest_title": "The Yarn Traffic Cop",
+    "teaser": "A knitted cop keeps hopping into traffic, and he really wants everyone to slow down.",
+    "mood": "silly",
+    "narration": "Neighbors set knitted guards and knitted kids by a village crossing. One knitted guard woke eager and hops out to flag cars. If he gets hit, cars stop slowing and kids cannot cross.",
+    "goal": "Move the knitted guard off the road and slow cars",
+    "situation": "A wobbly yarn guard with a stop sign, a bench of knitted kids, and fast cars rolling past.",
+    "problem": {
+     "name": "The Eager Yarn Guard",
+     "stakes": "the crossing stays unsafe",
+     "pronoun": "he"
+    },
+    "threat": {
+     "name": "The Eager Yarn Guard",
+     "pronoun": "he",
+     "want": "the crossing stays unsafe"
+    },
+    "beats": [
+     "Set the knitted guards by the road",
+     "Flag fast cars to ease off",
+     "Keep the eager guard off the road",
+     "Slow traffic and keep the crossing safe"
+    ],
+    "real_setting": {
+     "place_type": "a small village road with a busy crossing",
+     "roles": [
+      "neighbors who knit",
+      "people in fast cars",
+      "kids crossing to school"
+     ],
+     "situation": "cars speed past a crossing, so neighbors set out knitted guards to slow traffic",
+     "stakes": "if cars keep speeding, kids and walkers could get hurt",
+     "arc": [
+      "Neighbors knit guards and set them by road",
+      "Fast cars keep rushing past the crossing",
+      "Cars begin to ease off near figures",
+      "Neighbors say the road feels safer"
+     ]
+    },
+    "npc_line": {
+     "speaker": "Knitter",
+     "line": "Love, get out of the road right now!"
+    }
+   },
+   "ending_facts": {
+    "kind": "news",
+    "official_line": "Villagers in Fillongley, Warwickshire made knitted traffic officers to slow speeding drivers.",
+    "whats_happening_now": "Locals say many drivers are fooled by the mock speed cameras and ease off.",
+    "headline": "Sew down! Villagers knit fake cameras and cops to stop speeders",
+    "source": "ttownmedia.com",
+    "url": "https://www.ttownmedia.com/news/national/sew-down-villagers-knit-fake-cameras-and-cops-to-stop-speeders/article_d76b692d-6168-5d9c-b718-2e0c02c71058.html",
+    "date": "2026-10-20T08:15:14Z"
+   },
+   "opener_rating": "teens"
   },
   {
    "id": "rust-wyrm",

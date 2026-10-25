@@ -302,7 +302,7 @@ export function trimPile(s: string) {
     let j = i + 1;
     while (j < w.length && !FUNCTION_WORDS.has(w[j].toLowerCase()) && !DETERMINERS.has(w[j].toLowerCase()) && !TAIL.has(w[j].toLowerCase()) && !/^[A-Z]/.test(w[j])) j++;
     const run = w.slice(i + 1, j);
-    if (run.slice(0, -1).filter((x) => !PLAIN_ADJ.has(x.toLowerCase())).length >= 2) return [...w.slice(0, i + 1), ...run.slice(-2), ...w.slice(j)].join(" ");
+    if (run.slice(0, -1).filter((x) => !PLAIN_ADJ.has(x.toLowerCase())).length >= 3) return [...w.slice(0, i + 1), ...run.slice(-2), ...w.slice(j)].join(" ");
   }
   return s.trim();
 }

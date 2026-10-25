@@ -336,7 +336,13 @@ async function cached(id: string, provider: Clip["provider"], make: () => Promis
   if (hit) return hit;
   const file = path.join(DIR, `${id}.wav`);
   try {
-    const wav = fs.readFileSync(file);
+    // committed clips first (game/voice-cache: the judge stories' openers, voiced once), then this machine's cache
+    let wav: Buffer;
+    try {
+      wav = fs.readFileSync(path.join(process.cwd(), "voice-cache", `${id}.wav`));
+    } catch {
+      wav = fs.readFileSync(file);
+    }
     // every clip plays at its natural speed (time-stretching in the browser adds static)
     const clip: Clip = { wav, ms: Math.round(((wav.length - 44) / (RATE * 2)) * 1000), rate: 1, provider };
     mem.set(id, clip);

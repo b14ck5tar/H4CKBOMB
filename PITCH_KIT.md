@@ -42,8 +42,8 @@ second person is DRIVER (laptop, hotkeys, tech questions).
 ### The setting: `/tv?judge=1`
 Decided (DECISIONS Sun ~5:45 AM): **1 turn each, at most 3 turns, then the finale everyone plays.** `judge=1` also
 always opens on a saved, tested true story (`host.ts` `judge`), so the table never waits on live news. The turn cap is
-built (0121947, in main). `judge=1` doesn't force Quick yet (the story session is fixing it), so **tap Quick in the
-lobby** until then. Check the cap on the deployed site before 2 PM (3 judges = 3 turns).
+built (0121947, in main). `judge=1` also forces Quick
+(a7b3214). Check the cap on the deployed site before 2 PM (3 judges = 3 turns).
 
 ### Timing (from the code's timers, Quick Tale)
 | Step | Seconds | Source |

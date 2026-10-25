@@ -45,6 +45,8 @@ const nextConfig: NextConfig = {
   // Each dev server gets its own build folder so parallel test servers don't clobber each other.
   distDir: process.env.NEXT_DIST_DIR || ".next",
   env,
+  // the judge stories' pre-voiced openers ship with the narrator route (read with fs at runtime)
+  outputFileTracingIncludes: { "/api/tts": ["./voice-cache/**/*"] },
 };
 
 export default nextConfig;
