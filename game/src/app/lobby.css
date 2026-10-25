@@ -1277,3 +1277,26 @@
 /* The stat legend under the DM credit: what Guts / Brains / Charm mean (CD). */
 .lb-how-dm { display: flex; flex-direction: column; gap: calc(var(--u) * 0.15); }
 .lb-legend { font-size: calc(var(--u) * 1.1); font-weight: 700; font-style: normal; color: #c6ff2e; letter-spacing: 0.02em; }
+
+/* Host only: remove a player from the lobby. Small, top-right of the card, readable on focus/hover. */
+.lb-kick {
+  position: absolute;
+  top: calc(var(--u) * -0.6);
+  right: calc(var(--u) * -0.4);
+  z-index: 5;
+  width: calc(var(--u) * 2.4);
+  height: calc(var(--u) * 2.4);
+  display: grid;
+  place-items: center;
+  border: calc(var(--u) * 0.15) solid rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  background: rgba(10, 6, 18, 0.85);
+  color: #fff;
+  font-size: calc(var(--u) * 1.2);
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.55;
+  transition: opacity 0.15s ease, background 0.15s ease, transform 0.15s ease;
+}
+.lb-kick:hover,
+.lb-kick:focus-visible { opacity: 1; background: #ff2e7e; transform: scale(1.12); outline: none; }

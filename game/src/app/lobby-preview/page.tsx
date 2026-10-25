@@ -104,6 +104,7 @@ export default function LobbyPreview() {
       shortUrl="groupproject-game.vercel.app/play"
       joinUrl="https://groupproject-game.vercel.app/play?code=KRAB"
       onAddBot={bots ? join : undefined}
+      onKick={(id) => setPlayers((ps) => ps.filter((p) => p.id !== id))}
     />
   );
 }
