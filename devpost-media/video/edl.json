@@ -1,6 +1,6 @@
 {
  "out": "group-project",
- "notes": "Draft v2 on the CD's cut (video-source-cd.mp4, muted, its still-valid pieces only) + the 6:31 playtest (old build) + placeholders. Swap in raw/tv.mp4 + raw/phone.mp4 after 9:00; the hook headline comes from the take's own reveal (S12).",
+ "notes": "v3: footage from the live site (scripts/video/capture.mjs take3: TV + phone, shark story), the CD's cut (logo, phones), deck slides. No game audio (headless capture); Sarah + SFX.",
  "beats": [
   {
    "id": "h1",
@@ -9,7 +9,7 @@
    "min": 3.0,
    "shots": [
     {
-     "img": "devpost-media/video/stills/headline-slam.png",
+     "img": "devpost-media/video/stills/headline-shark.png",
      "slam": true,
      "zoom": 1.05
     }
@@ -27,7 +27,8 @@
      "at": 0.15,
      "vol": 0.7
     }
-   ]
+   ],
+   "gameVol": 0
   },
   {
    "id": "h2",
@@ -37,26 +38,20 @@
     {
      "src": "devpost-media/video-source-cd.mp4",
      "in": 58.2,
-     "dur": 1.8
+     "dur": 1.7
     },
     {
-     "src": "devpost-media/playtests/playtest-0631-judge.mp4",
-     "in": 234.5,
-     "crop": [
-      0,
-      52,
-      1295,
-      903
-     ]
+     "src": "devpost-media/video/raw/take3-tv.mp4",
+     "in": 189.3
     }
    ],
    "caption": "",
    "min": 3.2,
    "sfx": [
     {
-     "file": "game/public/sfx/magic-burst.mp3",
-     "at": 0.1,
-     "vol": 0.5
+     "file": "game/public/sfx/whoosh.mp3",
+     "at": 1.6,
+     "vol": 0.35
     }
    ]
   },
@@ -70,6 +65,13 @@
      "src": "devpost-media/video-source-cd.mp4",
      "in": 10.2
     }
+   ],
+   "sfx": [
+    {
+     "file": "game/public/sfx/magic-burst.mp3",
+     "at": 0.0,
+     "vol": 0.35
+    }
    ]
   },
   {
@@ -81,7 +83,8 @@
      "img": "devpost-media/broll/deck-slide-2.png",
      "zoom": 1.05
     }
-   ]
+   ],
+   "gameVol": 0
   },
   {
    "id": "p2",
@@ -92,23 +95,18 @@
      "img": "devpost-media/broll/deck-slide-2.png",
      "zoom": 1.04
     }
-   ]
+   ],
+   "gameVol": 0
   },
   {
    "id": "p3",
    "part": "problem",
    "vo": "So Meta's Muse runs it. The TV is the table, your phones are the controllers, and every story really happened.",
-   "gameVol": 0.3,
+   "gameVol": 0,
    "shots": [
     {
-     "src": "devpost-media/playtests/playtest-0631-judge.mp4",
-     "in": 80,
-     "crop": [
-      0,
-      52,
-      1295,
-      903
-     ]
+     "src": "devpost-media/video/raw/take3-tv.mp4",
+     "in": 30
     }
    ],
    "pad": 1.5
@@ -117,17 +115,14 @@
    "id": "d1",
    "part": "demo",
    "vo": "Scan the code. No app, no account. Name your character, describe them in one line, and add your secret strength.",
-   "gameVol": 0.3,
+   "gameVol": 0,
    "shots": [
     {
-     "src": "devpost-media/playtests/playtest-0631-judge.mp4",
-     "in": 40,
-     "crop": [
-      0,
-      52,
-      1905,
-      903
-     ]
+     "pair": 1.5,
+     "dur": 3.4
+    },
+    {
+     "pair": 9.0
     }
    ],
    "pad": 1.0
@@ -136,17 +131,10 @@
    "id": "d2",
    "part": "demo",
    "vo": "Your hero is exactly what you typed, painted in by Muse.",
-   "gameVol": 0.3,
+   "gameVol": 0,
    "shots": [
     {
-     "src": "devpost-media/playtests/playtest-0631-judge.mp4",
-     "in": 88,
-     "crop": [
-      0,
-      52,
-      1905,
-      903
-     ]
+     "pair": 48.5
     }
    ],
    "pad": 1.5
@@ -156,17 +144,16 @@
    "part": "demo",
    "vo": "Muse turns a real, odd news story into tonight's adventure.",
    "pad": 5.0,
-   "gameVol": 0.7,
+   "gameVol": 0,
    "shots": [
     {
-     "src": "devpost-media/playtests/playtest-0631-judge.mp4",
-     "in": 108,
-     "crop": [
-      0,
-      52,
-      1295,
-      903
-     ]
+     "src": "devpost-media/video/raw/take3-tv.mp4",
+     "in": 60.5,
+     "dur": 2.6
+    },
+    {
+     "src": "devpost-media/video/raw/take3-tv.mp4",
+     "in": 70
     }
    ]
   },
@@ -174,17 +161,11 @@
    "id": "d4",
    "part": "demo",
    "vo": "On your turn, you tell the table your plan.",
-   "gameVol": 0.3,
+   "gameVol": 0,
    "shots": [
     {
-     "src": "devpost-media/playtests/playtest-0631-judge.mp4",
-     "in": 184,
-     "crop": [
-      0,
-      52,
-      1905,
-      903
-     ]
+     "src": "devpost-media/video/raw/take3-tv.mp4",
+     "in": 89.5
     }
    ],
    "pad": 1.5
@@ -194,17 +175,16 @@
    "part": "demo",
    "vo": "Your friends throw in ideas, and the best part is arguing over which one to use.",
    "pad": 2.5,
-   "gameVol": 0.4,
+   "gameVol": 0,
    "shots": [
     {
-     "src": "devpost-media/playtests/playtest-0631-judge.mp4",
-     "in": 234,
-     "crop": [
-      0,
-      52,
-      1295,
-      903
-     ]
+     "src": "devpost-media/video/raw/take3-tv.mp4",
+     "in": 95.5,
+     "dur": 4.2
+    },
+    {
+     "src": "devpost-media/video/raw/take3-tv.mp4",
+     "in": 102.3
     }
    ]
   },
@@ -214,55 +194,51 @@
    "vo": "Every hero has Guts, Brains and Charm: force, tricks and talk.",
    "shots": [
     {
-     "ph": "S6 stats explained"
+     "pair": 53.5
     }
    ],
-   "pad": 1.0
+   "pad": 1.0,
+   "gameVol": 0
   },
   {
    "id": "d7",
    "part": "demo",
    "vo": "Swipe up to throw. Code rolls the dice, never the AI.",
-   "gameVol": 0.5,
+   "gameVol": 0,
    "shots": [
     {
-     "src": "devpost-media/playtests/playtest-0631-judge.mp4",
-     "in": 166.5,
-     "crop": [
-      0,
-      52,
-      1905,
-      903
-     ],
-     "dur": 2.6
-    },
-    {
-     "ph": "S7 the one die lands"
+     "pair": 104.0
     }
    ],
-   "pad": 2.5
+   "pad": 2.5,
+   "sfx": [
+    {
+     "file": "game/public/sfx/whoosh.mp3",
+     "at": 1.0,
+     "vol": 0.45
+    },
+    {
+     "file": "game/public/sfx/brass-hit.mp3",
+     "at": 5.0,
+     "vol": 0.4
+    }
+   ]
   },
   {
    "id": "d8",
    "part": "demo",
    "vo": "Muse takes your plan literally, writes what happens next, and paints a new scene.",
    "pad": 5.0,
-   "gameVol": 0.0,
+   "gameVol": 0,
    "shots": [
     {
-     "src": "devpost-media/playtests/playtest-0631-judge.mp4",
-     "in": 177,
-     "crop": [
-      0,
-      52,
-      1295,
-      903
-     ],
-     "dur": 6.6
+     "src": "devpost-media/video/raw/take3-tv.mp4",
+     "in": 114.5,
+     "dur": 5.5
     },
     {
-     "src": "devpost-media/video-source-cd.mp4",
-     "in": 53.3
+     "src": "devpost-media/video/raw/take3-tv.mp4",
+     "in": 128.5
     }
    ]
   },
@@ -273,37 +249,41 @@
    "pad": 3.0,
    "shots": [
     {
-     "ph": "S9 Convince each other (30 s talk)"
+     "pair": 140.0
     }
-   ]
+   ],
+   "gameVol": 0
   },
   {
    "id": "d10",
    "part": "demo",
    "vo": "Then you back a plan, and the whole table shakes their phones at once.",
    "pad": 3.0,
-   "gameVol": 0.5,
+   "gameVol": 0,
    "shots": [
     {
-     "src": "devpost-media/playtests/playtest-0631-judge.mp4",
-     "in": 302,
-     "crop": [
-      0,
-      52,
-      1905,
-      903
-     ],
-     "dur": 3.5
+     "pair": 168.5,
+     "dur": 2.6
     },
     {
-     "src": "devpost-media/playtests/playtest-0631-judge.mp4",
-     "in": 316,
-     "crop": [
-      0,
-      52,
-      1295,
-      903
-     ]
+     "pair": 179.5,
+     "dur": 2.4
+    },
+    {
+     "src": "devpost-media/video/raw/take3-tv.mp4",
+     "in": 186.0
+    }
+   ],
+   "sfx": [
+    {
+     "file": "game/public/sfx/drumroll-build.mp3",
+     "at": 2.6,
+     "vol": 0.35
+    },
+    {
+     "file": "game/public/sfx/crowd-cheer.mp3",
+     "at": 6.6,
+     "vol": 0.35
     }
    ]
   },
@@ -312,10 +292,11 @@
    "part": "reveal",
    "vo": "And the twist. Here's what you did.",
    "pad": 4.0,
-   "gameVol": 0.4,
+   "gameVol": 0,
    "shots": [
     {
-     "ph": "S11 WHAT YOU DID"
+     "src": "devpost-media/video/raw/take3-tv.mp4",
+     "in": 212.5
     }
    ]
   },
@@ -324,17 +305,23 @@
    "part": "reveal",
    "vo": "And here's what really happened.",
    "pad": 6.0,
-   "gameVol": 0.7,
+   "gameVol": 0,
    "shots": [
     {
-     "src": "devpost-media/playtests/playtest-0631-judge.mp4",
-     "in": 337,
-     "crop": [
-      0,
-      52,
-      1295,
-      903
-     ]
+     "src": "devpost-media/video/raw/take3-tv.mp4",
+     "in": 219.0,
+     "dur": 6.5
+    },
+    {
+     "src": "devpost-media/video/raw/take3-tv.mp4",
+     "in": 230.0
+    }
+   ],
+   "sfx": [
+    {
+     "file": "game/public/sfx/magic-shimmer.mp3",
+     "at": 0.0,
+     "vol": 0.4
     }
    ]
   },
@@ -348,7 +335,8 @@
      "zoom": 1.05
     }
    ],
-   "pad": 1.5
+   "pad": 1.5,
+   "gameVol": 0
   },
   {
    "id": "a2",
@@ -356,10 +344,12 @@
    "vo": "Muse Image paints your heroes into every scene. Code rolls the dice, and the AI judges ideas, never people.",
    "shots": [
     {
-     "ph": "S13 DM's Notes"
+     "src": "devpost-media/video/raw/take3-tv.mp4",
+     "in": 246.5
     }
    ],
-   "pad": 3.0
+   "pad": 3.0,
+   "gameVol": 0
   },
   {
    "id": "a3",
@@ -372,7 +362,8 @@
      "zoom": 1.08
     }
    ],
-   "pad": 1.5
+   "pad": 1.5,
+   "gameVol": 0
   },
   {
    "id": "t1",
@@ -380,10 +371,12 @@
    "vo": "It was built by a first-time hacker making every creative call, with Claude Code as lead engineer, running a team of agents.",
    "shots": [
     {
-     "ph": "S14 Claude Code sessions"
+     "img": "devpost-media/broll/deck-slide-7.png",
+     "zoom": 1.1
     }
    ],
-   "pad": 1.0
+   "pad": 1.0,
+   "gameVol": 0
   },
   {
    "id": "t2",
@@ -401,7 +394,8 @@
      ]
     }
    ],
-   "pad": 1.0
+   "pad": 1.0,
+   "gameVol": 0
   },
   {
    "id": "t3",
@@ -413,7 +407,8 @@
      "zoom": 1.12
     }
    ],
-   "pad": 1.0
+   "pad": 1.0,
+   "gameVol": 0
   },
   {
    "id": "e1",
@@ -426,7 +421,11 @@
     {
      "card": "end"
     }
-   ]
+   ],
+   "gameVol": 0
   }
- ]
+ ],
+ "tv": "devpost-media/video/raw/take3-tv.mp4",
+ "phone": "devpost-media/video/raw/take3-phone.mp4",
+ "phoneOffset": 0
 }

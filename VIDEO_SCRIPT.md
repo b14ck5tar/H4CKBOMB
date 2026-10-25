@@ -1,5 +1,10 @@
 # VIDEO SCRIPT: Group Project (Meta track video)
 
+**Final v3 (Sun 9:27 AM):** `devpost-media/video/out/group-project-final.mp4` (2:47, 1080p) + `group-project-final-small.mp4`
+(720p, 23 MB, for phones). Game footage was recorded from the live site by `node scripts/video/capture.mjs`
+(headless Chrome: TV + one scripted phone + 2 test players, judge mode, the shark story). If the CD records a better take,
+put it in `devpost-media/video/raw/`, point `tv`/`phone` and the shot times in `edl.json` at it, and rebuild.
+
 Rewritten Sun ~7:45 AM (video session) after the CD's notes on the first teaser. **The cut is built by script**, not
 by hand: `devpost-media/video/edl.json` (every beat: its voice line and its shots) → `python -I scripts/video/build.py`
 → `devpost-media/video/out/group-project.mp4`. The narrator is Sarah (ElevenLabs Flash v2.5, the game's Combo
