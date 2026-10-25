@@ -13,6 +13,7 @@ const KEYS: [string, string][] = [
   ["N", "DM's Notes: what the AI is doing"],
   ["Q", "Quick Tale: 3-minute mode + begin"],
   ["A", "Attract screen on/off"],
+  ["B", "Add a test player (lobby, for playtests)"],
   ["H", "This help"],
 ];
 
@@ -94,6 +95,9 @@ export function Presenter({ host, s, onNotes, onCloseNotes }: { host: Stage; s: 
         if (READING.includes(st.phase)) host.skip();
       } else if (k === "s") {
         if (host.deadlineAt) host.skip();
+      } else if (k === "b" && st.phase === "lobby") {
+        const name = host.addBot();
+        setToast(name ? `Test player ${name} joined.` : "No room for another test player.");
       } else if (k === "q" && st.phase === "lobby") {
         // Quick Tale (it preselects the demo story), or the first story if none is picked yet.
         host.setMode("quick");

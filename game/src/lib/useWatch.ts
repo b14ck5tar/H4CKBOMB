@@ -83,6 +83,9 @@ export class WatchSource {
   optionArt() {
     return "";
   }
+  addBot() {
+    return "";
+  }
   voiceUrl() {
     return "";
   }

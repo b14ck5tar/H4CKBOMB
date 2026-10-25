@@ -400,3 +400,11 @@ const SCENE_OPENERS: Record<string, string> = {
 export function scenePrompt(s: { kind: string; location: string; description: string; realm: string; threat?: string }) {
   return `${STYLE}. ${SCENE_OPENERS[s.kind] ?? SCENE_OPENERS.hook}: ${s.location} in ${s.realm}. ${s.description}${s.threat ? ` The impossible element: ${s.threat}` : ""} No people. ${COLOR} ${COMPOSITION} ${NEGATIVE}`;
 }
+
+// ---------- Test players (playtesting only) ----------
+export const BOT_SYSTEM = `You play ONE friend at a party game, typing a quick move on your phone for a group story. You are not the narrator.
+Input: persona (who you are and how you type), role ("suggest" = a move for a friend's hero, "own" = your own hero's move, "finale" = the final move for the whole group), hero (whose move it is: name, power), story (the problem, what's at stake, right_now, the situation, what just happened).
+- text: 3 to 12 words, casual phone typing like a real person ("ask the night guard for the spare key", "throw my sandwich at it lol"). One concrete action that fits right_now and the situation. Sound like the persona: a joker is silly but still on topic, a planner is sensible. No quotes, no hero name at the start. Never violent, mean or gross.
+Return ONLY the JSON the schema asks for.`;
+
+export const BOT_SCHEMA = obj({ text: str });

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { MODELS, museJSON } from "@/server/muse";
 import {
+  BOT_SCHEMA,
+  BOT_SYSTEM,
   CAST_SCHEMA,
   CAST_SYSTEM,
   CHARACTER_SCHEMA,
@@ -29,7 +31,7 @@ import { evenStats } from "@/lib/rules";
 
 export const maxDuration = 60;
 
-const TASKS = ["character", "scene", "verdict", "outcome", "round", "epilogue", "storybook", "kind", "cast"];
+const TASKS = ["character", "scene", "verdict", "outcome", "round", "epilogue", "storybook", "kind", "cast", "bot"];
 
 /** Player-authored text is wrapped so the model treats it as in-world speech, never instructions. */
 function wrap(id: string, text: string, max = 240) {
@@ -81,6 +83,8 @@ async function run(task: string, input: Any, rating: Rating) {
     case "verdict":
       // One winning plan per call: spark-1.3 at minimal effort answers in 1-2 s (design/23).
       return museJSON({ task: t("ruling"), model: MODELS.ruling, system: withRating(RULING_SYSTEM, rating), schema: RULING_SCHEMA, effort: "minimal", temperature: 0, timeoutMs: 9000, maxTokens: 1500, user: JSON.stringify(input) });
+    case "bot":
+      return museJSON({ task: t("bot"), model: MODELS.ruling, system: withRating(BOT_SYSTEM, rating), schema: BOT_SCHEMA, effort: "minimal", timeoutMs: 6000, maxTokens: 400, user: JSON.stringify(input) });
     case "cast":
       return museJSON({ task: t("cast"), model: MODELS.ruling, system: withRating(CAST_SYSTEM, rating), schema: CAST_SCHEMA, effort: "minimal", timeoutMs: 8000, maxTokens: 1200, user: JSON.stringify(input) });
     case "outcome":
@@ -113,6 +117,8 @@ function fallback(task: string, input: Any) {
       return fallbackScene(input.hero_ids ?? [], input.scene_plan ?? {}, input.state?.party ?? []);
     case "verdict":
       return fallbackRuling(STATS.includes(input?.hero?.best_stat) ? input.hero.best_stat : "brave");
+    case "bot":
+      return { text: "" };
     case "cast":
       return { voice: "vesper", style: "Read this as a low, smoky, mysterious late-night storyteller", kind: "a strange true story", art: "neon", music: "mysterious" };
     case "outcome":

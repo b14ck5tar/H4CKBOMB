@@ -27,7 +27,7 @@ export type Stage = Pick<
   GameHost,
   | "subscribe" | "getState" | "deadlineAt" | "portraits" | "thumbs" | "sceneImages" | "realStory" | "questSeed"
   | "transportKind" | "onReaction" | "skip" | "setPartyName" | "chooseQuest" | "canBegin" | "begin" | "nextTale"
-  | "setMode" | "startedAt" | "endedAt" | "setRating" | "voiceUrl" | "setSource" | "optionArt"
+  | "setMode" | "startedAt" | "endedAt" | "setRating" | "voiceUrl" | "setSource" | "optionArt" | "addBot"
 > & { readOnly?: boolean; onToast?: GameHost["onToast"] };
 
 export function useHost(host: Stage) {
@@ -168,6 +168,14 @@ function Lobby({ host, s }: { host: Stage; s: GameState }) {
       }
     });
   }, [s.players]);
+  const [showBots, setShowBots] = useState(false);
+  useEffect(() => {
+    try {
+      setShowBots(new URLSearchParams(window.location.search).has("bots"));
+    } catch {
+      // no URL, no test players
+    }
+  }, []);
   const ready = s.players.filter((p) => p.hero || p.status === "building").length;
   const status = host.readOnly
     ? "The table starts it when everyone's in."
@@ -191,6 +199,11 @@ function Lobby({ host, s }: { host: Stage; s: GameState }) {
         <p className="font-display text-6xl tracking-[0.2em] leading-none">{s.code}</p>
         <p className="font-ui uppercase tracking-[0.3em] text-xs text-ink-soft">Your Dungeon Master: Muse</p>
         {host.transportKind === "local" && <p className="font-ui text-xs text-crimson">Local mode: phones on other devices can’t connect until Supabase keys are set.</p>}
+        {showBots && !host.readOnly && (
+          <button className="gp-tb" onClick={() => host.addBot()} disabled={s.players.length >= 6}>
+            + Add test player
+          </button>
+        )}
       </div>
 
       <div className="flex flex-col gap-5">

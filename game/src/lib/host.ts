@@ -34,6 +34,7 @@ import { openRoom, type Msg, type Transport } from "./transport";
 import { mask } from "./mask";
 import { QUICK, coldOpenTimeline } from "./quick";
 import { FEATURES } from "./features";
+import { Bots } from "./bots";
 import { DEFAULT_CAST, VOICES, isVoice } from "./voices";
 import { ART_STYLES, isArtStyle } from "./artStyles";
 import { DEFAULT_RATING, isRating, questAllowed } from "./rating";
@@ -2130,6 +2131,23 @@ export class GameHost {
   private voiceSeq = 0;
   private voicedBy = "";
   private castP: Promise<NonNullable<GameState["cast"]>> | null = null;
+
+  /** Test players for playtesting (up to 3, run by this TV; they send the same intents a phone does). */
+  private bots = new Bots({
+    state: () => this.state,
+    inject: (m) => this.handle(m),
+    owner: () => this.owner(),
+    freeHeroIds: () => QUICK_HEROES.filter((h) => !this.state.players.some((p) => p.pick === h.id)).map((h) => h.id),
+    storySoFar: () => this.storySoFar(),
+    ask: (input) => this.ask<{ text?: string }>("bot", input).then((r) => (r.fallback ? "" : String(r.data?.text ?? ""))),
+  });
+
+  /** "+ Add test player" (lobby only). Returns the bot's name, or "" when there's no room. */
+  addBot() {
+    const name = this.bots.add();
+    if (name) this.note("hero", name, "Test player added: run by the TV for playtesting, its moves written by Muse Spark (minimal).");
+    return name;
+  }
   /** Cast calls per story, so a story's narrator (and its opener's audio) can be ready before it starts. */
   private castCache = new Map<string, Promise<{ cast: NonNullable<GameState["cast"]>; failed: boolean; want: string; pronoun: string }>>();
 
@@ -2988,6 +3006,7 @@ export class GameHost {
   }
 
   close() {
+    this.bots.stop();
     this.clearTimer();
     if (this.finalSafety) clearTimeout(this.finalSafety);
     if (this.presenceIv) clearInterval(this.presenceIv);
