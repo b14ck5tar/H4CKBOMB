@@ -854,6 +854,18 @@ const GRADE_COLOR: Record<string, string> = { DISASTER: "#ff3b4e", SETBACK: "#ff
 
 /** The HUD under the top bar: progress as 3 act dots and the crown, Right now, the goal. One meter only. */
 function SkinHud({ s }: { s: GameState }) {
+  if (FEATURES.storyV3) {
+    // Story v3: progress is a turn clock (3 acts + the finale), never "% done"; the goal is only a suggestion.
+    if (!s.nowGoal && !s.goal) return null;
+    const act = Math.max(1, Math.min(3, s.act ?? 1));
+    const total = s.turnOrder.length;
+    const clock = s.finale ? "Finale" : `Act ${act}${total ? ` · Turn ${Math.min(total, s.turnIndex + 1)} of ${total}` : ""}`;
+    return (
+      <HudStrip
+        ladder={{ steps: 4, at: s.finale ? 3 : act - 1, now: s.nowGoal || s.goal, goal: s.nowGoal ? s.goal : undefined, goalLabel: "Maybe:", clock }}
+      />
+    );
+  }
   if (!s.goal) return null;
   return (
     <HudStrip
@@ -1001,7 +1013,7 @@ function SkinEnding({ host, s }: { host: Stage; s: GameState }) {
       onReachEnd={() => setWant(2)}
       reveal={{
         // Where the story came from (design/37 §4): the start's problem really happened.
-        originalProblem: (s as GameState & { original_problem?: string }).original_problem || s.goal || undefined,
+        originalProblem: s.originalProblem || (s as GameState & { original_problem?: string }).original_problem || s.goal || undefined,
         headline: real.headline,
         source: real.source,
         date: real.date,

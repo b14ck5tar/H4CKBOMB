@@ -12,10 +12,13 @@ export interface LadderDotsProps {
   now?: string;
   /** The big goal, small, under it (s.goal). */
   goal?: string;
+  /** Story v3: the goal is only a suggestion ("Maybe:"), and a story clock shows instead of progress ("Act 2 · Turn 3 of 6"). */
+  goalLabel?: string;
+  clock?: string;
 }
 
 /** Story progress: gem steps on a neon rail, the current one pulses, the last one is the finale crown. */
-export function LadderDots({ steps, at, now, goal }: LadderDotsProps) {
+export function LadderDots({ steps, at, now, goal, goalLabel = "Goal:", clock }: LadderDotsProps) {
   const n = Math.max(2, steps);
   // a spark travels along the rail from the last step to the new one (from the start on first show)
   const [pair, setPair] = useState({ from: 0, to: at });
@@ -51,14 +54,19 @@ export function LadderDots({ steps, at, now, goal }: LadderDotsProps) {
           );
         })}
       </div>
-      {(now || goal) && (
+      {(now || goal || clock) && (
         <div className="tvx-ladder-txt">
+          {clock && <p className="tvx-ladder-clock">{clock}</p>}
           {now && (
             <p key={now} className="tvx-ladder-now">
               <span>Right now</span> {now}
             </p>
           )}
-          {goal && <p className="tvx-ladder-goal">Goal: {goal}</p>}
+          {goal && (
+            <p className="tvx-ladder-goal">
+              {goalLabel} {goal}
+            </p>
+          )}
         </div>
       )}
     </div>

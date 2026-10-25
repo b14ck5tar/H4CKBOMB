@@ -4,6 +4,7 @@
  * goal card, chunky buttons, plan box, reactions, d20/d6 glyphs). Pure props, no GameHost or transport import,
  * so every screen previews at /phone-preview. Styles: app/phone-theme.css (imported here, pk-* classes).
  */
+import { FEATURES } from "@/lib/features";
 import { heroPortrait } from "@/lib/heroArt";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Player } from "@/lib/types";
@@ -328,7 +329,7 @@ export function Goal({ goal, nowGoal, ladder, step }: { goal?: string; nowGoal?:
       <span className="pk-goal-txt">{now || goal}</span>
       {now && goal && (
         <span className="pk-goal-big">
-          <b>BIG GOAL</b>
+          <b>{FEATURES.storyV3 ? "MAYBE" : "BIG GOAL"}</b>
           {goal}
         </span>
       )}

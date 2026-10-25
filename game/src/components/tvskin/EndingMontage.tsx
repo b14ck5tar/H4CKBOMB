@@ -246,7 +246,7 @@ function Reveal({ r, keepsake, keepsakeUrl, crew, beatIndex }: { r: RevealData; 
         <div className="tvx-origin">
           <p className="tvx-origin-lead">Your story started from a real article.</p>
           <p className="tvx-origin-line">
-            The problem you faced at the start, <b>{r.originalProblem}</b>, really happened.
+            That first problem really happened: <b>{r.originalProblem}</b>.
           </p>
           {r.source && (
             <p className="tvx-origin-src">
