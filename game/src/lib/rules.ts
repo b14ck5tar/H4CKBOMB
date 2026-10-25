@@ -67,6 +67,13 @@ export const BAND_LABEL: Record<Band, string> = {
   LEGENDARY: "LEGENDARY",
 };
 
+/** design/24: every hero gets the same stat budget (+2 / +1 / 0). The AI only picks which is which. */
+export const STAT_BUDGET = [2, 1, 0] as const;
+export function evenStats(stats: Record<Stat, number>): Record<Stat, number> {
+  const order = (Object.keys(stats) as Stat[]).sort((a, b) => (stats[b] ?? 0) - (stats[a] ?? 0));
+  return Object.fromEntries(order.map((k, i) => [k, STAT_BUDGET[i] ?? 0])) as Record<Stat, number>;
+}
+
 export function d20(): number {
   const buf = new Uint32Array(1);
   crypto.getRandomValues(buf);

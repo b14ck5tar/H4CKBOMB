@@ -162,41 +162,49 @@ function JoinForm({ onJoin }: { onJoin: (name: string) => void }) {
   );
 }
 
-function ConceptForm({ send }: { send: Send }) {
+/** design/24 join: describe your hero in one line + one question. The answer becomes the hero's power. */
+function CreateHero({ send, onReady }: { send: Send; onReady: () => void }) {
   const [text, setText] = useState("");
+  const [skill, setSkill] = useState("");
   const [ex] = useState(() => EXAMPLES[Math.floor(Math.random() * EXAMPLES.length)]);
   return (
     <form
-      className="page p-5 flex flex-col gap-3"
+      className="flex flex-col gap-3"
       onSubmit={(e) => {
         e.preventDefault();
-        if (text.trim()) send("concept", { text: text.trim() });
+        if (!text.trim()) return;
+        sfx.unlock();
+        send("real", { skill: skill.trim(), fear: "" });
+        send("concept", { text: text.trim() });
+        vibrate(20);
       }}
     >
-      <h2 className="font-heading text-2xl uppercase">Make your own hero</h2>
-      <p className="text-ink-soft">One line. Be weird. It gets drawn while you play.</p>
-      <textarea id="concept" className="input min-h-24" value={text} onChange={(e) => setText(e.target.value)} maxLength={200} placeholder={ex} />
-      <MicButton onTranscript={(t) => setText(t)} />
-      <button className="btn btn-crimson text-lg" type="submit" disabled={!text.trim()}>Make my hero</button>
+      <Say text="Make your hero" />
+      <label className="flex flex-col gap-1">
+        <span className="font-ui text-sm">Describe your hero in one line</span>
+        <textarea className="input min-h-20" value={text} onChange={(e) => setText(e.target.value)} maxLength={140} placeholder={ex} />
+      </label>
+      <label className="flex flex-col gap-1">
+        <span className="font-ui text-sm">What are you weirdly good at? (optional)</span>
+        <input className="input" value={skill} onChange={(e) => setSkill(e.target.value)} maxLength={80} placeholder="parallel parking, finding lost things" autoComplete="off" />
+        <span className="text-xs text-parchment/70">It becomes your hero&apos;s power. Your real answer stays secret until the end.</span>
+      </label>
+      <button className="btn btn-crimson text-xl" type="submit" disabled={!text.trim()}>
+        Make my hero
+      </button>
+      <button type="button" className="btn btn-ghost" onClick={onReady}>
+        Or pick a ready-made hero (instant)
+      </button>
     </form>
   );
 }
 
 const QUICK = quickHeroes as { id: string; pitch: string; hero: Hero }[];
 
-/** Character step: ready-made heroes first (instant), "make your own" one tap away. */
+/** Character step: describe your own hero (the default), or a ready-made one if you're in a hurry. */
 function CharacterPicker({ state, me, send }: { state: GameState; me: Player; send: Send }) {
-  const [own, setOwn] = useState(false);
-  if (own) {
-    return (
-      <div className="flex flex-col gap-2">
-        <ConceptForm send={send} />
-        <button type="button" className="font-ui text-sm underline opacity-80" onClick={() => setOwn(false)}>
-          Back to the ready-made heroes
-        </button>
-      </div>
-    );
-  }
+  const [ready, setReady] = useState(false);
+  if (!ready) return <CreateHero send={send} onReady={() => setReady(true)} />;
   const takenBy = (id: string) => state.players.find((p) => p.id !== me.id && p.pick === id);
   return (
     <div className="flex flex-col gap-3">
@@ -229,41 +237,35 @@ function CharacterPicker({ state, me, send }: { state: GameState; me: Player; se
           );
         })}
       </div>
-      <button type="button" className="btn btn-ghost text-lg" onClick={() => setOwn(true)}>
-        Or make your own
+      <button type="button" className="btn btn-ghost text-lg" onClick={() => setReady(false)}>
+        Back to making my own
       </button>
     </div>
   );
 }
 
-/** The two join questions, both optional. They shape your hero's power and weakness, and stay private until the reveal. */
+/** The one join question, for a ready-made hero. It becomes the hero's power and stays private until the reveal. */
 function RealForm({ send }: { send: Send }) {
   const [skill, setSkill] = useState("");
-  const [fear, setFear] = useState("");
   return (
     <form
       className="page p-4 flex flex-col gap-3"
       onSubmit={(e) => {
         e.preventDefault();
-        send("real", { skill: skill.trim(), fear: fear.trim() });
+        send("real", { skill: skill.trim(), fear: "" });
         vibrate(15);
       }}
     >
-      <p className="font-heading text-xl uppercase leading-snug">Two quick questions (optional)</p>
       <label className="flex flex-col gap-1">
-        <span className="font-ui text-sm">What&apos;s something you&apos;re weirdly good at?</span>
+        <span className="font-heading text-xl uppercase leading-snug">What are you weirdly good at?</span>
         <input className="input" value={skill} onChange={(e) => setSkill(e.target.value)} maxLength={80} placeholder="parallel parking, finding lost things" autoComplete="off" />
-      </label>
-      <label className="flex flex-col gap-1">
-        <span className="font-ui text-sm">What&apos;s a small thing that scares you?</span>
-        <input className="input" value={fear} onChange={(e) => setFear(e.target.value)} maxLength={80} placeholder="geese, voicemails, the deep end" autoComplete="off" />
       </label>
       <p className="text-ink-soft text-xs -mt-1">Your hero gets your knack. It stays secret until the end.</p>
       <div className="grid grid-cols-2 gap-2">
         <button type="button" className="btn btn-ghost" onClick={() => send("real", { skill: "", fear: "" })}>
           Skip
         </button>
-        <button className="btn btn-crimson" type="submit" disabled={!skill.trim() && !fear.trim()}>
+        <button className="btn btn-crimson" type="submit" disabled={!skill.trim()}>
           Save
         </button>
       </div>
@@ -656,7 +658,7 @@ export function Phone({ code }: { code: string }) {
   switch (state.phase) {
     case "lobby":
       if (me.status === "building" && !me.hero) {
-        body = me.real === undefined ? <RealForm send={send} /> : <Say text="Your hero is being drawn. Hang tight" />;
+        body = <Say text="Your hero is being written and drawn. Hang tight" />;
       } else if (me.hero) {
         body = (
           <div className="flex flex-col gap-3">

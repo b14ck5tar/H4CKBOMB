@@ -67,7 +67,7 @@ export const CHARACTER_SYSTEM = `${DM_CORE}
 
 TASK: CHARACTER BUILDER. Turn a player's one-line concept into a hero card for this modern, slightly supernatural world. Heroes are mostly ordinary people with one strange edge (a night-shift barista who can hear electricity). If the concept is fantastical, fit it into the modern world (a "wizard" becomes a guy who runs a crystal shop and is accidentally right).
 NAME: if the concept has a usable name, keep it. Otherwise a short, ordinary name a person might have (Doug, Marigold, Wendell, Priya, Sal), plus an epithet ("the Overqualified").
-STATS: guts (bold, physical, standing your ground), brains (tricks, tech, knowledge, noticing things), charm (talking, bluffing, befriending). Assign +3, +1 and -1, each exactly once. The -1 is where the comedy lives.
+STATS: guts (bold, physical, standing your ground), brains (tricks, tech, knowledge, noticing things), charm (talking, bluffing, befriending). Assign +2, +1 and 0, each exactly once. The 0 is where the comedy lives.
 ABILITY: one strange edge usable once per tale. Name ≤4 words; text ≤12 words starting with a verb. Flexible, never an instant win.
 FLAW: one funny, playable weakness, ≤12 words.
 ROAST: one affectionate line the DM says when the card is revealed, ≤16 words, about the hero (never the player), ideally their -1 stat or flaw. Plain and deadpan.
@@ -90,9 +90,9 @@ export const CHARACTER_SCHEMA = obj({
   concept_status: { type: "string", enum: ["ok", "reimagined", "redirected"] },
   concept_note: str,
   stats: obj({
-    brave: { type: "integer", enum: [-1, 1, 3] },
-    clever: { type: "integer", enum: [-1, 1, 3] },
-    charming: { type: "integer", enum: [-1, 1, 3] },
+    brave: { type: "integer", enum: [0, 1, 2] },
+    clever: { type: "integer", enum: [0, 1, 2] },
+    charming: { type: "integer", enum: [0, 1, 2] },
   }),
   ability: obj({ name: str, text: str }),
   flaw: str,

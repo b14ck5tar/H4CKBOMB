@@ -23,6 +23,7 @@ import {
   TURN_MS,
   VOTE_MS,
   d20,
+  evenStats,
   judge,
   needOnDie,
   endingFromBand,
@@ -845,8 +846,10 @@ export class GameHost {
       );
     }
     delete this.basePowers[pid];
+    hero.stats = evenStats(hero.stats);
+    // The AI already built the power from their answer; the code override is only for ready-made heroes.
     this.patchPlayer(pid, { status: "ready", hero, abilityAvailable: true, heart: 1 });
-    this.applyReal(pid);
+    if (!this.reals[pid]?.skill) this.applyReal(pid);
     const url = await image({ kind: "portrait", visual: hero.visual, flaw: hero.flaw, ability: hero.ability?.text });
     // Same hero still? (Compare by name: the join answers replace the hero object with a new power and weakness.)
     if (!url || !this.sameHero(pid, hero)) return;
@@ -868,7 +871,7 @@ export class GameHost {
     const q = QUICK_HEROES.find((h) => h.id === heroId);
     if (!p || !q || p.status === "building" || this.state.phase !== "lobby") return;
     if (this.state.players.some((o) => o.id !== pid && o.pick === q.id)) return;
-    const hero: Hero = structuredClone(q.hero);
+    const hero: Hero = { ...structuredClone(q.hero), stats: evenStats(q.hero.stats) };
     delete this.basePowers[pid];
     this.patchPlayer(pid, { status: "ready", pick: q.id, concept: q.pitch, hero, hasPortrait: false, abilityAvailable: true, heart: 1 });
     this.applyReal(pid);
@@ -1311,7 +1314,7 @@ export class GameHost {
         const taken = new Set(this.state.players.map((o) => o.pick).filter(Boolean));
         const q = QUICK_HEROES.find((h) => !taken.has(h.id)) ?? QUICK_HEROES[0];
         this.portraits[p.id] = `/heroes/${q.id}.webp`;
-        this.patchPlayer(p.id, { status: "ready", pick: q.id, hero: structuredClone(q.hero), hasPortrait: true });
+        this.patchPlayer(p.id, { status: "ready", pick: q.id, hero: { ...structuredClone(q.hero), stats: evenStats(q.hero.stats) }, hasPortrait: true });
         this.applyReal(p.id);
         this.note("hero", q.hero.name, `${p.name}'s custom hero wasn't ready, so they play a ready-made one. Nobody waits.`);
         thumbnail(`/heroes/${q.id}.webp`).then((t) => {

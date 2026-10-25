@@ -23,6 +23,7 @@ import {
 import { FALLBACK_EPILOGUE, fallbackHero, fallbackKind, fallbackOutcome, fallbackRound, fallbackRuling, fallbackScene, fallbackStorybook } from "@/server/fallbacks";
 import { cleanText, ratingOf, realOf } from "@/server/real";
 import type { Hero, Rating, Stat } from "@/lib/types";
+import { evenStats } from "@/lib/rules";
 
 export const maxDuration = 60;
 
@@ -41,11 +42,9 @@ function wrapOpt(id: string, text: string, max = 240) {
 
 const STATS: Stat[] = ["brave", "clever", "charming"];
 
+/** Same stat budget for everyone (+2 / +1 / 0), whatever the model returned. */
 function fixStats(h: Hero): Hero {
-  const vals = STATS.map((s) => h.stats[s]).sort((a, b) => a - b).join(",");
-  if (vals === "-1,1,3") return h;
-  const ranked = [...STATS].sort((a, b) => h.stats[b] - h.stats[a]);
-  return { ...h, stats: { [ranked[0]]: 3, [ranked[1]]: 1, [ranked[2]]: -1 } as Hero["stats"] };
+  return { ...h, stats: evenStats(h.stats ?? { brave: 0, clever: 0, charming: 0 }) };
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
