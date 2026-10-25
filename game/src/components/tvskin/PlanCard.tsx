@@ -16,8 +16,8 @@ export interface PlanCardProps {
   shift?: number;
   /** The stat the roll uses, e.g. { label: "Charm", value: 2 }. */
   stat?: { label: string; value: number };
-  /** A friend's idea worked in. */
-  credit?: { name: string; color: string; bonus?: number };
+  /** A friend's idea worked in: `name` is their hero, `by` the player, `portrait` the hero's face (both optional). */
+  credit?: { name: string; color: string; bonus?: number; by?: string; portrait?: string };
   /** One short "why" line from the DM (optional, small). */
   why?: string;
   /** Bottom call to action. */
@@ -31,8 +31,16 @@ export function PlanCard({ hero, plan, tier, shift, stat, credit, why, cta = "Ro
   const bonus = credit ? credit.bonus ?? 1 : 0;
   const total = (stat?.value ?? 0) + bonus + sh;
   const ref = useRef<HTMLElement>(null);
+  const hasCredit = !!credit;
   useEffect(() => {
     const deal = setTimeout(() => playSfx("pick", { volume: 0.7 }), 120);
+    // a friend's idea made it in: the credit slams at ~0.35 s, before the difficulty stamp (connection beat)
+    const slam = hasCredit
+      ? setTimeout(() => {
+          playSfx("stamp", { volume: 0.8 });
+          playSfx("good", { volume: 0.55 });
+        }, 350)
+      : undefined;
     // the difficulty stamp lands at ~1.15 s: thud + a small shake (bigger for harder plans)
     const t = setTimeout(() => {
       playSfx(sh < 0 ? "partial" : "success", { volume: 0.7 });
@@ -41,8 +49,9 @@ export function PlanCard({ hero, plan, tier, shift, stat, credit, why, cta = "Ro
     return () => {
       clearTimeout(deal);
       clearTimeout(t);
+      if (slam) clearTimeout(slam);
     };
-  }, [sh]);
+  }, [sh, hasCredit]);
   const style: Css = { "--c": hero.color, "--tier": look.color };
   const long = plan.length > 90;
   return (
@@ -85,6 +94,16 @@ export function PlanCard({ hero, plan, tier, shift, stat, credit, why, cta = "Ro
         <span className="tvx-plan-stamp-num">{fmtSigned(sh)}</span>
       </div>
       {cta && <p className="tvx-plan-cta">{cta}</p>}
+      {credit && (
+        <div className="tvx-credit-slam" style={{ ["--c" as string]: credit.color }} role="status" aria-label={`${possessive(credit.name)} idea, ${fmtSigned(bonus)}`}>
+          <Face src={credit.portrait} name={credit.name} color={credit.color} size={5.4} />
+          <span className="tvx-credit-slam-txt">
+            <span className="tvx-credit-slam-name">{possessive(credit.name)} idea</span>
+            {credit.by && <span className="tvx-credit-slam-by">from {credit.by}</span>}
+          </span>
+          <span className="tvx-credit-slam-bonus">{fmtSigned(bonus)}</span>
+        </div>
+      )}
     </section>
   );
 }
