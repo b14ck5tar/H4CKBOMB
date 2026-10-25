@@ -245,7 +245,7 @@
     "quest_title": "The Crab With The Sack",
     "teaser": "Tiny white beads keep washing up, and a giant crab will not drop his sack.",
     "mood": "silly",
-    "narration": "Volunteers with buckets pick up tiny plastic beads on a windy beach. A van-sized crab hauled a sack of beads from a distant dock for lunch, and it leaks. If it leaks, beads bury beaches.",
+    "narration": "Volunteers with buckets pick up tiny plastic beads on a windy beach. A van-sized crab is dragging a leaky sack of beads up the beach for lunch. If it leaks, beads bury beaches.",
     "goal": "Patch the sack and clean the beach",
     "situation": "Buckets, a volunteer with a scoop, and a van-sized crab holding a sack.",
     "problem": {
@@ -261,7 +261,7 @@
     "beats": [
      "Follow the beads to the crab's sack",
      "Scoop beads before the tide returns",
-     "Show testers the distant dock sack",
+     "Show testers where the sack came from",
      "Patch the sack and clean the beach"
     ],
     "real_setting": {
@@ -310,11 +310,11 @@
    "scores": null,
    "added_at": "2026-10-25T06:54:06.718Z",
    "opener": {
-    "title": "The Boulder That Let Go",
-    "quest_title": "The Boulder That Let Go",
-    "teaser": "A hanging stone slips while a tiny tired troll holds it up.",
+    "title": "The Boulder on the Edge",
+    "quest_title": "The Boulder on the Edge",
+    "teaser": "A huge boulder hangs over a busy trail, and a tiny tired troll is holding it up.",
     "mood": "tense",
-    "narration": "At a stone trail, staff lead families under a hanging boulder. A tiny tired troll holds the boulder up, but his arms give out. If it drops on the wood path, the trail stays closed.",
+    "narration": "At a stone trail, staff lead families under a hanging boulder. A tiny tired troll holds the boulder up, and his arms are getting very tired. If it drops on the wood path, the trail stays closed.",
     "goal": "Help the troll set the boulder down gently",
     "situation": "A dusty boulder, a cracked path, and a tiny troll.",
     "problem": {
@@ -469,7 +469,7 @@
      "Calm the hiccuping pumpkin in the garden",
      "Roll the wobbly pumpkin to the scale",
      "Hold the pumpkin still for the weigh-in",
-     "Stop the hiccups and take the prize"
+     "Stop the hiccups for the final weigh-in"
     ],
     "real_setting": {
      "place_type": "a small town autumn fair",
@@ -521,7 +521,7 @@
     "quest_title": "Crab Lost His Ring",
     "teaser": "A lonely crab keeps losing his ring during beach games.",
     "mood": "silly",
-    "narration": "On a pretend desert island, idle helpers wait for watchers. A small lonely crab keeps losing his ring and starts shell games. If the ring stays lost, games never end and set jobs fail.",
+    "narration": "On a pretend desert island, idle helpers wait for watchers. A small lonely crab lost his ring in the sand and will not let anyone rest. If the ring stays lost, no helper gets a job done before the watchers come back.",
     "goal": "Help the crab find his lost ring",
     "situation": "Warm sand holds scattered shells, a flat stone, and a sad crab.",
     "problem": {
@@ -536,7 +536,7 @@
     },
     "beats": [
      "Wait with bored helpers on warm sand",
-     "Play the crab's find and carry shell games",
+     "Ask the bored helpers to search the sand",
      "Pile shells on the high flat stone",
      "Find the lost ring and finish set jobs"
     ],
@@ -558,7 +558,7 @@
     },
     "npc_line": {
      "speaker": "Watcher",
-     "line": "We gave them no job, and now this."
+     "line": "We left them alone all weekend. Now there is a crab."
     }
    },
    "ending_facts": {
