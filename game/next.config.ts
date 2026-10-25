@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -28,6 +29,17 @@ for (const k of KEYS) {
   const v = process.env[k] || parentEnv[k];
   if (v) env[k] = v;
 }
+
+// A short build stamp for the DM's Notes footer, so everyone can tell which build is live.
+let build = (process.env.VERCEL_GIT_COMMIT_SHA || "").slice(0, 7);
+if (!build) {
+  try {
+    build = execSync("git rev-parse --short HEAD", { stdio: ["ignore", "pipe", "ignore"] }).toString().trim();
+  } catch {
+    build = "dev";
+  }
+}
+env.NEXT_PUBLIC_BUILD = build;
 
 const nextConfig: NextConfig = {
   // Each dev server gets its own build folder so parallel test servers don't clobber each other.

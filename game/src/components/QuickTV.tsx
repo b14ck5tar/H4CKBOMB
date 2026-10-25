@@ -23,7 +23,7 @@ import { Avatar, Hope, ThankHearts, useFastNow } from "./TV";
 import { KeepsakeQR } from "./Keepsake";
 import { FEATURES } from "@/lib/features";
 import { dice, music, playSfx, useMusic } from "@/lib/sound";
-import { EndingMontage, HudStrip, OutcomeCaption, PlanCard, QualityMeter, SuggestionBubbles, TurnCard, TvStage, TIER_LOOK } from "@/components/tvskin";
+import { EndingMontage, HudStrip, OutcomeCaption, Particles, PhaseSwap, PlanCard, QualityMeter, SuggestionBubbles, TurnCard, TvStage, TIER_LOOK } from "@/components/tvskin";
 import type { CardHero, MontagePanel } from "@/components/tvskin";
 import { TIER_SHIFT, gradeRoll } from "@/lib/grade";
 import { speakableName } from "@/lib/now";
@@ -967,21 +967,29 @@ function SkinEnding({ host, s }: { host: Stage; s: GameState }) {
   }));
   const f = s.final;
   const start = s.phase === "epilogue" ? 0 : panels.length;
-  if (!rs || !seed) return null;
+  // Never skip the reveal: if a story arrived without its article fields, show what we do know.
+  const real = {
+    headline: rs?.headline || seed?.the_threat?.mapped_from || "A real story from this week",
+    source: rs?.source || "",
+    date: rs?.date || "",
+    summary: rs?.summary || seed?.the_threat?.mapped_from || "",
+    link: rs?.link || "",
+    now: rs?.now || "",
+  };
   return (
     <EndingMontage
       panels={panels}
       start={start}
       panelMs={MONTAGE_PANEL_MS}
       reveal={{
-        headline: rs.headline,
-        source: rs.source,
-        date: rs.date,
-        summary: dedupeSentences(rs.summary),
-        now: knownNow(rs.now) || undefined,
-        articleUrl: rs.link || undefined,
-        author: seed.author?.name,
-        yourTitle: s.quest?.title ?? seed.quest_title,
+        headline: real.headline,
+        source: real.source,
+        date: real.date,
+        summary: dedupeSentences(real.summary),
+        now: knownNow(real.now) || undefined,
+        articleUrl: real.link || undefined,
+        author: seed?.author?.name,
+        yourTitle: s.quest?.title ?? seed?.quest_title ?? "Your story",
         yourVersion: s.recap || s.epilogue,
         solvedBy: s.solvedBy || undefined,
         ending: f ? ENDING_LABEL[f.ending] : undefined,
@@ -1452,9 +1460,13 @@ export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameS
   }
 
   const inScene = SCENE_PHASES.includes(s.phase);
+  // One key per skin "beat": the plan card stays the same beat from the ruling until the throw.
+  const skinKey =
+    s.phase === "turn" ? `turn-${s.turnIndex}` : s.phase === "ruling" || (s.phase === "roll" && !s.revealed.length) ? `plan-${s.turnIndex}-${s.finale}` : s.phase === "outcome" ? `out-${s.turnIndex}` : s.phase;
   return (
     <div className="qt-root" onPointerDown={() => sfx.unlock()}>
       <Backdrop url={art} mood={mood} />
+      <Particles count={28} seed={s.turnIndex + 1} />
       <div key={shot} className="qt-dip" aria-hidden />
       {s.phase !== "quest" && !["epilogue", "reveal", "storybook"].includes(s.phase) && <QTopBar host={host} s={s} onNotes={onNotes} notesOpen={notesOpen} />}
       {s.phase === "quest" && !host.readOnly && (
@@ -1470,9 +1482,11 @@ export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameS
       {(inScene || s.phase === "final_roll" || s.phase === "final_result") && !(title && s.phase === "narrating") && (
         <TvStage>
           <SkinHud s={s} />
-          {s.phase === "turn" && <SkinTurn host={host} s={s} />}
-          {(s.phase === "ruling" || (s.phase === "roll" && !s.revealed.length)) && <SkinPlan host={host} s={s} />}
-          {s.phase === "outcome" && <SkinOutcome s={s} />}
+          <PhaseSwap k={skinKey}>
+            {s.phase === "turn" && <SkinTurn host={host} s={s} />}
+            {(s.phase === "ruling" || (s.phase === "roll" && !s.revealed.length)) && <SkinPlan host={host} s={s} />}
+            {s.phase === "outcome" && <SkinOutcome s={s} />}
+          </PhaseSwap>
         </TvStage>
       )}
       {["epilogue", "reveal", "storybook"].includes(s.phase) && <SkinEnding host={host} s={s} />}
