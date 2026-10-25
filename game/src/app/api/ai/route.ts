@@ -28,6 +28,7 @@ import { FALLBACK_EPILOGUE, fallbackHero, fallbackKind, fallbackOutcome, fallbac
 import { cleanText, ratingOf, realOf } from "@/server/real";
 import type { Hero, Rating, Stat } from "@/lib/types";
 import { evenStats } from "@/lib/rules";
+import { storeCast, storedCast } from "@/server/castCache";
 import { runEnding, runTurn } from "@/server/stories/procedural";
 import { applyTurn, fallbackProposal, stateFromOpener, type Grade } from "@/lib/procedural";
 import { BEAT_OF, fillBeat, liveProblems, makeBible, pronounMap, storedPack, tailor, tailorEnding, turnsOf } from "@/server/stories/bible";
@@ -118,8 +119,14 @@ async function run(task: string, input: Any, rating: Rating) {
       return museJSON({ task: t("ruling"), model: MODELS.ruling, system: withRating(RULING_SYSTEM, rating), schema: RULING_SCHEMA, effort: "minimal", temperature: 0, timeoutMs: 9000, maxTokens: 1500, user: JSON.stringify(input) });
     case "bot":
       return museJSON({ task: t("bot"), model: MODELS.ruling, system: withRating(BOT_SYSTEM, rating), schema: BOT_SCHEMA, effort: "minimal", timeoutMs: 6000, maxTokens: 400, user: JSON.stringify(input) });
-    case "cast":
-      return museJSON({ task: t("cast"), model: MODELS.ruling, system: withRating(CAST_SYSTEM, rating), schema: CAST_SCHEMA, effort: "minimal", timeoutMs: 8000, maxTokens: 1200, user: JSON.stringify(input) });
+    case "cast": {
+      // Muse casts each story once; later plays reuse its pick (same voice = its opener audio is ready and free).
+      const kept = storedCast(input, rating);
+      if (kept) return kept;
+      const d = await museJSON({ task: t("cast"), model: MODELS.ruling, system: withRating(CAST_SYSTEM, rating), schema: CAST_SCHEMA, effort: "minimal", timeoutMs: 8000, maxTokens: 1200, user: JSON.stringify(input) });
+      storeCast(input, rating, d);
+      return d;
+    }
     case "outcome":
       return museJSON({ task: t("outcome"), ...STORY_CALLS.outcome, system: withRating(outcomeSystem({ avoid: avoidOf(input) }), rating), schema: OUTCOME_SCHEMA, user: JSON.stringify(input) });
     case "outcome_branches": {
