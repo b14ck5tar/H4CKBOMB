@@ -22,7 +22,7 @@ Hand-inked neon comic character design: clean, confident brush-ink linework with
 
 ### Portrait composition (replaces the "Composition: bust portrait ..." sentence inside `portraitPrompt`)
 ```
-Composition: bust portrait, head and shoulders fill the frame, face in the upper half, centered, strong readable silhouette with a bright magenta-cyan rim light, against a plain flat deep-indigo background with a few bold ink speed streaks; limited palette of the character's colors plus at most three neon accents; the face must read clearly as a tiny circular avatar.
+Composition: bust portrait, head and shoulders fill the frame, face in the upper half, centered, strong readable silhouette with a bright magenta-cyan rim light, against a plain, flat, solid dark deep-indigo background with a very subtle darker vignette and nothing else (no streaks, speed lines, swirls, sparkles or glow); limited palette of the character's colors plus at most three neon accents; the face must read clearly as a tiny circular avatar.
 ```
 
 ### COLOR (replaces `COLOR`; v2, no glow)
@@ -98,9 +98,9 @@ The review found the same glowing magenta/cyan swirl in every painting (the stro
   - bridge: Marisol, Nadia, Lou in Porter, IN (a bite out of the steel railing, the old bridge curled like a tail)
   - pumpkin: Tamika, The Great Sal, Lupe in Hysham, MT (the vines knit around the hay bales)
 - **Prompt lesson:** I wrote "top-left quarter calm and dark (a logo sits there)" and Muse painted small fake emblems in 5 of 6 corners. I patched them out locally with flat sky color. Never mention a logo, title or badge in an image prompt: say "the top-left quarter is plain dark sky".
-- **Known leftovers:** the 18 portraits still have magenta/cyan speed-streak backgrounds, a milder version of the same tell. Next portrait pass: "plain flat deep-indigo background, no streaks". Big Walt's supernatural tell came out as a small third eye on his forehead. Lobby lighting is mostly but not always single-source (the bulbs in pumpkin, the lantern in boulder).
+- **Round 4 (CD approved Neon Ink + heroes):** all 18 portraits re-rendered via `/images/edits` on the originals, with only the background changed to plain dark indigo (no streaks). Big Walt's third eye is removed. The characters are unchanged and the filenames are the same. Edit prompt: "Keep the character exactly identical ... Change ONLY the background: plain, flat, solid dark deep-indigo ... Keep only a thin clean rim light on the character's outline." PORTRAIT_COMPOSITION above now asks for the plain background, so new custom heroes match.
 - Contact sheets: `game/public/style-candidates/heroes-v2-contact.webp` (18), `lobby-v2-contact.webp`, `round3-contact.webp` (all three together).
 
 ## 5. Budget
 
-Round 1: 6 calls (A/B/C). Round 2: 2 (Neon Ink test) + 12 heroes + 2 re-rolls. Round 3: 2 scene tests + 6 heroes (+1 filtered, no image) + 6 lobby = 15. Total 37 Muse image calls.
+Round 1: 6 calls (A/B/C). Round 2: 2 (Neon Ink test) + 12 heroes + 2 re-rolls. Round 3: 2 scene tests + 6 heroes (+1 filtered, no image) + 6 lobby = 15. Round 4: 18 background edits. Total 55 Muse image calls.
