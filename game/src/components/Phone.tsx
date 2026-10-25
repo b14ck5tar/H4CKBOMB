@@ -3,6 +3,7 @@
  * The phone: a controller, never a second TV. Every screen is ONE big instruction (the same words as the TV's
  * "Now:" banner, lib/now.ts), a timer when there is one, the scene's art blurred behind it, and one control.
  */
+import { heroPortrait } from "@/lib/heroArt";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useCountdown, usePhone } from "@/lib/usePhone";
 import { PLAN_MAX, QUICK_TURN_MS, REACTIONS, TURN_MS } from "@/lib/rules";
@@ -13,7 +14,7 @@ import { HeroCard } from "./HeroCard";
 import { D20 } from "./D20";
 import { MicButton } from "./MicButton";
 import type { GameState, Hero, Player } from "@/lib/types";
-import quickHeroes from "@/data/quickstart_heroes.json";
+import quickHeroes from "@/data/quickstart_heroes_v2.json";
 import questImages from "@/data/quest_images.json";
 
 const EXAMPLES = [
@@ -63,7 +64,7 @@ function Shell({ children, me, portrait, state }: { children: React.ReactNode; m
           <div className="flex items-center gap-2 font-ui text-parchment/85">
             {portrait || me.pick ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={me.pick ? `/heroes/${me.pick}.webp` : portrait} alt="" className="w-9 h-9 rounded-full object-cover object-top" style={{ boxShadow: `0 0 0 2px ${me.color}` }} />
+              <img src={me.pick ? heroPortrait(me.pick) : portrait} alt="" className="w-9 h-9 rounded-full object-cover object-top" style={{ boxShadow: `0 0 0 2px ${me.color}` }} />
             ) : (
               <span className="w-9 h-9 rounded-full inline-block" style={{ background: me.color }} />
             )}
@@ -228,7 +229,7 @@ function CharacterPicker({ state, me, send }: { state: GameState; me: Player; se
               }}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={`/heroes/${q.id}.webp`} alt="" className="w-full aspect-[2/3] object-cover rounded" loading="lazy" />
+              <img src={heroPortrait(q.id)} alt="" className="w-full aspect-[2/3] object-cover rounded" loading="lazy" />
               <span className="font-heading font-bold uppercase leading-none">{q.hero.name}</span>
               <span className="text-xs leading-snug opacity-80">{q.pitch}</span>
               {taken && (
@@ -721,7 +722,7 @@ function Keepsake({ state, me, portrait }: { state: GameState; me: Player; portr
   if (!book) return <Say text="Binding your keepsake…" />;
   const mine = book.hero_pages.find((h) => h.hero_id === me.id);
   const said = state.log.filter((l) => l.heroId === me.id && !l.flagged).map((l) => l.pitch)[0];
-  const img = me.pick ? `/heroes/${me.pick}.webp` : portrait;
+  const img = me.pick ? heroPortrait(me.pick) : portrait;
   return (
     <div className="flex flex-col gap-3">
       <div className="page p-5 flex flex-col gap-3 fade-in">
@@ -816,7 +817,7 @@ export function Phone({ code }: { code: string }) {
         body = (
           <div className="flex flex-col gap-3">
             {me.real === undefined ? <RealForm send={send} /> : <Say text="You're in. Waiting for the story to start" />}
-            <HeroCard player={me} portrait={me.pick ? `/heroes/${me.pick}.webp` : me.hasPortrait ? portrait : undefined} showRoast={false} />
+            <HeroCard player={me} portrait={me.pick ? heroPortrait(me.pick) : me.hasPortrait ? portrait : undefined} showRoast={false} />
             <button className="font-ui text-sm underline opacity-80" onClick={() => send("redraw")}>
               Pick a different hero
             </button>

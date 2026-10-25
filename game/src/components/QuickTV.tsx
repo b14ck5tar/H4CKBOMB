@@ -4,6 +4,7 @@
  * The painted scene stays on screen the whole time (Ken Burns drift, parallax motes, scrim) and crossfades when the
  * scene changes or the hero-painted version arrives. Each moment is one overlay with ONE "Now:" line.
  */
+import { heroPortrait } from "@/lib/heroArt";
 import { useEffect, useMemo, useRef, useState } from "react";
 import QRCode from "qrcode";
 import type { Stage } from "./TV";
@@ -837,7 +838,7 @@ function ThrowFlight({ fling, thrown, ms, children }: { fling: GameState["fling"
 }
 
 // ---------- the in-game TV skin (components/tvskin): what a real game looks like, piece by piece ----------
-const portraitOf = (host: Stage, p: Player) => (p.pick ? `/heroes/${p.pick}.webp` : host.thumbs[p.id] ?? host.portraits[p.id]);
+const portraitOf = (host: Stage, p: Player) => (p.pick ? heroPortrait(p.pick) : host.thumbs[p.id] ?? host.portraits[p.id]);
 const cardHero = (host: Stage, p: Player): CardHero => ({
   name: p.hero?.name ?? p.name,
   epithet: p.hero?.epithet,

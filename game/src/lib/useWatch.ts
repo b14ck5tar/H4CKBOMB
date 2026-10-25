@@ -1,4 +1,5 @@
 "use client";
+import { heroPortrait } from "@/lib/heroArt";
 import { useEffect, useState } from "react";
 import seedsJson from "@/data/seed_quests.json";
 import { openRoom, type Msg, type Transport } from "./transport";
@@ -127,7 +128,7 @@ export class WatchSource {
       this.lastHeard = Date.now();
       this.state = next;
       // Ready-made heroes have a static portrait, which the keepsake link can carry (data URLs can't ride along).
-      next.players.forEach((p) => p.pick && (this.portraits[p.id] = `/heroes/${p.pick}.webp`));
+      next.players.forEach((p) => p.pick && (this.portraits[p.id] = heroPortrait(p.pick)));
       this.deadlineAt = next.deadline ? Date.now() + next.deadline : 0;
       this.emit();
       this.ask();

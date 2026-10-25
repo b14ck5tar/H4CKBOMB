@@ -1,4 +1,5 @@
 "use client";
+import { heroPortrait } from "@/lib/heroArt";
 import { shortName } from "@/lib/now";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { type GameHost } from "@/lib/host";
@@ -389,7 +390,7 @@ export function TV({ host, embedded = false }: { host: Stage; embedded?: boolean
           mode={s.mode}
           source={s.source}
           rating={s.rating}
-          portraitOf={(p) => (p.pick ? `/heroes/${p.pick}.webp` : host.thumbs[p.id] ?? host.portraits[p.id])}
+          portraitOf={(p) => (p.pick ? heroPortrait(p.pick) : host.thumbs[p.id] ?? host.portraits[p.id])}
           readOnly={host.readOnly}
           onMode={(m) => host.setMode(m)}
           onSource={(x) => host.setSource(x)}

@@ -1,7 +1,8 @@
 "use client";
+import { heroPortrait } from "@/lib/heroArt";
 import seedsJson from "@/data/seed_quests.json";
 import questImages from "@/data/quest_images.json";
-import quickHeroes from "@/data/quickstart_heroes.json";
+import quickHeroes from "@/data/quickstart_heroes_v2.json";
 import { ai, image, thumbnail, withTimeout } from "./api";
 import {
   BAND_LABEL,
@@ -112,7 +113,10 @@ const outcomeMs = (text: string) => Math.min(12_000, Math.max(6500, text.split(/
 const AWAY_SILENCE_MS = 25_000;
 const AWAY_AFTER_TIMEOUTS = 2;
 export const MONTAGE_PANEL_MS = 4800; // one ending-montage panel on the TV
-const DANGER_MAX = 3; // the danger meter's top: at full, the finale gets a -3 shift
+const DANGER_MAX = 3;
+const QUICK_IS_CURATED = true; // judge mode (CD, Sun)
+/** The house ranking of the hand-made stories (Quick Tale opens on the first one a table hasn't played). */
+const FEATURED = ["rust-wyrm", "hanging-boulder", "cornfield-dome", "galactic-signal", "billion-pearls", "idle-island", "returned-otter", "littlest-gardener"]; // the danger meter's top: at full, the finale gets a -3 shift
 const PRESENCE_ONLY = new Set(["hello", "ping", "away"]); // these don't count as "I'm back"
 /** Every phone silent this long = the table pauses ("Reconnecting phones…"). Phones ping every 3 s. */
 const ALL_QUIET_MS = 8000;
@@ -1033,6 +1037,7 @@ export class GameHost {
   private prepareQuick() {
     this.prepareVote();
     if (!FEATURES.liveNews || this.state.source !== "news" || this.pinned || this.quickPrep || this.state.phase !== "lobby") return;
+    if (QUICK_IS_CURATED) return; // judge mode: Quick Tale plays a hand-made story, so no live one is written for it
     const recent = new Set(this.recentStories());
     const pool = this.newsCands.filter((c) => !recent.has(c.headline));
     if (!pool.length) return;
@@ -1091,13 +1096,17 @@ export class GameHost {
   private plateArt = new Map<string, string>();
   private teasers = new Map<string, string>();
 
-  /** A curated story this TV hasn't played lately. */
+  /**
+   * The best curated story this TV hasn't played lately (judge mode: Quick Tale opens on a hand-made top story).
+   * FEATURED is the house ranking; anything not in it comes after, and a table never gets the same story twice.
+   */
   private freshCurated() {
     const recent = new Set(this.recentStories());
     const allowed = this.state.questOptions;
+    const rank = (id: string) => (FEATURED.includes(id) ? FEATURED.indexOf(id) : FEATURED.length);
     const fresh = allowed.filter((q) => !recent.has(SEEDS.find((s) => s.id === q.id)?.the_real_story.headline ?? q.id));
-    const pool = fresh.length ? fresh : allowed;
-    return pool[randInt(pool.length)].id;
+    const pool = (fresh.length ? fresh : allowed).slice().sort((a, b) => rank(a.id) - rank(b.id));
+    return pool[0].id;
   }
 
   /** Swap in a new ending module (see EndingStep). */
@@ -1189,7 +1198,7 @@ export class GameHost {
     this.patchPlayer(pid, { status: "ready", pick: q.id, concept: q.pitch, hero, hasPortrait: false, abilityAvailable: true, heart: 1 });
     this.applyReal(pid);
     this.note("hero", hero.name, "Ready-made hero picked: written and painted ahead of time, so no AI call.");
-    const url = `/heroes/${q.id}.webp`;
+    const url = heroPortrait(q.id);
     this.portraits[pid] = url;
     const thumb = await thumbnail(url);
     if (!this.sameHero(pid, hero, q.id)) return;
@@ -1372,7 +1381,7 @@ export class GameHost {
     if (this.artP.has(key)) return;
     const heroes = this.heroes()
       .slice(0, 4)
-      .map((p) => ({ id: p.pick ?? p.id, name: p.hero!.name, portraitUrl: p.pick ? `/heroes/${p.pick}.webp` : this.portraits[p.id], visual: p.hero!.visual }));
+      .map((p) => ({ id: p.pick ?? p.id, name: p.hero!.name, portraitUrl: p.pick ? heroPortrait(p.pick) : this.portraits[p.id], visual: p.hero!.visual }));
     if (!heroes.length) return;
     const t0 = Date.now();
     const built = this.builtSeeds.has(questId);
@@ -1461,18 +1470,11 @@ export class GameHost {
       rescue: null,
       notes: { ...this.state.notes, source: null, canon: [], open: [] },
     });
-    // Quick Tale: the live story made during the lobby, if it's ready; else a curated one not played lately.
-    // Full Story: the table votes, unless one was picked by link.
+    // Quick Tale (judge mode): the best hand-made story this table hasn't played. Full Story: the table votes,
+    // unless one was picked by link.
     if (this.quick && !this.pinned && this.state.source !== "ours") {
-      const prep = this.quickPrep;
-      if (prep?.ready && prep.seed) {
-        this.useQuest(prep.seed.id);
-        this.quickPrep = null; // used: the next group gets a fresh one
-      }
-      else {
-        if (prep) this.note("source", "Quick Tale", "The live story wasn't ready in time, so a curated story stands in.");
-        this.useQuest(this.freshCurated());
-      }
+      this.useQuest(this.freshCurated());
+      this.note("source", "Quick Tale", "A hand-made top story, picked for a first game. Full Story plays this week's live news.");
     }
     if (this.state.source === "ours") return this.startStoryWrite();
     if (!this.quick && !this.pinned) return this.startStoryVote();
@@ -1802,11 +1804,11 @@ export class GameHost {
       .forEach((p) => {
         const taken = new Set(this.state.players.map((o) => o.pick).filter(Boolean));
         const q = QUICK_HEROES.find((h) => !taken.has(h.id)) ?? QUICK_HEROES[0];
-        this.portraits[p.id] = `/heroes/${q.id}.webp`;
+        this.portraits[p.id] = heroPortrait(q.id);
         this.patchPlayer(p.id, { status: "ready", pick: q.id, hero: { ...structuredClone(q.hero), stats: evenStats(q.hero.stats) }, hasPortrait: true });
         this.applyReal(p.id);
         this.note("hero", q.hero.name, `${p.name}'s custom hero wasn't ready, so they play a ready-made one. Nobody waits.`);
-        thumbnail(`/heroes/${q.id}.webp`).then((t) => {
+        thumbnail(heroPortrait(q.id)).then((t) => {
           if (!t) return;
           this.thumbs[p.id] = t;
           this.t.send({ type: "portrait", pid: p.id, url: t });
@@ -1979,7 +1981,7 @@ export class GameHost {
     const heroes = this.heroes()
       .filter((p) => !inShot || inShot.has(p.id))
       .slice(0, 4)
-      .map((p) => ({ id: p.pick ?? p.id, name: p.hero!.name, portraitUrl: p.pick ? `/heroes/${p.pick}.webp` : this.portraits[p.id], visual: p.hero!.visual }));
+      .map((p) => ({ id: p.pick ?? p.id, name: p.hero!.name, portraitUrl: p.pick ? heroPortrait(p.pick) : this.portraits[p.id], visual: p.hero!.visual }));
     if (!heroes.length || !prev) return;
     const t0 = Date.now();
     const asked = this.artSeq;

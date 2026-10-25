@@ -44,7 +44,7 @@ function wavFromPcm(pcm: Buffer): Buffer {
 }
 
 /**
- * Clean 16-bit PCM for playback: an even byte count, peaks normalized to about -2 dBFS (scaled, never clipped), and a 10 ms
+ * Raw 16-bit PCM for playback: an even byte count, scaled down only if it would clip, and a 5 ms
  * fade at each end so a clip never starts or stops with a click.
  */
 function cleanPcm(raw: Buffer): Buffer {
@@ -52,10 +52,11 @@ function cleanPcm(raw: Buffer): Buffer {
   const n = pcm.length / 2;
   let peak = 1;
   for (let i = 0; i < n; i++) peak = Math.max(peak, Math.abs(pcm.readInt16LE(i * 2)));
-  // Normalize to about -2 dBFS: the voice sits clearly over the music, and nothing ever clips.
-  const target = 26_000;
-  const gain = Math.min(3, target / peak);
-  const fade = Math.min(Math.floor(RATE * 0.01), Math.floor(n / 2));
+  // OpenAI's audio passes through untouched (the CD heard static only after processing): never boosted, only
+  // scaled down if it would clip.
+  const ceiling = 32_000;
+  const gain = peak > ceiling ? ceiling / peak : 1;
+  const fade = Math.min(Math.floor(RATE * 0.005), Math.floor(n / 2)); // 5 ms edge fades, nothing else
   for (let i = 0; i < n; i++) {
     let g = gain;
     if (i < fade) g *= i / fade;
@@ -74,14 +75,19 @@ async function openai(voice: VoiceId, style: string, text: string, timeoutMs: nu
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${k}` },
       signal: AbortSignal.timeout(timeoutMs),
-      body: JSON.stringify({
-        model: "gpt-4o-mini-tts",
-        voice: VOICES[voice].openai,
-        input: text,
-        instructions: `${style || "Read this as a storyteller"}. ${VOICE_DIRECTION}`,
-        speed: 1.1, // 1.2 sped the voice up enough to add artifacts; 1.1 keeps it brisk and clean
-        response_format: "pcm",
-      }),
+      body: JSON.stringify(
+        VOICES[voice].model
+          ? // tts-1-hd voices (shimmer): no instructions, natural speed
+            { model: VOICES[voice].model, voice: VOICES[voice].openai, input: text, response_format: "pcm" }
+          : {
+              model: "gpt-4o-mini-tts",
+              voice: VOICES[voice].openai,
+              input: text,
+              instructions: `${style || "Read this as a storyteller"}. ${VOICE_DIRECTION}`,
+              speed: 1.1,
+              response_format: "pcm",
+            },
+      ),
     });
     if (!res.ok) {
       console.warn(`[tts] openai HTTP ${res.status}, falling back to Gemini`);
@@ -111,7 +117,7 @@ async function call(model: string, voice: VoiceId, style: string, text: string, 
 }
 
 export async function speak(voice: VoiceId, style: string, text: string, timeoutMs = 20_000): Promise<Clip> {
-  const id = crypto.createHash("sha1").update(`v4|${voice}|${style}|${text}`).digest("hex"); // v3: speed 1.1, expressive direction, clean PCM
+  const id = crypto.createHash("sha1").update(`v5|${voice}|${style}|${text}`).digest("hex"); // v3: speed 1.1, expressive direction, clean PCM
   const hit = mem.get(id);
   if (hit) return hit;
   const file = path.join(DIR, `${id}.wav`);
