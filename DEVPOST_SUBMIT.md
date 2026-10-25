@@ -67,7 +67,6 @@ as a third link.
 4. `4-new-painting-read-aloud.jpg`: `A new painting every turn, read aloud by one narrator, Sarah.`
 5. `5-based-on-a-true-story.jpg`: `The ending: what you did, then what really happened.`
 6. `6-under-the-hood.jpg`: `Muse writes and judges. Code rolls the dice. Players steer.`
-(Upload #1 only after Claude rebuilds it with the "secret strength" phone; until then use the current file.)
 
 **Video demo link: replace** `https://youtu.be/wu14pZQE4NY` with the new video from the video session (~9:45). Check
 it in a private window first.
