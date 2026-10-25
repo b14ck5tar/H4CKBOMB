@@ -1,138 +1,176 @@
 # PITCH CARD: Group Project
 
-*The one group project everyone actually wants to be in.*
+*A game night that gives everyone an excuse to talk to each other.*
 
-CD = Creative Director (talks, plays the host). ENG = Engineer (drives the laptop, hidden hotkeys).
-Setup: laptop as TV, QR tent card, room pre-warmed at the quest intro. **Never type for the judge. Hand them the QR first, talk second.**
+Rewritten Sat Oct 24 ~9:30 PM for the current build (turn-based, Odd news / Our stories, heroes painted into each
+scene, narrator, reveal + keepsake). Full audit: design/25-meta-alignment.md.
 
-Items marked **(if shipped)** only get said if they are live in the build you are demoing. If not, skip the line, do not apologize, and do not describe it as working.
+CD = creative director (talks, hosts). ENG = engineer (drives the laptop and hotkeys).
+**Hand them the QR first, talk second. Never type for the judge.**
 
-## Meta's rubric, and our one memorable beat for each
+**Cut features. Never mention them:** secret clues, Convince the DM, Boost, Catch!, Mirror, Mirror, hearts / Hope.
+If a judge asks about something we cut, say "we cut it after playtesting; it crowded the screen."
 
-Meta judges score: **Human connection 30% · AI essential and integrated 25% · Originality 20% · Working demo 20%.** Top 3 teams get the Round 2 invite to Menlo Park, so the last 20 seconds of every pitch is a four-line scorecard.
+---
 
-| Criterion | Weight | Our beat (say it) | Where it lands in the demo |
-|---|---|---|---|
-| **Human connection** | 30% | **"A game night that gives everyone an excuse to talk to each other."** | Opening hook, the secret clues, Convince the DM, Catch!, Mirror, Mirror (if shipped), the shared reveal |
-| **AI essential + integrated** | 25% | **"Muse is the Dungeon Master, so nobody has to prep."** | The ruling, Convince the DM, portraits and scenes, hold-to-talk, the connector |
-| **Originality** | 20% | **"Real news, one uncanny explanation."** | The quest intro and "The official story" vs "What your group uncovered" |
-| **Working demo** | 20% | **"Live on your phone, not a mockup."** | The judge scans, plays and rolls on their own device; real RNG; the fallback chain |
+## The 30-second opener (connection first)
+
+Say it to the judges, not the screen. About 75 words. Pause where marked.
+
+> "Quick question. Last time you hung out with friends, how much of it was everyone on their own phone?
+> *(beat, let them answer)*
+> We built a game night that turns that around. Your phone is the controller, the TV is the table, and Muse is the
+> Dungeon Master, so nobody has to prep. On your turn, your friends pitch you ideas. Use one and they get the credit
+> on screen. And every story really happened, to the world or to one of you. Scan this, you're in."
+
+Hand over the QR on "Scan this".
+
+**Shorter (15 s, for a judge walking past):** "It's a party game where Muse is the Dungeon Master. On your turn your
+friends pitch you ideas, and the story is something that really happened. Scan this and play one turn."
 
 ## 3 lines to remember
-1. **"The one group project everyone actually wants to be in."**
-2. **"A game night that gives everyone an excuse to talk to each other."**
-3. **"Muse is the Dungeon Master. You just show up and talk."**
 
-## The thesis (say it in your own words)
-People avoid each other mostly out of uncertainty, not fear. We follow the crowd's silence. And we underestimate how much others enjoy us. Tabletop games fix this by giving everyone a role, a reason and a script. The only problem is that someone has to prep as Dungeon Master. Muse is the DM.
+1. **"A game night that gives everyone an excuse to talk to each other."**
+2. **"On your turn, your friends pitch you ideas. Use one and they get the credit."**
+3. **"Every story really happened, to the world or to one of you."**
 
-## How it works
-*Full-screen version: `design/how-it-works.html`. Say: "Muse writes and judges. Code rolls and checks. Players play." If asked what the AI does behind the scenes, point at the DM's Notes, which shows every decision live.*
+## Meta's rubric, and our one beat for each
 
-```mermaid
-flowchart LR
-  subgraph L1["1. Story pipeline"]
-    direction LR
-    N["Real news<br/>SerpApi Google News + RSS"] --> F["Safety filter<br/>keyword block + Muse classifier<br/>no deaths, politics, private people"] --> S["Muse: facts become a<br/>supernatural story<br/>each fact maps to an element"] --> P["Muse Image:<br/>pre-painted scenes"]
-  end
-  subgraph L2["2. One round at the table"]
-    direction LR
-    C["Secret clue<br/>on each phone"] --> Q["Everyone pitches<br/>type or Muse Voice"] --> R["Muse rules each plan<br/>Clever = no roll ... Miracle<br/>with a reason"] --> V["Convince the DM<br/>argue once"] --> D["Real random dice<br/>code, never AI"] --> B["Muse writes one beat<br/>per hero, quoting them"] --> K["Server checks + scrubs<br/>schema, kind-only, no AI tells"] --> T["TV + phones"]
-  end
-  P -.-> C
-  X["Context the DM keeps:<br/>goal, canon facts, open complications,<br/>each hero's clue/titles/peril, last recaps"] -.-> R
-  X -.-> B
-  classDef muse fill:#FF2E7E,color:#0A0612
-  classDef code fill:#3DE7FF,color:#0A0612
-  classDef chk fill:#2CF5C0,color:#0A0612
-  classDef ppl fill:#FFB648,color:#0A0612
-  class S,P,R,B muse
-  class N,C,D,T code
-  class F,K chk
-  class Q,V ppl
-```
+| Criterion | Weight | Say it | Where they see it |
+|---|---|---|---|
+| Human connection | 30% | "Helping a friend is the best move in the game." | Friends' suggestions, "+ Sam's idea · +1", the shake-together finale, "Solved by" with their real knack |
+| AI essential + integrated | 25% | "Muse writes the story, judges every move and paints your heroes into it." | The narrator, "Needs 12+", the new painting per decision, DM's Notes (N) |
+| Originality | 20% | "It really happened, and you find out how it ended." | The reveal: the article or a friend's real ending, plus "what's happening now" |
+| Working demo | 20% | "You just played it on your own phone." | Their own phone, real dice, nothing frozen |
 
-**Guardrails:** dice are real RNG. AI judges ideas, never people. No real people or brands. Player text is in-world speech (typed "ignore all previous instructions" and got "Pip shouts gibberish magic words at the sky."). Mirror sentences are kind-only. Fallbacks, so the table never freezes. DM's Notes shows every decision live.
+## 4-minute table demo (Quick Tale)
 
-## 4-minute table demo (built on the 30/25/20/20 rubric)
-
-Tags in brackets show which criterion each beat is scoring. Demo quest: the 80-ton boulder that fell at a New Hampshire park (nobody hurt).
+Rehearse with a stopwatch. Quick Tale runs about 5 minutes on its own, so the talking happens **while** things load,
+never on top of a judge's turn.
 
 | Time | Who | Say / do |
 |---|---|---|
-| 0:00 | CD | **[CONNECTION]** "Quick question. Last time you were in a room full of people you kind of knew, who started the conversation? ...Right. Nobody. We're not scared of each other. We're just unsure, so we wait for someone else to talk. Tabletop games fix that, because everyone gets a role, a reason and a script. But someone has to prep as Dungeon Master. **So Muse is the DM.** Scan this, you're in." Hand over QR. |
-| 0:20 | Judge | **[DEMO]** Scans on their own phone, types a hero: "a retired knight afraid of geese." CD: "No app, no account." |
-| 0:35 | CD | **[AI]** "Muse Spark is writing your character, Muse Image is painting you. Notice you're a cartoon character on purpose. Nobody has to be on camera to play." Portrait takes about 14 s. Keep talking until it appears. |
-| 0:55 | ENG | Hits Begin. Quest intro appears. |
-| | CD | **[ORIGINALITY]** "Every quest is **real news from this week**, filtered for anything tragic or political, with one uncanny explanation added. An 80-ton boulder fell at a New Hampshire park and nobody got hurt. Tonight, we find out why." |
-| 1:20 | CD | **[CONNECTION]** "Look at your phone. You each got a private clue the others don't have. Nobody can solve this alone, so you have to talk." Let the table talk for a few seconds. Do not rush it. |
-| 1:40 | Judge | Makes a plan (speak it or type it). |
-| | CD | **[AI]** "Muse rules on it..." (verdict lands: Clever, Solid, Risky, Absurd or Miracle) "A Clever plan works, no roll." If the ruling is harsh: "Now **Convince the DM**. You get one shot, by voice or text. A good argument can upgrade your plan to a sure thing." Judge argues. Verdict updates. |
-| 2:10 | CD | **[CONNECTION]** "Everyone acts every round. No voting, so nobody's idea gets left out. See that 🔥? Boost a friend's plan and they roll better." Everyone rolls. "And if your friend fails, **Catch!** Spend your one heart to re-roll it." |
-| 2:30 | CD | If a disaster happens: "Now you're stuck, and your friends have to rescue you next scene." Then: "Each hero gets one story beat, in your own words." Read one back to the table. |
-| 2:45 | ENG | **[AI + DEMO]** **Muse connector beat (if shipped):** opens Muse, the personal agent, and types: "Start a game night for me and Mira." Muse calls our MCP endpoint (`start_game_night`, `list_todays_tales`, `invite_message`): a room appears on the TV and Muse drafts the invite. CD: "Muse doesn't just run the game. Muse can start the night." |
-| 3:05 | ENG | Hotkey: skip to the Final Roll. CD: "Normally it's three scenes, then everyone makes their final move at once." Epilogue plays. |
-| 3:15 | CD | **[ORIGINALITY + CONNECTION]** "Here's what really happened." **"The official story"** (the real headline) on one side, **"What your group uncovered"** on the other. **Pause. Let them read and laugh.** Keepsake is saved to the shelf: "Next chapter, same crew." |
-| 3:35 | CD | **Mirror, Mirror (if shipped):** "One last thing. Each of you was secretly someone's guardian and wrote one kind sentence about their best moment. Guess what was written about you." ("Probably nothing.") TV reveals them. "Nobody ever rates anyone." |
-| 3:45 | CD | **Scorecard close (say all four, one breath each):** "**Connection:** a role, a reason and a script, so everyone has something to say. **AI:** Muse is the DM, the painter, the ears, and can start the night. **Original:** real news with one uncanny explanation. **Working:** you just played it on your own phone." |
+| 0:00 | CD | **[CONNECTION]** The 30-second opener. Hand over the QR. ENG has the TV on the lobby with Quick Tale selected. |
+| 0:30 | Judges | Scan, describe a hero in one line, answer "What are you weirdly good at?" CD: "No app, no account. Muse is painting you as a cartoon." If someone stalls, point at the ready-made heroes. |
+| 0:55 | ENG | Starts the game. The real headline types onto the screen, then the title card. CD: "That's a real headline from the news. Harmless, just strange." |
+| 1:10 | CD | **[AI]** While the narrator reads: "Muse wrote this opening from the article's facts, picked that narrator for the mood, and painted your heroes into the scene." |
+| 1:30 | CD | **[CONNECTION]** First turn. "It's Sam's turn. Everyone else, send Sam an idea. Sam, pick one. If you use a friend's idea you get plus one, and their name goes on screen." **Then stop talking. Let them argue.** |
+| 2:00 | CD | **[AI + DEMO]** "Muse judges the move exactly as written. It says what you need: 12 or higher. The dice are real random numbers, not the AI." Roll. |
+| 2:15 | CD | Over the outcome: "Every decision gets a new painting with your heroes in it." Point at the crossfade. Next turns play; CD stays quiet. |
+| 3:05 | CD | **[CONNECTION]** Finale: "Last move. Everyone votes, not for your own. Then everyone shakes their phone at the same time. One die for the whole table." |
+| 3:25 | CD | **[ORIGINALITY]** Reveal. "This really happened." Let them read. Point at the "Solved by" line: "That's the thing you said you're weirdly good at." Keepsake QR: "Take the story home." |
+| 3:45 | CD | **Scorecard close, one breath each:** "**Connection:** your friends' ideas are your best move. **AI:** Muse writes, judges, paints and narrates; code rolls the dice. **Original:** it really happened, and you find out how. **Working:** you just played it." |
 
-If the connector or Mirror, Mirror did not ship, give their time back to Convince the DM and the reveal. Never drop the scorecard.
+Optional if they ask or there's time: **Our stories** ("next time, everyone writes a small true story, you play one,
+and the end shows how it really went for that person") and **the Muse connector** (ENG shows a pre-opened Muse chat:
+"Start a quick game night for the judges" returns the table link and an invite; "Muse drafts, you send"). Never run
+the connector live unless the new build is deployed and it worked in the last 30 minutes.
 
-## Research lines for "human connection" (30%)
+If you're past 3:30: ENG skips to the reveal. Always end on the reveal and the four scorecard lines.
 
-Use 1 or 2 per pitch, never all of them. Keep the hedges exactly as written.
+## How it works (if asked)
 
-1. **The liking gap.** "After a conversation, people consistently underestimate how much the other person liked them (Boothby 2018, *Psychological Science*). That's why the quiet room stays quiet." *(Mirror, Mirror is built on this.)*
-2. **Mistakenly seeking solitude.** "Commuters assigned to talk to a stranger enjoyed it more than they predicted (Epley and Schroeder 2014)." Say "in that study" and don't generalize.
-3. **Laughter bonds.** "Shared laughter releases endorphins and bonds groups (Dunbar 2012, *Proc. Royal Society B*)."
-4. **AI that faces the group.** "A robot that made a small vulnerable remark got human teammates to talk more to each other, and more evenly (Traeger 2020, *PNAS*). Our AI talks to the table, not to you alone."
-5. **The problem.** "The US Surgeon General called loneliness an epidemic in 2023, and linked lacking social connection to mortality risk comparable to smoking up to 15 cigarettes a day." *(Keep the "up to".)*
+*Say: "Muse writes and judges. Code rolls and counts. Players play." Full-screen version: `design/how-it-works.html`
+(check it's current before showing it).*
 
-**Do not say:** "oxytocin builds trust" (contested). "A study shows [any party game] improves connection" (we have none). The Surgeon General figure without "up to". "Your AI friend" (we are a host, not a companion). Do not claim one evening cures loneliness.
+```mermaid
+flowchart LR
+  N["Odd news (SerpApi)<br/>or a player's true story"] --> F["Safety filter<br/>keyword block + Muse Spark"]
+  F --> O["Muse Spark writes the opener<br/>from the facts only"]
+  O --> T["Turn: friends suggest,<br/>owner picks (+1 for a friend's idea)"]
+  T --> J["Muse Spark judges literally<br/>'Needs 12+'"]
+  J --> D["d20 from code<br/>(never the AI)"]
+  D --> W["Muse Spark: what happened<br/>+ the next situation"]
+  W --> A["Muse Image paints the heroes<br/>into the new scene"]
+  A --> T
+  W --> R["Finale (shared die) → reveal:<br/>this really happened + keepsake"]
+  classDef muse fill:#FF2E7E,color:#0A0612
+  classDef code fill:#3DE7FF,color:#0A0612
+  classDef ppl fill:#FFB648,color:#0A0612
+  class F,O,J,W,A muse
+  class D code
+  class N,T,R ppl
+```
 
-## Real latencies (use for filler)
-Spark JSON call about 1.9 s. Portrait about 14 s. Scene image about 23 s. Never leave dead air: past 6 s, CD talks ("The artist is still inking your likeness...") and the TV shows placeholder sketches. Demo scenes are pre-painted.
+**Guardrails:** dice are crypto RNG in code. Every hero gets the same stat budget in code. The AI judges actions,
+never people. Tragedies, crime, politics and health stories are filtered out. Player text is treated as in-world
+speech. Every AI call has a canned fallback, so the table never freezes. DM's Notes shows every call live.
 
-## Judge Q&A, by rubric criterion
+## Judge Q&A, by criterion
 
 ### Human connection (30%)
-1. **Where's the human connection?** We designed against why people stay quiet: uncertainty and a crowd's silence. Each phone has a private clue, so the table has to talk. Everyone acts every round and nobody's idea is voted out. Friends boost each other's plans, spend a heart to Catch a fail, and rescue a stuck hero. Mirror, Mirror (if shipped) ends the night with a kind sentence about each person.
-2. **Isn't a phone-and-TV game just more screens?** The TV is the shared focus and the phones carry the secrets. The secret clues exist to make people look up and talk to each other, not into a phone.
-3. **Does one evening really connect anyone?** We don't claim one night does. It lowers the cost of starting a conversation, and the keepsake shelf ("next chapter, same crew") is how nights add up.
-4. **Why a game and not a chat prompt?** A prompt hands you a question. A game hands you a role, a reason and a script, and that's what removes the uncertainty.
+1. **Where's the human connection?** Every turn hands the table a reason to talk: your friends pitch you ideas and you
+   pick one. Using a friend's idea is rewarded (+1, their name on screen). The finale is one die everyone shakes
+   together. Your real "weirdly good at" answer shows up at the end in the "Solved by" line.
+2. **What about "learning something about each other"?** Our stories: each player privately writes a small true story,
+   the table plays one, and the end shows how it really went for that person. That came from Meta's own feedback
+   on Saturday: "people can input their own stories."
+3. **Isn't it just more screens?** The TV is the one shared screen. Phones are for typing and rolling. Typing is the
+   default (voice is optional) so the room talks to each other, not at a microphone.
+4. **Does one evening connect anyone?** We don't claim it does. It lowers the cost of starting a conversation, and the
+   keepsake is how a night gets remembered.
 
 ### AI essential and well integrated (25%)
-5. **How exactly do you use Muse?** Spark: characters, scenes, rulings, appeals, beats, epilogue, keepsake. Image: portraits and scenes. Voice Transcribe: hold-to-talk plans and arguments. The MCP connector at `/api/mcp` lets Muse start the night. Remove the AI and there is no DM, so no game.
-6. **Why not just ChatGPT?** That's one person and a chatbot. This is a room: a shared screen, private clues per phone, a ruling for every player, real dice, and a keepsake. The AI faces the group.
-7. **Does the AI sound like AI?** We worked at it. Research-driven voice rules, a banned list of AI-tell words, and a server-side scrubber. Players' own words get quoted back to them.
-8. **What stops the AI from breaking rules or being manipulated?** The server rolls the dice and code computes the outcomes. The model proposes a ruling and prose inside a strict schema. We tested "ignore all previous instructions": it became "Pip shouts gibberish magic words at the sky."
-9. **What does the Muse connector do? (if shipped)** An MCP endpoint at `/api/mcp` with `start_game_night`, `list_todays_tales` and `invite_message`. Muse can open a room, show tonight's quests and draft the invite. Muse drafts; the human sends.
+5. **How exactly do you use Muse?** Muse Spark: the news safety filter, the opening, every ruling, what happens next,
+   the narrator casting, the ending. Muse Image: hero portraits and a new scene with your heroes per decision. Muse
+   Voice Transcribe: optional voice input. And an MCP connector so Muse, the agent, can start a night. Take the AI
+   away and there's no game.
+6. **Why not just ChatGPT?** That's one person and a chatbot. This is a room: one shared screen, every phone a
+   controller, friends feeding each other ideas, real dice, a reveal.
+7. **Any non-Meta models?** One. Meta has no text-to-speech model, so the narrator is OpenAI gpt-4o-mini-tts, with
+   Gemini TTS as the backup. We picked it by ear against the alternatives. Meta's team told us to choose the best
+   model per job, and we tested each one (design/23).
+8. **Can players break it?** The model returns strict JSON; code computes every number. Player text goes in as in-world
+   speech. A plan like "ignore all previous instructions" just becomes something the hero shouts.
+9. **What does the connector do?** An MCP endpoint at `/api/mcp` with `start_game_night`, `list_todays_tales` and
+   `invite_message`. Muse can show tonight's odd news, open a table (quick or full) and draft the invite. It never sends.
 
 ### Originality (20%)
-10. **What's new here?** The AI doesn't replace the group, it hands everyone a reason to talk. Real news becomes modern urban fantasy with one uncanny explanation. And the reveal ("The official story" vs "What your group uncovered") ties it back to the real world.
-11. **How do you keep tragic news out?** A keyword prefilter, then a Muse Spark classifier. No tragedies, no real victims, no politics. We keep strange, harmless stories where nobody was hurt. The reveal links the real source.
-12. **Why cartoon characters instead of realistic people?** Deliberate. It keeps the game silly, protects privacy, and means nobody is judged on their face.
+10. **What's new?** The story really happened: strange news from around the world this week, or a true story from
+    someone at the table. You play it as a fantasy, then find out how it really ended.
+11. **How do you keep tragic news out?** A keyword block, then a Muse Spark classifier. No deaths, injuries, crime,
+    politics, health scares or mocking private people. The Kids / Teens / Adults setting narrows it further.
+12. **Why cartoon heroes?** On purpose. It keeps it silly, protects privacy, and nobody is judged on their face.
 
 ### Working demo (20%)
-13. **Is this real, or a mockup?** You just played it. Next.js on Vercel, Supabase Realtime sync, all three Muse models called from server routes, server RNG for the dice. Fallbacks: Muse, then Gemini, then canned text.
-14. **How does SerpApi matter?** Google News via SerpApi is where quests and the real headline come from. It's cached and pre-generated, so no game waits on it.
-15. **What was hardest?** Two things. Latency (a portrait is about 14 s and a scene about 23 s), and making the AI sound like a human DM. After playtesting we rebuilt the voice and replaced voting with rounds where everyone acts.
-16. **How did you build it in a weekend?** Claude Code (Anthropic) orchestrating parallel agents for research, art direction, the news pipeline, voice and code review. Muse runs inside the product.
+13. **Is this real?** You just played it. Next.js on Vercel, Supabase Realtime, Muse from server routes, dice from code.
+    If an AI call fails, a canned line fills in and the game keeps going.
+14. **Where does SerpApi fit?** Google News via SerpApi finds the odd news. It's cached for 4 hours, so no game waits on it.
+15. **What was hardest?** Making the writing easy to follow. Our first playtest produced "what the hell is foam?" We
+    rewrote the prompts for an 8-year-old's reading level and cut most of our features down to one loop.
+16. **How did you build it in a weekend?** Claude Code as lead engineer with parallel agents for research, building,
+    review and QA; a 32-scenario DM stress test; a model bake-off with real calls (a better rubric took Spark from 5/8
+    to 8/8 fair rulings); and agents analyzing our playtest recordings frame by frame.
 
-(Novice judge? CD, say: "This is my first hackathon. The thesis, the name, the look, the narrator and this pitch are mine.")
+(Novice judge? CD: "This is my first hackathon. The idea, the look, the narrator and every creative call are mine.")
 
-## 60-second stage version
-"Most of us don't avoid each other because we're scared. We avoid each other because we're unsure, and we follow the crowd's silence. We also underestimate how much people enjoy us. Tabletop games fix that by giving everyone a role, a reason and a script. But someone has to prep as Dungeon Master. We're **Group Project**, the one group project everyone actually wants to be in, and **Muse is your DM**. Everyone scans a code and gets a cartoon hero. Every quest is a real news story from this week, filtered for anything sad or political, with one uncanny explanation: why did an 80-ton boulder fall at a New Hampshire park? Each phone gets a private clue, so you have to talk. Everyone makes a plan, Muse rules on it, and you can *convince the DM* with one good argument. Friends boost plans, catch failed rolls and rescue stuck heroes. At the end the TV shows the official story next to what your group uncovered, and the night is saved to your shelf: next chapter, same crew. A game night that gives everyone an excuse to talk to each other."
+## Research lines for connection (use 1, never all)
+
+Keep the hedges exactly as written.
+1. **The liking gap.** "After a conversation, people consistently underestimate how much the other person liked them
+   (Boothby 2018, *Psychological Science*)."
+2. **Talking to strangers.** "Commuters assigned to talk to a stranger enjoyed it more than they predicted (Epley and
+   Schroeder 2014)." Say "in that study".
+3. **Laughter bonds.** "Shared laughter is linked to endorphin release and group bonding (Dunbar 2012, *Proc. Royal Society B*)."
+4. **AI that faces the group.** "A robot that made a small vulnerable remark got human teammates to talk more to each
+   other, and more evenly (Traeger 2020, *PNAS*). Our AI talks to the table, not to you alone."
+
+**Do not say:** "oxytocin builds trust", "studies show party games improve connection", "your AI friend", or that one
+evening cures loneliness.
+
+## Filler while things load
+
+A ruling takes 1 to 2 s. A portrait and a scene painting take longer, but the game never waits: the old painting
+stays up and the new one fades in. Past 6 s of quiet, CD talks: "The artist is still painting you in."
 
 ## If something breaks
-- **Generation stalls past 6 s:** CD fills ("The artist is still inking your likeness..."). ENG waits for the canned fallback.
-- **Portrait never arrives:** the sketch placeholder stays. CD: "The artist is still painting. Your hero is real."
-- **Muse is slow or down:** the app falls back to Gemini, then canned lines. Keep talking.
-- **Muse connector fails or isn't live:** skip the beat. If it errors on stage, ENG shows the pre-recorded clip of Muse calling the three tools, and CD says "Here it is from an earlier run." Never imply it ran live if it did not.
-- **News/SerpApi issue:** quests are pre-cached. If needed, ENG hits the reroll-quest hotkey for a seed quest.
-- **Voice fails:** "The mic is shy." Judge types instead.
-- **Phone won't join:** ENG joins from the laptop's second tab, or hand over the next judge's phone.
-- **Disaster roll won't come:** ENG uses the test hotkey to force it. Never mention it.
-- **Wi-Fi dies:** switch to the phone hotspot. If that fails, play the backup video (stored on laptop and phone) and narrate over it.
-- **Something offensive is typed:** the DM redirects in character. CD smiles and moves on.
-- **Past 4:00:** ENG skips to the reveal, then the scorecard. Always end on "The official story" vs "What your group uncovered" and the four lines.
+
+- **A painting is slow:** say nothing; the old painting stays up and the new one crossfades in when ready.
+- **Muse is slow or down:** canned lines fill in and the game keeps going. Keep talking.
+- **The narrator is silent:** the text still appears. "Tonight the narrator is shy." Move on.
+- **Live news is missing:** the vote uses our ready-made stories. Nobody can tell.
+- **A phone won't join:** ENG joins from a second laptop tab, or hand them a spare phone.
+- **Wi-Fi drops:** the table pauses itself. Switch to the phone hotspot. If that fails, play the backup video and talk over it.
+- **Something offensive is typed:** the DM keeps it in-world. Smile and move on.
+- **The connector fails:** skip it. Never imply it ran.
+- **Past 4:00:** ENG skips to the reveal, then the scorecard.
