@@ -212,6 +212,13 @@ export function FinaleVote({ heroes, plans, votes, deadlineAt, totalSeconds, tit
 }
 
 // ---------- TALK (convince each other, before the vote) ----------
+/** The phase's full length, read from its deadline the first time we see one (30 s judge / 60 s normal: the host decides). */
+export function usePhaseSeconds(deadlineAt?: number, given?: number) {
+  const first = useRef<{ dl: number; s: number } | null>(null);
+  if (deadlineAt && first.current?.dl !== deadlineAt) first.current = { dl: deadlineAt, s: Math.max(5, Math.round((deadlineAt - Date.now()) / 5000) * 5) };
+  return given ?? first.current?.s;
+}
+
 export interface FinaleTalkProps {
   heroes: FinaleHero[];
   plans: FinalePlan[];
@@ -222,7 +229,8 @@ export interface FinaleTalkProps {
 }
 
 /** Every final plan face up and BIG, a 60 s clock: the table argues out loud, phones tap "ready to vote". */
-export function FinaleTalk({ heroes, plans, ready, deadlineAt, totalSeconds = 60 }: FinaleTalkProps) {
+export function FinaleTalk({ heroes, plans, ready, deadlineAt, totalSeconds }: FinaleTalkProps) {
+  const total = usePhaseSeconds(deadlineAt, totalSeconds);
   const byId = new Map(heroes.map((h) => [h.id, h]));
   const n = plans.length;
   const cols = n <= 2 ? n : n === 4 ? 2 : 3;
@@ -237,7 +245,7 @@ export function FinaleTalk({ heroes, plans, ready, deadlineAt, totalSeconds = 60
         <p className="tvx-fin-vcount">
           <b key={ready.length}>{ready.length}</b> of {heroes.length} ready to vote
         </p>
-        <Countdown deadlineAt={deadlineAt} totalSeconds={totalSeconds} />
+        <Countdown deadlineAt={deadlineAt} totalSeconds={total} />
       </header>
       <div className={`tvx-fin-grid cols-${cols} n-${n}`}>
         {plans.map((p, i) => {

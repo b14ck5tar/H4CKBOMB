@@ -234,7 +234,7 @@ export function Phone({ code }: { code: string }) {
         );
         break;
       case "convince":
-        body = <TalkScreen ready={state.ready.includes(me.id)} onReady={() => send("ready")} goal={state.goal} timer={timer(60_000)} />;
+        body = <TalkScreen ready={state.ready.includes(me.id)} onReady={() => send("ready")} goal={state.goal} deadlineAt={deadlineAt || undefined} />;
         break;
       case "vote":
         body = (

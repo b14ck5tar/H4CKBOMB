@@ -174,10 +174,13 @@ function PhoneShakeIcon() {
 }
 
 /** Finale talk: the plans are on the TV; argue out loud, then tap ready (everyone ready = the vote starts early). */
-export function TalkScreen({ ready, onReady, goal, timer }: { ready: boolean; onReady: () => void; goal?: string; timer?: TimerSpec }) {
+export function TalkScreen({ ready, onReady, goal, deadlineAt }: { ready: boolean; onReady: () => void; goal?: string; deadlineAt?: number }) {
+  // The full length comes from the host's deadline (30 s in judge mode, 60 s otherwise), never hard-coded here.
+  const first = useRef<{ dl: number; ms: number } | null>(null);
+  if (deadlineAt && first.current?.dl !== deadlineAt) first.current = { dl: deadlineAt, ms: Math.max(5000, Math.round((deadlineAt - Date.now()) / 5000) * 5000) };
   return (
     <>
-      {timer && <Fuse {...timer} />}
+      {deadlineAt && first.current && <Fuse deadlineAt={deadlineAt} total={first.current.ms} />}
       <div className="pk-choices pk-center" style={{ gap: 14 }}>
         <TvGlyph />
         <Kicker tone="pink">The final move</Kicker>

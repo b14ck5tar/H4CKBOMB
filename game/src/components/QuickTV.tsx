@@ -1059,7 +1059,6 @@ function SkinFinaleTalk({ host, s }: { host: Stage; s: GameState }) {
       plans={s.pitches.filter((p) => !p.auto).map((p) => ({ id: p.id, playerId: p.playerId, text: p.verdict?.interpretation && !p.verdict.fallback ? p.verdict.interpretation : planText(p) }))}
       ready={s.ready}
       deadlineAt={host.deadlineAt || undefined}
-      totalSeconds={60}
     />
   );
 }
