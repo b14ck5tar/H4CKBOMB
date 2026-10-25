@@ -326,7 +326,7 @@ function StoryWriteForm({ state, me, send, deadlineAt }: { state: GameState; me:
   );
 }
 
-/** Full Story: three real headlines, tap one. */
+/** Full Story: three quests (the real stories stay hidden), tap one. */
 function StoryVote({ state, me, send, deadlineAt }: { state: GameState; me: Player; send: Send; deadlineAt: number }) {
   const mine = state.votes[me.id];
   return (

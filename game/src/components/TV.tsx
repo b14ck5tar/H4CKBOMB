@@ -27,7 +27,7 @@ export type Stage = Pick<
   GameHost,
   | "subscribe" | "getState" | "deadlineAt" | "portraits" | "thumbs" | "sceneImages" | "realStory" | "questSeed"
   | "transportKind" | "onReaction" | "skip" | "setPartyName" | "chooseQuest" | "canBegin" | "begin" | "nextTale"
-  | "setMode" | "startedAt" | "endedAt" | "setRating" | "voiceUrl" | "setSource"
+  | "setMode" | "startedAt" | "endedAt" | "setRating" | "voiceUrl" | "setSource" | "optionArt"
 > & { readOnly?: boolean; onToast?: GameHost["onToast"] };
 
 export function useHost(host: Stage) {

@@ -66,7 +66,7 @@
     "kind": "hook",
     "title": "The Bitten Bridge",
     "location": "The Closed Bridge",
-    "narration": "The new bridge in Porter opens at sunrise. Tonight it is empty, except for a humming sound from the river below. Someone, or something, took a bite out of the brand-new railing.",
+    "narration": "The new bridge in town opens at sunrise. Tonight it is empty, except for a humming sound from the river below. Someone, or something, took a bite out of the brand-new railing.",
     "goal": "Find out what is chewing on the new bridge",
     "situation": "An empty bridge under bright lights, a railing with a bite missing, and a dark river humming below.",
     "npc_line": {
@@ -103,7 +103,7 @@
    "kind": "hook",
    "title": "The Bridge Is Breakfast",
    "location": "The New Span Work Site",
-   "narration": "A road in Porter, Indiana, finally reopens at sunrise with a brand-new bridge. A giant river snake that eats metal is wrapped around it, chewing. It already ate the old bridge, and that took three years to fix.",
+   "narration": "A road in a small river town finally reopens at sunrise with a brand-new bridge. A giant river snake that eats metal is wrapped around it, chewing. It already ate the old bridge, and that took three years to fix.",
    "goal": "Get the snake off the bridge before sunrise",
    "situation": "A giant rust-red snake coiled around a new bridge, chewing the railing, while the sky gets lighter.",
    "npc_line": {
@@ -193,7 +193,7 @@
     "kind": "hook",
     "title": "A Beach Full of Beads",
     "location": "Mandø White Strand",
-    "narration": "A beach in Denmark is covered in tiny white beads, and the gulls are trying to eat them. Out in the water, a fin as big as a bus is circling. Every time a gull grabs a bead, the fin gets closer.",
+    "narration": "A faraway beach is covered in tiny white beads, and the gulls are trying to eat them. Out in the water, a fin as big as a bus is circling. Every time a gull grabs a bead, the fin gets closer.",
     "goal": "Bag the beads before the gulls eat them",
     "situation": "A wide, wet beach dotted with white beads, a crowd of hungry gulls, and a giant fin out past the waves.",
     "npc_line": {
@@ -217,7 +217,7 @@
     "kind": "climax",
     "title": "The Plastic Nest",
     "location": "Tyne Spill Dock",
-    "narration": "The sea mom swims all the way back to the river in England where the beads spilled. She piles a billion beads into a giant nest and sings to them. They will never hatch, and the river is filling up.",
+    "narration": "The sea mom swims all the way back to the river where the beads spilled. She piles a billion beads into a giant nest and sings to them. They will never hatch, and the river is filling up.",
     "goal": "Clear the nest without breaking the sea mom's heart",
     "situation": "A rusty river dock at low tide, a nest of white beads as big as a house, and a giant sea mom curled around it.",
     "npc_line": {
@@ -230,7 +230,7 @@
    "kind": "hook",
    "title": "Mom Wants Her Eggs",
    "location": "Tyne Spill Dock",
-   "narration": "A billion tiny plastic beads spilled into a river in England. A sea mom as big as a ferry thinks they are her eggs, and she is building a giant nest out of them. They will never hatch, and the river is filling up.",
+   "narration": "A billion tiny plastic beads spilled into a river far away. A sea mom as big as a ferry thinks they are her eggs, and she is building a giant nest out of them. They will never hatch, and the river is filling up.",
    "goal": "Get the beads back without breaking her heart",
    "situation": "A rusty river dock at low tide, a nest of white beads as big as a house, and a giant sea mom curled around it.",
    "npc_line": {
@@ -481,7 +481,7 @@
    "kind": "hook",
    "title": "Is It Aliens?",
    "location": "The Dish Field",
-   "narration": "A signal from deep space is so loud tonight that the giant dishes in the New Mexico desert are shaking. It is a star-eater, very far away, burping. A news crew goes live at sunrise, and they want to say aliens are coming.",
+   "narration": "A signal from deep space is so loud tonight that the giant dishes out in the desert are shaking. It is a star-eater, very far away, burping. A news crew goes live at sunrise, and they want to say aliens are coming.",
    "goal": "Prove the burping star-eater is far away",
    "situation": "Rows of huge white dishes shaking in the dark, and a news van with its camera lights on.",
    "npc_line": {

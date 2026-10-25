@@ -326,7 +326,7 @@ export interface GameState {
   outcome: string; // 1-2 sentences: what the winning plan did
   endingLine: string; // one line for the reveal: how it ended
   recap: string; // the reveal's "your version": 1-2 sentences on what this group actually did
-  storyOptions: { id: string; title: string; teaser: string }[]; // the story vote's 3 headlines
+  storyOptions: { id: string; title: string; teaser: string; art?: string }[]; // the story vote's 3 QUEST cards (never the real headline)
   source: "news" | "ours"; // lobby: Odd news (live headlines) or Our stories (players write true stories)
   written: string[]; // Our stories: who has sent theirs (the stories themselves stay on the TV)
   // Turns (design/24): one owner per turn, everyone else suggests, then a grand finale everyone votes on

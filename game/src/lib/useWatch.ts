@@ -80,6 +80,9 @@ export class WatchSource {
   setMode() {}
   setRating() {}
   setSource() {}
+  optionArt() {
+    return "";
+  }
   voiceUrl() {
     return "";
   }

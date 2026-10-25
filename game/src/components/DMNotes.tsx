@@ -104,7 +104,9 @@ export function DMNotesBody({ s, showQR = false }: { s: GameState; showQR?: bool
       {showQR && <JudgeQR code={s.code} />}
 
       <Section title="The source">
-        {src ? (
+        {src && !["reveal", "storybook"].includes(s.phase) ? (
+          <p className="leading-snug text-parchment/80">Hidden until the reveal, so it can&apos;t spoil the story.</p>
+        ) : src ? (
           <div className="flex flex-col gap-1">
             <p className="font-heading text-2xl leading-tight">“{src.headline}”</p>
             <p className="font-ui text-sm text-parchment/70">

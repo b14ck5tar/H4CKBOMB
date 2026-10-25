@@ -324,14 +324,18 @@ function StoryVote({ host, s }: { host: Stage; s: GameState }) {
   return (
     <div className="qt-stage qt-center">
       <div className="text-center flex flex-col gap-2 qt-rise">
-        <p className="qt-pill !text-[var(--signal)]">{s.source === "ours" ? "One of these really happened to someone here" : "Every story starts from a real headline"}</p>
-        <h2 className="qt-question">{s.busy || "Which one tonight?"}</h2>
+        <p className="qt-pill !text-[var(--signal)]">{s.source === "ours" ? "One of these really happened to someone here" : "Each quest hides a real story. You'll find out at the end"}</p>
+        <h2 className="qt-question">{s.busy || "Which quest tonight?"}</h2>
       </div>
       <div className="grid grid-cols-3 gap-6 w-full max-w-[96rem]">
         {s.storyOptions.map((o, i) => {
           const voters = s.players.filter((p) => s.votes[p.id] === o.id);
           return (
             <div key={o.id} className="qt-glass p-7 flex flex-col gap-3 qt-pop" style={{ animationDelay: `${i * 120}ms` }}>
+              {(o.art || host.optionArt(o.id)) && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={o.art || host.optionArt(o.id)} alt="" className="w-full aspect-video object-cover rounded fade-in" />
+              )}
               <span className="font-display text-5xl text-[var(--gilt-bright)] leading-none">{i + 1}</span>
               <h3 className="font-heading text-3xl uppercase leading-tight">{o.title}</h3>
               <p className="text-xl leading-snug text-parchment/80 line-clamp-3">{o.teaser}</p>
@@ -414,9 +418,11 @@ function TitleCard({ s, kicker, sub }: { s: GameState; kicker: string; sub: stri
       </p>
       <h1 className="qt-title">{s.quest?.title}</h1>
       <div className="qt-title-rule qt-rise" style={{ animationDelay: "0.7s" }} />
-      <p className="font-heading uppercase text-3xl tracking-[0.2em] text-parchment/90 qt-rise" style={{ animationDelay: "0.9s" }}>
-        {s.quest?.realm}
-      </p>
+      {s.quest?.realm && (
+        <p className="font-heading uppercase text-3xl tracking-[0.2em] text-parchment/90 qt-rise" style={{ animationDelay: "0.9s" }}>
+          {s.quest.realm}
+        </p>
+      )}
       <p className="font-ui uppercase tracking-[0.3em] text-base text-parchment/60 qt-rise" style={{ animationDelay: "1.2s" }}>
         {sub}
       </p>
@@ -1142,7 +1148,7 @@ export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameS
       break;
     case "quest":
       main =
-        s.mode === "quick" ? (
+        false ? (
           <ColdOpen host={host} s={s} />
         ) : (
           <div className="qt-stage qt-cold">

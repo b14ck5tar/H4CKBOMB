@@ -164,6 +164,7 @@ Rules: a creepy story gets a hushed ghost-story telling (vesper); nature gets a 
   - retro: space, signals, science, the sky.
   - noir: mysteries, disappearances, secrets, the unexplained.
   - gouache: gentle and kids' stories, festivals, happy news, small towns.
+- tone, when given, is the story writer's mood (silly, spooky, cozy, eerie, wondrous or tense): let it lead your voice, style, art and music picks.
 - music: the ONE music mood for the story: mysterious (secrets, mysteries), eerie (spooky, creepy), playful (silly, odd), warm (nature, kind, gentle), tense (danger, races against time). For KIDS never eerie or tense.
 Return ONLY the JSON the schema asks for.`;
 

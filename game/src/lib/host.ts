@@ -138,6 +138,9 @@ interface OpenerRes {
   ending_facts?: { kind: "news"; whats_happening_now?: string; official_line?: string } | { kind: "personal"; real_ending?: string };
   safe?: boolean;
   fallback?: boolean;
+  quest_title?: string; // the fantasy quest name (never the headline)
+  teaser?: string; // one line for the quest card
+  mood?: string;
 }
 
 /** /api/news may send candidates, or (older shape) whole quest seeds: either becomes a candidate. */
@@ -188,7 +191,7 @@ function newsSeed(id: string, c: NewsCand, o: OpenerRes): QuestSeed {
   return {
     id,
     quest_title: o.opener.title,
-    realm_name: c.place || "Somewhere real",
+    realm_name: "", // the real place waits for the reveal
     fairytale_premise: o.opener.narration,
     the_threat: { name: o.opener.title, description: o.opener.situation, mapped_from: facts?.official_line || c.snippet },
     the_goal: { description: o.opener.goal, mapped_from: "" },
@@ -347,7 +350,13 @@ const FALLBACK_LINE: Record<Ending, string> = {
 
 /** The stories this group's rating allows (lib/rating.ts). */
 function questOptionsFor(rating: Rating) {
-  return SEEDS.filter((q) => questAllowed(q.rating, rating)).map((q) => ({ id: q.id, title: q.quest_title, teaser: q.fairytale_premise.split(/(?<=[.!?])\s/)[0] }));
+  // Quest cards only: the fantasy title and the quest. The real headline, source and place wait for the reveal.
+  return SEEDS.filter((q) => questAllowed(q.rating, rating)).map((q) => ({
+    id: q.id,
+    title: q.quest_title,
+    teaser: `Your quest: ${(q.quick_scene?.goal ?? q.scenes?.[q.scenes.length - 1]?.goal ?? q.the_goal.description).replace(/[.!]+$/, "").replace(/^./, (c) => c.toLowerCase())}.`,
+    art: (questImages as Record<string, string[]>)[q.id]?.[2],
+  }));
 }
 
 export class GameHost {
@@ -1002,7 +1011,8 @@ export class GameHost {
    * during the lobby. If it isn't ready by Start, a curated story (also not played lately) stands in.
    */
   private prepareQuick() {
-    if (!FEATURES.liveNews || !this.quick || this.state.source !== "news" || this.pinned || this.quickPrep || this.state.phase !== "lobby") return;
+    this.prepareVote();
+    if (!FEATURES.liveNews || this.state.source !== "news" || this.pinned || this.quickPrep || this.state.phase !== "lobby") return;
     const recent = new Set(this.recentStories());
     const pool = this.newsCands.filter((c) => !recent.has(c.headline));
     if (!pool.length) return;
@@ -1015,10 +1025,49 @@ export class GameHost {
         if (!seed) return;
         prep.seed = seed;
         prep.ready = !!(await (this.plateP.get(seed.id) ?? Promise.resolve(null)));
-        if (prep.ready) this.note("source", "Quick Tale", `Tonight's live story is ready: "${c.headline}".`);
+        if (prep.ready) this.note("source", "Quick Tale", `Tonight's live quest is ready: "${seed.quest_title}".`);
       })
       .catch(() => {});
   }
+
+  /** Full Story's three quests, written (and painted) in parallel the moment Odd news is on and news is in. */
+  private votePrep: { optionId: string; c: NewsCand }[] = [];
+
+  private prepareVote() {
+    if (!FEATURES.liveNews || this.state.source !== "news" || this.pinned || this.votePrep.length || this.state.phase !== "lobby") return;
+    const recent = new Set(this.recentStories());
+    const pool = shuffle(this.newsCands.filter((c) => !recent.has(c.headline))).slice(0, 3);
+    if (pool.length < 3) return;
+    this.votePrep = pool.map((c) => {
+      const optionId = `news-${c.id}`;
+      if (!this.openerP.has(optionId)) this.prepareStory(optionId, { mode: "news", source: { headline: c.headline, snippet: c.snippet, source: c.source, url: c.url, date: c.date } }, (o) => newsSeed(optionId, c, o));
+      return { optionId, c };
+    });
+  }
+
+  /** The vote's live quest cards, once written: the quest title and teaser, never the headline. */
+  private async liveVoteOptions(): Promise<{ id: string; title: string; teaser: string }[]> {
+    if (!this.votePrep.length) this.prepareVote();
+    if (this.votePrep.length < 3) return [];
+    this.set({ phase: "story_vote", storyOptions: [], votes: {}, busy: "Writing tonight's quests…" });
+    const seeds = await Promise.all(this.votePrep.map((v) => withTimeout(this.openerP.get(v.optionId) ?? Promise.resolve(null), 10_000, () => null)));
+    this.set({ busy: "" });
+    return seeds
+      .map((seed, i) => {
+        if (!seed) return null;
+        const teaser = this.teasers.get(seed.id) || (seed.opener?.goal ? `Your quest: ${seed.opener.goal.replace(/[.!]+$/, "")}.` : "");
+        return { id: this.votePrep[i].optionId, title: seed.quest_title, teaser };
+      })
+      .filter((x): x is { id: string; title: string; teaser: string } => !!x);
+  }
+
+  /** The art for a vote card (curated plates ride in state; live paintings are data URLs, so the TV asks here). */
+  optionArt(id: string) {
+    return this.plateArt.get(id) ?? "";
+  }
+
+  private plateArt = new Map<string, string>();
+  private teasers = new Map<string, string>();
 
   /** A curated story this TV hasn't played lately. */
   private freshCurated() {
@@ -1179,6 +1228,7 @@ export class GameHost {
     this.set({ rating: r, questOptions });
     this.newsCands = [];
     this.quickPrep = null;
+    this.votePrep = [];
     this.loadNews();
     if (this.seed && !questAllowed(this.seed.rating, r)) {
       this.seed = undefined;
@@ -1249,7 +1299,7 @@ export class GameHost {
       questId: id,
       quest: {
         title: seed.quest_title,
-        realm: seed.realm_name,
+        realm: "", // the real place waits for the reveal
         premise: seed.fairytale_premise,
         threat: seed.the_threat.name,
         goal: seed.the_goal.description,
@@ -1426,18 +1476,18 @@ export class GameHost {
    * Three stories, every phone taps one (15 s), ties broken at random. Odd news: three live headlines (each one's
    * opener is written and its scene painted while people vote); curated stories when live news is missing.
    */
-  private startStoryVote(given?: { id: string; title: string; teaser: string }[]) {
+  private async startStoryVote(given?: { id: string; title: string; teaser: string }[]) {
     let storyOptions = given ?? [];
     if (!given) {
-      const live = shuffle(this.newsCands).slice(0, 3);
-      if (FEATURES.liveNews && live.length >= 3) {
-        storyOptions = live.map((c) => {
-          const optionId = `news-${c.id}`;
-          this.prepareStory(optionId, { mode: "news", source: { headline: c.headline, snippet: c.snippet, source: c.source, url: c.url, date: c.date } }, (o) => newsSeed(optionId, c, o));
-          return { id: optionId, title: c.headline, teaser: [c.place, c.source].filter(Boolean).join(" · ") };
-        });
-        this.note("source", "Odd news", "Three live headlines. Each one's opening is being written from the article's facts while you vote.");
-      } else storyOptions = shuffle(this.state.questOptions).slice(0, 3);
+      const live = FEATURES.liveNews ? await this.liveVoteOptions() : [];
+      if (this.state.phase !== "story_vote" && this.state.phase !== "lobby") return;
+      if (live.length >= 2) {
+        storyOptions = live;
+        this.note("source", "Odd news", "Three quests from this week's real news. The real headlines stay hidden until the reveal.");
+      } else {
+        if (this.votePrep.length) this.note("fallback", "Backup used", "The live quests weren't written in time, so curated quests stand in.");
+        storyOptions = shuffle(this.state.questOptions).slice(0, 3);
+      }
     }
     if (storyOptions.length < 2) return this.playOption(storyOptions[0]?.id ?? this.state.questOptions[0]?.id);
     this.set({ phase: "story_vote", storyOptions, votes: {}, ready: [] });
@@ -1518,7 +1568,7 @@ export class GameHost {
       seed.author
         ? `A true story from someone at this table. Who wrote it, and how it really ended, stays hidden until the reveal.`
         : quick
-        ? `Quick Tale built from a real news story. The cold open shows the real headline; how each part maps to it is revealed at the end.`
+        ? `Quick Tale built from a real news story. The headline stays hidden until the end so it can't spoil anything.`
         : `Built from a real news story${seed.category ? ` (${seed.category.replace(/_/g, " ")})` : ""}. The headline stays hidden until the end so it can't spoil the twist.`,
     );
     const n = this.state.turnOrder.length;
@@ -1528,7 +1578,7 @@ export class GameHost {
     this.askCast(seed);
     this.openerAsked = Date.now();
     this.voiceFor(openerText(opener));
-    const ms = quick && !seed.author ? coldOpenTimeline(seed.the_real_story.headline).total : TITLE_CARD_MS;
+    const ms = TITLE_CARD_MS; // a title card for every story: the real headline waits for the reveal
     this.setTimer(ms, () => this.openStory());
   }
 
@@ -1950,6 +2000,9 @@ export class GameHost {
         if (!j) return null;
         if (!j?.opener?.narration || j.safe === false) return null;
         const seed = build(j);
+        if (j.quest_title) seed.quest_title = j.quest_title;
+        if (j.teaser) this.teasers.set(seed.id, j.teaser);
+        if (j.mood) seed.tone = j.mood; // the writer's mood steers the narrator, music and paint
         this.builtSeeds.set(seed.id, seed);
         this.paintOpening(seed);
         return seed;
@@ -1965,10 +2018,13 @@ export class GameHost {
   private paintOpening(seed: QuestSeed) {
     if (this.plateP.has(seed.id)) return;
     const o = seed.opener!;
-    this.plateP.set(
-      seed.id,
-      image({ kind: "scene", location: o.location || seed.realm_name, description: o.situation, realm: seed.realm_name, threat: o.narration, quality: "fast" }),
-    );
+    const p = image({ kind: "scene", location: o.location || "", description: o.situation, realm: "", threat: o.narration, quality: "fast" });
+    this.plateP.set(seed.id, p);
+    p.then((url) => {
+      if (!url) return;
+      this.plateArt.set(seed.id, url);
+      if (this.state.phase === "story_vote") this.set({}); // the vote card picks up its picture
+    });
   }
 
   // ---------- Our stories: everyone privately writes a small true story ----------
@@ -2030,7 +2086,9 @@ export class GameHost {
 
   /** At game start the AI casts one narrator for the story's mood and writes how to read it. */
   private askCast(seed: QuestSeed) {
-    const fb = () => ({ voice: DEFAULT_CAST.voice, name: VOICES[DEFAULT_CAST.voice].name, style: DEFAULT_CAST.style, kind: "a strange true story", art: "neon", artName: ART_STYLES.neon.name, music: "" });
+    const MOOD_MUSIC: Record<string, string> = { silly: "playful", spooky: "eerie", cozy: "warm", eerie: "eerie", wondrous: "mysterious", tense: "tense" };
+    const moodMusic = MOOD_MUSIC[String(seed.tone ?? "").toLowerCase()] ?? "";
+    const fb = () => ({ voice: DEFAULT_CAST.voice, name: VOICES[DEFAULT_CAST.voice].name, style: DEFAULT_CAST.style, kind: "a strange true story", art: "neon", artName: ART_STYLES.neon.name, music: moodMusic });
     this.castP = this.viaAI(
       "Casting the narrator",
       this.ask<{ voice: string; style: string; kind: string; art: string; music: string }>("cast", {
@@ -2043,7 +2101,7 @@ export class GameHost {
       (d, f) => {
         if (f || !isVoice(d?.voice)) return fb();
         const art = FEATURES.artStyles && isArtStyle(d.art) ? d.art : "neon";
-        return { voice: d.voice, name: VOICES[d.voice].name, style: String(d.style ?? "").slice(0, 160) || DEFAULT_CAST.style, kind: String(d.kind ?? "").slice(0, 60) || "a strange true story", art, artName: ART_STYLES[art].name, music: String(d.music ?? "") };
+        return { voice: d.voice, name: VOICES[d.voice].name, style: String(d.style ?? "").slice(0, 160) || DEFAULT_CAST.style, kind: String(d.kind ?? "").slice(0, 60) || "a strange true story", art, artName: ART_STYLES[art].name, music: String(d.music ?? "") || moodMusic };
       },
       fb,
     ).then((cast) => {
@@ -2791,6 +2849,7 @@ export class GameHost {
     void prev;
     // A live story made ready during this game (and not played) waits for the next group.
     if (!this.quickPrep?.ready) this.quickPrep = null;
+    this.votePrep = [];
     this.prepareQuick();
   }
 
