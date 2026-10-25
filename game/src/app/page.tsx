@@ -9,12 +9,9 @@ export default function Home() {
           <p className="kicker">HackTX ’26 · Once Upon a Hack</p>
         </div>
 
-        <h1 className="font-display uppercase text-[3.4rem] sm:text-[6.5rem] leading-[0.88] tracking-tight">
-          <span className="block">Once Upon</span>
-          <span className="block">
-            a <span className="glitch text-[var(--gilt-bright)]">Roll</span>
-          </span>
-        </h1>
+        <h1 className="sr-only">Group Project</h1>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/logo-group-project.jpg" alt="Group Project" className="w-full h-auto rounded-xl" />
 
         <div className="gilt-rule" />
 
@@ -22,8 +19,8 @@ export default function Home() {
           Nobody has to be the <span className="text-crimson">Dungeon Master</span> anymore.
         </p>
         <p className="text-lg sm:text-xl leading-relaxed text-ink-soft">
-          Open the table on a laptop or TV. Everyone joins on their phone, describes a hero in one line, and the AI Dungeon Master
-          spins a fairytale quest out of today’s real news.
+          Open the table on a laptop or TV. Everyone joins on their phone and makes a hero. Muse, Meta’s AI, runs a story
+          that starts from this week’s odd real news or from something that really happened to one of you.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 pt-1">
@@ -32,7 +29,7 @@ export default function Home() {
         </div>
 
         <p className="font-ui text-xs uppercase tracking-[0.2em] text-ink-soft/80 border-t border-white/10 pt-4">
-          Case file 26-OUAR · Source: <span className="redacted">today’s headlines</span> · Status: open
+          Case file 26-GP · Source: <span className="redacted">today’s headlines</span> · Status: open
         </p>
       </div>
     </main>

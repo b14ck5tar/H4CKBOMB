@@ -13,8 +13,8 @@ const body = Atkinson_Hyperlegible({ variable: "--font-body", subsets: ["latin"]
 const ui = IBM_Plex_Mono({ variable: "--font-ui", subsets: ["latin"], weight: ["400", "500", "600", "700"] });
 
 export const metadata: Metadata = {
-  title: "Once Upon a Roll",
-  description: "Nobody has to be the Dungeon Master anymore. A co-op fairytale party game where every quest is today's news.",
+  title: "Group Project",
+  description: "A party game where Meta's Muse is the Dungeon Master, your phones are the controllers, and every story starts from something that really happened.",
 };
 
 export const viewport: Viewport = {
