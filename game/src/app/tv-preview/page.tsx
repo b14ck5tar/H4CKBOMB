@@ -99,7 +99,7 @@ function AutoPlay({ from }: { from?: string }) {
       );
       break;
     case "plan":
-      body = <PlanCard hero={{ name: "Rosa", color: "#3de7ff", portrait: "/heroes/v2/night-baker.webp" }} plan="I ask the park ranger what it wants" tier="solid" stat={{ label: "Charm", value: 0 }} credit={{ name: "Sam", color: "#ffad3b" }} />;
+      body = <PlanCard hero={{ name: "Rosa", color: "#3de7ff", portrait: "/heroes/v2/night-baker.webp" }} plan="I ask the park ranger what it wants" tier="solid" stat={{ label: "Charm", value: 0 }} credit={{ name: "Mo", color: "#ffad3b", by: "Sam", portrait: "/heroes/v2/mail-carrier.webp" }} />;
       break;
     case "plan2":
       body = <PlanCard hero={{ name: "Bea", color: "#ff2e7e", portrait: "/heroes/v2/skater-grandma.webp" }} plan="I give it a giant pillow to hug" tier="risky" stat={{ label: "Charm", value: 1 }} credit={{ name: "Jay", color: "#3de7ff" }} />;
@@ -275,7 +275,7 @@ export default function TvPreview() {
               plan="I hum it a slow lullaby and then I tuck it in with a blanket"
               tier={tier}
               stat={{ label: "Charm", value: 2 }}
-              credit={{ name: "Sam", color: "#ffad3b", bonus: 1 }}
+              credit={{ name: "Mo", color: "#ffad3b", bonus: 1, by: "Sam", portrait: "/heroes/v2/mail-carrier.webp" }}
             />
           </>
         )}

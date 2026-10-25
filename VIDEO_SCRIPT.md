@@ -104,6 +104,7 @@ ideas, never own a turn; never call one "my friend". A test player's idea can st
 | 1:16-1:32 | "Muse takes your plan literally…" | TV: the outcome uses A's own word, the new painting crossfades in, the progress meter moves, the last line names B. | §2 take: TV |
 | 1:32-1:44 | "For the finale…" | Phones: "Shake!" TV: one shared die lands, the screen shakes. | §2 take: phones + TV |
 | 1:44-2:00 | "And the twist…" | TV: "Because of you" with names, then **Based on a true story**: the real headline, "Solved by" with the real talents. Last 2 s: the keepsake QR. Headline hard to read? Cut to `deck-slide-6.png`. | §2 take: TV / §4 |
+| *optional* | (only if time allows) | **Our stories reveal, ~20 s**: a short second take with the lobby on **Our stories**; record only its ending, "Based on Ava's true story" and how it really ended. It's the strongest connection beat (fresh-eyes). Slot it right after the odd-news reveal and trim the finale shake to fit 3:00. Optional VO line: "Or play a friend's true story, and find out how it really ended." | a second §2 take, TV |
 | **Part 3** | | | |
 | 2:00-2:14 | "Muse runs the night…" | The one-turn diagram: real news → Muse Spark → plan → Muse Spark judges → code rolls → Muse Spark writes → Muse Image paints → narrator. Chips: *muse-spark-1.3*, *muse-image-1.0*. | §4 `how-it-works.png` |
 | 2:14-2:24 | "Code keeps it fair…" | TV with DM's Notes open, entries scrolling (rulings, progress with one line of why). | §3 DM's Notes clip |

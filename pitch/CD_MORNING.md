@@ -4,7 +4,12 @@ For the CD. Everything here happens after the final build is deployed. The shot 
 in VIDEO_SCRIPT.md; this page is the order to do it in. Devpost closes 11:30 AM; you leave at 11:00, so **submit by
 10:50**.
 
-**Latest start times:** record by 9:00, edit by 9:45, upload by 10:30, Devpost by 10:40.
+**Team schedule (laptop clock, all sessions):** no new features from now on. Fixes until **8:00**, final deploy by
+**8:30**, **3 timed judge runs 8:30-9:15** (`pitch/REHEARSAL.md`), **video + Devpost submit 9:15-10:45**. Inside that
+window: edit by 9:45, upload by 10:15, Devpost submitted by 10:45.
+
+**Recording on localhost:3000** (the partner's take) is fine: full screen (F11) so the address bar is hidden, and
+check the TV doesn't show "Local mode" (it means the rooms aren't connected).
 
 ## 0. Safety check (2 min, before ANY recording)
 
