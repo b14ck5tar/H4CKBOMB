@@ -594,7 +594,7 @@ export const CALLBACK_EXAMPLES: CallbackExample[] = [
   },
   {
     kind: "a player's real knack (outcome)",
-    earlier: "The lobby: Lou said his secret talent is untangling Christmas lights (his power became Knot Hands).",
+    earlier: "The lobby: Lou said his secret strength is untangling Christmas lights (his power became Knot Hands).",
     now: "Turn 1: Lou ties the floating hats down.",
     line: "Lou knots every hat to the costume table faster than he untangles Christmas lights, and the hats stop drifting.",
     why: "It nods to something true about the real person, warmly, so the table learns a little about them.",

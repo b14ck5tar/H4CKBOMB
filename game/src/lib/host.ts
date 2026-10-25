@@ -1377,7 +1377,7 @@ export class GameHost {
     const hero: Hero = {
       ...p.hero,
       // Keep the hero's designed power (it matches their portrait); the player's knack joins it.
-      ability: skill ? { name: base.ability.name, text: `${base.ability.text.replace(/[.!\s]+$/, "")}, with a secret talent for ${skill}.` } : base.ability,
+      ability: skill ? { name: base.ability.name, text: `${base.ability.text.replace(/[.!\s]+$/, "")}, with a secret strength: ${skill}.` } : base.ability,
       flaw: fear ? `Has the worst luck with ${fear}, at the worst moments.` : base.flaw,
     };
     this.patchPlayer(pid, { hero });

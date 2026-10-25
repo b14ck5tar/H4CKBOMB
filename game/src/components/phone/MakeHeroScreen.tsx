@@ -1,6 +1,6 @@
 "use client";
 /**
- * Make your hero: describe one in a line (+ the optional "What's your secret talent?"), or grab a ready-made trading
+ * Make your hero: describe one in a line (+ the optional "What's your secret strength?"), or grab a ready-made trading
  * card from the rail (one tap, instant). Same messages as before:
  *   onCreate({ text, skill, name })  ->  send("real", { skill, fear: "" }); send("concept", { text, name })
  *   onPick(heroId, name)              ->  send("pick", { heroId, name })
@@ -77,7 +77,7 @@ export function MakeHeroScreen({
         </label>
         <label className="pk-field">
           <span className="pk-label">
-            What’s your secret talent? <small>optional</small>
+            What’s your secret strength? <small>optional</small>
           </span>
           <input className="pk-input" value={skill} onChange={(e) => setSkill(e.target.value)} maxLength={80} placeholder="parallel parking, finding lost things" autoComplete="off" />
           <span className="pk-hint">It becomes your hero’s power. Your real answer stays secret until the end.</span>

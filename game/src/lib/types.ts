@@ -5,7 +5,7 @@ export type Rating = "kids" | "teens" | "adults";
 
 /** Two optional join questions (lib/real.ts). Either can be "" (skipped). Private until the reveal. */
 export interface RealAnswers {
-  skill: string; // "What's your secret talent?" -> their power, and the reveal's "Solved by" line
+  skill: string; // "What's your secret strength?" -> their power, and the reveal's "Solved by" line
   fear: string; // "What's a small thing that scares you?" -> comedy in the fiction only, never a real dare
 }
 /** How likely the winning plan is to work. Every plan rolls; "clever" is just the best modifier (lib/rules.ts). */
