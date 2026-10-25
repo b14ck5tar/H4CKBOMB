@@ -132,10 +132,16 @@ What actually changed the game:
 
 ## What we learned
 
-- Let the players steer. The best stories came from taking their plans literally.
-- Let the model write and let code decide. Players trust real dice.
-- Test models on your actual job. Our guess about the "better" model was wrong twice.
-- Watch people play. The recordings showed problems we had stopped seeing.
+- **AI needs a director.** Left alone, it drifts away from the original idea and writes stories that are hard to
+  follow. So we built the guidance: a story engine where Muse writes inside clear rules and code checks every move it
+  makes.
+- **Build the prototype fast.** A good idea isn't enough. Our first playtest found problems no plan would have, and
+  oh boy, there were a lot of them.
+- **Looking good isn't feeling good.** AI is great at building things that look good fast. Making them feel good
+  took playtesting with real people and watching the recordings.
+- **Let the players steer, and let code decide the numbers.** The best stories came from taking plans literally, and
+  players trust real dice.
+- **Our first hackathon:** stressful, fun, and a great experience.
 
 ## What's next for Group Project
 

@@ -68,7 +68,10 @@ the TV runs."
   the how-it-works diagram.
 - **Design:** Neon Ink art, Jackbox-style lobby, phone UI, every AI call explainable. *Point at:* lobby, painting, phone.
 - **Completion:** plays end to end on the live link; every AI call has a fallback. *Point at:* their own game.
-- **Learning:** the CD's first hackathon: creative director who directed AI to build it. Partner: *(line TBD)*.
+- **Learning (both of you):** "AI needs a director: left alone it drifts and writes stories you can't follow, so our
+  engine gives Muse rules and code checks every move." "Build the prototype fast: our first playtest found problems no
+  plan would have." "AI makes things look good fast; making them feel good took playtesting." "First hackathon:
+  stressful, fun, worth it." (Never say "AI is bad at stories".)
 
 ## Never say
 "4 minutes" · "this week's news" (at the table) · "nothing is saved" · "20 cents" as fact ·
