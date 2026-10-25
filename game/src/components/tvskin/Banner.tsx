@@ -30,3 +30,25 @@ export function Banner({ text, ms = 2600 }: { text?: string; ms?: number }) {
     </div>
   );
 }
+
+/** "10 s!": a small timer nudge near the top for ~2.2 s when `at` changes (state.nudge), naming the slow hero if any. */
+export function NudgeChip({ at, name }: { at?: number; name?: string }) {
+  const [on, setOn] = useState(0);
+  const seen = useRef(0);
+  useEffect(() => {
+    if (!at || at === seen.current || Date.now() - at > 3000) return;
+    seen.current = at;
+    setOn(at);
+    const h = setTimeout(() => setOn(0), 2200);
+    return () => clearTimeout(h);
+  }, [at]);
+  if (!on) return null;
+  return (
+    <div className="tvx-nudge" role="status" aria-live="polite">
+      <span key={on} className="tvx-nudge-txt">
+        <b>10 s!</b>
+        {name ? ` ${name}, lock it in` : " Lock it in"}
+      </span>
+    </div>
+  );
+}
