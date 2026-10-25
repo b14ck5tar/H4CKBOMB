@@ -6,7 +6,7 @@ import type { GameState } from "@/lib/types";
 import { buildKeepsake, fitKeepsake } from "@/lib/keepsake";
 
 /** Storybook "take it home" panel: a QR to /tale#<the whole story>. Nothing is uploaded anywhere. */
-export function KeepsakeQR({ host, s, size = 300 }: { host: Stage; s: GameState; size?: number }) {
+export function KeepsakeQR({ host, s, size = 300, bare = false }: { host: Stage; s: GameState; size?: number; bare?: boolean }) {
   const [qr, setQr] = useState("");
   const [url, setUrl] = useState("");
   const book = s.storybook;
@@ -35,6 +35,14 @@ export function KeepsakeQR({ host, s, size = 300 }: { host: Stage; s: GameState;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [book]);
   if (!book) return null;
+  // bare: just the code (the ending montage draws its own heading and caption around it)
+  if (bare)
+    return qr ? (
+      // eslint-disable-next-line @next/next/no-img-element
+      <img src={qr} alt="QR code: your storybook" className="rounded" style={{ width: size, height: size }} />
+    ) : (
+      <div className="rounded bg-[var(--surface-2)] animate-pulse" style={{ width: size, height: size }} />
+    );
   return (
     <div className="flex flex-col items-center gap-2 text-center max-w-[22rem]">
       <p className="font-heading text-2xl uppercase text-[var(--signal)]">Take your tale home</p>

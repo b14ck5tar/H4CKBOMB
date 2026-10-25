@@ -997,7 +997,7 @@ function SkinEnding({ host, s }: { host: Stage; s: GameState }) {
         ending: f ? ENDING_LABEL[f.ending] : undefined,
         endingColor: f?.ending === "TRIUMPHANT" ? "#ffd23f" : f?.ending === "BITTERSWEET" ? "#2cf5c0" : "#ff2e7e",
       }}
-      keepsake={s.storybook ? <KeepsakeQR host={host} s={s} size={260} /> : undefined}
+      keepsake={s.storybook ? <KeepsakeQR host={host} s={s} size={260} bare /> : undefined}
     />
   );
 }
