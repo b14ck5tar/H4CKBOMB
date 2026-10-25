@@ -1,9 +1,10 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import type { Tier } from "@/lib/types";
 import { TIER_SHIFT } from "@/lib/grade";
 import { playSfx } from "@/lib/sound";
 import { CreditChip, D20Glyph, Face, TIER_LOOK, fmtSigned, possessive, type Css } from "./shared";
+import { shakeStage } from "./motion";
 
 export interface PlanCardProps {
   hero: { name: string; color: string; portrait?: string };
@@ -28,15 +29,25 @@ export function PlanCard({ hero, plan, tier, shift, stat, credit, why, cta = "Ro
   const sh = shift ?? TIER_SHIFT[tier];
   const bonus = credit ? credit.bonus ?? 1 : 0;
   const total = (stat?.value ?? 0) + bonus + sh;
+  const ref = useRef<HTMLElement>(null);
   useEffect(() => {
-    const t = setTimeout(() => playSfx(sh < 0 ? "partial" : "success", { volume: 0.6 }), 900);
-    return () => clearTimeout(t);
+    const deal = setTimeout(() => playSfx("pick", { volume: 0.7 }), 120);
+    // the difficulty stamp lands at ~1.15 s: thud + a small shake (bigger for harder plans)
+    const t = setTimeout(() => {
+      playSfx(sh < 0 ? "partial" : "success", { volume: 0.7 });
+      shakeStage(ref.current, sh <= -5 ? 0.7 : 0.35);
+    }, 1150);
+    return () => {
+      clearTimeout(deal);
+      clearTimeout(t);
+    };
   }, [sh]);
   const style: Css = { "--c": hero.color, "--tier": look.color };
   const long = plan.length > 90;
   return (
-    <section className="tvx-plan" style={style} aria-label={`${hero.name}'s plan`}>
+    <section ref={ref} className="tvx-plan" style={style} aria-label={`${hero.name}'s plan`}>
       <div className="tvx-plan-card">
+        <span className="tvx-glow-breathe" aria-hidden />
         <header className="tvx-plan-head">
           <Face src={hero.portrait} name={hero.name} color={hero.color} size={4.4} />
           <span className="tvx-plan-who">{possessive(hero.name)} plan</span>

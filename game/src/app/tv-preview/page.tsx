@@ -7,11 +7,16 @@
  *   /tv-preview?piece=outcome   OutcomeCaption + HUD (&danger=4)
  *   /tv-preview?piece=montage   EndingMontage from the first panel (&at=3 jumps to the reveal)
  *   /tv-preview?piece=reveal    straight to "Based on a true story" (&author=Maya for the Our Stories wording)
+ *   /tv-preview?piece=autoplay  a full fake game on a loop: two turns (ideas, plan, roll, outcome), a nat-20 finale,
+ *                               the "because of you" montage and the reveal, with paint-smear wipes between phases
+ *                               (&from=meter2 starts at a step)
+ *   &t=600                      freeze every animation at 600 ms (for review frames), e.g. ?piece=wipe&t=560
+ *                               (&fz=4000 waits 4 s before freezing, to catch later events like the picked idea)
  * Keys: Space replays the current piece.
  */
 import { useEffect, useState } from "react";
 import type { Tier } from "@/lib/types";
-import { EndingMontage, HudStrip, OutcomeCaption, PlanCard, QualityMeter, SceneArt, SuggestionBubbles, TurnCard, TvStage } from "@/components/tvskin";
+import { EndingMontage, HudStrip, InkWipe, OutcomeCaption, PhaseSwap, PlanCard, QualityMeter, SceneArt, SuggestionBubbles, TurnCard, TvStage } from "@/components/tvskin";
 import type { MontagePanel, RevealData } from "@/components/tvskin";
 
 const ART = ["/quests/cornfield-dome/scene_1.webp", "/quests/cornfield-dome/scene_2.webp", "/quests/cornfield-dome/scene_3.webp", "/lobby/boulder_114b3c8fbac1bd2a55054597.webp"];
@@ -41,6 +46,91 @@ const REVEAL: RevealData = {
   endingColor: "#ffd23f",
 };
 
+// ---------- autoplay: one full fake game ----------
+const MABEL = { name: "Mabel", epithet: "Ghost Hunter Since 1974", color: "#ff2e7e", portrait: "/heroes/grandma.webp", stats: [{ label: "Guts", value: 2 }, { label: "Brains", value: -1 }, { label: "Charm", value: 1 }] };
+const IDEAS2 = [
+  { id: "d", text: "Give it a giant pillow to hug", by: "Jay", color: "#3de7ff", portrait: "/heroes/raccoon.webp" },
+  { id: "e", text: "Sing the pumpkin song backwards", by: "Luis", color: "#c6ff2e" },
+];
+type Step = { k: string; ms: number; art: number; at: number; danger: number };
+const STEPS: Step[] = [
+  { k: "turn", ms: 7600, art: 0, at: 1, danger: 1 },
+  { k: "plan", ms: 5200, art: 0, at: 1, danger: 1 },
+  { k: "meter", ms: 5200, art: 0, at: 1, danger: 1 },
+  { k: "outcome", ms: 6500, art: 1, at: 2, danger: 1 },
+  { k: "turn2", ms: 6800, art: 1, at: 2, danger: 2 },
+  { k: "plan2", ms: 4800, art: 1, at: 2, danger: 2 },
+  { k: "meter2", ms: 5200, art: 1, at: 2, danger: 2 },
+  { k: "outcome2", ms: 6200, art: 2, at: 3, danger: 4 },
+  { k: "finale", ms: 5600, art: 2, at: 3, danger: 4 },
+  { k: "montage", ms: 26000, art: 2, at: 3, danger: 4 },
+];
+
+function AutoPlay({ from }: { from?: string }) {
+  const [i, setI] = useState(() => Math.max(0, STEPS.findIndex((x) => x.k === from)));
+  const [ideas, setIdeas] = useState<typeof IDEAS>([]);
+  const [picked, setPicked] = useState<string | undefined>();
+  const step = STEPS[i];
+  useEffect(() => {
+    const ts: ReturnType<typeof setTimeout>[] = [setTimeout(() => setI((n) => (n + 1) % STEPS.length), step.ms)];
+    if (step.k === "turn" || step.k === "turn2") {
+      const list = step.k === "turn" ? IDEAS : IDEAS2;
+      setIdeas([]);
+      setPicked(undefined);
+      list.forEach((x, n) => ts.push(setTimeout(() => setIdeas((xs) => [...xs, x]), 1500 + n * 900)));
+      ts.push(setTimeout(() => setPicked(list[0].id), 1500 + list.length * 900 + 900));
+    }
+    return () => ts.forEach(clearTimeout);
+  }, [i, step.k, step.ms]);
+  const turn2 = ["turn2", "plan2", "meter2", "outcome2"].includes(step.k);
+  const ladder = { steps: 4, at: step.at, now: ["", "Turn off the red light", "Get the key from the ranger", "Tuck the hatchling in before sunrise"][step.at], goal: LADDER.goal };
+  let body: React.ReactNode = null;
+  switch (step.k) {
+    case "turn":
+    case "turn2":
+      body = (
+        <>
+          <TurnCard hero={turn2 ? MABEL : GUS} playedBy={turn2 ? "Priya" : "Jay"} turn={{ n: turn2 ? 2 : 1, of: 3 }} prompt="Everyone else: suggest a move" k={step.k} />
+          <SuggestionBubbles items={ideas} pickedId={picked} />
+        </>
+      );
+      break;
+    case "plan":
+      body = <PlanCard hero={{ name: "Gus", color: "#3de7ff", portrait: "/heroes/raccoon.webp" }} plan="I ask the park ranger what it wants" tier="solid" stat={{ label: "Charm", value: 0 }} credit={{ name: "Sam", color: "#ffad3b" }} />;
+      break;
+    case "plan2":
+      body = <PlanCard hero={{ name: "Mabel", color: "#ff2e7e", portrait: "/heroes/grandma.webp" }} plan="I give it a giant pillow to hug" tier="risky" stat={{ label: "Charm", value: 1 }} credit={{ name: "Jay", color: "#3de7ff" }} />;
+      break;
+    case "meter":
+      body = <QualityMeter total={14} parts={[{ label: "rolled", value: 13 }, { label: "Sam's idea", value: 1, signed: true }]} />;
+      break;
+    case "meter2":
+      body = <QualityMeter total={1} natural={1} parts={[{ label: "rolled", value: 1 }, { label: "Charm", value: 1, signed: true }, { label: "risky plan", value: -3, signed: true }]} />;
+      break;
+    case "finale":
+      body = <QualityMeter total={22} natural={20} parts={[{ label: "rolled", value: 20 }, { label: "Guts", value: 2, signed: true }]} />;
+      break;
+    case "outcome":
+      body = <OutcomeCaption text="Gus asks the park ranger what the hatchling wants. The ranger says it wants the red light off so it can finally sleep." tag="It works" tagColor="#3de7ff" hero={{ name: "Gus", color: "#3de7ff" }} k="o1" />;
+      break;
+    case "outcome2":
+      body = <OutcomeCaption text="Mabel hugs the giant pillow herself and falls asleep on the switch box. The red light starts blinking faster." tag="Disaster" tagColor="#ff3b4e" hero={{ name: "Mabel", color: "#ff2e7e" }} k="o2" />;
+      break;
+    case "montage":
+      body = <EndingMontage panels={PANELS} reveal={REVEAL} keepsakeUrl="https://groupproject-game.vercel.app/tale#demo" panelMs={5200} />;
+      break;
+  }
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "#07040d", overflow: "hidden" }}>
+      <SceneArt src={ART[step.art]} />
+      <TvStage>
+        {step.k !== "montage" && <HudStrip ladder={ladder} danger={{ level: step.danger, max: 5 }} />}
+        <PhaseSwap k={step.k}>{body}</PhaseSwap>
+      </TvStage>
+    </div>
+  );
+}
+
 export default function TvPreview() {
   const [q, setQ] = useState<URLSearchParams | null>(null);
   const [run, setRun] = useState(0);
@@ -53,6 +143,18 @@ export default function TvPreview() {
     return () => window.removeEventListener("keydown", k);
   }, []);
   const piece = q?.get("piece") ?? "turn";
+  // review frames: pause every CSS/WAAPI animation at the same time offset
+  useEffect(() => {
+    const t = q?.get("t");
+    if (!t) return;
+    const id = setTimeout(() => {
+      for (const a of document.getAnimations()) {
+        a.pause();
+        a.currentTime = Number(t);
+      }
+    }, Number(q?.get("fz") ?? 1500));
+    return () => clearTimeout(id);
+  }, [q]);
   // ideas fly in one by one, then one gets picked
   useEffect(() => {
     if (!q || piece !== "turn") return;
@@ -63,6 +165,7 @@ export default function TvPreview() {
     return () => ts.forEach(clearTimeout);
   }, [q, piece, run]);
   if (!q) return <div style={{ position: "fixed", inset: 0, background: "#07040d" }} />;
+  if (piece === "autoplay") return <AutoPlay key={run} from={q.get("from") ?? undefined} />;
 
   const tier = (q.get("tier") ?? "wild") as Tier;
   const total = Number(q.get("total") ?? 14);
@@ -85,6 +188,12 @@ export default function TvPreview() {
             <HudStrip ladder={LADDER} danger={{ level: danger, max: 5 }} />
             <TurnCard hero={GUS} playedBy="Jay" turn={{ n: 1, of: 3 }} prompt="Everyone else: suggest a move" k="gus" />
             <SuggestionBubbles items={ideas} pickedId={picked} />
+          </>
+        )}
+        {piece === "wipe" && (
+          <>
+            <QualityMeter total={14} sound={false} />
+            <InkWipe />
           </>
         )}
         {piece === "plan" && (

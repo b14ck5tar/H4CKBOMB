@@ -54,14 +54,25 @@ export function SuggestionBubbles({ items, pickedId, bonus = 1, title = "Ideas f
         const style: Css = { "--c": x.color, "--tilt": `${TILT[i % TILT.length]}deg`, "--i": i };
         return (
           <div key={x.id} className={`tvx-bubble ${picked ? "is-picked" : ""}`} style={style}>
-            <div className="tvx-bubble-body">
-              <span className="tvx-bubble-who">
-                <Face src={x.portrait} name={x.by} color={x.color} size={2.6} />
-                {possessive(x.by)} idea
-              </span>
-              <p className="tvx-bubble-txt">&ldquo;{x.text}&rdquo;</p>
+            <div className="tvx-bob">
+              <div className="tvx-bubble-body">
+                <span className="tvx-bubble-who">
+                  <Face src={x.portrait} name={x.by} color={x.color} size={2.6} />
+                  {possessive(x.by)} idea
+                </span>
+                <p className="tvx-bubble-txt">&ldquo;{x.text}&rdquo;</p>
+              </div>
+              {picked && (
+                <span className="tvx-bubble-credit-wrap">
+                  <span className="tvx-burst" aria-hidden>
+                    {Array.from({ length: 10 }, (_, k) => (
+                      <i key={k} style={{ ["--a" as string]: `${k * 36}deg` }} />
+                    ))}
+                  </span>
+                  <CreditChip name={x.by} color={x.color} bonus={bonus} className="tvx-bubble-credit" />
+                </span>
+              )}
             </div>
-            {picked && <CreditChip name={x.by} color={x.color} bonus={bonus} className="tvx-bubble-credit" />}
           </div>
         );
       })}

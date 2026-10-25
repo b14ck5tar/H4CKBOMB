@@ -22,6 +22,7 @@ export function OutcomeCaption({ text, tag, tagColor = "#3de7ff", hero, pace = 0
   const style: Css = { "--tc": tagColor, "--c": hero?.color ?? "#fff", "--fs": size };
   return (
     <section key={k} className="tvx-caption" style={style} aria-live="polite">
+      <span className="tvx-caption-glow" aria-hidden />
       {(tag || hero) && (
         <p className="tvx-caption-meta">
           {tag && <span className="tvx-caption-tag">{tag}</span>}

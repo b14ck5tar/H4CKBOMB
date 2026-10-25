@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 import { playSfx } from "@/lib/sound";
 import { Face, Words, possessive, type Css } from "./shared";
+import { Particles } from "./motion";
 
 export interface MontagePanel {
   /** The painted scene for this big choice. */
@@ -74,11 +75,12 @@ export function EndingMontage({ panels, reveal, keepsake, keepsakeUrl, panelMs =
         {panels.map((p, n) =>
           n === i || n === i - 1 || (atReveal && n === panels.length - 1) ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img key={n} src={p.image} alt="" className={`tvx-end-img ${atReveal ? "is-dim" : ""}`} style={{ ["--kb" as string]: n % 2 ? "tvx-kb-b" : "tvx-kb-a" }} />
+            <img key={n} src={p.image} alt="" className={`tvx-end-img ${atReveal ? "is-dim" : ""}`} style={{ ["--kb" as string]: ["tvx-pan-a", "tvx-pan-b", "tvx-pan-c"][n % 3] }} />
           ) : null,
         )}
         {!last && <div className="tvx-end-fallback" />}
         <div className="tvx-end-scrim" />
+        <Particles seed={3} count={34} />
         <div className="tvx-grain" />
       </div>
       <div className="tvx-stage">
@@ -93,6 +95,7 @@ function Panel({ p, n, of, ms }: { p: MontagePanel; n: number; of: number; ms: n
   const style: Css = { "--c": lead?.color ?? "#ff2e7e", "--ms": `${ms}ms` };
   return (
     <section className="tvx-panel" style={style}>
+      <span className="tvx-panel-flash" aria-hidden />
       <p className="tvx-panel-kicker">
         <span>Because of you</span>
         <span className="tvx-panel-pips" aria-label={`${n + 1} of ${of}`}>

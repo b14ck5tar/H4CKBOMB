@@ -1176,6 +1176,14 @@
   color: rgba(255, 255, 255, 0.6);
 }
 
+/* ---------------- idle life (motion pass) ---------------- */
+.lb-float {
+  perspective: calc(var(--u) * 60);
+}
+.lb-particles {
+  --u: min(1vw, 1.7778vh);
+}
+
 /* ---------------- reduced motion ---------------- */
 @media (prefers-reduced-motion: reduce) {
   .lb *,

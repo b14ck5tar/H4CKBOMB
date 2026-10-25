@@ -1,5 +1,9 @@
 /* In-game TV skin: the lobby's Jackbox x neon club x D&D look for every story screen. Pure props, no GameHost.
- * Preview every piece at /tv-preview?piece=turn|plan|meter|outcome|montage|reveal.
+ * Preview every piece at /tv-preview?piece=turn|plan|meter|outcome|montage|reveal, or watch a whole fake game at
+ * /tv-preview?piece=autoplay.
+ * MOTION: wrap the per-phase content in <PhaseSwap k={s.phase + turnIndex}> inside <TvStage> for the paint-smear wipe
+ * (keep HudStrip outside it so the ladder spark plays across phases). <Particles/> adds idle dust/sparks over any
+ * backdrop. All pieces animate themselves on mount; key them per turn (TurnCard k=, OutcomeCaption k=) to replay.
  *
  * import { TurnCard, ... } from "@/components/tvskin";   (folder is "tvskin", not "tv": "tv" collides with TV.tsx on Windows/macOS)
  * SWAP-IN (QuickTV.tsx, builder): keep QuickTV's Backdrop + top bar; render ONE <TvStage> over the scene
@@ -17,6 +21,7 @@
  */
 export { TvStage, SceneArt, HeroTradingCard, CreditChip, D20Glyph, Face, TIER_LOOK } from "./shared";
 export type { CardHero } from "./shared";
+export { Particles, PhaseSwap, InkWipe, Letters, shakeStage, flashScreen, useReducedMotion } from "./motion";
 export { TurnCard } from "./TurnCard";
 export type { TurnCardProps } from "./TurnCard";
 export { SuggestionBubbles } from "./SuggestionBubbles";
