@@ -587,7 +587,7 @@ export function checkTurn(p: TurnProposal, ctx: { state: StoryState; hero: strin
     }
   }
   if (ctx.next_player && p.scene && !new RegExp(`\\b${esc(ctx.next_player)}\\b`).test(p.scene)) out.push(`scene must hand the moment to ${ctx.next_player} by name`);
-  if (sentences(p.scene).length > 1 || words(p.scene) > 24) out.push("scene is 1 sentence, 24 words max");
+  if (FEATURES.storyV3 ? sentences(p.scene).length > 1 || words(p.scene) > 10 : sentences(p.scene).length > 1 || words(p.scene) > 24) out.push(FEATURES.storyV3 ? "scene is ONE short sentence, 10 words max with the name" : "scene is 1 sentence, 24 words max");
   if (p.new_character?.name && ctx.state.cast.length >= 3 && !ctx.state.cast.some((c) => norm(c.name) === norm(p.new_character.name))) out.push("no new named characters: the cast is full (3)");
   const newThings = [p.new_fact, p.new_character?.name].filter((x) => x && x.trim()).length;
   if (newThings > 1) out.push("one new thing per turn at most (a fact OR a character)");
