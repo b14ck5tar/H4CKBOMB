@@ -173,3 +173,7 @@ Full history and train of thought: `design/00-where-we-are.md`.
 - ✅ Sound effects approved by the CD ("cool, a little muffled but nice"); voice brightens them slightly.
 - ✅ (lead) Narration: Flash v2.5 for live turn lines (v3 takes 3-5 s, breaking the no-wait rule); v3 for openers, next scenes and the ending. Per-game credit guard: if the balance is low, the whole game reads with OpenAI, never switching mid-game. Judge stories each get one pinned AI-cast voice so their openers can be pre-cached.
 - ⏳ CD: narrator "a bit choppy and echoey, make it smooth" → voice is fixing it (dry narrator, smooth ducking).
+
+## Sun ~5 AM: CD course-correct + one narrator
+- ✅ CD: focus on the game working and feeling smooth before more narrator work. The laughing clip and 4th phone are dropped from the video (screen recording only).
+- ✅ CD voice pivot: ONE ElevenLabs narrator for everything, the "main girl" voice (v3, stability 0, similarity 0.8, style 0.45, speaker boost). No per-story casting for now. Flash in the same voice for live turn lines if v3 would make people wait.

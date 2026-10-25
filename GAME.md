@@ -11,7 +11,7 @@ every story really happened, to the world (odd news) or to one of you ("Our stor
 
 Built to win Meta's track:
 - **Human connection (30%):** friends suggest moves on your turn and get +1 and their name on screen when used; the TV hands the turn over by name; "tell the table your plan"; one shared shake-together finale die; Our stories.
-- **AI essential (25%):** Muse judges every plan, writes every turn, writes the openers, gates the news, paints the heroes into each scene and casts the narrator. DM's Notes shows every call.
+- **AI essential (25%):** Muse judges every plan, writes every turn, writes the openers, gates the news, paints the heroes into each scene. DM's Notes shows every call.
 - **Originality (20%):** you play a real event, then "Based on a true story" flips it; your own heroes appear in the art.
 - **Working demo (20%):** the flow just works. Every AI call has a fallback, art never makes you wait, Wi-Fi drops pause the game.
 
@@ -51,7 +51,7 @@ loop before any new feature.
 | 10 | Connection moments | Talk to convince the owner; +1 when the owner uses a friend's idea; one action only (no "if that fails"); shake together for the finale. |
 | 11 | Stakes | Team vs. the story: win or lose together, with a clear ending card. |
 | 12 | The ending | "Because of you" montage, then "Based on a true story" + what's happening now + keepsake. |
-| 13 | Narration | Voice with synced text, one narrator per game cast to the story's mood; mysterious, never cheerful. |
+| 13 | Narration | Voice with synced text, one narrator for every story (the CD's ElevenLabs pick); never cheerful. |
 | 14 | Art | A new painting per decision with the heroes in it; never wait. |
 | 15 | Input | Typing by default; voice optional on the owner's plan. |
 | 16 | Showing the AI | DM's Notes shows the reasoning. No forced reason lines on the main screen; the outcome is the explanation. |
@@ -77,7 +77,7 @@ loop before any new feature.
 - **Heroes:** cartoon characters, never realistic people. Equal stat budget in code (+2/+1/0 across Guts, Brains, Charm). The secret talent is the power, stays private, and returns at the reveal ("Solved by…"). Kids/Teens/Adults filters stories and tone.
 - **Dice:** all numbers from code (crypto); the AI picks labels and words, never numbers. Total = d20 + stat + 1 (friend's idea) + plan shift (CLEVER +3, SOLID 0, BOLD −3, LONG SHOT −5, ONLY A MIRACLE −8). Grades: natural 1 DISASTER · 2-5 UH OH · 6-9 SORT OF · 10-14 IT WORKS · 15-19 GREAT · 20+ LEGENDARY. Fails are funny and set you back a little. No roll in time = auto-roll with a buzz.
 - **Story sources:** live odd news (SerpApi, cached 4 h; 250 searches/month) → gated library → curated. The gate keeps only clear, safe, playable stories (no deaths, injuries, crime with victims, war, politics, health scares, private people or children). A problem, never a villain. Eerie but harmless tonight. **Quick Tale** writes a live opener from fresh news during the lobby, with a stored backup ready instantly; `?judge=1` forces a stored story.
-- **Narrator:** one AI-cast voice per game, synced text, text-only fallback if audio is slow. ElevenLabs v3 voices picked by the CD: Vesper (Sarah), Hollis (George), Wren (Charlie); OpenAI is the backup.
+- **Narrator:** one ElevenLabs voice for everything (the CD's pick, Eleven v3; the same voice on Flash for instant turn lines). Synced text; text-only fallback if audio is slow; never switches voice mid-game.
 - **Art:** Neon Ink house style (hand-inked indie comic, flat neon, less glossy-AI, away from the Gravity Falls look) plus a per-story theme. Muse Image paints the party's heroes into each scene, started the moment the owner picks; the old painting stays until the new one crossfades in. Art is never hidden by the UI.
 - **Sound:** original music made in code: a lobby loop plus 5 story moods picked by the AI (no eerie/tense for Kids). Music on the TV only, ducking under the narrator; phones play effects; a sound on every press.
 - **Models:** Muse Spark judges plans, writes turns and endings (fast setting) and openers (high setting, hidden wait); Muse Image for portraits and scenes; Muse Voice Transcribe for voice input; the Muse connector (`/api/mcp`) starts a night from Muse. Narration is the one non-Meta job (Meta has no text-to-speech).
