@@ -1,12 +1,13 @@
 "use client";
 
-import { EPS, adEnv, asrEnv, cleanup, crackleNoise, mtof, rand, satCurve, wave, whiteNoise, pinkNoise } from "./dsp";
+import { EPS, adEnv, asrEnv, cleanup, mtof, rand, satCurve, wave, whiteNoise, pinkNoise } from "./dsp";
 
 /**
- * One track instance's little studio: a set of buses (pad, keys, lead, pluck, bass, drums, fx),
- * a tape-wobble on the keys, a tempo-synced echo, and sends into the shared reverb.
- * Persistent nodes (buses, LFOs, filters) are built once per track; per-note nodes are tiny and
- * disconnect themselves when the note ends.
+ * One track instance's little studio. Per instrument family a bus with its own clean-up EQ, then a
+ * "layer" gain (so intensity can bring drums / bass / lead in and out smoothly), a sidechain-style
+ * pump on the tonal buses (ducked by the kick for that gentle groove breathing), a stereo chorus on
+ * the pads and keys for width, a ping-pong echo, and sends into the shared reverb.
+ * Persistent nodes are built once per track; per-note nodes are tiny and disconnect themselves.
  */
 
 export interface KitOptions {
@@ -19,8 +20,18 @@ export interface KitOptions {
   bassCutoff?: number;
   bassDrive?: number;
   reverb?: { pad?: number; keys?: number; lead?: number; pluck?: number; drums?: number; fx?: number; echo?: number };
-  crackle?: number; // vinyl crackle level (0 = off)
-  hiss?: number; // tape hiss level (0 = off)
+  /** sidechain pump depth when the kick (or tom) hits, 0..0.6 */
+  pump?: number;
+  /** stereo chorus amount on pads and keys (0 = off) */
+  width?: number;
+}
+
+export interface Layers {
+  drums: number;
+  bass: number;
+  lead: number;
+  keys: number;
+  pad: number;
 }
 
 export class Kit {
@@ -38,17 +49,41 @@ export class Kit {
   readonly drumIn: GainNode;
   readonly fxIn: GainNode;
   readonly echoIn: GainNode;
+  readonly pumpDepth: number;
+  private readonly pumpG: GainNode;
+  private readonly layer: Record<keyof Layers, GainNode>;
   private persist: AudioScheduledSourceNode[] = [];
   private nodes: AudioNode[] = [];
+  private readonly revSend: GainNode;
+  private readonly shaper: WaveShaperNode;
+  private pans = new Map<AudioNode, Map<number, AudioNode>>();
+  private load: { end: number; cost: number }[] = [];
+  /** max simultaneous oscillator/noise sources this track may run (lowered in lite mode) */
+  private cap = 56;
+  lite = false;
 
   constructor(ctx: AudioContext, dest: AudioNode, reverbIn: AudioNode, o: KitOptions) {
     this.ctx = ctx;
     this.beat = 60 / o.bpm;
+    this.pumpDepth = o.pump ?? 0;
     const g = (v = 1) => {
       const n = ctx.createGain();
       n.gain.value = v;
       this.nodes.push(n);
       return n;
+    };
+    const filt = (type: BiquadFilterType, f: number, q = 0.7, gain = 0) => {
+      const n = ctx.createBiquadFilter();
+      n.type = type;
+      n.frequency.value = f;
+      n.Q.value = q;
+      n.gain.value = gain;
+      this.nodes.push(n);
+      return n;
+    };
+    const chain = (...ns: AudioNode[]) => {
+      for (let i = 0; i < ns.length - 1; i++) ns[i].connect(ns[i + 1]);
+      return ns[ns.length - 1];
     };
     const send = (from: AudioNode, to: AudioNode, amt: number) => {
       if (amt <= 0) return;
@@ -56,110 +91,118 @@ export class Kit {
       from.connect(s);
       s.connect(to);
     };
-    const rv = { pad: 0.55, keys: 0.32, lead: 0.5, pluck: 0.4, drums: 0.1, fx: 0.7, echo: 0.4, ...(o.reverb ?? {}) };
+    const rv = { pad: 0.5, keys: 0.3, lead: 0.45, pluck: 0.35, drums: 0.08, fx: 0.7, echo: 0.35, ...(o.reverb ?? {}) };
 
     this.mix = g(1);
     this.fade = g(0);
     this.fadeRev = g(0);
     const revSend = g(1);
+    this.revSend = revSend;
     this.mix.connect(this.fade);
     this.fade.connect(dest);
     revSend.connect(this.fadeRev);
     this.fadeRev.connect(reverbIn);
 
-    // pad: shared lowpass with a slow LFO on the cutoff (the "breathing")
-    this.padIn = g(1);
-    this.padLP = ctx.createBiquadFilter();
-    this.padLP.type = "lowpass";
-    this.padLP.frequency.value = o.padCutoff ?? 900;
-    this.padLP.Q.value = o.padQ ?? 0.7;
-    this.nodes.push(this.padLP);
-    this.padIn.connect(this.padLP);
-    this.padLP.connect(this.mix);
-    send(this.padLP, revSend, rv.pad);
-    const lfo = o.padLfo ?? { rate: 0.06, depth: 280 };
-    this.lfo(lfo.rate * rand(0.85, 1.15), lfo.depth, this.padLP.frequency);
+    this.layer = { drums: g(1), bass: g(1), lead: g(1), keys: g(1), pad: g(1) };
+    this.pumpG = g(1);
+    this.pumpG.connect(this.mix);
 
-    // echo: tempo-synced, darkening feedback
+    // stereo chorus (two modulated short delays panned wide around the dry signal)
+    const width = o.width ?? 0.45;
+    const chorus = g(1);
+    chorus.connect(this.pumpG);
+    if (width > 0 && typeof ctx.createStereoPanner === "function") {
+      [
+        { base: 0.0072, rate: 0.31, pan: -0.85 },
+        { base: 0.0109, rate: 0.37, pan: 0.85 },
+      ].forEach((c) => {
+        const d = ctx.createDelay(0.05);
+        d.delayTime.value = c.base;
+        const p = ctx.createStereoPanner();
+        p.pan.value = c.pan;
+        const wg = g(width);
+        this.nodes.push(d, p);
+        chain(chorus, d, wg, p, this.pumpG);
+        this.lfo(c.rate, 0.0018, d.delayTime);
+      });
+    }
+
+    // ping-pong echo
     const e = o.echo ?? { beats: 0.75, feedback: 0.3, tone: 2600 };
     this.echoIn = g(1);
     const dl = ctx.createDelay(2);
-    dl.delayTime.value = Math.min(1.9, e.beats * this.beat);
-    const ef = ctx.createBiquadFilter();
-    ef.type = "lowpass";
-    ef.frequency.value = e.tone;
-    const eh = ctx.createBiquadFilter();
-    eh.type = "highpass";
-    eh.frequency.value = 280;
+    const dr = ctx.createDelay(2);
+    dl.delayTime.value = dr.delayTime.value = Math.min(1.9, e.beats * this.beat);
+    const etone = filt("lowpass", e.tone);
+    const ehp = filt("highpass", 300);
     const fb = g(e.feedback);
-    const echoOut = g(0.55);
-    this.nodes.push(dl, ef, eh);
-    this.echoIn.connect(dl);
-    dl.connect(ef);
-    ef.connect(eh);
-    eh.connect(fb);
-    fb.connect(dl);
-    eh.connect(echoOut);
-    if (typeof ctx.createStereoPanner === "function") {
-      const ep = ctx.createStereoPanner();
-      ep.pan.value = 0.35;
-      this.nodes.push(ep);
-      echoOut.connect(ep);
-      ep.connect(this.mix);
-    } else echoOut.connect(this.mix);
+    this.nodes.push(dl, dr);
+    chain(this.echoIn, ehp, etone, dl, dr, fb, dl);
+    const echoOut = g(0.5);
+    if (typeof ctx.createChannelMerger === "function") {
+      const m = ctx.createChannelMerger(2);
+      this.nodes.push(m);
+      dl.connect(m, 0, 0);
+      dr.connect(m, 0, 1);
+      m.connect(echoOut);
+    } else dl.connect(echoOut);
+    echoOut.connect(this.mix);
     send(echoOut, revSend, rv.echo);
 
-    // keys: tape wobble (a modulated short delay = gentle pitch wow, like an old cassette)
+    // pad: low cut (no mud under the bass), breathing lowpass, chorus
+    this.padIn = g(1);
+    this.padLP = filt("lowpass", o.padCutoff ?? 900, o.padQ ?? 0.7);
+    chain(this.padIn, filt("highpass", 170, 0.6), this.padLP, this.layer.pad, chorus);
+    send(this.layer.pad, revSend, rv.pad);
+    const lfo = o.padLfo ?? { rate: 0.06, depth: 280 };
+    this.lfo(lfo.rate * rand(0.85, 1.15), lfo.depth, this.padLP.frequency);
+
+    // keys: tape wobble, low cut, a soft top (FM keys can get glassy)
     this.keysIn = g(1);
-    const keysOut = g(1);
-    const w = o.wobble ?? { rate: 0.4, depth: 0.0015 };
+    const w = o.wobble ?? { rate: 0.4, depth: 0.0013 };
+    let keysHead: AudioNode = this.keysIn;
     if (w.depth > 0) {
       const wd = ctx.createDelay(0.1);
       wd.delayTime.value = 0.012;
       this.nodes.push(wd);
       this.keysIn.connect(wd);
-      wd.connect(keysOut);
       this.lfo(w.rate, w.depth, wd.delayTime);
-    } else this.keysIn.connect(keysOut);
-    keysOut.connect(this.mix);
-    send(keysOut, revSend, rv.keys);
-    send(keysOut, this.echoIn, 0.12);
+      keysHead = wd;
+    }
+    chain(keysHead, filt("highpass", 120, 0.6), filt("highshelf", 5000, 0.7, -4), this.layer.keys);
+    this.layer.keys.connect(chorus);
+    send(this.layer.keys, revSend, rv.keys);
+    send(this.layer.keys, this.echoIn, 0.1);
 
+    // lead + pluck share the "lead" layer
     this.leadIn = g(1);
-    this.leadIn.connect(this.mix);
-    send(this.leadIn, revSend, rv.lead);
-    send(this.leadIn, this.echoIn, 0.35);
-
     this.pluckIn = g(1);
-    this.pluckIn.connect(this.mix);
-    send(this.pluckIn, revSend, rv.pluck);
-    send(this.pluckIn, this.echoIn, 0.45);
+    const leadHP = filt("highpass", 260, 0.6);
+    const leadTop = filt("highshelf", 7000, 0.7, -3);
+    const pluckHP = filt("highpass", 200, 0.6);
+    this.leadIn.connect(leadHP);
+    this.pluckIn.connect(pluckHP);
+    pluckHP.connect(leadTop);
+    chain(leadHP, leadTop, this.layer.lead, this.mix);
+    send(this.layer.lead, revSend, (rv.lead + rv.pluck) / 2);
+    send(this.layer.lead, this.echoIn, 0.38);
 
-    // bass: warm saturation (so it reads on laptop speakers) then a lowpass
+    // bass: warm saturation (reads on laptop speakers), then a lowpass, then the pump
     this.bassIn = g(1);
     const sh = ctx.createWaveShaper();
     sh.curve = satCurve(ctx, o.bassDrive ?? 1.8);
     sh.oversample = "2x";
-    const bl = ctx.createBiquadFilter();
-    bl.type = "lowpass";
-    bl.frequency.value = o.bassCutoff ?? 520;
-    bl.Q.value = 0.6;
-    this.nodes.push(sh, bl);
-    this.bassIn.connect(sh);
-    sh.connect(bl);
-    bl.connect(this.mix);
+    this.shaper = sh;
+    this.nodes.push(sh);
+    chain(this.bassIn, sh, filt("lowpass", o.bassCutoff ?? 520, 0.6), filt("highpass", 34, 0.7), this.layer.bass, this.pumpG);
 
     this.drumIn = g(1);
-    this.drumIn.connect(this.mix);
-    send(this.drumIn, revSend, rv.drums);
+    chain(this.drumIn, filt("highshelf", 8000, 0.7, -3), this.layer.drums, this.mix);
+    send(this.layer.drums, revSend, rv.drums);
 
     this.fxIn = g(1);
     this.fxIn.connect(this.mix);
     send(this.fxIn, revSend, rv.fx);
-
-    // bed noise (vinyl crackle / tape hiss), looped
-    if (o.crackle) this.bed(crackleNoise(ctx), o.crackle, "highpass", 900);
-    if (o.hiss) this.bed(pinkNoise(ctx), o.hiss, "bandpass", 5000);
   }
 
   private lfo(rate: number, depth: number, target: AudioParam) {
@@ -175,25 +218,6 @@ export class Kit {
     this.nodes.push(d);
   }
 
-  private bed(buf: AudioBuffer, level: number, type: BiquadFilterType, f: number) {
-    const ctx = this.ctx;
-    const s = ctx.createBufferSource();
-    s.buffer = buf;
-    s.loop = true;
-    const fl = ctx.createBiquadFilter();
-    fl.type = type;
-    fl.frequency.value = f;
-    fl.Q.value = 0.5;
-    const gg = ctx.createGain();
-    gg.gain.value = level;
-    s.connect(fl);
-    fl.connect(gg);
-    gg.connect(this.mix);
-    s.start(ctx.currentTime + 0.02, Math.random() * buf.duration);
-    this.persist.push(s);
-    this.nodes.push(fl, gg);
-  }
-
   /** Crossfade this track in or out (an exponential approach: smooth, no audible "corner"). */
   setFade(v: number, sec: number) {
     const now = this.ctx.currentTime;
@@ -202,6 +226,51 @@ export class Kit {
       p.setValueAtTime(p.value, now);
       p.setTargetAtTime(v, now, sec / 3.2);
     }
+  }
+
+  /** Bring layers in or out smoothly (0..1 each). */
+  setLayers(l: Partial<Layers>, sec: number) {
+    const now = this.ctx.currentTime;
+    for (const k of Object.keys(l) as (keyof Layers)[]) {
+      const v = l[k];
+      if (v == null) continue;
+      const p = this.layer[k].gain;
+      p.cancelScheduledValues(now);
+      p.setValueAtTime(p.value, now);
+      p.setTargetAtTime(Math.max(0, v), now, Math.max(0.02, sec / 3));
+    }
+  }
+
+  /**
+   * Lite mode (busy or slow machines): about half the polyphony, one oscillator per pad note, no
+   * reverb send (the convolver then idles), no oversampling on the bass saturation.
+   */
+  setLite(on: boolean) {
+    this.lite = on;
+    this.cap = on ? 26 : 56;
+    this.shaper.oversample = on ? "none" : "2x";
+    const now = this.ctx.currentTime;
+    this.revSend.gain.cancelScheduledValues(now);
+    this.revSend.gain.setTargetAtTime(on ? 0 : 1, now, 0.3);
+  }
+
+  /** Polyphony budget: reserve `cost` sources until `end`; non-essential notes are dropped when full. */
+  private room(cost: number, end: number, essential = false): boolean {
+    const now = this.ctx.currentTime;
+    let used = 0;
+    this.load = this.load.filter((x) => x.end > now);
+    for (const x of this.load) used += x.cost;
+    if (!essential && used + cost > this.cap) return false;
+    this.load.push({ end, cost });
+    return true;
+  }
+
+  /** Sidechain-style breathing: the tonal buses dip when the kick hits and swell back. */
+  pump(t: number, depth = this.pumpDepth, release = 0.2) {
+    if (depth <= 0) return;
+    const p = this.pumpG.gain;
+    p.setTargetAtTime(1 - Math.min(0.8, depth), t, 0.006);
+    p.setTargetAtTime(1, t + 0.035, release / 3);
   }
 
   dispose() {
@@ -223,11 +292,24 @@ export class Kit {
     this.nodes = [];
   }
 
+  /** A reused panner per destination and position (quantised to 9 positions): no per-note panner nodes. */
   private pan(dest: AudioNode, p: number): AudioNode {
-    if (!p || typeof this.ctx.createStereoPanner !== "function") return dest;
-    const sp = this.ctx.createStereoPanner();
-    sp.pan.value = Math.max(-1, Math.min(1, p));
-    sp.connect(dest);
+    const q = Math.round(Math.max(-1, Math.min(1, p || 0)) * 4) / 4;
+    if (!q || typeof this.ctx.createStereoPanner !== "function") return dest;
+    let m = this.pans.get(dest);
+    if (!m) {
+      m = new Map();
+      this.pans.set(dest, m);
+    }
+    let sp = m.get(q);
+    if (!sp) {
+      const n = this.ctx.createStereoPanner();
+      n.pan.value = q;
+      n.connect(dest);
+      this.nodes.push(n);
+      m.set(q, n);
+      sp = n;
+    }
     return sp;
   }
 
@@ -242,14 +324,16 @@ export class Kit {
     const release = o.release ?? 2.2;
     const per = (vel * 0.16) / Math.sqrt(Math.max(1, notes.length));
     const w = wave(ctx, o.kind ?? "warm");
+    const voices = this.lite ? 1 : 2;
     for (const n of notes) {
+      this.room(voices, t + dur + release, true);
       const f = mtof(n);
       const env = ctx.createGain();
       asrEnv(env.gain, t, per, attack, Math.max(0, dur - attack), release);
       const p = this.pan(this.padIn, rand(-0.45, 0.45));
       env.connect(p);
       const det = o.detune ?? 7;
-      [-det, det].forEach((d, i) => {
+      (voices === 1 ? [0] : [-det, det]).forEach((d, i) => {
         const osc = ctx.createOscillator();
         osc.setPeriodicWave(w);
         osc.frequency.value = f;
@@ -257,7 +341,7 @@ export class Kit {
         osc.connect(env);
         osc.start(t);
         osc.stop(t + dur + release + 0.1);
-        if (i === 0) cleanup(osc, env, p);
+        if (i === 0) cleanup(osc, env);
         else cleanup(osc);
       });
     }
@@ -269,6 +353,7 @@ export class Kit {
     const per = (vel * 0.2) / Math.sqrt(Math.max(1, notes.length));
     notes.forEach((n, i) => {
       const tt = t + i * (o.strum ?? 0.018) + rand(0, 0.008);
+      if (!this.room(2, tt + Math.max(1.2, dur) + 0.7, i === 0)) return;
       const f = mtof(n);
       const v = per * rand(0.85, 1.05);
       const car = ctx.createOscillator();
@@ -281,11 +366,6 @@ export class Kit {
       mg.gain.exponentialRampToValueAtTime(f * 0.35 * bright + 1, tt + 0.5);
       mod.connect(mg);
       mg.connect(car.frequency);
-      const tine = ctx.createOscillator();
-      tine.frequency.value = f * 4;
-      const tg = ctx.createGain();
-      adEnv(tg.gain, tt, v * 0.18, 0.002, 0.25);
-      tine.connect(tg);
       const amp = ctx.createGain();
       amp.gain.setValueAtTime(EPS, tt);
       amp.gain.exponentialRampToValueAtTime(v, tt + 0.006);
@@ -294,14 +374,12 @@ export class Kit {
       car.connect(amp);
       const p = this.pan(this.keysIn, (i / Math.max(1, notes.length - 1) - 0.5) * 0.5);
       amp.connect(p);
-      tg.connect(p);
-      const end = tt + Math.max(1.2, dur) + 1;
-      for (const s of [car, mod, tine]) {
+      const end = tt + Math.max(1.2, dur) + 0.7;
+      for (const s of [car, mod]) {
         s.start(tt);
         s.stop(end);
       }
-      cleanup(car, amp, p, mg);
-      cleanup(tine, tg);
+      cleanup(car, amp, mg);
       cleanup(mod);
     });
   }
@@ -309,8 +387,9 @@ export class Kit {
   /** FM bell / music box / celesta. ratio 3.5 = bell, 5 = music box, 2 = glass. */
   bell(n: number, t: number, vel: number, o: { ratio?: number; index?: number; decay?: number; pan?: number; detune?: number; dest?: "lead" | "pluck" | "keys" } = {}) {
     const ctx = this.ctx;
-    const f = mtof(n) * Math.pow(2, (o.detune ?? 0) / 1200);
     const decay = o.decay ?? 1.6;
+    if (!this.room(2, t + decay)) return;
+    const f = mtof(n) * Math.pow(2, (o.detune ?? 0) / 1200);
     const ratio = o.ratio ?? 3.5;
     const car = ctx.createOscillator();
     car.frequency.value = f;
@@ -331,15 +410,16 @@ export class Kit {
     mod.start(t);
     car.stop(t + decay + 0.05);
     mod.stop(t + decay + 0.05);
-    cleanup(car, amp, p, mg);
+    cleanup(car, amp, mg);
     cleanup(mod);
   }
 
   /** Subtractive pluck (pizzicato / arp): a bright filter snap that closes fast. */
   pluck(n: number, t: number, vel: number, o: { decay?: number; bright?: number; pan?: number; type?: OscillatorType; q?: number } = {}) {
     const ctx = this.ctx;
-    const f = mtof(n);
     const decay = o.decay ?? 0.35;
+    if (!this.room(2, t + decay)) return;
+    const f = mtof(n);
     const osc = ctx.createOscillator();
     osc.type = o.type ?? "sawtooth";
     osc.frequency.value = f;
@@ -364,13 +444,14 @@ export class Kit {
       s.start(t);
       s.stop(t + decay + 0.05);
     }
-    cleanup(osc, lp, amp, p);
+    cleanup(osc, lp, amp);
     cleanup(osc2);
   }
 
   /** Bass: "sub" (round), "pluck" (upright-ish), "saw" (filtered synth pulse). */
   bass(n: number, t: number, dur: number, vel: number, kind: "sub" | "pluck" | "saw" = "sub", glideFrom?: number) {
     const ctx = this.ctx;
+    this.room(2, t + dur + 0.3, true);
     const f = mtof(n);
     const amp = ctx.createGain();
     const a = vel * 0.32;
@@ -425,8 +506,9 @@ export class Kit {
     cleanup(oscs[1]);
   }
 
-  private noise(t: number, dur: number, dest: AudioNode, type: BiquadFilterType, f0: number, q: number, vol: number, attack = 0.001, f1?: number) {
+  private noise(t: number, dur: number, dest: AudioNode, type: BiquadFilterType, f0: number, q: number, vol: number, attack = 0.001, f1?: number, pan = 0) {
     const ctx = this.ctx;
+    this.room(1, t + dur, true);
     const s = ctx.createBufferSource();
     s.buffer = whiteNoise(ctx);
     const fl = ctx.createBiquadFilter();
@@ -438,7 +520,8 @@ export class Kit {
     adEnv(amp.gain, t, vol, attack, dur);
     s.connect(fl);
     fl.connect(amp);
-    amp.connect(dest);
+    const p = this.pan(dest, pan);
+    amp.connect(p);
     s.start(t, rand(0, 1.5));
     s.stop(t + dur + 0.02);
     cleanup(s, fl, amp);
@@ -459,6 +542,7 @@ export class Kit {
     osc.stop(t + decay + 0.05);
     cleanup(osc, amp);
     this.noise(t, 0.02, this.drumIn, "lowpass", 1400, 0.7, vel * 0.08);
+    this.pump(t, this.pumpDepth * Math.min(1, vel + 0.2));
   }
 
   /** "rim" (cross-stick), "brush" (soft swish), "snap" (finger snap), "clap" (soft lo-fi clap). */
@@ -489,11 +573,45 @@ export class Kit {
   }
 
   hat(t: number, vel: number, open = false) {
-    this.noise(t, open ? 0.22 : 0.035, this.drumIn, "highpass", 7500, 0.8, vel * 0.09);
+    this.noise(t, open ? 0.22 : 0.035, this.drumIn, "highpass", 7200, 0.8, vel * 0.09, 0.001, undefined, 0.28);
   }
 
   shaker(t: number, vel: number) {
-    this.noise(t, 0.075, this.drumIn, "bandpass", 6200, 0.9, vel * 0.07, 0.018);
+    this.noise(t, 0.075, this.drumIn, "bandpass", 5600, 0.9, vel * 0.07, 0.018, undefined, -0.32);
+  }
+
+  /** A soft crash / cymbal swell tail. */
+  crash(t: number, vel: number, dur = 1.6) {
+    this.noise(t, dur, this.drumIn, "highpass", 5200, 0.6, vel * 0.08, 0.004, 3800, 0.1);
+    this.noise(t, dur * 0.6, this.drumIn, "bandpass", 3200, 0.8, vel * 0.04, 0.004, undefined, -0.2);
+  }
+
+  /** A rising synth tone (for risers): detuned saws gliding up through an opening filter. */
+  riseTone(n0: number, n1: number, t: number, dur: number, vel: number) {
+    const ctx = this.ctx;
+    const lp = ctx.createBiquadFilter();
+    lp.type = "lowpass";
+    lp.Q.value = 2;
+    lp.frequency.setValueAtTime(300, t);
+    lp.frequency.exponentialRampToValueAtTime(3200, t + dur);
+    const amp = ctx.createGain();
+    amp.gain.setValueAtTime(0, t);
+    amp.gain.linearRampToValueAtTime(vel * 0.05, t + dur * 0.85);
+    amp.gain.linearRampToValueAtTime(0, t + dur + 0.05);
+    lp.connect(amp);
+    amp.connect(this.fxIn);
+    const oscs = [-9, 9].map((det) => {
+      const o = ctx.createOscillator();
+      o.type = "sawtooth";
+      o.frequency.setValueAtTime(mtof(n0), t);
+      o.frequency.exponentialRampToValueAtTime(mtof(n1), t + dur);
+      o.detune.value = det;
+      o.connect(lp);
+      o.start(t);
+      o.stop(t + dur + 0.1);
+      return o;
+    });
+    cleanup(oscs[0], lp, amp);
   }
 
   tom(t: number, vel: number, f = 90) {
@@ -509,11 +627,13 @@ export class Kit {
     osc.stop(t + 0.6);
     cleanup(osc, amp);
     this.noise(t, 0.08, this.drumIn, "lowpass", 600, 0.7, vel * 0.06);
+    this.pump(t, this.pumpDepth * vel);
   }
 
   /** A filtered-noise swell (wind, riser, breath). */
   swell(t: number, dur: number, vel: number, f0: number, f1: number, q = 1.2) {
     const ctx = this.ctx;
+    if (!this.room(1, t + dur)) return;
     const s = ctx.createBufferSource();
     s.buffer = pinkNoise(ctx);
     s.loop = true;
@@ -532,12 +652,13 @@ export class Kit {
     amp.connect(p);
     s.start(t, rand(0, 2));
     s.stop(t + dur + 0.05);
-    cleanup(s, fl, amp, p);
+    cleanup(s, fl, amp);
   }
 
   /** A theremin-ish sine with vibrato that glides between notes (spooky-funny). */
   theremin(notes: number[], t: number, noteDur: number, vel: number) {
     const ctx = this.ctx;
+    if (!this.room(2, t + notes.length * noteDur + 0.7)) return;
     const osc = ctx.createOscillator();
     const vib = ctx.createOscillator();
     vib.frequency.value = 5.3;

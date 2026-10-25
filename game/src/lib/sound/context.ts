@@ -71,12 +71,27 @@ export function getBuses(): Buses | null {
   if (!Ctor) return null;
   try {
     const ctx = new Ctor({ latencyHint: "playback" } as AudioContextOptions);
+    // Headroom: music sits around -27 dBFS (peaks ~-15) and effects peak at -14, so the mix keeps >6 dB of
+    // headroom. Behind that, a gentle compressor at -8 dBFS and a soft-clip ceiling at -1 dBFS: nothing can
+    // ever clip the output, even with everything at once.
     const limiter = ctx.createDynamicsCompressor();
-    limiter.threshold.value = -6;
-    limiter.knee.value = 4;
-    limiter.ratio.value = 12;
-    limiter.attack.value = 0.002;
-    limiter.release.value = 0.2;
+    limiter.threshold.value = -8;
+    limiter.knee.value = 6;
+    limiter.ratio.value = 10;
+    limiter.attack.value = 0.003;
+    limiter.release.value = 0.25;
+    const ceiling = ctx.createWaveShaper();
+    const n = 1024;
+    const curve = new Float32Array(new ArrayBuffer(n * 4));
+    // perfectly linear up to -6 dBFS, then a soft knee into a -1 dBFS ceiling
+    const lin = 0.5;
+    const room = 0.89 - lin;
+    for (let i = 0; i < n; i++) {
+      const x = (i / (n - 1)) * 2 - 1;
+      const ax = Math.abs(x);
+      curve[i] = Math.sign(x) * (ax <= lin ? ax : lin + room * Math.tanh((ax - lin) / room));
+    }
+    ceiling.curve = curve;
     const master = ctx.createGain();
     master.gain.value = allMuted ? 0 : 1;
     const music = ctx.createGain();
@@ -84,7 +99,8 @@ export function getBuses(): Buses | null {
     music.connect(master);
     sfx.connect(master);
     master.connect(limiter);
-    limiter.connect(ctx.destination);
+    limiter.connect(ceiling);
+    ceiling.connect(ctx.destination);
     buses = { ctx, master, music, sfx };
     ctx.addEventListener("statechange", () => {
       if (ctx.state === "running") fireUnlock();
