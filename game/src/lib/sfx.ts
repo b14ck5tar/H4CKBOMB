@@ -2,42 +2,34 @@
 
 /**
  * Once Upon a Roll: synthesized sound effects (Web Audio API only, no assets).
- * One lazily-created AudioContext. Every call is a safe no-op on the server,
- * when muted, or when Web Audio is unavailable.
+ * Shares the app's one AudioContext with the music engine (lib/sound/context.ts), so one gesture
+ * unlocks everything and the TV's mute button silences music too. Every call is a safe no-op on the
+ * server, when muted, or when Web Audio is unavailable.
+ * New code: prefer playSfx() from "@/lib/sound" (the newer, consistent "house" family); every name
+ * here keeps working, and sfx.play()/sfx.fx() also accept the house names ("turnStart", "nat20", ...).
  */
 
+import { canStart, getBuses, isAllMuted, isServer, setAllMuted, unlockAudio } from "./sound/context";
+import { playSfx, type SfxOpts } from "./sound/sfx";
+
 const MASTER = 0.35;
-const MUTE_KEY = "ouar-muted";
 
 let ctx: AudioContext | null = null;
 let out: GainNode | null = null;
 let noiseBuf: AudioBuffer | null = null;
 let isMuted = false;
-let muteLoaded = false;
-
-function isServer() {
-  return typeof window === "undefined";
-}
 
 function loadMute() {
-  if (muteLoaded || isServer()) return;
-  muteLoaded = true;
-  try {
-    isMuted = window.localStorage.getItem(MUTE_KEY) === "1";
-  } catch {
-    /* storage blocked */
-  }
+  isMuted = isAllMuted();
 }
 
 function getCtx(): AudioContext | null {
   if (isServer()) return null;
   if (ctx) return ctx;
-  const Ctor =
-    window.AudioContext ??
-    (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-  if (!Ctor) return null;
+  const b = getBuses();
+  if (!b) return null;
   try {
-    ctx = new Ctor();
+    ctx = b.ctx;
     const comp = ctx.createDynamicsCompressor();
     comp.threshold.value = -16;
     comp.knee.value = 14;
@@ -47,7 +39,7 @@ function getCtx(): AudioContext | null {
     out = ctx.createGain();
     out.gain.value = isMuted ? 0 : MASTER;
     out.connect(comp);
-    comp.connect(ctx.destination);
+    comp.connect(b.sfx);
   } catch {
     ctx = null;
     out = null;
@@ -71,7 +63,7 @@ type Voice = (c: AudioContext, dest: AudioNode, t: number) => void;
 function run(fn: Voice) {
   if (isServer()) return;
   loadMute();
-  if (isMuted) return;
+  if (isMuted || !canStart()) return;
   const c = getCtx();
   if (!c || !out) return;
   const o = out;
@@ -646,7 +638,7 @@ function play(name: string) {
     case "splash":
       return sfx.splash();
     default:
-      return;
+      return playSfx(name); // the house family (tap, turnStart, nat20, ...); unknown names are ignored
   }
 }
 
@@ -654,30 +646,14 @@ export const sfx = {
   /** Call from a user gesture (tap/click) to unlock audio on mobile + Chrome autoplay policy. */
   unlock(): void {
     if (isServer()) return;
-    loadMute();
-    const c = getCtx();
-    if (!c) return;
-    try {
-      if (c.state !== "running") void c.resume().catch(() => {});
-      // iOS: play one silent sample inside the gesture
-      const b = c.createBuffer(1, 1, c.sampleRate);
-      const s = c.createBufferSource();
-      s.buffer = b;
-      s.connect(c.destination);
-      s.start(0);
-    } catch {
-      /* ignore */
-    }
+    unlockAudio();
+    getCtx();
   },
+  /** Global mute: sound effects AND music (persisted). */
   setMuted(m: boolean): void {
     if (isServer()) return;
-    muteLoaded = true;
     isMuted = !!m;
-    try {
-      window.localStorage.setItem(MUTE_KEY, isMuted ? "1" : "0");
-    } catch {
-      /* ignore */
-    }
+    setAllMuted(isMuted);
     if (ctx && out) {
       const now = ctx.currentTime;
       out.gain.cancelScheduledValues(now);
@@ -752,6 +728,10 @@ export const sfx = {
   },
   play(name: string): void {
     play(name);
+  },
+  /** The house family with options, e.g. sfx.fx("diceRoll", { ms: 1800 }). Same as playSfx(). */
+  fx(name: string, opts?: SfxOpts): void {
+    playSfx(name, opts);
   },
 };
 
