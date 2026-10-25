@@ -3095,8 +3095,9 @@ export class GameHost {
     this.set({ phase: "reveal", solvedBy });
     const rsr = this.seed?.the_real_story;
     if (rsr) {
-      // "true story / really happened" is said ONCE in the game, here (the on-screen banner stays)
-      const said = this.seed?.author ? `Here's the twist… it was ${speakableName(this.seed.author.name)}'s. ${rsr.summary}` : `Now, here's the strange part… this really happened. ${rsr.headline}.`;
+      // "based on a true story" is said ONCE in the game, here (the on-screen banner stays). Never "this really happened":
+      // the game's story is based on it, it didn't happen (CD).
+      const said = this.seed?.author ? `Here's the twist… it's based on ${speakableName(this.seed.author.name)}'s true story. ${rsr.summary}` : `Now, here's the strange part… it's based on a true story. ${rsr.headline}.`;
       this.voiceBy(said, Date.now() + 2500).then((clip) => this.state.phase === "reveal" && this.play(clip));
     }
     const text = `${this.seed?.the_real_story.headline ?? ""} ${this.seed?.the_real_story.summary ?? ""}`;
