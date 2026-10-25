@@ -1067,7 +1067,8 @@ export class GameHost {
     const c = pool[0]; // /api/news sends only stories that pass the storyability gate, best first
     const optionId = `news-${c.id}`;
     // The live opener is written while people join and make heroes (that takes longer than the ~30 s call).
-    const p = this.prepareStory(optionId, { mode: "news", source: { headline: c.headline, snippet: c.snippet, source: c.source, url: c.url, date: c.date } }, (o) => newsSeed(optionId, c, o)).catch(() => null);
+    // patient: nobody waits on this one, so the server lets the high-effort draft land (up to 40 s).
+    const p = this.prepareStory(optionId, { mode: "news", patient: true, source: { headline: c.headline, snippet: c.snippet, source: c.source, url: c.url, date: c.date } }, (o) => newsSeed(optionId, c, o)).catch(() => null);
     const prep: { seed: QuestSeed | null; ready: boolean; p: Promise<QuestSeed | null> } = { seed: null, ready: false, p };
     this.quickPrep = prep;
     p.then((seed) => {

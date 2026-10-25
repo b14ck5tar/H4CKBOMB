@@ -44,6 +44,6 @@ export async function POST(req: Request) {
 
   // pregen (dev only): no 25 s limit, high effort until clean; scripts/pregen-openers.mjs fills the story library.
   const pregen = process.env.NODE_ENV !== "production" && b.pregen === true;
-  const result = await makeOpener({ mode, rating, party, source, pregen });
+  const result = await makeOpener({ mode, rating, party, source, pregen, patient: b.patient === true });
   return NextResponse.json(result);
 }

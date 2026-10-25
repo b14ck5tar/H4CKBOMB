@@ -59,6 +59,11 @@ const DEADLINE_MS = 22_500; // + article fetch overhead and JSON stays under 25 
 const PREGEN_DEADLINE_MS = 320_000; // pre-generation only (dev, scripts/pregen-openers.mjs)
 const MAX_GRADE = 6;
 const PREFER_HIGH_MS = 15_000; // use the high-effort draft if it lands by then, else the low-effort one
+// Quick Tale writes its opener while people join (no one waits): high effort runs 15-25 s tonight, so it gets until
+// 30 s, and the whole call until 40 s (one retry fits). Measured Sun ~8 AM: at the 15 s cut, 1 of 2 live drafts
+// shipped the minimal draft with 5 problems (incl. a giveaway word) while the high draft landed at ~20 s.
+const PATIENT_DEADLINE_MS = 40_000;
+const PATIENT_PREFER_HIGH_MS = 30_000;
 
 const clip = (s: unknown, n: number) => String(s ?? "").replace(/[<>]/g, "").replace(/\s+/g, " ").trim().slice(0, n);
 
@@ -655,9 +660,12 @@ export async function makeOpener(input: {
   source: NewsSource | PersonalSource;
   /** Dev pre-generation for the library: high effort only, no 25 s limit, up to 4 tries until a draft is clean. */
   pregen?: boolean;
+  /** Written during the lobby (Quick Tale): nobody is waiting, so the high-effort draft gets time to land. */
+  patient?: boolean;
 }): Promise<OpenerResult> {
   const t0 = Date.now();
-  const deadline = input.pregen ? PREGEN_DEADLINE_MS : DEADLINE_MS;
+  const deadline = input.pregen ? PREGEN_DEADLINE_MS : input.patient ? PATIENT_DEADLINE_MS : DEADLINE_MS;
+  const preferHigh = input.patient ? PATIENT_PREFER_HIGH_MS : PREFER_HIGH_MS;
   const left = () => deadline - (Date.now() - t0);
   const { mode, rating, party } = input;
   const meta: OpenerResult["meta"] = { grade: 0, attempts: 0, ms: 0, problems: [] };
@@ -743,7 +751,7 @@ ${RATING_GUIDE[rating]}`;
     for (const [p, name] of [[high, "high"], [low, "low"], [min, "minimal"]] as const) {
       p.then((r) => (got[name] = r)).catch((e) => console.warn(`[opener] ${name} failed: ${(e as Error).message}`));
     }
-    const wait = Math.max(0, PREFER_HIGH_MS - (Date.now() - t0));
+    const wait = Math.max(0, preferHigh - (Date.now() - t0));
     const h = await Promise.race([high.catch(() => null), new Promise<"late">((r) => setTimeout(() => r("late"), wait))]);
     if (h && h !== "late") first = h;
     else {
