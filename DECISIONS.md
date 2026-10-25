@@ -120,3 +120,14 @@ Full history and train of thought: `design/00-where-we-are.md`.
 - ✅ Tagline: "Group Project: the one group project where everyone actually shows up."
 - ✅ Fail forward: every turn advances one step; the grade picks a better or worse branch.
 - ✅ Blind model bake-off for storytelling (Spark minimal vs Spark high vs Wonder, plus Claude/GPT if keys are added).
+- ✅ Join question: "What's your secret talent?" (replaces "weirdly good at").
+- ✅ Odd-news stories must pass a storyability gate (clear situation, problem + stakes, visual setting, a real 3-4 step arc, a payoff at the reveal; fantasy twist improves rather than confuses). No more grasping at random articles.
+- ✅ The in-game look = the tvskin mockups (turn card + idea bubbles, 1-20 quality meter, HUD with ladder + danger). Everything animated, nothing stiff. Top priority for the builder.
+- ✅ Art: a house style blending A (lively comic color/energy) + B (bold ink, flat neon, graphic readability); less glossy-AI; C rejected (unsettling). 12 new ready-made heroes in that style.
+- ✅ Voice: raw OpenAI audio has no static, so no processing. Cast: sage, coral, fable, shimmer (tts-1-hd); onyx dropped. One narrator per game.
+- ✅ Stories: a library of gated good stories; past week, then past month, then library, then curated.
+- ✅ Judge demo: a guaranteed-great curated story. Bots: none for judges (1-2 only if needed).
+- ✅ House art style "Neon Ink" (A+B blend) + 12 new heroes (v2) replace the old 6.
+- ✅ CD rule (Sun ~2 AM): perfect the core loop before ANY new feature. The fresh-eyes 'bold ideas' (roast intros, talent vote, real-vs-fake, anchor cameo, front-page keepsake) are parked.
+- ✅ Art: Neon Ink house style + 18 v2 heroes approved; each story still gets its own art theme (a variation on Neon Ink).
+- ✅ Pitch: both present. The CD is away 11 AM-4:30 PM (work) and back ~4:45 for the 5:30 pitch; the partner covers judging 2-5 PM. So the build must be stable by ~9:30 AM, the video recorded and the Devpost finalized before 11 AM.
