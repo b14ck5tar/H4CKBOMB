@@ -37,7 +37,7 @@ import { QUICK, coldOpenTimeline } from "./quick";
 import { FEATURES } from "./features";
 import { pickStorySfx, pickStorySfxCues, type StorySfxCue } from "./storySfx";
 import { Bots } from "./bots";
-import { TIER_SHIFT, gradeRoll } from "./grade";
+import { TIER_SHIFT, gradeRoll, isMiss } from "./grade";
 import { applyTurn, fallbackProposal, pressureNow, quipOk, stateFromOpener, type StoryState, type TurnResult, type VoiceLine } from "./procedural";
 import { speakableName } from "./now";
 import { DEFAULT_CAST, VOICES, isVoice } from "./voices";
@@ -67,7 +67,9 @@ import type {
   Verdict,
 } from "./types";
 
-const SEEDS = seedsJson as QuestSeed[];
+// Out of every pool (CD, Sun 11 AM): the opera snake failed the 8-box story gate (Batman's seed is deleted).
+const EXCLUDED_SEEDS = new Set(["opera-snake", "norwich-batman"]);
+const SEEDS = (seedsJson as QuestSeed[]).filter((q) => !EXCLUDED_SEEDS.has(q.id));
 /** Ready-made characters for fast onboarding; portraits are pre-painted in public/heroes/<id>.webp. */
 export const QUICK_HEROES = quickHeroes as { id: string; pitch: string; hero: Hero }[];
 
@@ -2283,7 +2285,9 @@ export class GameHost {
       this.voiceFor(d.outcome);
       // A new painting every turn (CD, Sun): what just happened, in the place the story has moved to. A new act or
       // the finale frames the whole party; any other turn frames the hero and the friend whose idea it was.
-      this.paintDecision(judged, v, d.outcome, d.scene || this.state.situation, d.finale ? "finale" : d.act_changed ? "act" : "win");
+      // Dynamic paintings (look, art prompt v8): a miss gets its own camera; a half-success is tense.
+      const g = gradeRoll(roll.total, roll.kept).grade;
+      this.paintDecision(judged, v, d.outcome, d.scene || this.state.situation, d.finale ? "finale" : d.act_changed ? "act" : g === "PARTIAL" ? "tense" : isMiss(g) ? "miss" : "win");
       if (d.scene) this.voiceFor(d.finale || !this.nextOwner() ? `Alright, everyone… time for the grand finale. ${d.scene} So. What's the final move?` : d.scene);
     });
     this.setTimer(this.judge ? 1800 : this.quick ? 2200 : RULING_MS, () => this.startRoll());
@@ -2294,7 +2298,7 @@ export class GameHost {
    * muse-image edits the CURRENT picture: the heroes, doing this action, in this situation. ~15 s; the outcome shows
    * over the previous art and the TV crossfades when it lands. Never waited on. Steered plans are never painted.
    */
-  private paintDecision(pitch: Pitch, v: Verdict, moment = v.interpretation, where = this.state.situation, beat: "act" | "win" | "finale" = "finale") {
+  private paintDecision(pitch: Pitch, v: Verdict, moment = v.interpretation, where = this.state.situation, beat: "act" | "win" | "miss" | "tense" | "finale" = "finale") {
     if (!FEATURES.heroArt || !this.seed || v.moderation !== "ok") return;
     const questId = this.seed.id;
     const plate = this.plateFor(this.state.turnIndex);
