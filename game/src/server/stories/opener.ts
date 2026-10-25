@@ -27,7 +27,7 @@ export type OpenerResult = {
   meta: { grade: number; attempts: number; ms: number; problems: string[]; facts_fetched?: boolean };
 };
 
-const DEADLINE_MS = 24_000;
+const DEADLINE_MS = 22_500; // + article fetch overhead and JSON stays under 25 s
 const MAX_GRADE = 6;
 const HEDGE_MS = 13_000;
 
@@ -35,19 +35,25 @@ const clip = (s: unknown, n: number) => String(s ?? "").replace(/[<>]/g, "").rep
 
 // ---------------------------------------------------------------- prompt
 
-const EXAMPLES = `EXAMPLES of the style we want (hand-written by the team):
+const EXAMPLES = `EXAMPLES of the style we want (based on the team's hand-written ones):
 1. title "The Bridge Is Breakfast"
-   narration "A road in Porter, Indiana, finally reopens at sunrise with a brand-new bridge. A giant river snake that eats metal is wrapped around it, chewing. It already ate the old bridge, and that took three years to fix."
+   event_line "A road in Porter, Indiana, finally reopens at sunrise with a brand-new bridge."
+   trouble_line "A giant river snake that eats metal is wrapped around the bridge, chewing the railing."
+   stakes_line "It already ate the old bridge, so if it eats this one, the road stays closed for years."
    goal "Get the snake off the bridge before sunrise"
    situation "A giant rust-red snake coiled around a new bridge, chewing the railing, while the sky gets lighter."
    npc_line {"speaker": "Bridge inspector", "line": "Good morning! Is the bridge supposed to be humming?"}
 2. title "The Hand That Let Go"
-   narration "A giant ice hand from the Ice Age held an 80-ton boulder over this path for 100 years. Today it got tired and let go. Now it is grabbing everything in the park, and it will not calm down."
+   event_line "An 80-ton boulder that hung over a park path in New Hampshire for 100 years just fell."
+   trouble_line "A giant ice hand was holding it up, and now that it let go, it grabs everything in the park."
+   stakes_line "If the hand is still grabbing by winter, the park can't reopen."
    goal "Put the grabby ice hand to sleep for winter"
    situation "A smashed walkway, the fallen boulder, and a giant ice hand juggling traffic cones."
    npc_line {"speaker": "Park ranger", "line": "It took my lunch. It does not even have a mouth."}
 3. title "Mom Wants Her Eggs"
-   narration "A billion tiny plastic beads spilled into a river in England. A sea mom as big as a ferry thinks they are her eggs, and she is building a giant nest out of them. They will never hatch, and the river is filling up."
+   event_line "A billion tiny plastic beads spilled into a river in England."
+   trouble_line "A sea creature as big as a ferry thinks the beads are her eggs, so she is building a nest out of them."
+   stakes_line "The beads will never hatch, and if she keeps going, the whole river fills up with plastic."
    goal "Get the beads back without breaking her heart"
    situation "A rusty river dock at low tide, a nest of white beads as big as a house, and a giant sea mom curled around it."
    npc_line {"speaker": "The sea mom", "line": "Shh. They are almost ready to hatch. I can tell."}`;
@@ -63,10 +69,16 @@ You get a SOURCE. It is either NEWS (a real news story) or PERSONAL (a real thin
 
 WRITE:
 - title: 2 to 6 words, funny and concrete. Not a pun on a real person.
-- narration: 2 or 3 short sentences, 45 words max in total. First say the real event plainly (what and where).
-  Then add the one magical twist that secretly explains it. End on why it matters right now.
+- The narration is three sentences, 45 words max in total, written as three fields:
+  - event_line: the real event, plainly (what happened and where).
+  - trouble_line: WHO or WHAT the trouble is, in plain words, and what it is doing. This is the one magical
+    twist that secretly explains the real event. Anyone or anything named in the goal MUST be explained here
+    ("a ghost who rents a room under the volcano", not just "the lodger").
+  - stakes_line: WHY the goal matters: what goes wrong if the group fails ("if it eats this one, the road
+    stays closed for years"). Cause and effect, said plainly.
+  An 8-year-old must be able to retell the problem after hearing these three sentences once.
 - goal: what the group must do, 10 words max, starting with a verb ("Get", "Find", "Put", "Help", "Stop").
-  It must be clear when the goal is done.
+  It must be clear when the goal is done. Use only things already explained in the three lines.
 - situation: ONE sentence, 25 words max: what is physically in front of the heroes right now. Two or three
   concrete things they could touch, use or talk to.
 - npc_line: one person or creature who is there, with one short, tired, funny line (12 words max). speaker is
@@ -92,9 +104,12 @@ NEWS SOURCE RULES:
   Say "a farmer", "a museum", "scientists". Never mock or blame anyone real.
 - official_line: ONE plain sentence saying the main real event from the headline (what, who in general
   terms, where), from the source text only. Not a side detail.
-- whats_happening_now: 1 or 2 plain sentences on the current real-world status and who it affects, from the
-  source text only. If the text does not say, write what is known and say the rest has not been reported.
-  Never guess.
+- official_line and whats_happening_now are read at the end as "this really happened". Write them in your own
+  plain words. Never copy a sentence from the source text.
+- whats_happening_now: 1 or 2 plain sentences on what is happening now in the real world and who it affects,
+  from the source text only, and different from official_line. If the text gives nothing more, write ONE short
+  sentence of what is known, or "". NEVER write about the text itself or what is unknown ("has not been
+  reported", "the article does not say", "it is unclear"). Never guess.
 - Set real_ending to "".
 
 PERSONAL SOURCE RULES:
@@ -123,12 +138,14 @@ const str = { type: "string" } as const;
 export const OPENER_SCHEMA = {
   type: "object",
   additionalProperties: false,
-  required: ["safe", "unsafe_message", "title", "narration", "goal", "situation", "npc_speaker", "npc_line", "official_line", "whats_happening_now", "real_ending"],
+  required: ["safe", "unsafe_message", "title", "event_line", "trouble_line", "stakes_line", "goal", "situation", "npc_speaker", "npc_line", "official_line", "whats_happening_now", "real_ending"],
   properties: {
     safe: { type: "boolean" },
     unsafe_message: str,
     title: str,
-    narration: str,
+    event_line: str,
+    trouble_line: str,
+    stakes_line: str,
     goal: str,
     situation: str,
     npc_speaker: str,
@@ -143,7 +160,10 @@ type Draft = {
   safe: boolean;
   unsafe_message: string;
   title: string;
-  narration: string;
+  event_line: string;
+  trouble_line: string;
+  stakes_line: string;
+  narration: string; // built in code from the three lines
   goal: string;
   situation: string;
   npc_speaker: string;
@@ -170,14 +190,51 @@ function contentWords(s: string) {
   );
 }
 
-function problems(d: Draft, mode: "news" | "personal", sourceText: string, personal?: PersonalSource): { list: string[]; grade: number } {
+const STAKES = /\b(if|unless|or|otherwise|will|won't|can't|cannot|never|forever|before|until|so)\b/i;
+const GOAL_VERBS = new Set("stop find bring keep help catch calm guide leave return clean fix save send stay sleep tonight before after first without".split(" "));
+/** Talk about the source or about missing facts: never shown to players at the reveal. */
+const META = /\b(not (been )?(reported|said|stated|mentioned|known|clear|confirmed)|(has|have|was|were) not (been )?(reported|said|announced)|no (word|details|information)|unclear|unknown|the (text|article|source|snippet|report|story) (does|did|doesn't|didn't|says|said)|according to (the )?(text|article|report))\b/i;
+
+function stems(s: string) {
+  return new Set([...contentWords(s)].map((w) => w.slice(0, 4)));
+}
+function sigWords(s: string) {
+  return new Set(s.toLowerCase().replace(/[^a-z0-9 ]/g, " ").split(/\s+/).filter((w) => w.length >= 3));
+}
+/** True when `text` has a sentence that is >= 80% made of one source sentence's words. */
+function copies(text: string, sourceSentences: string[]) {
+  return splitSentences(text).some((t) => {
+    const a = sigWords(t);
+    if (a.size < 5) return false;
+    return sourceSentences.some((src) => {
+      const b = sigWords(src);
+      let n = 0;
+      for (const w of a) if (b.has(w)) n++;
+      return n / a.size >= 0.8;
+    });
+  });
+}
+function splitSentences(s: string) {
+  return String(s ?? "")
+    .split(/(?<=[.!?])\s+|\n+/)
+    .map((x) => x.replace(/^[A-Z_ ]+:\s*/, "").trim())
+    .filter(Boolean);
+}
+/** Drop meta sentences and copied source sentences; "" if nothing is left. */
+function cleanFact(s: string, sourceSentences: string[]) {
+  return sanitize(
+    splitSentences(s)
+      .filter((x) => !META.test(x) && !copies(x, sourceSentences))
+      .join(" "),
+  );
+}
+
+function problems(d: Draft, mode: "news" | "personal", sourceText: string, personal?: PersonalSource, sourceSentences: string[] = []): { list: string[]; grade: number } {
   const list: string[] = [];
-  const grade = fkGrade([d.narration, d.goal, d.situation]);
+  const grade = fkGrade([d.event_line, d.trouble_line, d.stakes_line, d.goal, d.situation]);
   if (grade > MAX_GRADE) list.push(`reading grade is ${grade}, the max is ${MAX_GRADE}: use shorter sentences and everyday words, but keep it natural English`);
   const nw = wordCount(d.narration);
-  if (nw > 45) list.push(`narration is ${nw} words, the max is 45`);
-  const ns = (d.narration.match(/[.!?](\s|$)/g) ?? []).length;
-  if (ns > 3) list.push(`narration has ${ns} sentences, the max is 3`);
+  if (nw > 48) list.push(`the three lines are ${nw} words together, the max is 45`);
   const gw = wordCount(d.goal);
   if (gw > 10) list.push(`goal is ${gw} words, the max is 10`);
   if (NOT_VERB_START.test(d.goal.trim())) list.push(`goal must start with a verb like "Get" or "Find"`);
@@ -188,7 +245,22 @@ function problems(d: Draft, mode: "news" | "personal", sourceText: string, perso
   const coined = inventedNames(all, sourceText);
   if (coined.length) list.push(`invented names (${coined.join(", ")}): describe things in plain words instead`);
   if (/\byou(r|'re)?\b/i.test(`${d.narration} ${d.situation}`)) list.push(`do not say "you"`);
-  if (mode === "news" && (!d.official_line.trim() || !d.whats_happening_now.trim())) list.push("official_line and whats_happening_now are required");
+  for (const [k, v] of [["event_line", d.event_line], ["trouble_line", d.trouble_line], ["stakes_line", d.stakes_line]] as const) {
+    if (!v.trim()) list.push(`${k} is required`);
+    else if ((v.trim().match(/[.!?](\s|$)/g) ?? []).length > 1) list.push(`${k} must be ONE sentence`);
+  }
+  if (d.stakes_line.trim() && !STAKES.test(d.stakes_line)) list.push(`stakes_line must say what goes wrong if the group fails ("if ... then ...")`);
+  // Everything the goal mentions must be explained in the narration (the "who is the lodger?" bug).
+  const told = stems(`${d.event_line} ${d.trouble_line} ${d.stakes_line}`);
+  const unexplained = [...contentWords(d.goal)].filter((w) => !GOAL_VERBS.has(w) && !told.has(w.slice(0, 4)));
+  if (unexplained.length) list.push(`the goal mentions ${unexplained.map((w) => `"${w}"`).join(", ")} but the three lines never say who or what that is`);
+  if (mode === "news") {
+    if (!d.official_line.trim()) list.push("official_line is required");
+    for (const [k, v] of [["official_line", d.official_line], ["whats_happening_now", d.whats_happening_now]] as const) {
+      if (META.test(v)) list.push(`${k} talks about the text or what is unknown: state only known facts, or leave whats_happening_now ""`);
+      if (copies(v, sourceSentences)) list.push(`${k} copies a sentence from the source: use your own plain words`);
+    }
+  }
   if (mode === "personal" && personal) {
     // Leak check: distinctive words from the real ending that the setup never mentioned must not show up early.
     const known = contentWords(`${personal.title} ${personal.setup} ${[personal.steps].flat().join(" ")}`);
@@ -223,10 +295,12 @@ function firstSentence(s: string, max = 220) {
 }
 
 function newsFacts(src: NewsSource, d?: Partial<Draft>): EndingFacts {
+  const ss = splitSentences(clip(src.snippet, 1000)).slice(0, 1);
+  const official = d?.official_line ? splitSentences(d.official_line).filter((x) => !META.test(x)).join(" ") : "";
   return {
     kind: "news",
-    official_line: sanitize(d?.official_line || firstSentence(src.snippet) || clip(src.headline, 200)),
-    whats_happening_now: sanitize(d?.whats_happening_now || `The full story, and any updates, are in the original report from ${clip(src.source, 80) || "the news"}.`),
+    official_line: sanitize(official || clip(src.headline, 200)),
+    whats_happening_now: d?.whats_happening_now ? cleanFact(d.whats_happening_now, [...ss, official]) : "",
     headline: clip(src.headline, 300),
     source: clip(src.source, 120),
     url: clip(src.url, 1000),
@@ -254,7 +328,8 @@ function userPrompt(mode: "news" | "personal", rating: Rating, party: PartyMembe
   if (mode === "personal") u += `AUTHOR_HERO: ${authorHero || "(unknown, do not name anyone)"}\n`;
   u += `\n<source>\n${body}\n</source>\n`;
   if (prev) {
-    u += `\nYour previous draft had problems. Write a new version that fixes ALL of them and keeps what worked.\nPREVIOUS DRAFT: ${JSON.stringify({ title: prev.draft.title, narration: prev.draft.narration, goal: prev.draft.goal, situation: prev.draft.situation })}\nPROBLEMS:\n${prev.problems.map((p) => `- ${p}`).join("\n")}\n`;
+    const { title, event_line, trouble_line, stakes_line, goal, situation, official_line, whats_happening_now } = prev.draft;
+    u += `\nYour previous draft had problems. Write a new version that fixes ALL of them and keeps what worked.\nPREVIOUS DRAFT: ${JSON.stringify({ title, event_line, trouble_line, stakes_line, goal, situation, ...(mode === "news" ? { official_line, whats_happening_now } : {}) })}\nPROBLEMS:\n${prev.problems.map((p) => `- ${p}`).join("\n")}\n`;
   }
   return u;
 }
@@ -312,6 +387,7 @@ export async function makeOpener(input: {
     }
   }
 
+  const sourceSentences = news ? splitSentences(`${clip(news.snippet, 1000)} ${body}`) : [];
   const system = `${OPENER_SYSTEM}
 
 ${RATING_GUIDE[rating]}`;
@@ -325,7 +401,10 @@ ${RATING_GUIDE[rating]}`;
       effort,
       maxTokens: effort === "high" ? 16000 : 8000, // reasoning tokens count against this
       timeoutMs: Math.max(3_000, left() - 900),
-    }).then((d) => ({ d, effort }));
+    }).then((d) => {
+      d.narration = [d.event_line, d.trouble_line, d.stakes_line].map((x) => String(x ?? "").trim()).filter(Boolean).join(" ");
+      return { d, effort };
+    });
   };
 
   // 1) "high" effort (the contract). If it is still thinking at HEDGE_MS, start a "low" backup in parallel and take
@@ -344,7 +423,7 @@ ${RATING_GUIDE[rating]}`;
   type Best = { d: Draft; probs: string[]; grade: number };
   let best = null as Best | null; // assigned inside judge(), so no narrowing to null
   const judge = (d: Draft, label: string) => {
-    const { list, grade } = problems(d, mode, sourceText, personal);
+    const { list, grade } = problems(d, mode, sourceText, personal, sourceSentences);
     console.log(`[opener] ${label} grade ${grade}, problems: ${list.length ? list.join(" | ") : "none"}`);
     if (!best || list.length < best.probs.length || (list.length === best.probs.length && grade < best.grade)) best = { d, probs: list, grade };
     return list;
@@ -357,7 +436,7 @@ ${RATING_GUIDE[rating]}`;
     }
     const probs = judge(first.d, `draft (${first.effort})`);
     // 2) One retry with the problems listed, if there is time for a fast call.
-    if (probs.length && left() > 6_000) {
+    if (probs.length && left() > 8_000) { // a low-effort retry needs about 5-7 s
       try {
         const r = await call(left() > 14_000 ? "medium" : "low", { draft: first.d, problems: probs });
         if (r.d.safe) judge(r.d, `retry (${r.effort})`);
