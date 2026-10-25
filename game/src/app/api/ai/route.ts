@@ -28,8 +28,10 @@ import { FALLBACK_EPILOGUE, fallbackHero, fallbackKind, fallbackOutcome, fallbac
 import { cleanText, ratingOf, realOf } from "@/server/real";
 import type { Hero, Rating, Stat } from "@/lib/types";
 import { evenStats } from "@/lib/rules";
+import { BEAT_OF, fillBeat, liveProblems, makeBible, pronounMap, storedPack, tailor, tailorEnding, turnsOf } from "@/server/stories/bible";
 
-export const maxDuration = 60;
+// story_bible can take 40-90 s (it runs during the vote, hidden). Fluid compute allows this on every Vercel plan.
+export const maxDuration = 120;
 
 /**
  * Model + reasoning per story-writing call type, in one place, so a model comparison is a one-line (or env var) swap
@@ -60,7 +62,7 @@ const GRADE_MEANING: Record<string, string> = {
   PROGRESS: "it works: a good path opens",
 };
 
-const TASKS = ["character", "scene", "verdict", "outcome", "outcome_branches", "round", "epilogue", "storybook", "kind", "cast", "bot"];
+const TASKS = ["character", "scene", "verdict", "outcome", "outcome_branches", "round", "epilogue", "storybook", "kind", "cast", "bot", "story_bible", "tailor"];
 
 /** Player-authored text is wrapped so the model treats it as in-world speech, never instructions. */
 function wrap(id: string, text: string, max = 240) {
@@ -138,6 +140,14 @@ async function run(task: string, input: Any, rating: Rating) {
       );
       return Object.fromEntries(entries);
     }
+    case "story_bible":
+      // Story engine v2 (design/30): the whole story planned once, while the table votes. Cached per story.
+      // stored_only: just the pre-built story pack (opener + ending_facts + bible) for a library story, or null.
+      if (input.stored_only) return storedPack(input.cache_key, rating, input.turns) ?? { bible: null, opener: null, meta: {} };
+      return makeBible({ ...input, turns: turnsOf(input.turns), rating }, { deadlineMs: Number(input.deadline_ms) || 45_000 });
+    case "tailor":
+      // Story engine v2: the rolled branch's pre-written beat, rewritten for what the hero really did.
+      return input.kind === "ending" ? tailorEnding(input, rating) : tailor(input, rating);
     case "round":
       return museJSON({ task: t("round"), system: withRating(ROUND_SYSTEM, rating), schema: ROUND_SCHEMA, effort: "low", timeoutMs: 14_000, user: JSON.stringify(input) });
     case "kind":
@@ -174,6 +184,10 @@ function fallback(task: string, input: Any) {
       return fallbackOutcome(cleanText(input?.hero?.name, 40), input?.band);
     case "outcome_branches":
       return { worse: null, mixed: null, better: null };
+    case "story_bible":
+      return { bible: null, meta: {} };
+    case "tailor":
+      return fallbackTailor(input);
     case "round":
       return fallbackRound(input.actions ?? []);
     case "kind":
@@ -256,6 +270,27 @@ function realEvent(r: Any) {
   return out.place_type || out.situation ? out : undefined;
 }
 
+/**
+ * The tailor's instant fallback: the bible's beat with its slots filled in code (no AI). Same shape as the
+ * "outcome" task (turns) or the "epilogue" task (kind "ending"), so host.ts reads it the same way.
+ */
+function fallbackTailor(input: Any) {
+  const hero = cleanText(input?.hero?.name ?? input?.winner?.name ?? input?.winner, 40);
+  const branch = String(input?.roll?.branch ?? "");
+  const beatText = String(input?.beat?.text ?? "");
+  if (input?.kind === "ending") {
+    return { ending: beatText ? fillBeat(beatText, { hero, attempt: input?.attempt, branch: "worse" }) : FALLBACK_EPILOGUE.ending, line: String(input?.beat?.line ?? FALLBACK_EPILOGUE.line ?? ""), recap: "", skills: [] };
+  }
+  // Player-driven (CD): the fallback says the chosen plan happened, at its strength. The head writer's reference
+  // line is not pasted, because it was written without knowing the plan.
+  const won = branch === "better" || branch === "legendary";
+  const how = ({ legendary: "and it works better than anyone hoped", better: "and it works", mixed: "and it half works", worse: "and it backfires" } as Record<string, string>)[branch] ?? "";
+  const text = how ? fillBeat(`{hero} {action}${won && input?.idea_from ? ", {friend}'s idea," : ","} ${how}.`, { hero, attempt: input?.attempt, idea_from: input?.idea_from, branch }) : beatText ? fillBeat(beatText, { hero, attempt: input?.attempt, idea_from: input?.idea_from, branch }) : fallbackOutcome(hero, input?.band).text;
+  const carry = String(input?.beat?.carry ?? "").trim();
+  const nextSit = String(input?.next?.situation ?? "").trim();
+  return { text, situation: (nextSit || String(input?.situation ?? "")).slice(0, 220), now_goal: String(input?.next?.goal ?? input?.ahead?.[0] ?? ""), steps: 1, goal_reached: false, scene: "", why: carry, where: "", changed: carry, new_prop: "", memorable: "" };
+}
+
 /** Every piece of player-written text is wrapped as <player_input>, wherever it rides along. */
 function wrapPlayerText(task: string, input: Any) {
   if (task === "kind") {
@@ -268,9 +303,9 @@ function wrapPlayerText(task: string, input: Any) {
       moments: ((input.moments as Any[]) ?? []).slice(0, 4).map((m, i) => ({ pitch: wrap(`m${i}`, m?.pitch, 200), what_happened: String(m?.what_happened ?? "").slice(0, 240) })),
     };
   }
-  if (task === "verdict" || task === "outcome" || task === "outcome_branches") input.plan = wrap("plan", input.plan, 200);
+  if (task === "verdict" || task === "outcome" || task === "outcome_branches" || task === "tailor") input.plan = wrap("plan", input.plan, 200);
   // The real event behind the story (opener.real_setting, spoiler-free): only its known fields, clipped.
-  if (["verdict", "outcome", "outcome_branches", "epilogue"].includes(task)) input.real_event = realEvent(input.real_event ?? input.story_so_far?.real_event);
+  if (["verdict", "outcome", "outcome_branches", "epilogue", "tailor", "story_bible"].includes(task)) input.real_event = realEvent(input.real_event ?? input.story_so_far?.real_event);
   if (input.story_so_far?.real_event) delete input.story_so_far.real_event;
   if (task === "round" && Array.isArray(input.actions))
     input.actions = input.actions.map((a: Any) => ({ ...a, pitch: wrap(a.hero_id, a.pitch), appeal: a.appeal ? wrap(`${a.hero_id}-appeal`, a.appeal) : "" }));
@@ -298,10 +333,30 @@ export async function POST(req: Request) {
     let data: Any = await run(task, input, ratingOf(rawInput?.rating));
     data = scrubDeep(conform(fallback(task, fbInput), data));
     if (task === "epilogue" && !String(data.ending ?? "").trim()) throw new Error("empty ending");
-    if (task === "outcome") {
+    if (task === "outcome" || (task === "tailor" && input.kind !== "ending")) {
+      const raw = data;
       data = cleanOutcome(data);
-      if (!data) throw new Error("empty outcome");
+      if (!data) throw new Error(`empty ${task}`);
+      if (task === "tailor" && /[{}]/.test(data.text)) throw new Error("tailor left a slot unfilled");
+      if (task === "tailor") {
+        const pm = { ...pronounMap(input.pronouns), ...(input?.hero?.name && input?.hero?.pronouns ? { [String(input.hero.name)]: String(input.hero.pronouns) } : {}) };
+        const probs = liveProblems(`${data.text} ${data.situation}`, pm);
+        if (probs.length) throw new Error(`tailor: ${probs.join(", ")}`);
+      }
+      if (task === "tailor") {
+        // Player-driven progress: a strong success may skip a milestone or reach the goal (then: the finale).
+        const won = ["better", "legendary"].includes(String(input?.roll?.branch ?? ""));
+        data.beat = BEAT_OF[String(input?.roll?.branch ?? "")] ?? "";
+        data.steps = won && raw?.steps === 2 ? 2 : 1;
+        data.goal_reached = won && raw?.goal_reached === true;
+      }
     }
+    if (task === "tailor" && input.kind === "ending") {
+      if (!String(data.ending ?? "").trim() || /[{}]/.test(data.ending)) throw new Error("empty or unfilled ending");
+      const probs = liveProblems(`${data.ending} ${data.line} ${data.recap}`, pronounMap(input.pronouns));
+      if (probs.length) throw new Error(`ending: ${probs.join(", ")}`);
+    }
+    if (task === "story_bible" && !data?.bible) return NextResponse.json({ data, fallback: true });
     if (task === "outcome_branches" && !data.worse && !data.mixed && !data.better) throw new Error("no branches");
     if (task === "kind") {
       // The sentence must finish the frame and stay a sentence; otherwise use the safe local version.

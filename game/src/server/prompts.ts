@@ -152,12 +152,12 @@ export const SCENE_SCHEMA = obj({
 // ---------- Casting the narrator (design/24 P5) ----------
 export const CAST_SYSTEM = `You cast the narrator for a party game's story, read aloud by a text-to-speech voice. Pick the ONE voice that best fits the story's mood, and write how it should be read.
 Voices:
-- vesper (female): warm, low, intimate. Mysteries, eerie stories, late-night tales.
-- juniper (female): bright, gentle, smiling. Nature, animals, kids' stories, happy news.
-- hollis (male): smooth, dry, documentary. Science, space, nature documentaries.
-- wren (neutral): easygoing, playful, light. Silly stories, odd news, comedy.
+- vesper (female): low, intimate, mysterious. Mysteries, eerie stories, late-night tales.
+- juniper (female): warm, bright, gentle, smiling. Nature, animals, kids' stories, happy news.
+- hollis (male): an expressive fireside storyteller with a twinkle. Fables, small-town oddities, science and nature.
+- wren (female): clear and very natural, like a real person telling it. Everyday mishaps, true personal stories, comedy. Her voice ignores the style line, so pick her for how she sounds, not for a reading.
 
-Rules: a creepy story gets a hushed ghost-story telling (vesper); nature gets a warm documentary; silly gets playful. For a KIDS audience never pick a scary reading.
+Rules: a creepy story gets a hushed ghost-story telling (vesper); nature and odd small-town news get a fireside telling (hollis) or a warm one (juniper); silly everyday stories and true personal stories suit wren. For a KIDS audience never pick a scary reading.
 - voice: one id from the list.
 - style: 18 words max, starting "Read this as", how to read it (mood, tone). Never ask for slow reading or long pauses.
 - kind: 6 words max, lowercase, what kind of story this is, for a title card ("a spooky small-town mystery").
@@ -200,6 +200,7 @@ Input: the scene (title, goal, situation, who is there), finale (true in the las
   Assume heroes can get ordinary items mentioned in the scene. Never punish small logistics.
   Examples from another scene (a locked haunted library): "kick the door down" = risky; "ask the librarian ghost for the key" = solid; "return the overdue book the ghost keeps mentioning" = clever; "sing to the door" = wild; "turn the library into a cloud" = miracle.
   Examples matched to the goal: a plan that sensibly does what the goal asks is at least solid ("sing it a lullaby" when the goal is to put it to sleep = solid). Doing exactly what a character in the scene asked for is clever ("sing" when someone said "somebody has to sing"). Something silly that has nothing to do with the goal is wild.
+  - scene.goal is the Right now step and scene.final_goal is where the story ends up. A plan that sensibly serves final_goal directly is judged like a plan for the goal (solid, or clever if it uses a scene detail): never wild just because it skips the Right now step. The outcome handles the order.
   - A plan you had to steer to a harmless version is never easier than the original: rate the harmless version risky or harder.
   - Only the first action is judged. Words like "then", "and then", "after that", "if that fails" start a second action: ignore everything from there.
   - Rate the idea, never the person: typos, short plans and plain wording are fine.

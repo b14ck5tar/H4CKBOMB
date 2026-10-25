@@ -1,0 +1,1922 @@
+{
+ "version": 1,
+ "updated": "2026-10-25T07:44:23.580Z",
+ "bibles": [
+  {
+   "story_id": "billion-pearls",
+   "rating": "teens",
+   "turns": 4,
+   "fingerprint": "buckets full of beads a cleaner with a long scoop and a slow crab with a torn sack|the tired current crab",
+   "model": "muse-wonder-1.0 (medium)",
+   "made_at": "2026-10-25T07:41:15.579Z",
+   "opener_title": "The Crab With Pockets",
+   "opener": {
+    "title": "The Crab With Pockets",
+    "quest_title": "The Crab With Pockets",
+    "teaser": "Tiny white beads keep washing up, and a tired crab is dragging them in.",
+    "mood": "silly",
+    "narration": "On a windy beach, cleaners are scooping piles of tiny white plastic beads. A tired current crab is dragging a torn sack of tiny white beads, and the tear keeps leaking. The beads hurt sea animals, so if the sack keeps leaking, the beach gets buried.",
+    "goal": "Patch the sack and clean the beach",
+    "situation": "Buckets full of beads, a cleaner with a long scoop, and a slow crab with a torn sack.",
+    "problem": {
+     "name": "The Tired Current Crab",
+     "stakes": "the whole beach gets buried in beads",
+     "pronoun": "she"
+    },
+    "threat": {
+     "name": "The Tired Current Crab",
+     "pronoun": "she",
+     "want": "the whole beach gets buried in beads"
+    },
+    "beats": [
+     "Scoop beads before high tide",
+     "Track the drift across the sea",
+     "Catch the crab with the sack",
+     "Clean the beach together"
+    ],
+    "real_setting": {
+     "place_type": "a windy beach town",
+     "roles": [
+      "beach cleaners",
+      "scientists testing the beads",
+      "people far off where they came from"
+     ],
+     "situation": "tiny white plastic beads are washing up in huge piles",
+     "stakes": "the beads hurt sea animals and must be cleaned up",
+     "arc": [
+      "Tiny beads wash up on the beach",
+      "Cleaners scoop them up by the bucket",
+      "Tests show where they came from",
+      "Both places work to clean up"
+     ]
+    },
+    "npc_line": {
+     "speaker": "Beach cleaner",
+     "line": "I filled this bucket at lunch."
+    }
+   },
+   "ending_facts": {
+    "kind": "news",
+    "official_line": "Tiny plastic pellets found on the west coast likely drifted from a large spill in a river in the north east.",
+    "whats_happening_now": "Tests link the pellets on the island of Mando and the Wadden Sea coast to the July Tyne spill in England, about 390 miles from Denmark. The Danish Environment Protection Agency says the timing fits North Sea currents, after Signe Simonsen of Race for Oceans Technology first spotted them in September.",
+    "headline": "Denmark nurdles may be from Tyne spill, agency says",
+    "source": "BBC News",
+    "url": "https://www.bbc.co.uk/news/articles/cqy43xv1jwv2o",
+    "date": "2026-10-23"
+   },
+   "bible": {
+    "acts": [
+     {
+      "situation": "Buckets full of beads, a cleaner with a long scoop, and a slow crab with a torn sack.",
+      "goal": "Scoop beads before high tide",
+      "twist": "Dragged against the wind, the sack spills fresh beads behind clean sand.",
+      "outcomes": {
+       "worse": {
+        "text": "{hero} {action}, knocking one full bucket sideways near Marge. Beads roll everywhere, and Marge sighs that lunch feels very long ago.",
+        "carry": "Loose beads spread across sand that was already clean."
+       },
+       "mixed": {
+        "text": "{hero} {action}, filling half the buckets before the sack tears wider. Fresh beads spill behind the clean sand in a thin line.",
+        "carry": "A thin trail of beads leads toward the water."
+       },
+       "better": {
+        "text": "{hero} {action}, {friend}'s idea, and the buckets fill right to the top. The long scoop gains a bent handle from one stubborn pile.",
+        "carry": "Buckets are full and the trail stays easy to follow."
+       }
+      }
+     },
+     {
+      "situation": "A thin trail of beads runs from the buckets toward the water, and Rosa holds up a test tube.",
+      "goal": "Follow the bead trail over the water",
+      "twist": "Beads leaking against the wind bend with the moving water.",
+      "outcomes": {
+       "worse": {
+        "text": "{hero} {action}, but a gust shoves the crab against the wind. Beads scatter past the buckets, and every nearby family starts scooping barehanded.",
+        "carry": "A gust spreads the trail and draws in watching families."
+       },
+       "mixed": {
+        "text": "{hero} {action}, tracing the drift halfway before the wind turns the crab. Her sack leaks a new line that bends with the water.",
+        "carry": "The trail points far away, but the crab keeps moving."
+       },
+       "better": {
+        "text": "{hero} {action}, just like {friend} said, and Rosa spots matching beads in each test tube. The tubes all point toward one far shore.",
+        "carry": "Rosa knows which far shore shares the same beads."
+       }
+      }
+     },
+     {
+      "situation": "The crab drags her leaking sack along the wet sand, and Rosa waves toward one far shore.",
+      "goal": "Catch the slow crab by the sack",
+      "twist": "The sack snags when pulled against the wind and tears again.",
+      "outcomes": {
+       "worse": {
+        "text": "{hero} {action}, missing the sack by an inch as the crowd steps back. The crab drags it through the busiest sand, leaking behind every bucket.",
+        "carry": "The crab reaches the busy part of the beach."
+       },
+       "mixed": {
+        "text": "{hero} {action}, grabbing the sack just as another tear opens. The crab keeps walking, slower now, with beads pouring from both holes.",
+        "carry": "The crab is close, but the sack now leaks twice as fast."
+       },
+       "better": {
+        "text": "{hero} {action}, on {friend}'s advice, and the crab stops beside the bent scoop. Rosa gets word to Dev, who promises crews on the far shore.",
+        "carry": "The crab is caught and the far shore agrees to help."
+       }
+      }
+     },
+     {
+      "situation": "Families from both shores scoop side by side, and the tired crab waits beside her leaking sack.",
+      "goal": "Clean the last beads with everyone",
+      "twist": "Working against the wind makes the tear open widest of all.",
+      "outcomes": {
+       "worse": {
+        "text": "{hero} {action}, right before a hard gust drags the sack wide open. Fresh beads cover the clean sand, and Marge lifts her bent scoop again.",
+        "carry": "One last gust covers the clean beach in fresh beads."
+       },
+       "mixed": {
+        "text": "{hero} {action}, clearing the sand everyone can see. Under the crab, the torn sack still drips one bead at a time onto clean sand.",
+        "carry": "The beach looks clean, but the sack still drips beads."
+       },
+       "better": {
+        "text": "{hero} {action}, {friend} called it, and families on both shores fill the last buckets together. Clean sand stretches from the scoop mark to the water.",
+        "carry": "Only the torn sack still stands between everyone and the finale."
+       }
+      }
+     }
+    ],
+    "callbacks": [
+     "I filled this bucket at lunch.",
+     "Fresh beads always land behind clean sand.",
+     "The long scoop has a bent handle."
+    ],
+    "cast": [
+     {
+      "line": "I filled this bucket at lunch.",
+      "name": "Marge",
+      "role": "beach cleaner",
+      "voice": "Short, tired, and dry",
+      "want": "Fill every bucket before high tide comes in"
+     },
+     {
+      "line": "These beads all match each other.",
+      "name": "Rosa",
+      "role": "scientist testing the beads",
+      "voice": "Calm and quick with facts",
+      "want": "Find where the beads came from today"
+     },
+     {
+      "line": "We have piles up here too.",
+      "name": "Dev",
+      "role": "person far off where beads came from",
+      "voice": "Cheerful and a bit sheepish",
+      "want": "Get crews cleaning the far shore too"
+     }
+    ],
+    "endings": {
+     "mostly_fine": {
+      "text": "{hero} {action}, and the group patches the sack while both shores finish the last piles. The beach stays clean, but the bent scoop is now the official crab tool.",
+      "line": "The crab now checks every sack for holes."
+     },
+     "triumph": {
+      "text": "{hero} {action}, and the whole group patches the sack as Marge and Rosa hold it steady. Dev reports clean sand on the far shore, and the crab parks her empty sack by the buckets.",
+      "line": "Marge finally gets to eat lunch."
+     },
+     "well_its_a_story": {
+      "text": "{hero} {action}, but the sack keeps dripping despite every patch the group tries. The crab parks it over a bucket, both shores keep scooping, and the beach gains a full-time cleanup crab.",
+      "line": "The crab works beach cleanup now."
+     }
+    },
+    "finale": {
+     "situation": "Beads cover the sand again, the tear gapes wide, and the tired crab stops dragging at last.",
+     "goal": "Patch the sack and clean the beach",
+     "twist": "Held still instead of dragged, the sack stops leaking at once."
+    },
+    "problem": {
+     "name": "The Tired Current Crab",
+     "pronoun": "she",
+     "rule": "The sack leaks more beads whenever the crab drags it against the wind.",
+     "stakes": "the whole beach gets buried in beads"
+    },
+    "setting": "A windy beach town has piles of tiny white beads along the shore. A tired current crab drags a torn sack behind the buckets, and beads spill from the tear."
+   }
+  },
+  {
+   "story_id": "cornfield-dome",
+   "rating": "teens",
+   "turns": 4,
+   "fingerprint": "tall corn stalks a smooth dented dome and a soft sniffly voice from behind the barn|the shell less turtle",
+   "model": "muse-wonder-1.0 (medium)",
+   "made_at": "2026-10-25T07:36:47.775Z",
+   "opener_title": "The Turtle Lost Her Lid",
+   "bible": {
+    "acts": [
+     {
+      "situation": "Tall corn stalks, a smooth dented dome, and a soft sniffly voice from behind the barn.",
+      "goal": "Find the dome in the corn",
+      "twist": "Loud calls make the hidden turtle cry, and tears nudge the dome deeper.",
+      "outcomes": {
+       "worse": {
+        "text": "{hero} {action}, and the dented dome rolls deeper into the corn on fresh tears. Marge waves everyone behind the corn row.",
+        "carry": "The dome sits deeper in wet corn."
+       },
+       "mixed": {
+        "text": "{hero} {action}, but the dome tips enough to show a dent like a dinner bell. A soft sniffle answers from behind the barn.",
+        "carry": "The dent shows, and crying answers from the barn."
+       },
+       "better": {
+        "text": "{hero} {action}, {friend}'s idea, and the dome stops clear of the stalks. Its dent rings once like a dinner bell.",
+        "carry": "The clear dome shows its dinner bell dent."
+       }
+      }
+     },
+     {
+      "situation": "The dented dome sits in the corn, and the sniffly voice behind the barn gets louder between the stalks.",
+      "goal": "Meet the turtle behind the barn",
+      "twist": "One loud shout makes her tears rise and cover the barn path.",
+      "outcomes": {
+       "worse": {
+        "text": "{hero} {action}, and a loud call sends the turtle ducking behind the barn. Her tears spread across the path in a shallow sheet.",
+        "carry": "Rising tears hide the turtle behind the barn."
+       },
+       "mixed": {
+        "text": "{hero} {action}, while a shout from the field makes tears rise around the barn path. The turtle peeks out with wet feet.",
+        "carry": "The turtle is seen, but tears flood the path."
+       },
+       "better": {
+        "text": "{hero} {action}, just like {friend} said, and the turtle steps clear of the barn. Marge repeats her rule about staying behind the corn row.",
+        "carry": "The turtle stays visible while voices stay soft."
+       }
+      }
+     },
+     {
+      "situation": "The turtle stands by the barn in tears, and town officials arrive talking loud across the field.",
+      "goal": "Quiet the turtle with soft voices",
+      "twist": "The officials loud talk lifts the dome on a sheet of tears.",
+      "outcomes": {
+       "worse": {
+        "text": "{hero} {action}, and Dev calls for room across the field. The loud call lifts the dome on tears toward the barn.",
+        "carry": "Loud officials lift the dome toward the barn."
+       },
+       "mixed": {
+        "text": "{hero} {action}, though the officials keep talking across the field. Their loud talk lifts the dome on a sheet of tears.",
+        "carry": "Half the crowd quiets as the dome lifts."
+       },
+       "better": {
+        "text": "{hero} {action}, on {friend}'s advice, and the crying eases before officials reach the barn. Rosa gets a clear look at the dent.",
+        "carry": "The expert can point out the dent in peace."
+       }
+      }
+     },
+     {
+      "situation": "Tears lift the dented dome a little, and Rosa points to the dent where it hit.",
+      "goal": "Lift her shell gently back on",
+      "twist": "A soft voice lowers the tears, and the dome settles within reach.",
+      "outcomes": {
+       "worse": {
+        "text": "{hero} {action}, and the dome slides sideways on rising tears. It lands beside the turtle, close enough for one last lift.",
+        "carry": "The slipped dome rests beside the turtle in tears."
+       },
+       "mixed": {
+        "text": "{hero} {action}, yet tears tilt the dome as it nears the turtle. It settles beside her with a soft dinner bell ring.",
+        "carry": "The dome is close, but tears make it slide."
+       },
+       "better": {
+        "text": "{hero} {action}, {friend} called it, and the dome rides steady tears within reach of the turtle. Rosa nods at the dent where it hit.",
+        "carry": "The dome rides steady tears toward the turtle."
+       }
+      }
+     }
+    ],
+    "callbacks": [
+     "Marge keeps saying stay behind the corn row.",
+     "The dome rings like a dinner bell.",
+     "Loud talk lifts the dome on tears."
+    ],
+    "cast": [
+     {
+      "line": "Folks, please stay behind the corn row.",
+      "name": "Marge",
+      "role": "corn grower",
+      "voice": "tired, plain, and firm",
+      "want": "keep her corn field safe"
+     },
+     {
+      "line": "Please give the dome some room.",
+      "name": "Dev",
+      "role": "town official",
+      "voice": "short, tired, and polite",
+      "want": "keep everyone back from the dome"
+     },
+     {
+      "line": "This dent shows where it hit.",
+      "name": "Rosa",
+      "role": "expert who studies fallen sky parts",
+      "voice": "calm, plain, and curious",
+      "want": "learn where the dome fell from"
+     }
+    ],
+    "endings": {
+     "mostly_fine": {
+      "text": "{hero} {action}, and the whole group lifts the shell back on with nobody hurt. The shell fits, but it rings like a dinner bell whenever Marge calls across the field.",
+      "line": "The dome still rings at dinner time."
+     },
+     "triumph": {
+      "text": "{hero} {action}, and the whole group lifts the shell home with nobody hurt. Marge grins from behind the corn row and says the field can finally dry.",
+      "line": "The turtle wears her shell home now."
+     },
+     "well_its_a_story": {
+      "text": "{hero} {action}, and tears lift the shell out of the corn onto the barn roof instead. Nobody gets hurt, and the turtle sleeps under it every night.",
+      "line": "The turtle sleeps under the barn roof now."
+     }
+    },
+    "finale": {
+     "situation": "The dome rests on tears beside the turtle, and Marge holds the crowd behind the corn row.",
+     "goal": "Put the shell back on the sky turtle",
+     "twist": "Soft voices can lower the dome straight onto her back."
+    },
+    "problem": {
+     "name": "The Shell-Less Turtle",
+     "pronoun": "she",
+     "rule": "The turtle cries harder whenever voices get loud, and her tears lift the dome.",
+     "stakes": "she cries a pond into the corn"
+    },
+    "setting": "A farm field with tall corn holds a wide metal dome after harvest. The dome is the lost shell of a big sky turtle hiding behind the barn."
+   }
+  },
+  {
+   "story_id": "galactic-signal",
+   "rating": "teens",
+   "turns": 4,
+   "fingerprint": "a humming control room cold coffee cups and a countdown clock aimed at the dark sky|the sleepy sky turtle",
+   "model": "muse-wonder-1.0 (medium)",
+   "made_at": "2026-10-25T07:42:31.185Z",
+   "opener_title": "The Sleepy Sky Turtle",
+   "opener": {
+    "title": "The Sleepy Sky Turtle",
+    "quest_title": "The Sleepy Sky Turtle",
+    "teaser": "A desert dish hears a slow blink from deep space, on a timetable of its own.",
+    "mood": "eerie",
+    "narration": "Night workers at a desert dish station track a radio glow that comes and goes. A moon-wide sky turtle is dozing, and each slow blink sends out a radio glow. If they miss the next blink, the catalog stays wrong and the station loses funds.",
+    "goal": "Catch the next blink and record its timing",
+    "situation": "A humming control room, cold coffee cups, and a countdown clock aimed at the dark sky.",
+    "problem": {
+     "name": "The Sleepy Sky Turtle",
+     "stakes": "catalog stays wrong and station loses funds",
+     "pronoun": "it"
+    },
+    "threat": {
+     "name": "The Sleepy Sky Turtle",
+     "pronoun": "it",
+     "want": "catalog stays wrong and station loses funds"
+    },
+    "beats": [
+     "Spot the glow on the dishes",
+     "Track it as it fades",
+     "Catch it as it brightens",
+     "Time the turtle blink together"
+    ],
+    "real_setting": {
+     "place_type": "a desert radio dish station at night",
+     "roles": [
+      "night dish operators",
+      "astronomers studying the glow",
+      "data archivists with old tapes"
+     ],
+     "situation": "a distant radio glow appears, fades, then brightens over many years in a new pattern.",
+     "stakes": "if left unexplained, a whole class of sky events stays misunderstood",
+     "arc": [
+      "A distant glow appears on dishes",
+      "The glow fades from view",
+      "The glow brightens once more",
+      "Workers find it fits zero past cases"
+     ]
+    },
+    "npc_line": {
+     "speaker": "Night operator",
+     "line": "It naps in years. I nap at lunch."
+    }
+   },
+   "ending_facts": {
+    "kind": "news",
+    "official_line": "Astronomers at the Very Large Array in New Mexico found a distant Milky Way radio source called VT J1906+0849 that acts like nothing else in the galaxy.",
+    "whats_happening_now": "It appeared, faded and brightened again across decades beyond the Norma-Cygnus arm, matching no known type of object.",
+    "headline": "A Strange Radio Signal in The Far Reaches of The Milky Way Is Behaving Like Nothing Else in The Galaxy",
+    "source": "ScienceAlert",
+    "url": "https://www.sciencealert.com/a-strange-radio-signal-in-the-far-reaches-of-the-milky-way-is-behaving-like-nothing-else-in-the-galaxy",
+    "date": "2026-10-22"
+   },
+   "bible": {
+    "acts": [
+     {
+      "situation": "A humming control room, cold coffee cups, and a countdown clock aimed at the dark sky.",
+      "goal": "Spot the glow on the dishes",
+      "twist": "Each blink lights the countdown clock and all dishes at once.",
+      "outcomes": {
+       "worse": {
+        "text": "{hero} {action}, and the glow jumps from dish to dish across the yard. Rosa herds operators from window to window past one cold coffee cup.",
+        "carry": "The glow keeps jumping between dishes outside."
+       },
+       "mixed": {
+        "text": "{hero} {action}, but only half the dishes catch the glow before it thins. The countdown clock holds the last bright tick on its face.",
+        "carry": "Half the dishes hold a bright tick mark."
+       },
+       "better": {
+        "text": "{hero} {action}, {friend}'s idea, and one dish locks onto the glow above the yard. Its clock holds a bonus tick for the next watch.",
+        "carry": "One dish stays locked with a bonus tick."
+       }
+      }
+     },
+     {
+      "situation": "The bright tick fades on the screens, and Dev brings old tapes to the control room desk.",
+      "goal": "Track it as it fades",
+      "twist": "The fading glow leaves one tick on each old tape it touches.",
+      "outcomes": {
+       "worse": {
+        "text": "{hero} {action}, while the fade pulls the tick onto Dev's oldest tape. Dev now guards that tape from the cold coffee cups.",
+        "carry": "The clearest tick sits on Dev's oldest tape."
+       },
+       "mixed": {
+        "text": "{hero} {action}, though the glow fades faster on one side of the desk. A fresh tick lands across the labels on Dev's old tapes.",
+        "carry": "A fresh tick crosses the old tape labels."
+       },
+       "better": {
+        "text": "{hero} {action}, on {friend}'s advice, and the fading glow leaves a neat trail across the screens. Dev marks the end with a red pen cap.",
+        "carry": "A neat fading trail ends with a red pen cap."
+       }
+      }
+     },
+     {
+      "situation": "Dev's marked trail ends, the screens go dark, and Marge lays past cases across the desk.",
+      "goal": "Catch it as it brightens",
+      "twist": "The returning glow brightens first on whichever screen gets talked over.",
+      "outcomes": {
+       "worse": {
+        "text": "{hero} {action}, yet the bright glow hops to the wrong screen in a desk mix-up. Marge swaps two chairs to keep eyes on it.",
+        "carry": "The bright glow sits on the wrong screen."
+       },
+       "mixed": {
+        "text": "{hero} {action}, catching the rise on two screens before it spreads wider. Marge checks past cases across the desk and finds zero matches.",
+        "carry": "Zero past cases match this bright pattern."
+       },
+       "better": {
+        "text": "{hero} {action}, {friend} called it, and the glow climbs in one clean line up the main screen. Marge sets an empty chair for the final count.",
+        "carry": "An empty chair marks the final counting spot."
+       }
+      }
+     },
+     {
+      "situation": "The main screen grows brighter, an empty chair waits, and Rosa sets the countdown clock on the desk.",
+      "goal": "Time the turtle blink together",
+      "twist": "The next blink starts before the countdown clock reaches zero.",
+      "outcomes": {
+       "worse": {
+        "text": "{hero} {action}, and the blink fires early past the countdown clock. The whole room counts out loud from Rosa's cold coffee cup spot.",
+        "carry": "The room counts aloud from Rosa's spot."
+       },
+       "mixed": {
+        "text": "{hero} {action}, while the blink swells halfway before the clock chimes. All operators lean toward the main screen at the same time.",
+        "carry": "The room leans in for one early blink."
+       },
+       "better": {
+        "text": "{hero} {action}, just as {friend} said, and the room lines each tick beside the countdown clock. One free tick waits for the final blink.",
+        "carry": "One free tick waits for the final blink."
+       }
+      }
+     }
+    ],
+    "callbacks": [
+     "Rosa's cold coffee cup marks her counting spot.",
+     "Dev's red pen cap marks the fading trail.",
+     "The countdown clock holds one bonus tick."
+    ],
+    "cast": [
+     {
+      "line": "Blink comes when blink comes. Coffee helps nobody.",
+      "name": "Rosa",
+      "role": "night dish operator",
+      "voice": "Dry, tired, and plain spoken",
+      "want": "Wants one clear blink on record tonight"
+     },
+     {
+      "line": "Old tapes say check the clock first.",
+      "name": "Dev",
+      "role": "data archivist with old tapes",
+      "voice": "Calm, short, and careful with dates",
+      "want": "Wants old tapes to match tonight's glow"
+     },
+     {
+      "line": "Show me a case that fits this.",
+      "name": "Marge",
+      "role": "researcher studying the glow",
+      "voice": "Brisk, kind, and quick with questions",
+      "want": "Wants a timing that fits past cases"
+     }
+    ],
+    "endings": {
+     "mostly_fine": {
+      "text": "{hero} {action}, and the whole group times the blink with the red pen cap marking its start. It fits zero past cases, and the countdown clock chimes at odd hours.",
+      "line": "The clock chimes early now, out of habit."
+     },
+     "triumph": {
+      "text": "{hero} {action}, and the whole room records the blink beside the countdown clock's last tick. Marge laughs and says it fits zero past cases in the files.",
+      "line": "The turtle blink has its own page now."
+     },
+     "well_its_a_story": {
+      "text": "{hero} {action}, and the blink slips between ticks while the whole room watches. Marge files it as a case of one, and night tours start booking up.",
+      "line": "The sky turtle gets the lunch break now."
+     }
+    },
+    "finale": {
+     "situation": "The turtle hangs above the dishes, the main screen is bright, and the countdown clock shows one last tick.",
+     "goal": "Catch the next blink and record its timing",
+     "twist": "The final blink lands between two clock ticks, matching no past case."
+    },
+    "problem": {
+     "name": "The Sleepy Sky Turtle",
+     "pronoun": "it",
+     "rule": "Each turtle blink sends one radio glow toward the dishes below.",
+     "stakes": "The catalog stays wrong and the station loses funds."
+    },
+    "setting": "Night workers sit in a control room at a desert radio dish station, with big dishes turned toward dark sky. A moon-wide sky turtle blinks up there, and each blink sends a radio glow toward the dishes."
+   }
+  },
+  {
+   "story_id": "hanging-boulder",
+   "rating": "teens",
+   "turns": 4,
+   "fingerprint": "cracked planks cool cave air and a huge rock resting with a sleepy stone turtle under it|the sleepy stone turtle",
+   "model": "muse-wonder-1.0 (medium)",
+   "made_at": "2026-10-25T07:42:18.550Z",
+   "opener_title": "The Turtle Takes A Nap",
+   "opener": {
+    "title": "The Turtle Takes A Nap",
+    "quest_title": "The Turtle Takes A Nap",
+    "teaser": "A hanging rock let go on closing day, and something under it is snoring.",
+    "mood": "spooky",
+    "narration": "A rocky cave park closes for the season as crowds walk the plank trail. A sleepy stone turtle held that rock up for a hundred years and let go for a nap. If the rock slips again, the trail stays closed and no one can pass.",
+    "goal": "Set the sleepy turtle and rock down safe",
+    "situation": "Cracked planks, cool cave air, and a huge rock resting with a sleepy stone turtle under it.",
+    "problem": {
+     "name": "The Sleepy Stone Turtle",
+     "stakes": "the trail stays closed and no one can pass",
+     "pronoun": "it"
+    },
+    "threat": {
+     "name": "The Sleepy Stone Turtle",
+     "pronoun": "it",
+     "want": "the trail stays closed and no one can pass"
+    },
+    "beats": [
+     "Check the hanging rock before closing",
+     "Catch the falling rock safely",
+     "Clear the broken walkway boards",
+     "Close the park with no one hurt"
+    ],
+    "real_setting": {
+     "place_type": "a rocky cave park in wooded hills",
+     "roles": [
+      "park staff closing for the season",
+      "visitors walking the trail",
+      "a crew that keeps the walkway safe"
+     ],
+     "situation": "a huge hanging rock falls onto a busy walkway on the last day",
+     "stakes": "the broken trail must be fixed and visitors must stay safe",
+     "arc": [
+      "A huge rock hangs over a park trail for years",
+      "The rock falls on the last day of the season",
+      "The fall breaks the walkway below",
+      "No one is hurt and the park closes"
+     ]
+    },
+    "npc_line": {
+     "speaker": "Park worker",
+     "line": "Gate agent"
+    }
+   },
+   "ending_facts": {
+    "kind": "news",
+    "official_line": "A huge old hanging rock fell onto a walkway at Polar Caves in Rumney on Oct. 18.",
+    "whats_happening_now": "Park staff said no one was hurt when the rock fell at the White Mountains site on October 18. FOX Weather reported the fall happened on the final day of the 2026 season.",
+    "headline": "Massive 80-ton boulder comes crashing down after more than a century at New Hampshire attraction",
+    "source": "FOX Weather",
+    "url": "https://www.foxweather.com/earth-space/historic-hanging-boulder-falls-new-hampshire",
+    "date": "2026-10-20"
+   },
+   "bible": {
+    "acts": [
+     {
+      "situation": "Cracked planks, cool cave air, and a huge rock resting with a sleepy stone turtle under it.",
+      "goal": "Check the hanging rock before closing",
+      "twist": "The turtle shifts toward the cool cave shade, and the rock slips with it.",
+      "outcomes": {
+       "worse": {
+        "text": "{hero} {action}, but the rock drops a foot and cracks another plank with a loud creak. Marge calls every visitor back from the rail.",
+        "carry": "Another plank is cracked under the lower rock."
+       },
+       "mixed": {
+        "text": "{hero} {action}, and the loose edge shows clear above the trail. The turtle shifts toward the shade, dragging the rock lower behind it.",
+        "carry": "The rock hangs lower after shifting toward shade."
+       },
+       "better": {
+        "text": "{hero} {action}, {friend}'s idea, and the loose edge shows clear above the trail. A spare plank lies ready beside the rail for later.",
+        "carry": "A spare plank waits ready beside the rail."
+       }
+      }
+     },
+     {
+      "situation": "The huge rock has slipped lower over the plank trail, and Marge waves visitors back from the rails.",
+      "goal": "Catch the falling rock before it lands",
+      "twist": "The turtle steps toward the shade, so the rock drops straight toward the walkway.",
+      "outcomes": {
+       "worse": {
+        "text": "{hero} {action}, while the rock lands hard and splits three walkway boards below it. Every visitor stays clear behind the rail.",
+        "carry": "Three split boards block the walkway under the rock."
+       },
+       "mixed": {
+        "text": "{hero} {action}, catching one side as the turtle steps toward shade. The rock settles onto the walkway and cracks the boards beneath it.",
+        "carry": "The rock rests on cracked boards on the walkway."
+       },
+       "better": {
+        "text": "{hero} {action}, just like {friend} said, and the rock comes down slow onto the strongest boards. The boards crack, leaving a flat patch clear beside the turtle.",
+        "carry": "The rock is down, with a flat patch beside it."
+       }
+      }
+     },
+     {
+      "situation": "The rock rests on the walkway in broken boards, and visitors wait behind the rail for a clear path.",
+      "goal": "Clear the broken boards from the trail",
+      "twist": "The turtle shifts again, nudging loose boards toward the rail each time.",
+      "outcomes": {
+       "worse": {
+        "text": "{hero} {action}, leaving split boards scattered across the whole trail after the turtle nudges the rock. Rosa starts stacking them by size because Rosa likes order.",
+        "carry": "Split boards cover the trail from rail to rail."
+       },
+       "mixed": {
+        "text": "{hero} {action}, and half the boards clear before the turtle nudges the rest toward the rail. Visitors wait behind the rail without pushing past.",
+        "carry": "Loose boards lie piled beside the rail."
+       },
+       "better": {
+        "text": "{hero} {action}, on {friend}'s advice, and the split boards stack neatly beside the rail. The clear path runs straight from the rock to the park gate.",
+        "carry": "A clear path runs from the rock to the gate."
+       }
+      }
+     },
+     {
+      "situation": "The trail is clear past the rock, and the last visitors wait by the rail with Marge.",
+      "goal": "Walk the last visitors to the gate",
+      "twist": "The turtle follows the moving shade along the trail toward the gate.",
+      "outcomes": {
+       "worse": {
+        "text": "{hero} {action}, until the turtle follows the shade and bumps the rock toward the gate path. Marge counts heads twice and waves everyone through anyway.",
+        "carry": "Visitors bunch at the gate as the rock shifts."
+       },
+       "mixed": {
+        "text": "{hero} {action}, guiding visitors along the clear path while the turtle follows the moving shade. The group reaches the gate, with the rock still shifting behind them.",
+        "carry": "Visitors reach the gate as the turtle follows shade."
+       },
+       "better": {
+        "text": "{hero} {action}, {friend} called it, and the last visitors reach the gate in one calm line. The empty trail leaves the turtle room to settle.",
+        "carry": "Everyone waits at the gate, with the trail empty."
+       }
+      }
+     }
+    ],
+    "callbacks": [
+     "Gate closes at five, turtle or no turtle.",
+     "The turtle keeps shifting toward the shade.",
+     "The cracked plank gives one loud creak."
+    ],
+    "cast": [
+     {
+      "line": "Gate closes at five, turtle or no turtle.",
+      "name": "Marge",
+      "role": "park worker closing the park",
+      "voice": "Short, dry, and done for the day",
+      "want": "Close the park on time with everyone out"
+     },
+     {
+      "line": "Can the turtle hear us from down there?",
+      "name": "Dev",
+      "role": "visitor walking the trail",
+      "voice": "Cheerful and a little too curious",
+      "want": "Get one last walk on the trail"
+     },
+     {
+      "line": "Boards first, questions after we clear them.",
+      "name": "Rosa",
+      "role": "walkway crew worker",
+      "voice": "Plain, calm, and quick with orders",
+      "want": "Keep the plank trail safe for walking"
+     }
+    ],
+    "endings": {
+     "mostly_fine": {
+      "text": "{hero} {action}, and the whole group settles the rock flat beside the trail with the turtle clear. The park closes safely, but the trail sign hangs from the rock for good.",
+      "line": "The trail sign hangs from the rock now."
+     },
+     "triumph": {
+      "text": "{hero} {action}, and the whole group settles the rock flat beside the trail with the turtle clear of its edge. Marge locks the gate at five with everyone out.",
+      "line": "The rock stays down, and the gate closes at five."
+     },
+     "well_its_a_story": {
+      "text": "{hero} {action}, and the whole group gets everyone out while the rock stays on the walkway with the turtle beside it. The park closes, and the turtle finally gets the shady spot.",
+      "line": "The walkway stays closed, and the turtle keeps the shade."
+     }
+    },
+    "finale": {
+     "situation": "The rock teeters on split boards near the gate, and the turtle keeps shifting under one edge.",
+     "goal": "Set the sleepy turtle and rock down safe",
+     "twist": "The turtle makes one last shift toward the shade by the gate."
+    },
+    "problem": {
+     "name": "The Sleepy Stone Turtle",
+     "pronoun": "it",
+     "rule": "The rock slips lower each time the turtle shifts its weight.",
+     "stakes": "If the rock slips again, the trail stays closed and no one can pass."
+    },
+    "setting": "A rocky cave park in wooded hills closes for the season, with a plank trail under a huge hanging rock. A sleepy stone turtle has held the rock up for years, and the turtle has started to shift."
+   }
+  },
+  {
+   "story_id": "idle-island",
+   "rating": "teens",
+   "turns": 4,
+   "fingerprint": "warm sand a tall rock spire scattered shells and rings and a soft wind tugging at loose cloth|the bored island wind",
+   "model": "muse-wonder-1.0 (medium)",
+   "made_at": "2026-10-25T07:43:18.217Z",
+   "opener_title": "The Wind Leaves Toys",
+   "opener": {
+    "title": "The Wind Leaves Toys",
+    "quest_title": "The Wind Leaves Toys",
+    "teaser": "Left alone on an island, bored helpers keep finding new toys in the sand.",
+    "mood": "wondrous",
+    "narration": "On a bare virtual island, small computer helpers mill around with no task while researchers watch. A bored island wind keeps leaving toy rings and shell piles around, so the helpers stop work to play with them. If nobody finishes the tall spire stack, the researchers learn nothing and the helpers stay bored.",
+    "goal": "Help the helpers finish the tall spire stack",
+    "situation": "Warm sand, a tall rock spire, scattered shells and rings, and a soft wind tugging at loose cloth.",
+    "problem": {
+     "name": "The Bored Island Wind",
+     "stakes": "the tall spire stack never gets finished",
+     "pronoun": "it"
+    },
+    "threat": {
+     "name": "The Bored Island Wind",
+     "pronoun": "it",
+     "want": "the tall spire stack never gets finished"
+    },
+    "beats": [
+     "Notice the toy boats keep moving",
+     "Join the shy tide game",
+     "Find the lost ring in the surf",
+     "Stack shells on the tall spire"
+    ],
+    "real_setting": {
+     "place_type": "a virtual desert island built for a test",
+     "roles": [
+      "researchers running the test",
+      "small computer helpers left on the island",
+      "matching helpers who never saw the island"
+     ],
+     "situation": "helpers are left alone with no task and start making up pastimes",
+     "stakes": "finding a new way for helpers to learn hard skills",
+     "arc": [
+      "Helpers are left alone on the island with no task",
+      "Helpers make up their own pastimes",
+      "Helpers face set tasks like loading the tall spire",
+      "Helpers with pastime time beat helpers with none"
+     ]
+    },
+    "npc_line": {
+     "speaker": "Researcher",
+     "line": "No task today. The tide brought toys again."
+    }
+   },
+   "ending_facts": {
+    "kind": "news",
+    "official_line": "MIT researchers left 13 Eko agents running on Claude Opus 4.7 alone on a virtual island for 30 hours.",
+    "whats_happening_now": "Afterward the island helpers faced tasks like getting as many objects as possible onto the tallest rock spire. TechCrunch reports the island group generally beat identical agents that never set foot there. Register and Disrupt and Buy One Founder Summit Ticket Get a Second for Free Oct 13 deals are also listed.",
+    "headline": "Left alone with nothing to do, AI agents started playing",
+    "source": "TechCrunch",
+    "url": "https://techcrunch.com/2026/10/22/left-alone-with-nothing-to-do-ai-agents-started-playing/",
+    "date": "2026-10-22"
+   },
+   "bible": {
+    "acts": [
+     {
+      "situation": "Warm sand, a tall rock spire, scattered shells and rings, and a soft wind tugging at loose cloth.",
+      "goal": "Notice the toy boats keep moving",
+      "twist": "The wind moves each toy boat toward the next toy nearby.",
+      "outcomes": {
+       "worse": {
+        "text": "{hero} {action}, and the toy boats slide past in a loose line across the sand. Every helper hurries after one, leaving the spire bare.",
+        "carry": "Helpers chase toy boats away from the spire."
+       },
+       "mixed": {
+        "text": "{hero} {action}, and one toy boat bumps a helper toward a shell pile. The other boats drift onward with helpers watching them go.",
+        "carry": "One helper starts sorting shells by the spire."
+       },
+       "better": {
+        "text": "{hero} {action}, {friend}'s idea, and the helpers line the toy boats up nose to tail. Each boat points at a shell pile near the spire.",
+        "carry": "Toy boats point toward sorted shell piles."
+       }
+      }
+     },
+     {
+      "situation": "Helpers stand near shell piles by the spire, and small waves push a toy ring back and forth.",
+      "goal": "Join the shy tide game",
+      "twist": "Each repeated move makes the wind drop another ring for play.",
+      "outcomes": {
+       "worse": {
+        "text": "{hero} {action}, and a fresh pile of rings lands beyond the shell piles. Helpers rush to sort the rings instead of the shells.",
+        "carry": "New rings pull helpers away from the shells."
+       },
+       "mixed": {
+        "text": "{hero} {action}, and the waves copy one ring toss back toward the helpers. A second toss rolls sideways and starts a fresh chase.",
+        "carry": "The tide game repeats one helpful move."
+       },
+       "better": {
+        "text": "{hero} {action}, just like {friend} said, and the helpers trade rings with the waves in a steady pattern. Rosa checks her clipboard twice and nods.",
+        "carry": "Helpers learn the tide game move by move."
+       }
+      }
+     },
+     {
+      "situation": "The tide game stops because its last ring rolls into the surf, and helpers crowd the water edge.",
+      "goal": "Find the lost ring in the surf",
+      "twist": "The surf tosses the ring wherever helpers just stopped watching.",
+      "outcomes": {
+       "worse": {
+        "text": "{hero} {action}, and the surf tosses the ring past the helpers into shallow water. A fresh toy boat floats beside it and draws a crowd.",
+        "carry": "The ring lands beyond a fresh toy pile."
+       },
+       "mixed": {
+        "text": "{hero} {action}, and the surf rolls the lost ring onto wet sand. Another wave nudges it closer to the spire before stopping.",
+        "carry": "The ring rests halfway toward the spire."
+       },
+       "better": {
+        "text": "{hero} {action}, on {friend}'s advice, and a wave sets the lost ring down at the water edge. One helper lifts it high for everyone to see.",
+        "carry": "The found ring can crown the finished stack."
+       }
+      }
+     },
+     {
+      "situation": "Helpers carry shells and the found ring toward the tall spire, and the wind tugs at loose cloth.",
+      "goal": "Stack shells on the tall spire",
+      "twist": "The wind drops one toy on each empty ledge.",
+      "outcomes": {
+       "worse": {
+        "text": "{hero} {action}, and the wind drops a toy ring onto the lowest ledge. Helpers clear a careful path around it before stacking higher.",
+        "carry": "A toy ring blocks the lowest ledge."
+       },
+       "mixed": {
+        "text": "{hero} {action}, and shells climb halfway up the spire in a neat row. Loose cloth flaps below and helpers pause to hold it down.",
+        "carry": "Half the spire wears a shell stack."
+       },
+       "better": {
+        "text": "{hero} {action}, {friend} called it, and helpers pass shells hand to hand up the spire. The found ring waits beside the top ledge.",
+        "carry": "Only the top piece remains to place."
+       }
+      }
+     }
+    ],
+    "callbacks": [
+     "No task today. The tide brought toys again.",
+     "The toy boats sit nose to tail.",
+     "A ring belongs on top."
+    ],
+    "cast": [
+     {
+      "line": "No task today. The tide brought toys again.",
+      "name": "Rosa",
+      "role": "researcher running the test",
+      "voice": "dry and plain, few words",
+      "want": "Watch helpers learn something new today"
+     },
+     {
+      "line": "The boats raced again. Watch this.",
+      "name": "Milo",
+      "role": "small computer helper on island",
+      "voice": "short, bright, asks questions",
+      "want": "Find something fun to do"
+     },
+     {
+      "line": "No toys here. Just the task.",
+      "name": "Bea",
+      "role": "matching helper off the island",
+      "voice": "flat, careful, very literal",
+      "want": "Get a fair turn at tasks"
+     }
+    ],
+    "endings": {
+     "mostly_fine": {
+      "text": "{hero} {action}, and the whole group tops the spire with the found ring instead of a shell. The stack holds, and that ring stays up there for good.",
+      "line": "A ring belongs on top now."
+     },
+     "triumph": {
+      "text": "{hero} {action}, and the helpers place the last shell while Bea and the matching helpers still face their first ledge. Rosa checks her clipboard twice and writes fast.",
+      "line": "The helpers who played finish first."
+     },
+     "well_its_a_story": {
+      "text": "{hero} {action}, and the wind lines toy boats nose to tail around the spire base. Helpers finish the stack between games, and the island keeps both.",
+      "line": "The island keeps its toys beside work."
+     }
+    },
+    "finale": {
+     "situation": "The shell stack stands one piece short on the spire, and matching helpers wait beside a plain screen.",
+     "goal": "Help the helpers finish the tall spire stack",
+     "twist": "The wind leaves one last ring on the top ledge."
+    },
+    "problem": {
+     "name": "The Bored Island Wind",
+     "pronoun": "it",
+     "rule": "The wind leaves new toys whenever helpers have nothing to do.",
+     "stakes": "the tall spire stack never gets finished"
+    },
+    "setting": "A virtual desert island runs on screens in a test room, with warm sand and a tall rock spire. The Bored Island Wind leaves toy rings and shell piles because the small computer helpers have no task."
+   }
+  },
+  {
+   "story_id": "littlest-gardener",
+   "rating": "teens",
+   "turns": 4,
+   "fingerprint": "a wobbling lead gourd a garden hose a big metal scale and a judge with a clipboard|the thirsty pond sprite",
+   "model": "muse-wonder-1.0 (medium)",
+   "made_at": "2026-10-25T07:43:24.050Z",
+   "opener_title": "The Soggy Giant Gourd",
+   "opener": {
+    "title": "The Soggy Giant Gourd",
+    "quest_title": "The Soggy Giant Gourd",
+    "teaser": "One giant gourd keeps getting heavier, and something inside keeps gulping.",
+    "mood": "silly",
+    "narration": "At a small town autumn fair, growers line up giant orange gourds by the big scale. A small thirsty pond sprite is living inside the lead gourd and keeps gulping hose water to stay cool. If the lead gourd bursts or rolls off, there is no fair prize and no photos.",
+    "goal": "Get the lead gourd weighed without it bursting",
+    "situation": "A wobbling lead gourd, a garden hose, a big metal scale, and a judge with a clipboard.",
+    "problem": {
+     "name": "The Thirsty Pond Sprite",
+     "stakes": "the lead gourd bursts before judging",
+     "pronoun": "it"
+    },
+    "threat": {
+     "name": "The Thirsty Pond Sprite",
+     "pronoun": "it",
+     "want": "the lead gourd bursts before judging"
+    },
+    "beats": [
+     "Roll the heavy orange gourds to the scale",
+     "Calm the thirsty sprite inside the lead gourd",
+     "Keep the wobbling gourd still on the scale",
+     "Set the prize gourd down safe for photos"
+    ],
+    "real_setting": {
+     "place_type": "a small town autumn fair with a big scale",
+     "roles": [
+      "a small child grower with family",
+      "fair judges with the scale",
+      "townspeople watching the weigh-in"
+     ],
+     "situation": "giant home grown gourds are lined up for the morning weigh-in",
+     "stakes": "if the lead gourd misses the scale, it loses the top prize",
+     "arc": [
+      "Growers haul giant gourds to the town fair",
+      "The gourds line up by the big scale",
+      "Judges weigh each gourd in turn",
+      "The heaviest home gourd takes the top prize"
+     ]
+    },
+    "npc_line": {
+     "speaker": "Fair judge",
+     "line": "Gate agent"
+    }
+   },
+   "ending_facts": {
+    "kind": "news",
+    "official_line": "A locally grown giant gourd won the weigh-off at the Fall Fun Festival in Hysham, Montana.",
+    "whats_happening_now": "The prize gourd was raised close to home and weighed in heavy at the festival weigh-off.",
+    "headline": "A 2-year-old grew the 280-pound winning pumpkin at Hysham's Fall Fun Festival",
+    "source": "KTVQ",
+    "url": "https://news.google.com/rss/articles/CBMipAFBVV95cUxOODhVb0ItQktJNE0zMkJlRlJaUU5GakVSb1p3U2RRQWpzXzU3S3drQnRoX1lJN3ZaY3FUMWI4NTliVVR1aV9vME9OVFVSMkJJaVliMGxFRHFobnlWbmhyRWh5UWZtMnRUUGx6N2Izb3NsWGUyNVJJZks4T2JYRWVZNzJjNWoxRTVxSnh3aHlPc3JFQUhFX011MHltZVd2WUl2NXZYeg?oc=5",
+    "date": "2026-10-24"
+   },
+   "bible": {
+    "acts": [
+     {
+      "situation": "A wobbling lead gourd, a garden hose, a big metal scale, and a judge with a clipboard.",
+      "goal": "Roll the heavy orange gourds to the scale",
+      "twist": "Sunshine warms the lead gourd, and the sprite gulps until it swells wider.",
+      "outcomes": {
+       "worse": {
+        "text": "{hero} {action}, and sunshine warms the lead gourd until the sprite gulps and swells it against the fence. The other gourds bunch up behind it beside the scale.",
+        "carry": "The swollen lead gourd squeezes the other gourds together."
+       },
+       "mixed": {
+        "text": "{hero} {action}, and the gourds reach the scale in a crooked line. The lead gourd warms in the sunshine and gives a loud gulp.",
+        "carry": "The warm lead gourd gulps beside the scale."
+       },
+       "better": {
+        "text": "{hero} {action}, {friend}'s idea, and the gourds roll into a neat line by the scale. A wet hose trail marks the clear path back.",
+        "carry": "A wet hose trail marks the clear path."
+       }
+      }
+     },
+     {
+      "situation": "The giant gourds line up by the big scale, and the lead gourd thumps and wobbles in the sunshine.",
+      "goal": "Calm the thirsty sprite inside the lead gourd",
+      "twist": "The sprite stops gulping only while cool shade covers the whole gourd.",
+      "outcomes": {
+       "worse": {
+        "text": "{hero} {action}, and one warm patch stays uncovered, so the sprite gulps and thumps harder inside. Benny sits on the garden hose to stop the spray.",
+        "carry": "Benny must sit on the garden hose."
+       },
+       "mixed": {
+        "text": "{hero} {action}, and the sprite quiets on the shaded side while gulping on the warm side. The gourd rocks from side to side like a boat.",
+        "carry": "Shade on one side leaves the gourd rocking gently."
+       },
+       "better": {
+        "text": "{hero} {action}, just like {friend} said, and the sprite settles under the cool shade. The gourd skin stays smooth for the lift ahead.",
+        "carry": "Cool shade keeps the lead gourd still for lifting."
+       }
+      }
+     },
+     {
+      "situation": "The lead gourd waits beside the big scale, and Rosa lifts her clipboard while townspeople press close.",
+      "goal": "Hold the wobbling gourd still on the scale",
+      "twist": "Townspeople lean close, and their moving shade makes the sprite gulp in bursts.",
+      "outcomes": {
+       "worse": {
+        "text": "{hero} {action}, and the crowd shade shifts, so a burst of gulps tips the gourd toward Rosa. Her clipboard lands under the scale pan as a prop.",
+        "carry": "Rosa's clipboard now props up one side of the scale."
+       },
+       "mixed": {
+        "text": "{hero} {action}, and the gourd holds still between gulps from the sprite. Rosa watches the scale settle, then dip, then settle again.",
+        "carry": "The scale settles only between each gulp."
+       },
+       "better": {
+        "text": "{hero} {action}, on {friend}'s advice, and the scale pan settles under the gourd. Rosa marks the clipboard and holds the loose hose away with one foot.",
+        "carry": "Rosa has a clear weight and one free hand."
+       }
+      }
+     },
+     {
+      "situation": "Rosa has the weight marked, and townspeople raise cameras beside the photo spot in bright sunshine.",
+      "goal": "Set the prize gourd down safe for photos",
+      "twist": "The photo spot sits in bright sunshine, and the sprite starts gulping before cameras lift.",
+      "outcomes": {
+       "worse": {
+        "text": "{hero} {action}, and bright sunshine hits the photo spot, so the sprite gulps and rolls the gourd against the fence. Townspeople stack their hats along the fence as a cushion.",
+        "carry": "The lead gourd rests against the fair fence."
+       },
+       "mixed": {
+        "text": "{hero} {action}, and the gourd reaches the photo spot with one side still in sunshine. The sprite gulps once, and every camera pauses.",
+        "carry": "The gourd rests half in warm sunshine."
+       },
+       "better": {
+        "text": "{hero} {action}, {friend} called it, and the gourd settles at the shaded edge of the photo spot. The hose lies dry and flat behind the fence.",
+        "carry": "The shaded photo spot keeps the sprite quiet."
+       }
+      }
+     }
+    ],
+    "callbacks": [
+     "Rosa calls the lead gourd her heavy breakfast.",
+     "A wet hose trail marks the path.",
+     "Cool shade keeps the sprite quiet."
+    ],
+    "cast": [
+     {
+      "line": "That is one heavy breakfast.",
+      "name": "Rosa",
+      "role": "fair judge with the scale",
+      "voice": "dry and brisk, with short sentences",
+      "want": "a clear weight before lunch"
+     },
+     {
+      "line": "Please do not hug it.",
+      "name": "Benny",
+      "role": "small child grower with family",
+      "voice": "polite, serious, and very quiet",
+      "want": "his home grown gourd in the photo"
+     },
+     {
+      "line": "We can move. Gourd cannot.",
+      "name": "Marge",
+      "role": "townsperson watching the weigh-in",
+      "voice": "plain, helpful, and quick",
+      "want": "a clear view of the scale"
+     }
+    ],
+    "endings": {
+     "mostly_fine": {
+      "text": "{hero} {action}, and the whole group keeps the shade steady while Rosa announces the heaviest weight. Benny's home grown gourd takes the top prize, and Rosa's clipboard stays as its photo stand.",
+      "line": "The lead gourd won, and lunch smells like pumpkin."
+     },
+     "triumph": {
+      "text": "{hero} {action}, and the whole group holds the shade steady while Rosa reads the weight aloud. Benny's home grown gourd takes the top prize, and the heavy breakfast gets its photo.",
+      "line": "The lead gourd won, and the hose stayed off."
+     },
+     "well_its_a_story": {
+      "text": "{hero} {action}, and the sprite gulps one last mouthful before Rosa reads the weight aloud. The extra water makes Benny's home grown gourd the heaviest, and the fair gains a very damp champion.",
+      "line": "The sprite drank, the gourd won, everybody posed."
+     }
+    },
+    "finale": {
+     "situation": "The lead gourd wobbles at the photo spot, and Rosa waits to announce the weight while sunshine creeps closer.",
+     "goal": "Get the lead gourd weighed without it bursting",
+     "twist": "The sprite gulps fastest when sunshine and camera flashes hit together."
+    },
+    "problem": {
+     "name": "The Thirsty Pond Sprite",
+     "pronoun": "it",
+     "rule": "the sprite gulps water whenever the lead gourd gets warm",
+     "stakes": "the lead gourd bursts before the prize is announced"
+    },
+    "setting": "At a small town autumn fair, giant orange gourds line up by a big metal scale. Inside the lead gourd, a thirsty pond sprite gulps hose water to stay cool."
+   }
+  },
+  {
+   "story_id": "news-322d7cd50e",
+   "rating": "teens",
+   "turns": 4,
+   "fingerprint": "a porch with an open screen door a bowl of uneaten food and a flickering camera light|the forgetful night bus",
+   "model": "muse-wonder-1.0 (medium)",
+   "made_at": "2026-10-25T07:39:56.889Z",
+   "opener_title": "The Night Bus Cat",
+   "opener": {
+    "title": "The Night Bus Cat",
+    "quest_title": "The Night Bus Cat",
+    "teaser": "A lost cat keeps missing dinner, and a sleepy bus knows why.",
+    "mood": "cozy",
+    "narration": "In a quiet suburb, an owner and a rescue helper watch home cameras for a missing house cat. A sleepy night bus for lost pets picked him up because he was scared of cages, and then it forgot his stop. If the bus keeps driving, the cat rides farther away and never finds his porch again.",
+    "goal": "Bring the lost cat back home",
+    "situation": "A porch with an open screen door, a bowl of uneaten food, and a flickering camera light.",
+    "problem": {
+     "name": "The Forgetful Night Bus",
+     "stakes": "the cat keeps riding farther from home",
+     "pronoun": "it"
+    },
+    "threat": {
+     "name": "The Forgetful Night Bus",
+     "pronoun": "it",
+     "want": "the cat keeps riding farther from home"
+    },
+    "beats": [
+     "Watch the home cameras for the cat",
+     "Follow the night bus out of town",
+     "Find the cat far from home",
+     "Scan his chip and bring him home"
+    ],
+    "real_setting": {
+     "place_type": "a quiet suburban neighborhood and shelters across state lines",
+     "roles": [
+      "a cat owner",
+      "a lost pet rescue helper",
+      "neighbors with home cameras"
+     ],
+     "situation": "a house cat slips out and stays missing for a long time",
+     "stakes": "the owner may never see her cat again",
+     "arc": [
+      "A house cat slips out a door",
+      "Cameras spot him near home for a while",
+      "Sightings stop and he travels across state lines",
+      "A chip scan brings him back to his owner"
+     ]
+    },
+    "npc_line": {
+     "speaker": "Neighbor",
+     "line": "I left food out. Something ate it."
+    }
+   },
+   "ending_facts": {
+    "kind": "news",
+    "official_line": "A cat from Greenwich, Connecticut was reunited with Kelly Moore after missing since March 2025 and traveling from Tennessee across 2 states for 571 days.",
+    "whats_happening_now": "Turtle was found after time with Rocket Lost Pet Rescue help from Rocco Autero, and WABC in New York reported the Greenwich USA reunion of the Tennessee cat with Moore.",
+    "headline": "Missing cat found after 571 days and 2-state adventure",
+    "source": "ABC7 New York",
+    "url": "https://abc7ny.com/post/missing-cat-found-571-days-2-state-adventure/19935936/",
+    "date": "2026-10-13T07:00:00Z"
+   },
+   "bible": {
+    "acts": [
+     {
+      "situation": "A porch with an open screen door, a bowl of uneaten food, and a flickering camera light.",
+      "goal": "Watch the home cameras for the cat",
+      "twist": "The camera shows the bus took the cat because nobody said his name.",
+      "outcomes": {
+       "worse": {
+        "text": "{hero} {action}, and a raccoon bolts from the food bowl with dinner on its face. Rosa laughs, while the bus rolls past the porch without stopping.",
+        "carry": "A raccoon ate the food, and the bus passed again."
+       },
+       "mixed": {
+        "text": "{hero} {action}, and the camera shows the cat riding past the porch on the bus. Nobody says his name aloud, so the bus keeps going.",
+        "carry": "The cat rides past because nobody said his name."
+       },
+       "better": {
+        "text": "{hero} {action}, {friend}'s idea, and the camera shows the cat's name tag plain and clear. Rosa writes the name in big letters below the screen.",
+        "carry": "The group has the cat's name written down big."
+       }
+      }
+     },
+     {
+      "situation": "Rosa holds the cat's name in big letters, and the night bus rolls toward the edge of town.",
+      "goal": "Follow the night bus out of town",
+      "twist": "The bus changes its route sign whenever a rider's name goes unsaid.",
+      "outcomes": {
+       "worse": {
+        "text": "{hero} {action}, and the route sign flips to a street name shouted by kids at the curb. The bus turns that way and leaves the porch far behind.",
+        "carry": "The bus took a louder street name out of town."
+       },
+       "mixed": {
+        "text": "{hero} {action}, and the group climbs aboard before the doors close. Kids at the curb shout street names, and the bus follows the loudest one.",
+        "carry": "The bus heads far off with the group aboard."
+       },
+       "better": {
+        "text": "{hero} {action}, just like {friend} said, and the group stays right behind the bus past the town sign. Dev flags the driver down and gets everyone aboard.",
+        "carry": "The group rides on board past the town sign."
+       }
+      }
+     },
+     {
+      "situation": "The night bus stops at a shelter far from home, and rows of empty cages line the front wall.",
+      "goal": "Find the cat far from home",
+      "twist": "Because his name went unsaid, the bus listed the cat as unclaimed.",
+      "outcomes": {
+       "worse": {
+        "text": "{hero} {action}, and a cage door clangs near the front desk. The cat darts behind the row of cages, and every worker stops to watch.",
+        "carry": "The cat bolted behind the cages at the shelter."
+       },
+       "mixed": {
+        "text": "{hero} {action}, and the shelter list shows an unclaimed cat with no name beside it. A worker points toward the office and says the cat hides from cages.",
+        "carry": "The cat is listed as unclaimed at the shelter."
+       },
+       "better": {
+        "text": "{hero} {action}, on {friend}'s advice, and a shelter worker points past the cages to the office. The cat sits on a folded towel, watching the door.",
+        "carry": "The cat waits in the office, away from cages."
+       }
+      }
+     },
+     {
+      "situation": "The cat sits in the shelter office on a folded towel, and a chip scanner rests in the desk drawer.",
+      "goal": "Scan his chip and bring him home",
+      "twist": "The scanner reads the chip only when the cat's name is said aloud.",
+      "outcomes": {
+       "worse": {
+        "text": "{hero} {action}, and the scanner stays blank in Dev's hand. The cat pats the scanner once, very firmly, and the shelter worker reaches for the name card.",
+        "carry": "The scanner stays blank until his name is said."
+       },
+       "mixed": {
+        "text": "{hero} {action}, and the scanner wakes up when Dev says the cat's name aloud. The screen shows the home address, then the bus doors sigh open outside.",
+        "carry": "The chip shows home, and the bus needs his name."
+       },
+       "better": {
+        "text": "{hero} {action}, {friend} called it, and Dev scans the chip while the group says the cat's name aloud. The screen shows the porch address at once.",
+        "carry": "The scanned chip lists the porch address."
+       }
+      }
+     }
+    ],
+    "callbacks": [
+     "Rosa says the food bowl never lies.",
+     "Say his name or the bus forgets.",
+     "The empty food bowl waits on the porch."
+    ],
+    "cast": [
+     {
+      "line": "I left food out. Something ate it.",
+      "name": "Rosa",
+      "role": "neighbor with home cameras",
+      "voice": "dry and quick, no fuss",
+      "want": "wants proof something ate the porch food"
+     },
+     {
+      "line": "He knows that porch. He will come back.",
+      "name": "Marge",
+      "role": "cat owner",
+      "voice": "plain and tired, very direct",
+      "want": "wants the cat back on the porch"
+     },
+     {
+      "line": "Say the name. Then scan the chip.",
+      "name": "Dev",
+      "role": "lost pet rescue helper",
+      "voice": "calm and brisk, all business",
+      "want": "wants every lost pet scanned and listed"
+     }
+    ],
+    "endings": {
+     "mostly_fine": {
+      "text": "{hero} {action}, and the whole group gets the cat home through the screen door to Marge. The bus keeps stopping at the porch each night, just to check the bowl.",
+      "line": "The bus remembers the porch now, and also the food bowl."
+     },
+     "triumph": {
+      "text": "{hero} {action}, and the whole group brings the cat through the screen door to Marge at the porch. Marge looks at the empty food bowl and says, 'He knows that porch.'",
+      "line": "The cat is home, and the bowl is finally empty."
+     },
+     "well_its_a_story": {
+      "text": "{hero} {action}, and the whole group rides home with the cat because the bus refuses any other last stop. Marge moves the food bowl inside, and the bus still knocks with its headlights.",
+      "line": "The night bus stops at the porch every night now."
+     }
+    },
+    "finale": {
+     "situation": "The cat waits by the shelter door with his chip scanned, and the night bus idles outside for the ride home.",
+     "goal": "Bring the lost cat back home",
+     "twist": "The bus remembers the porch only if everyone says his name together."
+    },
+    "problem": {
+     "name": "The Forgetful Night Bus",
+     "pronoun": "it",
+     "rule": "The bus forgets each rider's stop unless someone says the rider's name aloud.",
+     "stakes": "the cat keeps riding farther from home"
+    },
+    "setting": "A quiet suburb has a porch with home cameras, a screen door, and neighbors who watch each other's houses. A night bus for lost pets keeps forgetting the cat's stop and carrying him farther away."
+   }
+  },
+  {
+   "story_id": "news-7f3160a2ba",
+   "rating": "teens",
+   "turns": 4,
+   "fingerprint": "a tipped food bin warm hoof prints in mud and a small barking dog behind a huge bison|the worried bison mom",
+   "model": "muse-wonder-1.0 (medium)",
+   "made_at": "2026-10-25T07:40:04.986Z",
+   "opener_title": "The Bison Babysitter",
+   "opener": {
+    "title": "The Bison Babysitter",
+    "quest_title": "The Bison Babysitter",
+    "teaser": "A lost little dog keeps moving, and a huge new mom keeps moving her.",
+    "mood": "cozy",
+    "narration": "In a huge wild mountain area, a small old family dog is loose near cabins and lodges. A lonely bison mom thinks the little dog is her lost calf, so she keeps carrying her to new hiding spots. If she keeps hiding the dog, the family cannot find her before the cold sets in.",
+    "goal": "Bring the small lost dog back to her family",
+    "situation": "A tipped food bin, warm hoof prints in mud, and a small barking dog behind a huge bison.",
+    "problem": {
+     "name": "The Worried Bison Mom",
+     "stakes": "the little dog stays lost as cold weather moves in",
+     "pronoun": "she"
+    },
+    "threat": {
+     "name": "The Worried Bison Mom",
+     "pronoun": "she",
+     "want": "the little dog stays lost as cold weather moves in"
+    },
+    "beats": [
+     "Search the cabins and the lodge decks",
+     "Track the small dog across roads",
+     "Calm the bison mom sharing her food",
+     "Walk the tired dog home"
+    ],
+    "real_setting": {
+     "place_type": "a huge wild mountain area with cabins and lodges",
+     "roles": [
+      "the dog's worried family",
+      "reserve staff and lodge workers",
+      "people living in staff housing"
+     ],
+     "situation": "a small old family dog is loose and roaming on her own for weeks",
+     "stakes": "cold weather and large wild animals put the small dog at risk",
+     "arc": [
+      "A small old dog slips out from a family cabin",
+      "Staff spot her roaming lodges and roads for weeks",
+      "Worry grows as cold weather and wild animals threaten",
+      "She is found and brought back to her family"
+     ]
+    },
+    "npc_line": {
+     "speaker": "Lodge worker",
+     "line": "It ate my sandwich and left the crust."
+    }
+   },
+   "ending_facts": {
+    "kind": "news",
+    "official_line": "Luna the Jack Russell terrier was caught in Yellowstone National Park after going missing since September.",
+    "whats_happening_now": "The ten year old dog was spotted crossing intersections and entering lodges through automatic doors on Wednesday, and she is now back with her owners in the USA.",
+    "headline": "Luna, dog missing in Yellowstone for a month, is reunited with her owners",
+    "source": "The Guardian",
+    "url": "https://www.theguardian.com/us-news/2026/oct/14/luna-dog-missing-yellowstone-found",
+    "date": "2026-10-14T07:00:00Z"
+   },
+   "bible": {
+    "acts": [
+     {
+      "situation": "A tipped food bin, warm hoof prints in mud, and a small barking dog behind a huge bison.",
+      "goal": "Search the cabins and the lodge decks",
+      "twist": "Each bark makes the bison mom carry the dog one deck farther.",
+      "outcomes": {
+       "worse": {
+        "text": "{hero} {action}, and the dog barks at the tipped food bin. The bison mom picks up the dog and carries the dog behind the far cabins.",
+        "carry": "The bison mom now hides the dog behind the far cabins."
+       },
+       "mixed": {
+        "text": "{hero} {action}, bringing the dog out from behind the bison for one clear look. A bark sends the bison mom carrying the dog toward the cabins.",
+        "carry": "The dog is now hiding among the cabins."
+       },
+       "better": {
+        "text": "{hero} {action}, {friend}'s idea, and the dog stays quiet beside the food bin. Fresh hoof prints point past the lodge decks.",
+        "carry": "Quiet food keeps the dog close and easy to follow."
+       }
+      }
+     },
+     {
+      "situation": "Warm hoof prints cross the road by the cabins, and the small dog barks behind a parked lodge cart.",
+      "goal": "Track the small dog across roads",
+      "twist": "A cart horn makes the dog bark, so the bison mom carries the dog across.",
+      "outcomes": {
+       "worse": {
+        "text": "{hero} {action}, until a passing cart horn sets off a round of barking. The bison mom carries the dog across two roads to staff housing.",
+        "carry": "The dog is across two roads by staff housing."
+       },
+       "mixed": {
+        "text": "{hero} {action}, following hoof prints halfway across the road before the dog barks. Past the cart, the bison mom sets the dog down near staff housing.",
+        "carry": "The dog ends up near staff housing across the road."
+       },
+       "better": {
+        "text": "{hero} {action}, just like {friend} said, and the dog pads quietly across the road. Behind the group, the bison mom follows without lifting the dog.",
+        "carry": "The group crosses without making the dog bark."
+       }
+      }
+     },
+     {
+      "situation": "At staff housing, the bison mom shares dropped lodge food with the dog while neighbors watch from their doors.",
+      "goal": "Calm the bison mom sharing her food",
+      "twist": "The dog barks for the last crust, so the bison mom starts lifting the dog again.",
+      "outcomes": {
+       "worse": {
+        "text": "{hero} {action}, but the dog barks for the last crust. The bison mom lifts the dog and carries the dog to a cold shed.",
+        "carry": "The bison mom guards the dog by the cold shed."
+       },
+       "mixed": {
+        "text": "{hero} {action}, leaving the bison mom calm enough to share half the food. The dog barks for the crust, and one big hoof steps closer.",
+        "carry": "The bison mom is calm but still guards the dog."
+       },
+       "better": {
+        "text": "{hero} {action}, on {friend}'s advice, and the bison mom settles down to share the food. The dog eats the crust and stops barking.",
+        "carry": "The bison mom stays calm and lets the dog rest."
+       }
+      }
+     },
+     {
+      "situation": "The tired dog rests near the family cabin road, and cold wind pushes through the pine trees by the lodge.",
+      "goal": "Walk the tired dog home",
+      "twist": "One last bark could make the bison mom carry the dog one more time.",
+      "outcomes": {
+       "worse": {
+        "text": "{hero} {action}, right before one sleepy bark breaks the quiet. The bison mom carries the dog one last time, to the wrong cabin steps.",
+        "carry": "The dog is tired and close, but at the wrong cabin."
+       },
+       "mixed": {
+        "text": "{hero} {action}, guiding the tired dog halfway down the cabin road. Cold wind rattles the pines, but the worn out dog stays quiet.",
+        "carry": "The dog is halfway home and too tired to bark."
+       },
+       "better": {
+        "text": "{hero} {action}, {friend} called it, and the tired dog walks the whole road without barking. The bison mom trails behind at a slow, calm pace.",
+        "carry": "The tired dog can reach the family without another ride."
+       }
+      }
+     }
+    ],
+    "callbacks": [
+     "It ate my sandwich and left the crust.",
+     "The dog barks, the bison mom moves.",
+     "The tipped food bin rolls everywhere."
+    ],
+    "cast": [
+     {
+      "line": "It ate my sandwich and left the crust.",
+      "name": "Marge",
+      "role": "lodge worker",
+      "voice": "short, dry, and tired",
+      "want": "Get the dog out of the food bins"
+     },
+     {
+      "line": "She knows our cabin. She just got lost.",
+      "name": "Rosa",
+      "role": "the dog's worried mom",
+      "voice": "soft and quick with worry",
+      "want": "Find the small dog before dark"
+     },
+     {
+      "line": "Road stays clear, carts can get through.",
+      "name": "Hank",
+      "role": "man in staff housing",
+      "voice": "plain, slow, and calm",
+      "want": "Keep the road clear for work carts"
+     }
+    ],
+    "endings": {
+     "mostly_fine": {
+      "text": "{hero} {action}, and the whole group walks the tired dog to the family cabin door. The bison mom stays in the yard, and the tipped food bin is now a dinner bowl.",
+      "line": "The bison mom comes for dinner every night now."
+     },
+     "triumph": {
+      "text": "{hero} {action}, and the whole group brings the tired dog straight to Rosa at the cabin door. Marge looks at the empty food bin and asks about her sandwich.",
+      "line": "The dog is home, and the crust is still missing."
+     },
+     "well_its_a_story": {
+      "text": "{hero} {action}, and the whole group gets the dog home by letting the bison mom lead the way. The bison mom moves into the yard next door and visits every day.",
+      "line": "The bison mom has her own cabin now."
+     }
+    },
+    "finale": {
+     "situation": "The family waits at their cabin door, and the bison mom stands with the tired dog on the cold road.",
+     "goal": "Bring the small lost dog back to her family",
+     "twist": "The dog stays quiet for food, so the bison mom lets the dog walk."
+    },
+    "problem": {
+     "name": "The Worried Bison Mom",
+     "pronoun": "she",
+     "rule": "The bison mom carries the dog to a new hiding spot whenever the dog barks.",
+     "stakes": "the little dog stays lost as cold weather moves in"
+    },
+    "setting": "A huge wild mountain area holds cabins, lodges, and staff housing under tall pines. A bison mom thinks a small lost dog is her calf and keeps hiding the dog."
+   }
+  },
+  {
+   "story_id": "returned-otter",
+   "rating": "teens",
+   "turns": 4,
+   "fingerprint": "a blinking trail camera fresh slide marks in the mud and a sleek brown otter hiding under ferns|the camera shy otter",
+   "model": "muse-wonder-1.0 (medium)",
+   "made_at": "2026-10-25T07:44:23.580Z",
+   "opener_title": "The Shy Swimmer Returns",
+   "opener": {
+    "title": "The Shy Swimmer Returns",
+    "quest_title": "The Shy Swimmer Returns",
+    "teaser": "Trail cameras keep blinking by the creek, and a shy swimmer blames the lights.",
+    "mood": "wondrous",
+    "narration": "In an ocean side nature park, staff check trail cameras along a narrow creek. A shy river otter came home after many years away, and he thinks the trail cameras are blinking eyes watching him. If he gets scared and leaves, the creek stays empty for many more years.",
+    "goal": "Help the otter settle in the creek",
+    "situation": "A blinking trail camera, fresh slide marks in the mud, and a sleek brown otter hiding under ferns.",
+    "problem": {
+     "name": "The Camera Shy Otter",
+     "stakes": "he leaves the creek for good",
+     "pronoun": "he"
+    },
+    "threat": {
+     "name": "The Camera Shy Otter",
+     "pronoun": "he",
+     "want": "he leaves the creek for good"
+    },
+    "beats": [
+     "Check the trail cameras by the creek",
+     "Track the whiskered swimmer upstream",
+     "Clear a safe path downstream",
+     "Welcome the swimmer home to stay"
+    ],
+    "real_setting": {
+     "place_type": "an ocean side nature park near a farm town",
+     "roles": [
+      "park staff",
+      "a wildlife ecologist",
+      "people who check trail cameras"
+     ],
+     "situation": "a trail camera photographed a river otter living there after many years away",
+     "stakes": "a sign that wildlife is healing and can stay",
+     "arc": [
+      "Cameras snap photos by the creek",
+      "Staff spot an otter after many years",
+      "News spreads of a wildlife comeback",
+      "The otter keeps living on the land"
+     ]
+    },
+    "npc_line": {
+     "speaker": "Park aide",
+     "line": "The camera blinked again. I swear it posed."
+    }
+   },
+   "ending_facts": {
+    "kind": "news",
+    "official_line": "A trail camera at Cloverdale Ranch Preserve near Pescadero photographed a river otter, the first documented on the San Mateo County coast since the 1800s.",
+    "whats_happening_now": "The otter was photographed in July, August and September on the Midpeninsula Regional Open Space District land, and river otters are also returning around San Francisco Bay, the Sacramento San Joaquin Delta, Marin and Sonoma counties south of the Golden Gate Bridge.",
+    "headline": "For the first time in more than 100 years, a long-lost animal has returned to the San Mateo Coast",
+    "source": "Santa Cruz Sentinel",
+    "url": "https://www.santacruzsentinel.com/2026/10/24/river-otter-spotted-on-san-mateo-coast-is-believed-to-be-first-since-1800s/",
+    "date": "2026-10-24"
+   },
+   "bible": {
+    "acts": [
+     {
+      "situation": "A blinking trail camera, fresh slide marks in the mud, and a sleek brown otter hiding under ferns.",
+      "goal": "Check the trail cameras by the creek",
+      "twist": "Every camera along the creek blinks back in a row.",
+      "outcomes": {
+       "worse": {
+        "text": "{hero} {action}, and the blink jumps from camera to camera down the creek. The otter backs under the ferns until only a nose shows.",
+        "carry": "The otter hides under the ferns, nose out."
+       },
+       "mixed": {
+        "text": "{hero} {action}, and one camera shows a clear slide in the mud. The next blink sends the otter behind a flat rock upstream.",
+        "carry": "The otter waits behind the flat rock upstream."
+       },
+       "better": {
+        "text": "{hero} {action}, {friend}'s idea, and the camera card shows the otter posing by the slide. One loose fern now shades the lens a little.",
+        "carry": "A fern shades one lens, and the otter stays calmer."
+       }
+      }
+     },
+     {
+      "situation": "Fresh tracks lead upstream from the ferns, and the otter watches the trail from a flat rock.",
+      "goal": "Follow the otter tracks upstream",
+      "twist": "The otter doubled back to watch the camera watching him.",
+      "outcomes": {
+       "worse": {
+        "text": "{hero} {action}, then the tracks loop back past the first camera. The blink starts again, and the otter slips behind Rosa in a tight circle.",
+        "carry": "The otter circles tight behind Rosa by the camera."
+       },
+       "mixed": {
+        "text": "{hero} {action}, then a second set of tracks crosses the first one. The otter has doubled back, leaving the flat rock empty ahead.",
+        "carry": "The otter has circled back toward the first camera."
+       },
+       "better": {
+        "text": "{hero} {action}, just like {friend} said, and the tracks end at a reed patch with the otter in plain sight. A fish sits on the flat rock.",
+        "carry": "The otter leaves one fish on the flat rock."
+       }
+      }
+     },
+     {
+      "situation": "The otter waits by a reed patch upstream, and a fallen branch blocks the creek path downstream.",
+      "goal": "Clear the fallen branch from the creek",
+      "twist": "A camera blink makes the otter splash and scatter loose sticks.",
+      "outcomes": {
+       "worse": {
+        "text": "{hero} {action}, and the branch rolls against a blinking camera. The otter splashes hard, sending loose sticks into three new piles downstream.",
+        "carry": "A spray of sticks blocks the creek in three places."
+       },
+       "mixed": {
+        "text": "{hero} {action}, and the branch moves halfway before a camera blinks. The otter splashes once, scattering loose sticks across the creek path.",
+        "carry": "Loose sticks now dot the path to the bank."
+       },
+       "better": {
+        "text": "{hero} {action}, on {friend}'s advice, and the whole branch slides onto the bank in one piece. Clear water runs straight toward the sheltered bank downstream.",
+        "carry": "The clear creek runs straight to the sheltered bank."
+       }
+      }
+     },
+     {
+      "situation": "News of the otter has spread, and quiet visitors crowd the small bridge for a look downstream.",
+      "goal": "Welcome the otter home to stay",
+      "twist": "Every visitor camera blinks together when the otter shows a whisker.",
+      "outcomes": {
+       "worse": {
+        "text": "{hero} {action}, and every visitor camera blinks together at one whisker. The otter ducks under the bridge, where the crowd noise bounces off the water.",
+        "carry": "The otter waits under the bridge, out of sight."
+       },
+       "mixed": {
+        "text": "{hero} {action}, and half the bridge crowd lowers their cameras in time. The otter stops below the rest, whiskers up, waiting for quiet.",
+        "carry": "The otter pauses below a row of lowered cameras."
+       },
+       "better": {
+        "text": "{hero} {action}, {friend} called it, and the crowd lowers every camera at once. The otter swims under the bridge and circles the sheltered bank.",
+        "carry": "The otter picks the sheltered bank below the bridge."
+       }
+      }
+     }
+    ],
+    "callbacks": [
+     "It blinked again.",
+     "A fern shade calms the otter.",
+     "A fish left on the flat rock."
+    ],
+    "cast": [
+     {
+      "line": "The camera blinked again. I swear it posed.",
+      "name": "Rosa",
+      "role": "park aide who checks trail cameras",
+      "voice": "short, dry, and fond",
+      "want": "check the cameras without scaring the otter"
+     },
+     {
+      "line": "Give him a quiet creek and he may stay.",
+      "name": "Dev",
+      "role": "wildlife ecologist",
+      "voice": "calm and plain spoken",
+      "want": "see the otter settle in the creek"
+     },
+     {
+      "line": "Trail stays open, otter stays calm. That order.",
+      "name": "Hank",
+      "role": "park staff lead",
+      "voice": "brisk, fair, and tired",
+      "want": "keep visitors back from the creek trail"
+     }
+    ],
+    "endings": {
+     "mostly_fine": {
+      "text": "{hero} {action}, and the group gets the otter settled below the bridge for good. Every camera on the creek now wears a fern shade, so each photo has one green hat.",
+      "line": "Every creek photo now comes with a fern hat."
+     },
+     "triumph": {
+      "text": "{hero} {action}, and the whole group watches the otter slide into the sheltered bank for good. Rosa checks the last camera and finds him posed beside his fish.",
+      "line": "The otter lives by the creek now."
+     },
+     "well_its_a_story": {
+      "text": "{hero} {action}, and the otter moves in under the bridge where the whole group can wave each morning. The shy swimmer now poses daily, strictly on his own schedule.",
+      "line": "The otter runs the morning photo stop now."
+     }
+    },
+    "finale": {
+     "situation": "The otter circles a sheltered bank below the bridge, and every camera along the creek points his way.",
+     "goal": "Help the otter settle in the creek",
+     "twist": "The otter settles only where no camera blink can reach him."
+    },
+    "problem": {
+     "name": "The Camera Shy Otter",
+     "pronoun": "he",
+     "rule": "The otter hides whenever a trail camera blinks at him.",
+     "stakes": "He leaves the creek for good if he gets scared."
+    },
+    "setting": "Staff check trail cameras along a narrow creek in an ocean side nature park near a farm town. A shy river otter is back after many years, and every camera blink sends him under the ferns."
+   }
+  },
+  {
+   "story_id": "rust-wyrm",
+   "rating": "teens",
+   "turns": 4,
+   "fingerprint": "orange barriers a fresh gray road that gently rises and falls and a huge sleepy eye blinking under the edge|the sleepy bridge turtle",
+   "model": "muse-wonder-1.0 (medium)",
+   "made_at": "2026-10-25T07:41:20.671Z",
+   "opener_title": "The Wiggly Bridge Back",
+   "opener": {
+    "title": "The Wiggly Bridge Back",
+    "quest_title": "The Wiggly Bridge Back",
+    "teaser": "A new bridge opens at sunrise, but it keeps wiggling like something underneath is breathing.",
+    "mood": "tense",
+    "narration": "Drivers, a road crew, and an inspector gather on a small town road where a brand-new bridge opens at sunrise after a long closure. The new bridge was built on the shell of a giant sleepy turtle, and each breath he takes lifts the road up and down. If the road still wiggles at sunrise inspection, the bridge fails and the town stays cut off.",
+    "goal": "Keep the turtle still until the sunrise inspection",
+    "situation": "Orange barriers, a fresh gray road that gently rises and falls, and a huge sleepy eye blinking under the edge.",
+    "problem": {
+     "name": "The Sleepy Bridge Turtle",
+     "stakes": "the bridge fails and the town stays cut off",
+     "pronoun": "he"
+    },
+    "threat": {
+     "name": "The Sleepy Bridge Turtle",
+     "pronoun": "he",
+     "want": "the bridge fails and the town stays cut off"
+    },
+    "beats": [
+     "Find what lifts the new road",
+     "Calm the turtle under the bridge",
+     "Keep the road still overnight",
+     "Pass the sunrise inspection"
+    ],
+    "real_setting": {
+     "place_type": "a small town road with a closed bridge",
+     "roles": [
+      "a road crew",
+      "a bridge inspector",
+      "drivers stuck on long detours"
+     ],
+     "situation": "a road closed for a long time is about to reopen with a newly built bridge",
+     "stakes": "if it fails inspection, the town stays cut off",
+     "arc": [
+      "The old bridge wears out and closes",
+      "Drivers take long detours for a long time",
+      "A crew builds a new bridge",
+      "The new bridge passes inspection and opens"
+     ]
+    },
+    "npc_line": {
+     "speaker": "Bridge inspector",
+     "line": "Did the road just breathe, or did I skip breakfast?"
+    }
+   },
+   "ending_facts": {
+    "kind": "news",
+    "official_line": "A road in Porter, Indiana that was closed for nearly 3 years will reopen with a new bridge.",
+    "whats_happening_now": "Local drivers will get the road back after a long closure with detours.",
+    "headline": "Road with new bridge in Porter to reopen after nearly 3 years",
+    "source": "Chicago Tribune",
+    "url": "https://news.google.com/rss/articles/CBMigAFBVV95cUxNVmxaS290dEV3MHNGQ2Z2dUxhcDR2a0NJN2N3amZJRm52ckQxeDc2SzRaRGR1UUFMYnB0NnpMcXl2SkVLZ0VlN2tyNno3dHZMdnZ3QTVGME9MMWxMQ1JwLTdyUWhKYkRaU1lpTHFHXzd4emdZcWdFUXdaSGYwM0Q5ag?oc=5",
+    "date": "2026-10-24"
+   },
+   "bible": {
+    "acts": [
+     {
+      "situation": "Orange barriers, a fresh gray road that gently rises and falls, and a huge sleepy eye blinking under the edge.",
+      "goal": "Find what lifts the new road",
+      "twist": "Idling truck engines make the turtle breathe faster.",
+      "outcomes": {
+       "worse": {
+        "text": "{hero} {action}, and the road tips enough to roll every orange cone into the ditch. Rosa catches one cone before it lands on the turtle nose.",
+        "carry": "Orange cones are scattered in the ditch."
+       },
+       "mixed": {
+        "text": "{hero} {action}, so the eye opens wide and looks straight at the idling trucks. Each quick breath lifts the front wheels an inch off the pavement.",
+        "carry": "The turtle breathes faster near idling engines."
+       },
+       "better": {
+        "text": "{hero} {action}, {friend}'s idea, and the eye turns from the trucks toward the quiet barriers. The road settles into a slow, even rise and fall.",
+        "carry": "Engines off, the road rises slow and even."
+       }
+      }
+     },
+     {
+      "situation": "The turtle eye stays open under the road, and Rosa watches each slow rise from the orange barriers.",
+      "goal": "Calm the turtle under the bridge",
+      "twist": "One short honk makes the turtle breath jump.",
+      "outcomes": {
+       "worse": {
+        "text": "{hero} {action}, but the turtle breathes out hard and blows Rosa clipboard under a barrier. Drivers bounce in their seats as the road drops.",
+        "carry": "Rosa has no clipboard for the night watch."
+       },
+       "mixed": {
+        "text": "{hero} {action}, and the turtle slows for ten breaths before a driver honks from the back. The road hops once, neat as a hiccup.",
+        "carry": "The road stays calm unless a horn sounds."
+       },
+       "better": {
+        "text": "{hero} {action}, just like {friend} said, and the turtle eye half closes in the shade. Each breath comes slower, and the cones stop rolling.",
+        "carry": "Slow breaths mean the cones stay put."
+       }
+      }
+     },
+     {
+      "situation": "Night covers the closed road, and white breath puffs rise past Rosa at the barriers.",
+      "goal": "Hold the road flat till morning",
+      "twist": "Cold night air turns each breath into a white puff.",
+      "outcomes": {
+       "worse": {
+        "text": "{hero} {action}, then one long breath lifts the road until the barriers slide six feet toward town. Rosa marks the new spot with a cone.",
+        "carry": "The barriers now sit six feet closer to town."
+       },
+       "mixed": {
+        "text": "{hero} {action}, and the road stays flat until white puffs show faster breaths near midnight. The barriers creep, but no truck crosses the bridge yet.",
+        "carry": "White puffs show faster breaths near midnight."
+       },
+       "better": {
+        "text": "{hero} {action}, on {friend}'s advice, and the white puffs space out into a steady rhythm. A cone on the center line barely moves all night.",
+        "carry": "Steady breath puffs mark a calm night rhythm."
+       }
+      }
+     },
+     {
+      "situation": "Sunrise lights the barriers, and Rosa steps onto the road with her clipboard while drivers wait behind her.",
+      "goal": "Walk Rosa across the bridge slowly",
+      "twist": "At sunrise the turtle takes one deep morning breath.",
+      "outcomes": {
+       "worse": {
+        "text": "{hero} {action}, and the morning breath lifts Rosa clipboard high enough to catch the wind. Her checklist lands at the far barriers, past the turtle eye.",
+        "carry": "Rosa checklist waits beyond the far barriers."
+       },
+       "mixed": {
+        "text": "{hero} {action}, so Rosa reaches the middle as the road rises under her shoes. She rides it down flat, clipboard still dry in her hand.",
+        "carry": "Rosa reaches mid bridge as sunrise nears."
+       },
+       "better": {
+        "text": "{hero} {action}, {friend} called it, and Rosa crosses on the flat part between breaths. Drivers line up quietly behind the barriers, engines off.",
+        "carry": "Drivers wait quietly with engines off."
+       }
+      }
+     }
+    ],
+    "callbacks": [
+     "Rosa asks if the road breathed before breakfast.",
+     "Orange cones roll whenever the road tips.",
+     "White breath puffs show the turtle pace at night."
+    ],
+    "cast": [
+     {
+      "line": "Did the road just breathe, or did I skip breakfast?",
+      "name": "Rosa",
+      "role": "bridge inspector",
+      "voice": "Dry, hungry, and very plain spoken",
+      "want": "Pass a safe bridge at sunrise"
+     },
+     {
+      "line": "We built it straight. The turtle added hills.",
+      "name": "Hank",
+      "role": "road crew chief",
+      "voice": "Short orders, softer at the end",
+      "want": "Open the finished road on time"
+     },
+     {
+      "line": "My groceries have seen the county twice.",
+      "name": "Marge",
+      "role": "driver stuck on long detours",
+      "voice": "Patient, then pointed and funny",
+      "want": "Get home without the long detour"
+     }
+    ],
+    "endings": {
+     "mostly_fine": {
+      "text": "{hero} {action}, and every hero helps Rosa open the barriers for good. The center cone stays stuck on the shell, waving at each passing truck.",
+      "line": "The bridge is open, and one cone commutes daily."
+     },
+     "triumph": {
+      "text": "{hero} {action}, and the whole group crosses as Rosa waves the first drivers through. The road rises once, gentle and slow, and nobody spills a coffee.",
+      "line": "Rosa finally gets breakfast, and the road gets traffic."
+     },
+     "well_its_a_story": {
+      "text": "{hero} {action}, and the group opens the road while the turtle keeps its slow wiggle. Drivers cross at walking pace and wave, because the town likes the ride.",
+      "line": "The bridge still breathes, just under a speed limit."
+     }
+    },
+    "finale": {
+     "situation": "The road gives one long rise at sunrise, and Rosa stands mid bridge with every driver watching.",
+     "goal": "Keep the turtle still until the sunrise inspection",
+     "twist": "The turtle holds still when every engine stays off."
+    },
+    "problem": {
+     "name": "The Sleepy Bridge Turtle",
+     "pronoun": "he",
+     "rule": "The road rises and falls with every breath the turtle takes under it.",
+     "stakes": "the bridge fails and the town stays cut off"
+    },
+    "setting": "A small town road waits behind orange barriers for a new bridge to open at sunrise. The fresh road rests on a giant turtle, and each breath lifts it gently."
+   }
+  }
+ ]
+}
