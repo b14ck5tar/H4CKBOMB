@@ -1,9 +1,17 @@
 import type { ArtBeat, ArtHero } from "./types";
-import { colorFor, HERO_CONSISTENCY, NEGATIVE, SCENE_RULE, styleFor } from "./style";
+import { HERO_CONSISTENCY, NEGATIVE, SCENE_RULE } from "./style";
 
 // Edit prompts for /v1/images/edits. Images are captioned by index (Muse reads parts in order).
 // Bump PROMPT_VERSION whenever the wording changes: it is part of the cache key.
-export const PROMPT_VERSION = "v5"; // v5: story beats (act / win / finale) + a TV-safe frame (heroes in the middle band)
+export const PROMPT_VERSION = "v6"; // v6: every scene keeps the previous picture's art style, place and heroes (CD: "build off the last picture")
+
+/**
+ * Continuity (CD playtest: "completely different picture... needs to build off the last picture"). Scene pictures are
+ * edits of the previous painting, so the look comes from Image 1, never from a style label: the story's theme is
+ * whatever its first painting was, locked for the whole game.
+ */
+const KEEP_LOOK =
+  "Keep EXACTLY the art style of Image 1: the same line work, rendering, palette, lighting and level of detail, so this picture looks like the next frame of the same illustrated story. Never switch to another style (no black-and-white, no different comic or painting look).";
 
 const clip = (s: string, n: number) => (s.length > n ? s.slice(0, n).replace(/\s+\S*$/, "") : s);
 
@@ -50,14 +58,14 @@ export function sceneEditPrompt(o: { heroes: ArtHero[]; sceneText: string; momen
     ? `They are in the middle of this moment: ${clip(o.moment, 260)}`
     : "Each hero is caught mid-reaction to the impossible thing in an expressive, funny pose that fits their personality and uses their signature prop (aiming it, holding it up, hiding behind it), and at least one of them points at it";
   return [
-    `${styleFor(o.style)}.`,
+    KEEP_LOOK,
     `Image 1 is a finished picture of a story scene${place}. Image${n > 1 ? `s 2 to ${last} are reference portraits` : " 2 is a reference portrait"} of our hero${n > 1 ? "es" : ""}.`,
-    `Redraw Image 1 in this style, keeping its place, composition and camera angle, and add ${n === 1 ? "this hero" : `these ${n} heroes`} into it. The impossible thing stays the focal point and is not covered by anyone.`,
+    `Redraw Image 1 keeping its art style, place, composition and camera angle, and add ${n === 1 ? "this hero" : `these ${n} heroes`} into it. The impossible thing stays the focal point and is not covered by anyone.`,
     `The heroes, from left to right: ${heroList(o.heroes)}`,
     `Draw each hero full body, about a third of the frame height, standing together as a small group on solid ground in the middle of the frame (not at the edges), a little apart so they don't overlap, each casting a hard ink shadow on the ground. ${action}.`,
     SAFE_FRAME,
     `${HERO_CONSISTENCY} Draw them into the scene, not pasted on top.${ratingLine(o.rating)}`,
-    `${SCENE_RULE} ${colorFor(o.style)} ${NEGATIVE}`,
+    `${SCENE_RULE} Use Image 1's palette. ${NEGATIVE}`,
   ].join("\n");
 }
 
@@ -70,16 +78,16 @@ export function sceneEditPrompt(o: { heroes: ArtHero[]; sceneText: string; momen
 export function newScenePrompt(o: { heroes: ArtHero[]; sceneText: string; moment?: string; setting?: string; rating?: string; style?: string; beat?: ArtBeat }) {
   const n = o.heroes.length;
   return [
-    `${styleFor(o.style)}.`,
-    `Image 1 is the PREVIOUS picture of our story: use it only for the look of the world and the impossible thing. Image${n > 1 ? `s 2 to ${n + 1} are reference portraits` : " 2 is a reference portrait"} of our hero${n > 1 ? "es" : ""}.`,
+    KEEP_LOOK,
+    `Image 1 is the PREVIOUS picture of our story. This picture is the NEXT moment of the same story: the same place, the same impossible thing (same look, same size) and the same heroes, unless the story says they moved somewhere new. Image${n > 1 ? `s 2 to ${n + 1} are reference portraits` : " 2 is a reference portrait"} of our hero${n > 1 ? "es" : ""}.`,
     `Draw a NEW illustration of the moment that just happened${o.moment ? `: ${clip(o.moment, 300)}` : ""}.`,
     o.setting ? `The place is ${clip(o.setting, 120)}, drawn as a real, specific modern location of that kind, with two or three ordinary details that make it believable, and the one impossible thing of our story in it.` : "",
     o.sceneText ? `What the picture must show right now: ${clip(o.sceneText, 240)}` : "",
-    `Show the RESULT clearly: what changed because of what the heroes did (something lifted, spilled, stuck, toppled, running away) is the focal point and easy to read at a glance. A new camera angle and a new composition that fit this moment; if the story moved somewhere new, draw that place. Do not copy Image 1's layout.`,
+    `Show the RESULT clearly: what changed because of what the heroes did (something lifted, spilled, stuck, toppled, running away) is the focal point and easy to read at a glance. Move the camera (closer, wider or from another side of the same place) so it is a new shot, but it must clearly continue Image 1: a viewer should recognise the place and the creature at a glance. Only if the story moved somewhere new, draw that new place, in the same style.`,
     o.beat ? BEAT_SHOT[o.beat] : "",
     `The heroes, from left to right: ${heroList(o.heroes)} Show them in the middle of the action, full body, big enough to read. ${HERO_CONSISTENCY} Any other people are background figures in plain clothes, simplified into flat shapes.${ratingLine(o.rating)}`,
     SAFE_FRAME,
-    `${SCENE_RULE} ${colorFor(o.style)} ${NEGATIVE}`,
+    `${SCENE_RULE} Use Image 1's palette. ${NEGATIVE}`,
   ]
     .filter(Boolean)
     .join("\n");
@@ -89,11 +97,11 @@ export function posterEditPrompt(o: { heroes: ArtHero[]; sceneText: string; rati
   const n = o.heroes.length;
   const place = o.sceneText ? ` (${o.sceneText})` : "";
   return [
-    `${styleFor(o.style)}.`,
+    KEEP_LOOK,
     `Image 1 is the climax scene of our story${place}. Images 2 to ${n + 1} are reference portraits of the ${n} heroes who saved the day.`,
     `Draw a vertical storybook keepsake cover: all ${n} heroes together as one team in the lower half, posed heroically and a little comically, shoulder to shoulder, in front of the same place, with the impossible thing from Image 1 looming huge behind them. Keep Image 1's location and palette.`,
     `The heroes, from left to right: ${heroList(o.heroes)}`,
     `${HERO_CONSISTENCY} The top fifth is plain, empty dark sky.${ratingLine(o.rating)}`,
-    `${SCENE_RULE} ${colorFor(o.style)} ${NEGATIVE}`,
+    `${SCENE_RULE} ${NEGATIVE}`,
   ].join("\n");
 }
