@@ -1633,7 +1633,6 @@ export class GameHost {
     this.sceneList = [{ ...opener, goal }];
     this.rememberStory(seed);
     this.turnArt.clear();
-    this.paintedWin.clear();
     // Where the heroes are: the real kind of place (never a real place name, which would leak into story_so_far).
     const placeType = typeof seed.real_event?.place_type === "string" ? (seed.real_event.place_type as string) : "";
     this.story = null;
@@ -1706,7 +1705,9 @@ export class GameHost {
     const ids = humans.length ? humans : all;
     // Judge mode (/tv?judge=1, ~5 min): 1 turn each, at most 3 turns, then the finale everyone plays.
     if (this.judge) return ids.slice(0, 3);
-    // 2-4 people: 2 turns each; 5+: 1 each (every mode). Counted from the people who own turns, never the bots.
+    // Quick Tale (~5 min, CD Sun): 1 turn each, then the finale.
+    if (this.quick) return ids;
+    // Full Story: 2-4 people get 2 turns each; 5+ get 1 each. Counted from the people who own turns, never the bots.
     const cycles = ids.length >= 5 ? 1 : 2;
     return Array.from({ length: cycles }, () => ids).flat();
   }
@@ -2029,16 +2030,12 @@ export class GameHost {
     // design/35: ONE turn call, started the moment the plan is ruled (hidden behind the plan card, the throw and
     // the meter), with the player's own words.
     this.turnP = this.turnFor(judged, roll);
-    const actNow = this.story?.act ?? 1;
-    const big = ["GREAT", "LEGENDARY"].includes(gradeRoll(roll.total, roll.kept).grade);
     this.turnP.then((d) => {
       this.outcomeAt = Date.now();
       this.voiceFor(d.outcome);
-      // A new painting only when the story turns (art agent): a new act, the finale, or the act's first big win.
-      // The picture shows what just happened, in the place the story has moved to.
-      const beat = d.finale ? "finale" : d.act_changed ? "act" : big && !this.paintedWin.has(actNow) ? "win" : null;
-      if (beat === "win") this.paintedWin.add(actNow);
-      if (beat) this.paintDecision(judged, v, d.outcome, d.scene || this.state.situation, beat);
+      // A new painting every turn (CD, Sun): what just happened, in the place the story has moved to. A new act or
+      // the finale frames the whole party; any other turn frames the hero and the friend whose idea it was.
+      this.paintDecision(judged, v, d.outcome, d.scene || this.state.situation, d.finale ? "finale" : d.act_changed ? "act" : "win");
       if (d.scene) this.voiceFor(d.finale || !this.nextOwner() ? `The grand finale. ${d.scene} Everyone, what's the final move?` : d.scene);
     });
     this.setTimer(this.quick ? 3000 : RULING_MS, () => this.startRoll());
@@ -2119,8 +2116,7 @@ export class GameHost {
   }
 
   private lastArtAsked = 0;
-  /** Acts that already got their "first big win" painting. */
-  private paintedWin = new Set<number>();
+
   /** The painting of each turn's decision (turn index; -1 = the finale), for the ending montage. */
   private turnArt = new Map<number, string>();
 

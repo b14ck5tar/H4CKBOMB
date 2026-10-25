@@ -376,7 +376,8 @@ export function checkTurn(p: TurnProposal, ctx: { state: StoryState; hero: strin
     if (words(rn) > 8) out.push(`right_now is ${words(rn)} words (8 max)`);
     if (longestStack(rn, true) >= 4 || modifierPile(rn) >= 2) out.push(`right_now "${rn}" stacks too many words: a verb, then one plain thing ("Tuck the ice hand into the snow")`);
     if (NOT_VERB_START.test(rn) || VAGUE.test(rn)) out.push(`right_now "${rn}" must start with a concrete verb (no vague verbs)`);
-    if (/\bagain\b/i.test(rn) || ctx.state.goals_done.some((x) => norm(x) === norm(rn))) out.push(`right_now "${rn}" repeats an earlier goal: give the NEXT step`);
+    const stays = !WON(ctx.grade) && norm(rn) === norm(ctx.state.right_now); // a miss may keep the same step
+    if (/\bagain\b/i.test(rn) || (!stays && ctx.state.goals_done.some((x) => norm(x) === norm(rn)))) out.push(`right_now "${rn}" repeats an earlier goal: give the NEXT step`);
   }
   if (ctx.next_player && p.scene && !new RegExp(`\\b${esc(ctx.next_player)}\\b`).test(p.scene)) out.push(`scene must hand the moment to ${ctx.next_player} by name`);
   if (sentences(p.scene).length > 1 || words(p.scene) > 24) out.push("scene is 1 sentence, 24 words max");
@@ -428,7 +429,9 @@ export function applyTurn(
   progress = Math.min(100, progress);
   delta = progress - state.progress;
   let rn = clip(p.right_now, 80).replace(/[.!]+$/, "");
-  if (!rn || /\bagain\b/i.test(rn) || state.goals_done.some((x) => norm(x) === norm(rn))) rn = state.finish_line;
+  // A miss stays on the current step (that is what a miss means); only a success may move on to the finish line.
+  const stays = !WON(ctx.grade) && !!rn && norm(rn) === norm(state.right_now);
+  if (!rn || /\bagain\b/i.test(rn) || (!stays && state.goals_done.some((x) => norm(x) === norm(rn)))) rn = WON(ctx.grade) ? state.finish_line : state.right_now || state.finish_line;
   const cast = [...state.cast];
   if (p.new_character?.name && cast.length < 3 && !cast.some((c) => norm(c.name) === norm(p.new_character.name)) && !p.new_fact?.trim()) cast.push({ name: clip(p.new_character.name, 30), role: clip(p.new_character.role, 50) });
   // Wins become facts, so they can never be undone; plus the one new fact the model proposed.
@@ -476,7 +479,8 @@ export function fallbackProposal(state: StoryState, o: { hero: string; attempt?:
   const key = (content[content.length - 1] ?? "big").toLowerCase();
   const won = WON(o.grade);
   const result = won ? "worked" : o.grade === "PARTIAL" ? "half worked" : "made things harder";
-  const fresh = [won ? `Finish what ${o.hero} started` : `Fix what the ${key} plan shook loose`, `Build on ${o.hero}'s ${key} plan`, state.finish_line].find((g) => !state.goals_done.some((x) => norm(x) === norm(g))) ?? state.finish_line;
+  // A miss keeps the current step; a success heads for the finish line (plain, never "Build on X's plan").
+  const fresh = won ? state.finish_line : state.right_now || state.finish_line;
   return {
     outcome: `${o.hero} ${action}${credit} ${how[o.grade]}`.replace(/\s+/g, " ").trim(),
     scene: o.next_player ? `${o.next_player}, ${o.hero}'s ${key} plan ${result}, so what now?` : `Everyone, ${o.hero}'s ${key} plan ${result}, and the grand finale is next.`,
