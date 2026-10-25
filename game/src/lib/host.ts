@@ -439,7 +439,7 @@ export class GameHost {
   private finalPitch: Pitch | null = null;
   private artP = new Map<string, Promise<void>>(); // `${questId}:${scene}` -> hero-painted scene art in flight
   private artSeq = 10; // keys for per-decision paintings in sceneImages (0-2 are the plates)
-  private epilogueP: Promise<{ ending: string; line: string; recap: string; skills: Record<string, string> | null; sfx?: StorySfxCue[]; buildup?: string; payoff?: string }> | null = null;
+  private epilogueP: Promise<{ ending: string; line: string; recap: string; skills: Record<string, string> | null; sfx?: StorySfxCue[]; buildup?: string; payoff?: string; bridge?: string }> | null = null;
   private endingAt = 0;
   private storybookP: Promise<Storybook> | null = null;
   private reactionId = 0;
@@ -2842,12 +2842,13 @@ export class GameHost {
     const sc = this.sceneList[this.state.sceneIndex];
     const heroes = this.heroes().map((p) => ({ id: p.id, name: p.hero!.name }));
     const winner = this.heroName(pitch.playerId);
-    const fb = () => ({ ending: fallbackEnding(ending, winner, pitch.verdict && !pitch.verdict.fallback ? pitch.verdict.interpretation : "", this.story?.finish_line ?? ""), line: FALLBACK_LINE[ending], recap: "", skills: null as Record<string, string> | null, sfx: [] as StorySfxCue[], buildup: "", payoff: "" });
+    const fb = () => ({ ending: fallbackEnding(ending, winner, pitch.verdict && !pitch.verdict.fallback ? pitch.verdict.interpretation : "", this.story?.finish_line ?? ""), line: FALLBACK_LINE[ending], recap: "", skills: null as Record<string, string> | null, sfx: [] as StorySfxCue[], buildup: "", payoff: "", bridge: "" });
     this.epilogueP = this.viaAI(
       "The ending",
-      this.ask<{ ending: string; line: string; recap: string; skills?: { id: string; phrase: string }[]; sfx?: unknown; sfx_buildup?: string; sfx_payoff?: string }>("story_end", {
+      this.ask<{ ending: string; line: string; recap: string; skills?: { id: string; phrase: string }[]; sfx?: unknown; sfx_buildup?: string; sfx_payoff?: string; bridge?: string }>("story_end", {
         state: this.story,
         winner_hero: { name: winner, pronouns: this.player(pitch.playerId)?.hero?.pronouns || "they/them" },
+        real_story: this.seed?.the_real_story ? { headline: this.seed.the_real_story.headline, summary: this.seed.the_real_story.summary, now: this.seed.the_real_story.now ?? "" } : undefined,
         plan: pitch.text,
         grade: gradeRoll(roll.total, roll.kept).grade,
         scene: { title: sc?.title, goal: sc?.goal },
@@ -2878,6 +2879,7 @@ export class GameHost {
               skills: Array.isArray(d.skills) ? Object.fromEntries(d.skills.filter((x) => x && typeof x.id === "string").map((x) => [x.id, String(x.phrase ?? "").trim()])) : null,
               sfx: pickStorySfxCues(d.sfx),
               buildup: pickStorySfx(d.sfx_buildup),
+              bridge: String(d.bridge ?? "").trim().slice(0, 200),
               payoff: pickStorySfx(d.sfx_payoff),
             }
           : null,
@@ -2973,7 +2975,10 @@ export class GameHost {
   private nextEnding(): void {
     this.clearTimer();
     const id = this.endingQueue.shift();
-    if (id === undefined) return this.startReveal();
+    if (id === undefined) {
+      void this.startReveal();
+      return;
+    }
     const step = this.endingSteps[id];
     if (!step) return this.nextEnding();
     let called = false;
@@ -3208,7 +3213,21 @@ export class GameHost {
     this.setTimer(lead + (spoken ? Math.max(spoken + 1200, MONTAGE_PANEL_MS) : Math.min(11_000, Math.max(7000, ending.split(/\s+/).length * 320 + 3000))), done);
   }
 
-  private startReveal() {
+  /** The grand ending's reveal data (CD): each hero's key move in their own words, the real story in beats, the bridge. */
+  private async revealData() {
+    const rs = this.seed?.the_real_story;
+    const e = await withTimeout(this.epilogueP ?? Promise.resolve(null), 1500, () => null);
+    const moves = this.heroes().map((p) => {
+      const mine = this.state.log.filter((l) => l.heroId === p.id && l.pitch);
+      const best = mine.slice().sort((a, b) => BAND_RANK[a.band] - BAND_RANK[b.band])[0];
+      return { heroId: p.id, name: p.hero!.name, move: cleanText(best?.pitch ?? "", 140) };
+    });
+    return { moves, real: { what: rs?.headline ?? "", ending: [rs?.summary, rs?.now].filter(Boolean).join(" "), source: rs?.source ?? "", date: rs?.date ?? "" }, bridge: e?.bridge ?? "" };
+  }
+
+  private async startReveal() {
+    const revealData = await this.revealData();
+    this.set({ revealData });
     const seed = this.seed;
     if (seed) {
       const rs = seed.the_real_story;
@@ -3247,10 +3266,13 @@ export class GameHost {
       // "based on a true story" is said ONCE in the game, here (the on-screen banner stays). Never "this really happened":
       // the game's story is based on it, it didn't happen (CD).
       const said = this.seed?.author ? `Here's the twist… it's based on ${speakableName(this.seed.author.name)}'s true story. ${rsr.summary}` : `Now, here's the strange part… it's based on a true story. ${rsr.headline}.`;
-      this.voiceBy(said, Date.now() + 2500).then((clip) => this.state.phase === "reveal" && this.play(clip));
+      // The bridge links the table's ending to the real one, after a beat of breathing room (CD: the grand ending).
+      const bridge = this.state.revealData?.bridge ?? "";
+      this.voiceBy(bridge ? `${said} ... ${bridge}` : said, Date.now() + 2500).then((clip) => this.state.phase === "reveal" && this.play(clip));
     }
     const text = `${this.seed?.the_real_story.headline ?? ""} ${this.seed?.the_real_story.summary ?? ""}`;
-    if (this.quick) return this.reading(text, () => this.showStorybook(), QUICK.revealMs, QUICK.revealMs);
+    // Room to breathe: the headline plus the bridge line (CD's grand ending); Continue still skips.
+    if (this.quick) return this.reading(text, () => this.showStorybook(), Math.max(QUICK.revealMs, 16_000), Math.max(QUICK.revealMs, 16_000));
     this.reading(text, () => this.showStorybook(), 15000);
   }
 
