@@ -24,12 +24,12 @@ If you can't see the project, the CD has to add you as a teammate first (message
 | Elevator pitch | `The one group project where everyone actually shows up.` |
 | Thumbnail | `devpost-media/thumbnail-final.jpg` |
 | About the project (the big text box) | Everything from **## Inspiration** down to the end of **## What's next for Group Project** (stop at the `---` line). Keep the `##` headings; Devpost reads Markdown. |
-| Built with | Type each tag and press Enter: next.js, typescript, react, tailwindcss, vercel, supabase, meta-muse-spark, meta-muse-image, meta-muse-voice-transcribe, elevenlabs, openai-tts, web-audio-api, serpapi, google-news, mcp, claude-code |
+| Built with | Type each tag and press Enter: next.js, react, typescript, tailwindcss, vercel, supabase, meta-muse-spark, meta-muse-image, meta-muse-voice-transcribe, mcp, elevenlabs, openai, web-audio-api, serpapi, google-news, claude-code |
 | "Try it out" links | `https://groupproject-game.vercel.app/tv` and `https://groupproject-game.vercel.app/tv?judge=1` |
 | Image gallery | Upload `devpost-media/gallery-final/` **in number order, 1 to 6** (1 is the cover). |
 | Video demo link | The YouTube link from step 1 |
 
-Don't paste the "Paste from Name down" line, the **## Built with / Tracks / Try it** sections into the text box, or
+The full field-by-field list is `DEVPOST_SUBMIT.md` (top level). Don't paste the **## Built with / Try it** sections into the text box, or
 anything in *italics with brackets*.
 
 ## 3. Submit

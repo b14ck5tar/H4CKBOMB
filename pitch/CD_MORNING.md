@@ -116,7 +116,7 @@ Never on screen: hotkeys, the "?" help, "Local mode", the address bar, any key, 
 - [ ] YouTube, **Unlisted**. Open the link in a private window: it plays without a login.
 - [ ] Copy the MP4 to your phone: it's the backup video for the judge table.
 
-## 8. Devpost: submit by ~10:15 (follow `pitch/PARTNER_SUBMIT.md` §2-3; it works for you too)
+## 8. Devpost: submit by ~10:15 (follow `DEVPOST_SUBMIT.md`, field by field)
 
 Everything is paste-ready: the text (DEVPOST.md, your Accomplishments line is filled in), the gallery
 (`devpost-media/gallery-final/`, upload 1-6 in order), tracks (Meta, Most Entertaining, SerpApi).
