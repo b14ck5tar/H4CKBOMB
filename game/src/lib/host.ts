@@ -1656,9 +1656,11 @@ export class GameHost {
       {
         ...opener,
         goal,
-        problem: { name: seed.the_threat.name, stakes: seed.problem?.stakes ?? "" },
+        // A plain problem name ("the ice hand"), never the invented title ("The Ice Age Grip").
+        problem: { name: (quick && seed.quick_scene?.problem_name) || seed.the_threat.name, stakes: seed.problem?.stakes ?? "" },
         real_setting: seed.real_event,
-        beats: seed.beats ?? (seed.scenes ?? []).map((sc) => sc.goal),
+        // Quick Tale's opener already answers the full story's first mystery, so its first step comes from the quick scene.
+        beats: quick && seed.quick_scene?.first_step ? [seed.quick_scene.first_step] : seed.beats ?? (seed.scenes ?? []).map((sc) => sc.goal),
       },
       this.heroes().map((p) => ({ name: p.hero!.name, pronouns: p.hero!.pronouns })),
       this.state.turnOrder.length,

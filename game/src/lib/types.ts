@@ -162,7 +162,7 @@ export interface QuestSeed {
   author?: { pid: string; name: string };
   art_style_hint: string;
   scenes?: SeedScene[]; // Full Story: hook, twist, climax
-  quick_scene?: SeedScene; // Quick Tale: the one scene
+  quick_scene?: SeedScene & { first_step?: string; problem_name?: string }; // Quick Tale: the one scene (+ its first step, plain problem name)
   category?: string;
   tone?: string;
   /** The youngest group this story suits: "kids" = fine for everyone, "adults" = adults only. Missing = "teens". */

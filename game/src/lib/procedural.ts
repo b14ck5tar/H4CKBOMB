@@ -356,6 +356,9 @@ export function checkTurn(p: TurnProposal, ctx: { state: StoryState; hero: strin
   if (!o) return ["outcome is empty"];
   if (ctx.plan && !usesPlan(o, ctx.plan)) out.push(`the plan is the cause: the outcome must use the player's own key word (one of: ${planWords(ctx.plan).slice(0, 5).join(", ")})`);
   if (ctx.hook_due && ctx.state.hook && !usesPlan(`${o} ${p.scene}`, ctx.state.hook)) out.push("keep the opener's hook in play (state.hook) in this act");
+  // A forward grade must change something: "plan happens, but the old obstacle still holds" stalls the story.
+  const second = sentences(o)[1] ?? "";
+  if (!["SETBACK", "DISASTER"].includes(ctx.grade) && /\b(still|tighter|closer|anyway)\b/i.test(second)) out.push("the plan must change something for good: sentence 2 is one NEW snag the plan caused, never the old obstacle still holding on");
   const retold = repeatsMoment(o, ctx.state.last_moments, ctx.plan);
   if (retold) out.push(`repeats an earlier moment ("${retold}"): something new happens now, and what was learned stays learned`);
   if (/\b(still right there|isn't solved yet|is not solved yet)\b/i.test(o)) out.push("banned filler: never 'still right there' or 'isn't solved yet'; say what the action did");
@@ -377,6 +380,10 @@ export function checkTurn(p: TurnProposal, ctx: { state: StoryState; hero: strin
     if (longestStack(rn, true) >= 4 || modifierPile(rn) >= 2) out.push(`right_now "${rn}" stacks too many words: a verb, then one plain thing ("Tuck the ice hand into the snow")`);
     if (NOT_VERB_START.test(rn) || VAGUE.test(rn)) out.push(`right_now "${rn}" must start with a concrete verb (no vague verbs)`);
     const stays = !WON(ctx.grade) && norm(rn) === norm(ctx.state.right_now); // a miss may keep the same step
+    // A success moves on: a reworded copy of the step just worked on ("Scoop beads before high tide" x3) is a repeat.
+    const rw = planWords(rn);
+    const near = (g: string) => rw.length > 0 && rw.filter((w) => planWords(g).includes(w)).length / rw.length >= 0.6;
+    if (WON(ctx.grade) && near(ctx.state.right_now)) out.push(`right_now "${rn}" is the step they just did, reworded: give the NEXT step`);
     if (/\bagain\b/i.test(rn) || (!stays && ctx.state.goals_done.some((x) => norm(x) === norm(rn)))) out.push(`right_now "${rn}" repeats an earlier goal: give the NEXT step`);
   }
   if (ctx.next_player && p.scene && !new RegExp(`\\b${esc(ctx.next_player)}\\b`).test(p.scene)) out.push(`scene must hand the moment to ${ctx.next_player} by name`);
