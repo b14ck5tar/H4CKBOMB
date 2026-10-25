@@ -671,6 +671,8 @@ export class GameHost {
   }
 
   private toast(text: string) {
+    // Never over the big moments (the roll, what happened, the finale, the ending): a "back" pill there is noise.
+    if (["narrating", "roll", "outcome", "final_roll", "final_result", "epilogue", "reveal"].includes(this.state.phase)) return;
     const t = { text, id: ++this.toastId };
     this.toastSubs.forEach((f) => f(t));
   }
