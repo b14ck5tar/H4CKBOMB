@@ -4,6 +4,7 @@
  * goal card, chunky buttons, plan box, reactions, d20/d6 glyphs). Pure props, no GameHost or transport import,
  * so every screen previews at /phone-preview. Styles: app/phone-theme.css (imported here, pk-* classes).
  */
+import { heroPortrait } from "@/lib/heroArt";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Player } from "@/lib/types";
 import "@/app/phone-theme.css";
@@ -20,7 +21,7 @@ export function vibrate(p: number | number[]) {
 /** The picture for a player's hero: the ready-made card art, else the painted portrait (if any). */
 export function heroImg(p?: Player | null, portrait?: string) {
   if (!p) return undefined;
-  return p.pick ? `/heroes/${p.pick}.webp` : portrait || undefined;
+  return p.pick ? heroPortrait(p.pick) : portrait || undefined;
 }
 
 /** ms left until deadlineAt, re-rendering every 250 ms while it runs. */

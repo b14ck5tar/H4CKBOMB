@@ -6,11 +6,33 @@
 import { heroPortrait } from "@/lib/heroArt";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useCountdown, usePhone } from "@/lib/usePhone";
-import { PLAN_MAX, QUICK_TURN_MS, REACTIONS, TURN_MS } from "@/lib/rules";
-import { eligibleIds, nowText, plateFor, turnOwner, winnerPid, shortName } from "@/lib/now";
+import { PLAN_MAX, QUICK_TURN_MS, REACTIONS, STAT_LABEL, TURN_MS, stampText } from "@/lib/rules";
+import { eligibleIds, heroFirst, nowText, plateFor, turnOwner, winnerPid, shortName } from "@/lib/now";
 import { sfx } from "@/lib/sfx";
 import { playSfx } from "@/lib/sound";
 import { HeroCard } from "./HeroCard";
+import {
+  BackPlanScreen,
+  FinalePitchScreen,
+  GameButton,
+  JoinScreen,
+  KeepsakeScreen,
+  LobbyScreen,
+  MakeHeroScreen,
+  PhoneFrame,
+  QuestVoteScreen,
+  RevealScreen,
+  Say as PSay,
+  ShakeScreen,
+  SkillScreen,
+  StoryWriteScreen,
+  SuggestScreen,
+  ThrowScreen,
+  WatchingScreen,
+  YourTurnScreen,
+  heroImg,
+  type ReadyHero,
+} from "./phone/index"; // "/index" on purpose: on Windows "./phone" resolves to this file
 import { D20 } from "./D20";
 import { MicButton } from "./MicButton";
 import type { GameState, Hero, Player } from "@/lib/types";
@@ -778,110 +800,189 @@ export function Phone({ code }: { code: string }) {
 
   if (!state) {
     return (
-      <Shell>
-        <Say text={`Finding table ${code}…`} />
-        <p className="font-ui text-sm opacity-80">Make sure the game is open on the laptop or TV.</p>
-      </Shell>
+      <PhoneFrame>
+        <PSay text={`Finding table ${code}…`} />
+      </PhoneFrame>
     );
   }
   if (!me) {
-    if (state.phase !== "lobby") return <Shell state={state}><Say text="A story is underway. Jump in on the next one!" /></Shell>;
-    return <Shell><JoinForm onJoin={(name) => send("join", { name })} /></Shell>;
-  }
-
-  // Never cover the climax (final roll, ending, reveal) with the away screen.
-  const inStory = !["lobby", "story_write", "story_vote", "final_roll", "final_result", "epilogue", "reveal", "storybook"].includes(state.phase);
-  if (inStory && me.away) {
+    if (state.phase !== "lobby")
+      return (
+        <PhoneFrame art={artFor(state)}>
+          <PSay text="A story is underway. Jump in on the next one!" />
+        </PhoneFrame>
+      );
     return (
-      <Shell me={me} portrait={portrait} state={state}>
-        <Say text={`${me.hero?.name ?? "Your hero"} is on autopilot`} />
-        <BigButton label="I'M BACK" sub="Take your hero back" tone="gilt" onClick={() => send("back")} />
-      </Shell>
+      <PhoneFrame onPointerDown={() => sfx.unlock()}>
+        <JoinScreen code={code} onJoin={(name) => send("join", { name })} />
+      </PhoneFrame>
     );
   }
 
-  const goal = SCENE_PHASES.includes(state.phase) ? state.goal : "";
-  const passive = (text = nowText(state, me.id)) => (
-    <>
-      <Say text={text} goal={goal} now={goal && state.nowGoal && state.nowGoal !== state.goal ? state.nowGoal : ""} />
-      <ReactionBar send={send} />
-    </>
+  const timer = (total: number) => ({ deadlineAt, total });
+  const ladderProps = { goal: state.goal, nowGoal: state.nowGoal, ladder: state.ladder, step: state.step };
+  const owner = state.players.find((p) => p.id === turnOwner(state));
+  const turnMs = state.mode === "quick" ? QUICK_TURN_MS : TURN_MS;
+  // Never a dark screen: while the TV has the floor, the phone shows what's happening (the outcome itself once it's
+  // in), the goal, and big reactions that pop on the TV.
+  const watching = (text = nowText(state, me.id)) => (
+    <WatchingScreen
+      text={state.phase === "outcome" && state.outcome ? state.outcome : text}
+      kicker={state.phase === "outcome" ? "What happened" : "Eyes up"}
+      {...ladderProps}
+      reactions={REACTIONS}
+      onReact={(emoji) => send("react", { emoji })}
+    />
   );
-  let body: React.ReactNode;
 
-  switch (state.phase) {
-    case "lobby":
-      if (me.status === "building" && !me.hero) {
-        body = <Say text="Your hero is being written and drawn. Hang tight" />;
-      } else if (me.hero) {
+  // Never cover the climax (final roll, ending, reveal) with the away screen.
+  const inStory = !["lobby", "story_write", "story_vote", "final_roll", "final_result", "epilogue", "reveal", "storybook"].includes(state.phase);
+  let body: React.ReactNode;
+  if (inStory && me.away) {
+    body = (
+      <>
+        <PSay text={`${me.hero?.name ?? "Your hero"} is on autopilot`} />
+        <GameButton tone="lime" xl onClick={() => send("back")} sub="Take your hero back">
+          I&apos;M BACK
+        </GameButton>
+      </>
+    );
+  } else
+    switch (state.phase) {
+      case "lobby":
+        if (me.status === "building" && !me.hero) body = <PSay text="Your hero is being written and drawn. Hang tight" />;
+        else if (me.hero && me.real === undefined) body = <SkillScreen me={me} portrait={heroImg(me, portrait)} onAnswer={(skill) => send("real", { skill, fear: "" })} />;
+        else if (me.hero) body = <LobbyScreen me={me} portrait={heroImg(me, me.hasPortrait ? portrait : undefined)} players={state.players} onRedraw={() => send("redraw")} />;
+        else
+          body = (
+            <MakeHeroScreen
+              readyMade={QUICK as ReadyHero[]}
+              takenIds={state.players.filter((p) => p.id !== me.id && p.pick).map((p) => p.pick!)}
+              onCreate={({ text, skill }) => {
+                sfx.unlock();
+                send("real", { skill, fear: "" });
+                send("concept", { text });
+              }}
+              onPick={(heroId) => {
+                sfx.unlock();
+                send("pick", { heroId });
+              }}
+            />
+          );
+        break;
+      case "story_write":
+        body = <StoryWriteScreen sent={state.written.includes(me.id)} onSend={(st) => send("story", st)} timer={timer(state.mode === "quick" ? 90_000 : 120_000)} />;
+        break;
+      case "story_vote":
+        body = <QuestVoteScreen options={state.storyOptions} votes={state.votes} players={state.players} meId={me.id} onVote={(id) => send("vote", { id })} timer={timer(15_000)} />;
+        break;
+      case "turn":
+        body =
+          turnOwner(state) === me.id ? (
+            <YourTurnScreen
+              key={state.turnIndex}
+              ideas={state.ideas}
+              players={state.players}
+              portraitOf={(p) => heroImg(p, undefined)}
+              {...ladderProps}
+              max={PLAN_MAX}
+              onPitch={(text, creditId) => send("pitch", { text, creditId })}
+              onTyping={() => send("typing")}
+              timer={timer(turnMs)}
+            />
+          ) : (
+            <SuggestScreen
+              key={state.turnIndex}
+              owner={owner}
+              ownerPortrait={heroImg(owner)}
+              sent={state.ideas[me.id]}
+              {...ladderProps}
+              max={PLAN_MAX}
+              onIdea={(text) => send("idea", { text })}
+              onTyping={() => send("typing")}
+              timer={timer(turnMs)}
+            />
+          );
+        break;
+      case "pitch":
         body = (
-          <div className="flex flex-col gap-3">
-            {me.real === undefined ? <RealForm send={send} /> : <Say text="You're in. Waiting for the story to start" />}
-            <HeroCard player={me} portrait={me.pick ? heroPortrait(me.pick) : me.hasPortrait ? portrait : undefined} showRoast={false} />
-            <button className="font-ui text-sm underline opacity-80" onClick={() => send("redraw")}>
-              Pick a different hero
-            </button>
-          </div>
+          <FinalePitchScreen
+            key={state.sceneIndex}
+            sent={state.pitches.find((p) => p.playerId === me.id)?.text}
+            goal={state.goal}
+            max={PLAN_MAX}
+            onPitch={(text) => send("pitch", { text })}
+            onTyping={() => send("typing")}
+            timer={timer(turnMs)}
+          />
         );
-      } else {
-        body = <CharacterPicker state={state} me={me} send={send} />;
-      }
-      break;
-    case "story_write":
-      body = <StoryWriteForm state={state} me={me} send={send} deadlineAt={deadlineAt} />;
-      break;
-    case "story_vote":
-      body = <StoryVote state={state} me={me} send={send} deadlineAt={deadlineAt} />;
-      break;
-    case "turn":
-      body =
-        turnOwner(state) === me.id ? (
-          <OwnerTurn key={state.turnIndex} state={state} send={send} deadlineAt={deadlineAt} />
-        ) : (
-          <IdeaForm key={state.turnIndex} state={state} me={me} send={send} deadlineAt={deadlineAt} />
+        break;
+      case "vote":
+        body = (
+          <BackPlanScreen
+            pitches={state.pitches}
+            players={state.players}
+            meId={me.id}
+            mine={state.votes[me.id]}
+            eligible={eligibleIds(state)}
+            portraitOf={(p) => heroImg(p, undefined)}
+            goal={state.goal}
+            onVote={(id) => send("vote", { id })}
+            timer={timer(20_000)}
+          />
         );
-      break;
-    case "pitch":
-      body = state.pitches.some((p) => p.playerId === me.id) ? passive() : <PitchForm key={state.sceneIndex} state={state} send={send} deadlineAt={deadlineAt} />;
-      break;
-    case "roll": {
-      const mine = state.rolls[0]?.playerId === me.id;
-      const shown = state.revealed.includes(me.id);
-      body =
-        mine && !shown ? (
-          <div className="flex flex-col gap-3">
-            <Timer deadlineAt={deadlineAt} total={10000} />
-            <SwipeThrow
+        break;
+      case "roll": {
+        const r = state.rolls[0];
+        const mine = r?.playerId === me.id;
+        if (mine && !state.revealed.includes(me.id)) {
+          const pitch = state.pitches.find((p) => p.playerId === me.id);
+          const v = pitch?.verdict;
+          const bonuses = [
+            ...(v ? [{ label: STAT_LABEL[v.stat], value: r.statBonus }] : []),
+            ...(r.bonus ? [{ label: pitch?.creditId ? `${heroFirst(state, pitch.creditId)}'s idea` : "backed", value: r.bonus }] : []),
+            ...(r.tierMod ? [{ label: v ? `${stampText(v.tier).toLowerCase()} plan` : "plan", value: r.tierMod }] : []),
+          ];
+          body = (
+            <ThrowScreen
               onThrow={(power, angle) => {
                 sfx.unlock();
                 send("roll", { power, angle });
                 vibrate([20, 40, 20]);
               }}
+              plan={v?.interpretation && !v.fallback ? v.interpretation : pitch?.text}
+              bonuses={bonuses}
+              timer={timer(10_000)}
             />
-          </div>
-        ) : (
-          passive(mine ? "Eyes on the TV" : undefined)
+          );
+        } else body = watching(mine ? "Eyes on the TV" : undefined);
+        break;
+      }
+      case "final_roll":
+      case "final_result":
+        body = <ShakeScreen final={state.final} phase={state.phase} meId={me.id} deadlineAt={deadlineAt} onArm={() => send("arm")} onShake={() => send("roll")} onUnlock={() => sfx.unlock()} />;
+        break;
+      case "reveal":
+        body = <RevealScreen />;
+        break;
+      case "storybook":
+        body = (
+          <KeepsakeScreen
+            book={state.storybook}
+            me={me}
+            portrait={heroImg(me, portrait)}
+            said={state.log.filter((l) => l.heroId === me.id && !l.flagged).map((l) => l.pitch)[0]}
+            solvedBy={state.solvedBy}
+          />
         );
-      break;
+        break;
+      default:
+        body = watching();
     }
-    case "vote":
-      body = <BackPlan state={state} me={me} send={send} deadlineAt={deadlineAt} />;
-      break;
-    case "final_roll":
-      body = <FinalRollPhone state={state} me={me} send={send} deadlineAt={deadlineAt} />;
-      break;
-    case "storybook":
-      body = <Keepsake state={state} me={me} portrait={portrait} />;
-      break;
-    default:
-      body = passive();
-  }
 
   return (
-    <Shell me={me} portrait={portrait} state={state}>
-      <div key={state.phase} className="ph-screen">
-        {body}
-      </div>
-    </Shell>
+    <PhoneFrame me={me} portrait={heroImg(me, portrait)} art={artFor(state)} code={code} screenKey={state.phase} onPointerDown={() => sfx.unlock()}>
+      {body}
+    </PhoneFrame>
   );
 }
