@@ -48,8 +48,67 @@ function wavFromPcm(pcm: Buffer): Buffer {
  * Raw 16-bit PCM for playback: an even byte count, scaled down only if it would clip, and a 5 ms
  * fade at each end so a clip never starts or stops with a click.
  */
+/**
+ * Smooth delivery (CD: "a bit choppy"): any pause longer than 0.3 s inside a line is shortened to 0.3 s and lead-in
+ * silence to 0.06 s. Only near-silence (under -38 dBFS: silence and breath noise) is removed, with a 6 ms crossfade
+ * at each cut, so nothing is time-stretched (that is what sounded echoey).
+ */
+export function trimPauses(pcm: Buffer): Buffer {
+  const n = pcm.length / 2;
+  const at = (i: number) => pcm.readInt16LE(i * 2);
+  const QUIET = 410; // -38 dBFS: silence and breath noise, never a word
+  const win = Math.floor(RATE * 0.01); // 10 ms blocks
+  const maxGap = Math.floor(RATE * 0.3);
+  const lead = Math.floor(RATE * 0.06);
+  const xf = Math.floor(RATE * 0.006);
+  const loud: boolean[] = [];
+  for (let b = 0; b * win < n; b++) {
+    let peak = 0;
+    for (let i = b * win; i < Math.min(n, (b + 1) * win); i++) peak = Math.max(peak, Math.abs(at(i)));
+    loud.push(peak > QUIET);
+  }
+  const first = loud.indexOf(true);
+  if (first < 0) return pcm;
+  // keep-ranges in samples
+  const keep: [number, number][] = [];
+  let start = Math.max(0, first * win - lead);
+  let b = first;
+  while (b < loud.length) {
+    if (loud[b]) { b++; continue; }
+    let e = b;
+    while (e < loud.length && !loud[e]) e++;
+    const gap = (e - b) * win;
+    if (e < loud.length && gap > maxGap) {
+      // keep half the allowed pause on each side of the cut
+      keep.push([start, b * win + maxGap / 2]);
+      start = e * win - maxGap / 2;
+    }
+    b = e;
+  }
+  keep.push([start, n]);
+  if (keep.length === 1 && keep[0][0] === 0) return pcm;
+  const out: number[] = [];
+  for (const [a, z] of keep) {
+    for (let i = a; i < z; i++) {
+      const v = at(i);
+      const k = i - a;
+      if (out.length >= xf && k < xf) {
+        // crossfade into the previous range's tail
+        const j = out.length - xf + k;
+        const t = k / xf;
+        out[j] = Math.round(out[j] * (1 - t) + v * t);
+        continue;
+      }
+      out.push(v);
+    }
+  }
+  const buf = Buffer.alloc(out.length * 2);
+  for (let i = 0; i < out.length; i++) buf.writeInt16LE(Math.max(-32768, Math.min(32767, out[i])), i * 2);
+  return buf;
+}
+
 function cleanPcm(raw: Buffer): Buffer {
-  const pcm = raw.length % 2 ? raw.subarray(0, raw.length - 1) : Buffer.from(raw);
+  const pcm = trimPauses(raw.length % 2 ? raw.subarray(0, raw.length - 1) : Buffer.from(raw));
   const n = pcm.length / 2;
   let peak = 1;
   for (let i = 0; i < n; i++) peak = Math.max(peak, Math.abs(pcm.readInt16LE(i * 2)));
@@ -85,7 +144,6 @@ async function openai(voice: VoiceId, style: string, text: string, timeoutMs: nu
               voice: VOICES[voice].openai,
               input: text,
               instructions: `${style || "Read this as a storyteller"}. ${VOICE_DIRECTION}`,
-              speed: 1.1,
               response_format: "pcm",
             },
       ),
@@ -285,7 +343,7 @@ function toClip(pcm: Buffer, provider: Clip["provider"]): Clip {
 async function elevenClip(voice: VoiceId, text: string, model: ElevenModel, timeoutMs: number) {
   const cfg = ELEVEN[voice];
   const body = elevenText(model, text);
-  const id = crypto.createHash("sha1").update(`el1|${cfg.voiceId}|${model}|${JSON.stringify(cfg.settings[model] ?? FLASH)}|${body}`).digest("hex");
+  const id = crypto.createHash("sha1").update(`el2|${cfg.voiceId}|${model}|${JSON.stringify(cfg.settings[model] ?? FLASH)}|${body}`).digest("hex");
   return cached(id, "elevenlabs", async () => {
     const t0 = Date.now();
     const pcm = await eleven(voice, model, text, timeoutMs);
@@ -298,7 +356,7 @@ async function elevenClip(voice: VoiceId, text: string, model: ElevenModel, time
 
 /** OpenAI first, then Gemini; cached by (voice, style, text). Throws when both fail. */
 async function openaiClip(voice: VoiceId, style: string, text: string, timeoutMs: number) {
-  const id = crypto.createHash("sha1").update(`v5|${voice}|${style}|${text}`).digest("hex"); // v3: speed 1.1, expressive direction, clean PCM
+  const id = crypto.createHash("sha1").update(`v6|${voice}|${style}|${text}`).digest("hex"); // v6: natural speed, smooth direction, pauses trimmed
   const clip = await cached(id, "openai", async () => {
     const t0 = Date.now();
     let pcm = await openai(voice, style, text, timeoutMs);

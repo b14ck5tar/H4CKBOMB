@@ -22,7 +22,7 @@ export const VOICE_IDS = Object.keys(VOICES) as VoiceId[];
  * appended to the story's own style line.
  */
 export const VOICE_DIRECTION =
-  "Expressive, emotionally alive storyteller: real wonder, suspense and comic timing; leans in on surprises, lets a smile show on funny lines, drops low and tense on danger; mysterious and alluring, never flat, never announcer-like; natural pauses.";
+  "Expressive, emotionally alive storyteller: real wonder, suspense and comic timing; a smile on funny lines, low and tense on danger; one smooth, flowing read with brisk, short pauses; close and dry, never breathy or whispery; never flat, never announcer-like.";
 
 /** The house style when the casting call fails: the CD's original brief for the narrator. */
 export const DEFAULT_CAST = {
