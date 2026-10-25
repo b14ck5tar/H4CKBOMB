@@ -1,18 +1,6 @@
 # Group Project (Devpost text, final build)
 
-> **Before pasting (Sun by ~10:30 AM; deadline 11:30 AM).** This block is not for Devpost; delete it when you paste.
-> 1. **Confirm the live site runs the final build.** At 8:40 AM `origin/main` was 44 commits behind
->    `rebuild-around-the-table` (the procedural story engine is only on the branch). Merge + redeploy, then open
->    https://groupproject-game.vercel.app/tv and check: the TV says "{name}, tell the table your plan", the progress
->    rail has 3 act gems, and the ending says "Based on a true story". If the live site is still the old build, the
->    "players steer" paragraph below describes a game judges can't play.
-> 2. Paste the video link at the bottom. Upload the gallery from `devpost-media/gallery-v2/` in this order:
->    `composite-1-turn.jpg` (make it the cover), then the numbered TV shots `01` to `13`, then `composite-2-roll.jpg`.
->    These are draft shots: re-shoot after the next deploy with `node scripts/gallery-shots.mjs` (a dev server on port
->    3012; see the script's header). Devpost takes JPG/PNG up to 5 MB, 3:2 crops best.
-> 3. Fill the CD's one line under "Accomplishments".
-> 4. Every claim below was checked against the code at 8:45 AM Sun (`game/src`). If a feature is cut before the
->    freeze, delete its sentence; don't leave a claim judges can't see.
+Paste from "Name" down. The paste steps, gallery order and last checks are in `pitch/CD_MORNING.md`.
 
 ## Name
 Group Project
@@ -31,7 +19,7 @@ come from real life, so the ending starts a real conversation: "wait, that actua
 ## What it does
 
 A laptop or TV is the table. Phones scan a QR code and become controllers. No app, no accounts, no prep. 2 to 6
-players in one room. Quick Tale is about 5 minutes; Full Story about 10.
+players in one room. A Quick Tale takes about 5 to 10 minutes, depending on how many play; a Full Story 10 to 15.
 
 1. **Make a hero.** Describe them in one line and answer one question: "What's your secret talent?" Muse paints the
    hero in our house style, Neon Ink (hand-inked lines, flat neon color). Or grab one of 18 ready-made heroes and
@@ -170,8 +158,7 @@ What actually changed the game:
 - Meta: Bringing People Closer Together with AI
 - Most Entertaining
 - Best Use of SerpApi
-- MLH Best Use of Gemini API: **CD call.** Gemini TTS is only the backup narrator, so this entry is weak. Keep it only
-  if we're under the track limit.
+- MLH Best Use of Gemini API: only if the CD keeps it (see `pitch/CD_MORNING.md`).
 - Best Novice applies automatically if we're eligible.
 
 ## Try it

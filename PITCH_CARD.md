@@ -2,8 +2,8 @@
 
 **Group Project: the one group project where everyone actually shows up.**
 
-Rewritten Sun Oct 25 ~1 AM, updated ~8:50 AM for the procedural story build (players steer, the DM reacts). Stage pitch: Sun 5:30 PM (GDC 2.216). Judging table: Sun 2 to 5 PM
-(WEL), run-of-show in `design/27-judge-table-plan.md`. Slides: `pitch/deck.html` (also at
+Rewritten Sun Oct 25 ~1 AM, updated Sun ~7 AM for the procedural story build (players steer, the DM reacts) and judge mode. Stage pitch: Sun 5:30 PM (GDC 2.216). Judging table: Sun 2 to 5 PM
+(WEL): the partner runs it alone until the CD is back ~4:45; lines in PITCH_KIT.md, pocket card `pitch/CHEAT_SHEET.md`. Slides: `pitch/deck.html` (also at
 groupproject-game.vercel.app/pitch/deck.html). Live: **groupproject-game.vercel.app** (TV: `/tv`, phones: `/play`).
 
 CD = creative director (speaks). ENG = engineer/partner (drives the laptop and the live demo phone).
@@ -94,7 +94,7 @@ working demo (the live swipe and the QR on 8).
 
 ### Privacy
 **"What happens to what we type?"** It goes to Meta's Muse API to run tonight's game; the phone says so on the
-join screen ("Your words go to Meta's Muse AI to run tonight's game. Nothing is saved after."). No accounts, no
+join screen ("Your words go to Meta's Muse AI to run tonight's game."). No accounts, no
 names beyond a nickname, no database of players. Rooms are a 4-letter code over Supabase broadcast; the TV holds the
 game in memory. The keepsake lives in the link itself. We never use Meta's `-contributor` models (code refuses to
 start if one is configured), because those are the ones Meta trains on.
@@ -108,10 +108,11 @@ heroes are pre-painted, so they're free. The live news search is cached for 4 ho
 *(Estimate from published prices, design/23 and design/26. Don't quote lower unless we've measured a real game.)*
 
 ### Why a non-Meta voice
-**"Why OpenAI for the narrator?"** Meta has no text-to-speech model; Muse Voice Transcribe only listens. So the voice
-is the one job that had to leave Meta. We compared voices by ear and picked OpenAI gpt-4o-mini-tts, with Gemini TTS as
-the automatic backup and plain text if both fail. Meta's team told us on Saturday to pick the best model per job,
-and we tested every job (design/23, design/26).
+**"Why a non-Meta narrator?"** Meta has no text-to-speech model; Muse Voice Transcribe only listens. So the voice
+is the one job that had to leave Meta. We compared voices by ear, there's an automatic backup voice, and plain text
+if both fail. Meta's team told us on Saturday to pick the best model per job, and we tested every job (design/23,
+design/26). *(Name the vendor only once the voice session confirms the final pick: OpenAI today, ElevenLabs being
+tested.)*
 
 ### Safety
 **"How do you keep tragic news out?"** A keyword block list, then the Muse Spark storyability gate, which also throws
@@ -144,11 +145,10 @@ including GPT-5.5 and GPT-4.1; Spark won because it credited the right friend an
 our playtest recordings frame by frame ("what the hell is foam?" became our writing rule).
 
 ### What's next
-**"Where does this go?"** (1) **Our stories** as the main mode: every player writes a small true story, the table
-plays one, and the end shows how it really went for that person. That came from Meta's own feedback. (2) **Remote
-play** for friends in different cities (the `/watch` big-screen view already exists). (3) **Weekly chapters**: the
-same crew, a new true story each week. (4) **Real World mode**: opt-in heavier news with guardrails, for groups who
-want to talk about things that matter. Not tonight's build.
+**"Where does this go?"** (1) **Campaign mode**: your heroes carry over into the next story and grow from what they
+did, like a real D&D campaign. (2) **Our stories** as the main mode: every player brings a small true story, and the
+night becomes "I didn't know that about you." That came from Meta's own feedback. (3) **Real World mode**: opt-in
+heavier news with guardrails, for groups who want to talk about things that matter. Not tonight's build.
 
 ### Novice judge
 CD: "This is my first hackathon. The idea, the look, the narrator cast and every creative call are mine."
