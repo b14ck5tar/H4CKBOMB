@@ -59,8 +59,8 @@ export function SceneArt({ src, dim = 0.35, particles = true }: { src?: string; 
 export const TIER_LOOK: Record<Tier, { color: string; word: string }> = {
   clever: { color: "#2cf5c0", word: "Clever plan" },
   solid: { color: "#f7f3ff", word: "Solid plan" },
-  risky: { color: "#ffad3b", word: "Risky plan" },
-  wild: { color: "#ff2e7e", word: "Wild plan" },
+  risky: { color: "#ffad3b", word: "Bold plan" },
+  wild: { color: "#ff2e7e", word: "Long shot" },
   miracle: { color: "#b46bff", word: "Only a miracle" },
 };
 

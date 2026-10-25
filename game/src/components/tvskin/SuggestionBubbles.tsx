@@ -25,7 +25,7 @@ export interface SuggestionBubblesProps {
 }
 
 const TILT = [-3, 2.5, -1.5, 3];
-const MAX = 4;
+const MAX = 3; // a corner column, not a wall over the painting
 
 /** Friends' ideas fly in from the right as comic speech bubbles; the one that gets used earns "+ Sam's idea +1". */
 export function SuggestionBubbles({ items, pickedId, bonus = 1, title = "Ideas from the table", sound = true }: SuggestionBubblesProps) {

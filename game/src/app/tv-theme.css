@@ -2815,3 +2815,71 @@
     display: none;
   }
 }
+
+/* ==========================================================================
+   ART FIRST (Sun, CD: "the image can hide behind some stuff, at least on my laptop").
+   The painting's focal point is the upper two-thirds and the heroes are painted in the middle band, so every
+   piece hugs an edge: the HUD the top strip, cards the bottom corners, the plan/meter/caption the bottom band.
+   The middle of the picture stays clear in every phase. Audit: devpost-media/art-audit/ (before/after).
+   ========================================================================== */
+/* (a) turn: the card and title sit in the bottom-left corner, smaller */
+.tvx-turn {
+  top: auto;
+  bottom: calc(var(--u) * 3.2);
+  left: calc(var(--u) * 2.8);
+  align-items: flex-end;
+  gap: calc(var(--u) * 1.6);
+}
+.tvx-turn-txt { max-width: calc(var(--u) * 30); gap: calc(var(--u) * 0.5); }
+.tvx-turn-n { font-size: calc(var(--u) * 1.45); }
+.tvx-turn-d20 { width: calc(var(--u) * 2.3); height: calc(var(--u) * 2.3); }
+.tvx-turn-word { font-size: calc(var(--u) * 4.4); }
+.tvx-turn-by { margin-top: calc(var(--u) * 0.3); font-size: calc(var(--u) * 1.9); }
+.tvx-turn-prompt { font-size: calc(var(--u) * 1.4); }
+/* (b) friends' ideas: a narrow column in the bottom-right corner, growing upward */
+.tvx-ideas {
+  top: auto;
+  bottom: calc(var(--u) * 3.2);
+  right: calc(var(--u) * 2.4);
+  width: calc(var(--u) * 29);
+  gap: calc(var(--u) * 1.3);
+}
+.tvx-ideas-title { font-size: calc(var(--u) * 1.3); }
+.tvx-bubble-body { padding: calc(var(--u) * 0.75) calc(var(--u) * 1.2) calc(var(--u) * 0.9); }
+.tvx-bubble-who { font-size: calc(var(--u) * 1.15); margin-bottom: calc(var(--u) * 0.25); }
+.tvx-bubble-txt { font-size: calc(var(--u) * 1.7); }
+/* (c) plan: a bottom band, not a card over the middle of the picture */
+.tvx-plan {
+  top: auto;
+  bottom: calc(var(--u) * 2.6);
+  left: calc(var(--u) * 17);
+  width: calc(var(--u) * 66);
+}
+.tvx-plan-card { padding: calc(var(--u) * 1.3) calc(var(--u) * 2.2) calc(var(--u) * 1.4); }
+.tvx-plan-who { font-size: calc(var(--u) * 2.5); }
+.tvx-plan-quote { margin-top: calc(var(--u) * 0.8); font-size: calc(var(--u) * 2.5); }
+.tvx-plan-quote.is-long { font-size: calc(var(--u) * 2); }
+.tvx-plan-why { margin-top: calc(var(--u) * 0.5); font-size: calc(var(--u) * 1.5); }
+.tvx-plan-math { margin-top: calc(var(--u) * 1.1); padding-right: calc(var(--u) * 16); }
+.tvx-chip { font-size: calc(var(--u) * 1.4); }
+.tvx-chip b { font-size: calc(var(--u) * 1.75); }
+.tvx-plan-stamp { bottom: calc(var(--u) * 2); padding: calc(var(--u) * 0.6) calc(var(--u) * 1.2) calc(var(--u) * 0.45); }
+.tvx-plan-stamp-word { font-size: calc(var(--u) * 1.9); }
+.tvx-plan-stamp-num { font-size: calc(var(--u) * 4.6); }
+.tvx-plan-cta { margin-top: calc(var(--u) * 1.1); font-size: calc(var(--u) * 2.1); }
+/* (d) meter: a slimmer bottom band, the readout no taller than the heroes' feet */
+.tvx-meter { left: calc(var(--u) * 14); width: calc(var(--u) * 72); bottom: calc(var(--u) * 2); gap: calc(var(--u) * 0.4); }
+.tvx-meter-num { font-size: calc(var(--u) * 6); }
+.tvx-meter-dot { font-size: calc(var(--u) * 3.4); }
+.tvx-meter-word { font-size: calc(var(--u) * 4.2); }
+.tvx-meter-cells { height: calc(var(--u) * 2.6); }
+.tvx-meter-parts { font-size: calc(var(--u) * 1.4); }
+/* (f) caption: the subtitle band, a little lower and narrower */
+.tvx-caption { left: calc(var(--u) * 12); width: calc(var(--u) * 76); bottom: calc(var(--u) * 2.4); gap: calc(var(--u) * 0.6); }
+
+/* A new painting just landed: the skin steps back for a beat so the table sees it (QuickTV sets is-peek). */
+.tvx-layer > .tvx-stage { transition: opacity 0.7s ease; }
+.tvx-layer.is-peek > .tvx-stage { opacity: 0.08; }
+@media (prefers-reduced-motion: reduce) {
+  .tvx-layer > .tvx-stage { transition: none; }
+}

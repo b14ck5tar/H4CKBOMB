@@ -1205,3 +1205,25 @@
 
 /* The test-player button (only with ?bots) stays clickable above the "Waiting for heroes" panel. */
 .lb-bot { z-index: 30; position: relative; bottom: auto; right: auto; margin-top: calc(var(--u) * 1); align-self: flex-end; }
+
+/* ---------------- readability over the busy art (Sun AM) ----------------
+   Soft ink pools behind each run of words: no boxes, just enough dark that the slideshow never fights the text. */
+.lb-how,
+.lb-pitch,
+.lb-go,
+.lb-status { isolation: isolate; }
+.lb-how::before,
+.lb-pitch::before,
+.lb-go::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(closest-side, rgba(6, 3, 12, 0.72), rgba(6, 3, 12, 0.5) 55%, rgba(6, 3, 12, 0));
+}
+.lb-how::before { inset: calc(var(--u) * -1.6) calc(var(--u) * -3) calc(var(--u) * -1.6) calc(var(--u) * -3); }
+.lb-pitch::before { inset: calc(var(--u) * -2.4) calc(var(--u) * -4) calc(var(--u) * -2.4) calc(var(--u) * -4); }
+.lb-go::before { inset: calc(var(--u) * -1.5) calc(var(--u) * -3); }
+.lb-how-dm { color: rgba(242, 236, 255, 0.85); }
+.lb-pitch-sub,
+.lb-status { text-shadow: 0 calc(var(--u) * 0.12) 0 #000, 0 0 calc(var(--u) * 0.8) #000, 0 0 calc(var(--u) * 1.8) rgba(6, 3, 12, 0.9); }

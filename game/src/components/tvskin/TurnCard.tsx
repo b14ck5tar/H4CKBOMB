@@ -29,8 +29,9 @@ export function TurnCard(props: TurnCardProps) {
 
 function TurnCardInner({ hero, playedBy, turn, prompt, sound = true }: TurnCardProps) {
   const name = possessive(hero.name).toUpperCase();
-  // Shrink long names so the title never collides with the suggestion column (title box is ~34u wide).
-  const size = Math.min(8.2, 34 / Math.max(4, name.length * 0.47));
+  // Shrink long names so the title never collides with the suggestion column (title box is ~30u wide, in the
+  // bottom-left corner so the middle of the painting stays clear).
+  const size = Math.min(5.6, 29 / Math.max(4, name.length * 0.47));
   const ref = useRef<HTMLElement>(null);
   useEffect(() => {
     const t = setTimeout(() => {
@@ -47,7 +48,7 @@ function TurnCardInner({ hero, playedBy, turn, prompt, sound = true }: TurnCardP
     <section ref={ref} className="tvx-turn" style={style} aria-label={`${hero.name}'s turn, played by ${playedBy}`}>
       <div className="tvx-turn-drop">
         <div className="tvx-float">
-          <HeroTradingCard hero={hero} size={15.5} tilt={-5} className="tvx-turn-card" />
+          <HeroTradingCard hero={hero} size={11} tilt={-5} className="tvx-turn-card" />
         </div>
         <span className="tvx-turn-dust" aria-hidden />
       </div>

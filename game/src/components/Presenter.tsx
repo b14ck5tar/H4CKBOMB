@@ -3,16 +3,13 @@ import { useEffect, useRef, useState } from "react";
 import type { Stage } from "./TV";
 import type { GameState } from "@/lib/types";
 import { saveToHall } from "@/lib/keepsake";
-import { Attract } from "./Attract";
 
-const IDLE_MS = 20_000;
 const READING = ["quest", "narrating", "outcome", "mirror_reveal", "epilogue", "reveal"];
 const KEYS: [string, string][] = [
   ["Space", "Continue (reading screens)"],
   ["S", "Skip the current timer"],
   ["N", "DM's Notes: what the AI is doing"],
   ["Q", "Quick Tale: 3-minute mode + begin"],
-  ["A", "Attract screen on/off"],
   ["B", "Add a test player (lobby, with ?bots=1)"],
   ["H", "This help"],
 ];
@@ -23,33 +20,16 @@ function typing(t: EventTarget | null) {
 }
 
 /**
- * Presenter layer on the TV: hotkeys, the idle attract loop, and saving finished tales to the Hall.
+ * Presenter layer on the TV: hotkeys and saving finished tales to the Hall. No standby screen (CD, Sun): the lobby
+ * is always the lobby.
  * Nothing here is shown on screen except a faint "?" in the corner.
  */
 export function Presenter({ host, s, onNotes, onCloseNotes }: { host: Stage; s: GameState; onNotes: () => void; onCloseNotes: () => void }) {
   // Latest callbacks without re-binding the key listener.
   const notesRef = useRef({ onNotes, onCloseNotes });
   notesRef.current = { onNotes, onCloseNotes };
-  const [attract, setAttract] = useState(false);
   const [help, setHelp] = useState(false);
   const [toast, setToast] = useState("");
-  const [idleTick, setIdleTick] = useState(0); // bumps on activity, restarting the idle timer
-  const empty = s.phase === "lobby" && s.players.length === 0;
-  const count = useRef(s.players.length);
-
-  // Idle: an empty lobby for 20 s starts the attract loop.
-  useEffect(() => {
-    if (!empty || attract) return;
-    const t = setTimeout(() => setAttract(true), IDLE_MS);
-    return () => clearTimeout(t);
-  }, [empty, attract, idleTick]);
-
-  // Any join, or leaving the lobby, dismisses it.
-  useEffect(() => {
-    if (s.players.length > count.current || s.phase !== "lobby") setAttract(false);
-    count.current = s.players.length;
-  }, [s.players.length, s.phase]);
-
   // Hall of Tales: remember each finished tale once.
   const saved = useRef<unknown>(null);
   useEffect(() => {
@@ -69,11 +49,6 @@ export function Presenter({ host, s, onNotes, onCloseNotes }: { host: Stage; s: 
     const onKey = (e: KeyboardEvent) => {
       if (typing(e.target) || e.ctrlKey || e.metaKey || e.altKey) return;
       const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
-      setIdleTick((n) => n + 1);
-      if (k === "a") {
-        setAttract((v) => !v);
-        return;
-      }
       if (k === "n") {
         notesRef.current.onNotes();
         return;
@@ -84,11 +59,9 @@ export function Presenter({ host, s, onNotes, onCloseNotes }: { host: Stage; s: 
       }
       if (k === "Escape") {
         setHelp(false);
-        setAttract(false);
         notesRef.current.onCloseNotes();
         return;
       }
-      setAttract(false);
       const st = host.getState();
       if (k === " " || k === "PageDown" || k === "ArrowRight") {
         e.preventDefault();
@@ -107,21 +80,12 @@ export function Presenter({ host, s, onNotes, onCloseNotes }: { host: Stage; s: 
         else setToast(host.getState().questId ? "Quick Tale picked. Waiting for a finished character to start." : "No stories loaded yet.");
       }
     };
-    const onPointer = () => {
-      setIdleTick((n) => n + 1);
-      setAttract(false);
-    };
     window.addEventListener("keydown", onKey);
-    window.addEventListener("pointerdown", onPointer);
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      window.removeEventListener("pointerdown", onPointer);
-    };
+    return () => window.removeEventListener("keydown", onKey);
   }, [host]);
 
   return (
     <>
-      {attract && <Attract code={s.code} />}
       <button
         className="fixed bottom-2 left-3 z-50 font-ui text-sm text-parchment/25 hover:text-parchment/80 w-7 h-7 rounded-full border border-parchment/15"
         onClick={(e) => {

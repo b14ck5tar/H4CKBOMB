@@ -9,7 +9,7 @@ import type { Player, Storybook } from "@/lib/types";
 import { Kicker, ReactionBar, Say, SceneThumb } from "./kit";
 
 /**
- * `text` may mark words with *stars* (lime); the stamp already says "this really happened". Never dark: the scene,
+ * `text` may mark words with *stars* (lime); the stamp already says "based on a true story". Never dark: the scene,
  * how your version ended, and big reactions stay on the phone while the TV tells the real story.
  */
 export function RevealScreen({
@@ -32,7 +32,6 @@ export function RevealScreen({
         <div className="pk-truth" role="status">
           Based on a<br />
           true story
-          <small>This really happened</small>
         </div>
         {art && <SceneThumb art={art} live="The real story" />}
         <Kicker tone="pink">The reveal</Kicker>

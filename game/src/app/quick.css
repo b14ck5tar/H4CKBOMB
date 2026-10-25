@@ -711,3 +711,37 @@
 /* Centered stages never push their top under the goal bar: overflow goes down, and the vote cards stay compact. */
 .qt-center { justify-content: safe center; }
 .gp-vote .qt-plan { padding-top: 0.8rem; padding-bottom: 0.8rem; }
+
+/* ==================================================================
+   Art first (Sun, CD: "the image can hide behind some stuff, at least on my laptop"). Audit: devpost-media/art-audit/.
+   ================================================================== */
+/* rem follows the height too: a short laptop window (1366x635 = 2.15:1) lays out like a 16:9 TV, not a tall poster.
+   At 16:9 this is exactly TV.tsx's 1.3vw. (!important beats TV.tsx's inline style on <html>, only on this stage.) */
+html:has(.qt-root) { font-size: clamp(11px, min(1.3vw, 2.31vh), 30px) !important; }
+/* Framing: a wide window crops the picture's top and bottom; crop more sky than ground (heroes stand in the middle
+   band), and zoom gently so the drift never pushes faces off screen. */
+.qt-bd-img { object-position: 50% 58%; }
+@keyframes qt-push {
+  from { transform: scale(1.01) translate3d(0, 0, 0); }
+  to { transform: scale(1.07) translate3d(-1%, 0.6%, 0); }
+}
+@keyframes qt-drift {
+  from { transform: scale(1.02) translate3d(-0.8%, -0.4%, 0); }
+  to { transform: scale(1.05) translate3d(0.8%, 0.4%, 0); }
+}
+.qt-bd[data-mood="action"] .qt-bd-zoom { transform: scale(1.02); filter: none; }
+.qt-bd[data-mood="final"] .qt-bd-zoom { transform: scale(1.05); filter: saturate(1.25) contrast(1.05); }
+/* Shade only where words sit: a short band at the bottom and a thin one under the top bar. No global dimming. */
+.qt-bd[data-mood="scene"] .qt-shade,
+.qt-bd[data-mood="action"] .qt-shade {
+  background:
+    linear-gradient(to top, rgba(5, 3, 9, 0.88) 0%, rgba(5, 3, 9, 0.5) 15%, rgba(5, 3, 9, 0.12) 30%, transparent 40%),
+    linear-gradient(to bottom, rgba(5, 3, 9, 0.62) 0%, transparent 17%);
+  background-color: transparent;
+}
+.qt-bd[data-mood="final"] .qt-shade { background-color: rgba(5, 3, 9, 0.18); }
+.qt-bd[data-mood="scene"] .qt-vignette,
+.qt-bd[data-mood="action"] .qt-vignette { opacity: 0.4; }
+/* Narration over brighter art: the words carry their own soft shadow. */
+.gp-lowerthird .qt-narration,
+.gp-lowerthird p { text-shadow: 0 2px 0 #000, 0 0 18px rgba(5, 3, 9, 0.95), 0 0 36px rgba(5, 3, 9, 0.8); }
