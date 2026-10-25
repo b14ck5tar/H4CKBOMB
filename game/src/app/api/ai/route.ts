@@ -44,7 +44,7 @@ export const maxDuration = 120;
 const STORY_MODEL = process.env.STORY_MODEL || MODELS.writing;
 const STORY_CALLS = {
   // "high" reasoning needs room: at 3000 tokens it ran out ("empty response (length)") on every call.
-  outcome: { model: STORY_MODEL, effort: (process.env.OUTCOME_EFFORT || "low") as Effort, timeoutMs: Number(process.env.OUTCOME_TIMEOUT_MS) || 20_000, // design/33: the host waits until the die lands + 4 s maxTokens: process.env.OUTCOME_EFFORT === "high" ? 9000 : 3000 },
+  outcome: { model: STORY_MODEL, effort: (process.env.OUTCOME_EFFORT || "low") as Effort, timeoutMs: Number(process.env.OUTCOME_TIMEOUT_MS) || 20_000, maxTokens: process.env.OUTCOME_EFFORT === "high" ? 9000 : 3000 }, // design/33: the host waits until the die lands + 4 s
   branch: { model: process.env.BRANCH_MODEL || STORY_MODEL, effort: (process.env.BRANCH_EFFORT || "high") as Effort, timeoutMs: 28_000, maxTokens: 9000 },
   epilogue: { model: STORY_MODEL, effort: (process.env.EPILOGUE_EFFORT || "low") as Effort, timeoutMs: 15_000, maxTokens: 4000 },
 };
@@ -291,6 +291,9 @@ function cleanOutcome(data: Any) {
     new_prop: clean(data.new_prop).slice(0, 40),
     scene: clean(data.scene).slice(0, 260),
     memorable: clean(data.memorable).slice(0, 90),
+    // Hybrid progress (design/35): the AI's pick inside the grade's range; the host clamps it with lib/procedural progressDelta.
+    progress_gain: Number.isFinite(Number(data.progress_gain)) ? Math.round(Number(data.progress_gain)) : null,
+    progress_why: clean(data.progress_why).slice(0, 120),
   };
 }
 
