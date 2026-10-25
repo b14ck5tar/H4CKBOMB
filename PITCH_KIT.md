@@ -82,7 +82,7 @@ normal one (2 each at 2-4 players). **Check the cap on the deployed site before 
 | 0:00 | Hand them the QR card first. 30-second pitch (section 1) while they scan. |
 | 0:30 | Heroes: "Muse is painting you as a cartoon right now. The secret talent comes back at the end." |
 | 0:50 | Press Start. "This story hides something that really happened. You find out at the end." |
-| 1:00 | Over the opener, once, quietly: "Muse wrote this, cast that narrator and painted you in." Then stop talking. |
+| 1:00 | Over the opener, once, quietly: "Muse wrote this and painted you in." Then stop talking. |
 | 1:15 | Turn 1: "Everyone else, send [A] an idea. [A], use a friend's and you get plus one." Coach: "Which one made you laugh?" Then silence. |
 | 2:00 | "Swipe up to throw." On the meter: "Every number is its own outcome. Code rolls, never the AI." |
 | 2:15-3:45 | Turns 2-3. Only say whose turn it is. |
@@ -160,7 +160,7 @@ Re-count commits at 10 AM.
 4. **A shy player?** Typing is the default, so nobody has to speak. Friends send you ideas, so you never face a blank
    box. If your timer runs out, the first friend's idea goes ahead.
 5. **Replayability?** New odd news every day, plus Our stories from your own lives. 18 ready-made heroes or your own,
-   a narrator cast per story, 6 art themes.
+   6 art themes.
 6. **Cost?** About 20 cents for a Quick Tale by our math from published prices (paintings ~1 cent each). Not measured
    on a real game; say "about".
 7. **What's next?** Section 7's top 3.
@@ -215,7 +215,9 @@ The 10-minute plan and the 15-question drill are in `pitch/REHEARSAL.md`.
 - **Judge mode stays max 3 turns.** Say "about five minutes" up front; drop to max 2 if rehearsal runs go past 6:00
   from hello.
 - **Quick Tale = 1 turn each, ~5 min** (CD; the story session is building it). Full Story keeps 2 each at 2-4 players.
-- **Narrator: ElevenLabs (Eleven v3)**, OpenAI TTS as the backup (CD). **Gemini track: off.**
+- **Narrator: one ElevenLabs voice for everything** (the CD's pick; Eleven v3 for the story beats, the same voice on
+  Flash for instant turn lines), no per-story casting, OpenAI TTS as the backup (CD). **Pending:** the switch goes live when the CD confirms the
+  plan purchase; until the deployed narrator is ElevenLabs, say "OpenAI TTS" instead. **Gemini track: off.**
 - **Phone footer** reworded by the look session (4b8cfa2): "No accounts. Your words go to Meta's Muse AI to run the
   game; the TV keeps the finished tale, and our server caches the art and audio."
 

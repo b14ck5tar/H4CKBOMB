@@ -1,4 +1,4 @@
-import { speak } from "@/server/tts";
+import { gameProvider, speak } from "@/server/tts";
 import { isVoice } from "@/lib/voices";
 
 // POST { text, voice, style, ahead? } -> audio/wav (X-Audio-Ms header = its length, X-Voice-Provider = who read it).
@@ -8,6 +8,13 @@ import { isVoice } from "@/lib/voices";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
+
+/** GET ?start=1 at game start: picks the provider for the whole game (credit guard). Returns which one, no secrets. */
+export async function GET(req: Request) {
+  const start = new URL(req.url).searchParams.get("start") === "1";
+  const d = await gameProvider(start);
+  return Response.json({ provider: d.provider, remaining: d.remaining, why: d.why });
+}
 
 export async function POST(req: Request) {
   let body: { text?: unknown; voice?: unknown; style?: unknown; ahead?: unknown };
@@ -20,7 +27,7 @@ export async function POST(req: Request) {
   const style = String(body.style ?? "").replace(/[\r\n]+/g, " ").trim().slice(0, 240);
   if (!text || !isVoice(body.voice)) return new Response("need text and a cast voice", { status: 400 });
   try {
-    const clip = await speak(body.voice, style, text, { ahead: body.ahead === true });
+    const clip = await speak(body.voice, style, text, { ahead: typeof body.ahead === "boolean" ? body.ahead : undefined });
     return new Response(new Uint8Array(clip.wav), {
       headers: { "Content-Type": "audio/wav", "X-Audio-Ms": String(clip.ms), "X-Voice-Rate": String(clip.rate), "X-Voice-Provider": clip.provider, "Cache-Control": "private, max-age=86400" },
     });

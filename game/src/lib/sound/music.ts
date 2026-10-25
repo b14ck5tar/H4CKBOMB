@@ -233,8 +233,17 @@ class MusicEngine {
   /** Duck while an <audio> element is playing. Returns a cleanup function (call it when you drop the element). */
   duckWhile(audio: HTMLAudioElement): () => void {
     const key = `a${Math.random().toString(36).slice(2)}`;
-    const down = () => this.duck(true, key);
-    const up = () => this.duck(false, key);
+    // Hold the dip ~0.9 s after a line ends, so back-to-back lines duck ONCE instead of pumping in and out.
+    let hold: ReturnType<typeof setTimeout> | null = null;
+    const down = () => {
+      if (hold) clearTimeout(hold);
+      hold = null;
+      this.duck(true, key);
+    };
+    const up = () => {
+      if (hold) clearTimeout(hold);
+      hold = setTimeout(() => this.duck(false, key), 900);
+    };
     const evs = ["play", "playing"] as const;
     const offs = ["pause", "ended", "error", "emptied"] as const;
     evs.forEach((e) => audio.addEventListener(e, down));

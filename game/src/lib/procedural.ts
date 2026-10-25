@@ -28,7 +28,7 @@ export type StoryState = {
   facts: string[];
   /** At most one loose end the story can pick up ("the keeper still has the spare key"). */
   open_thread: string;
-  /** The last 3 outcome lines (for flow and the never-repeat rule). */
+  /** The last 6 outcome lines (for flow and the never-repeat rule; a game has up to 8 turns). */
   last_moments: string[];
   /** Up to 2 funny lines or moments worth calling back. */
   memorable: string[];
@@ -270,7 +270,7 @@ const DETERMINERS = new Set("the a an his her their its my your our this that ev
 const PLAIN_ADJ = new Set(
   "big little small tiny huge giant old new red blue green yellow black white pink orange purple gold silver brown gray grey long short tall wet dry hot cold warm soft hard loud quiet lost sleepy angry happy sad scared baby mom dad good bad last first next whole same other only real empty full".split(" "),
 );
-const TAIL = new Set("away back home out off down up over around now here there too fast slowly".split(" "));
+const TAIL = new Set("away back home out off down up over around now here there too fast slowly till asleep awake still safe free inside outside together alone".split(" "));
 
 /**
  * The most odd describing words piled onto one thing after "the/a/his…": "the cone juggling ice hand" = 3 (cone,
@@ -294,6 +294,19 @@ export function modifierPile(s: string) {
   return best;
 }
 
+/** Repair a piled-up Right now in code: keep only the last describer and the thing ("Shut the open warm cabin doors" -> "Shut the cabin doors"). */
+export function trimPile(s: string) {
+  const w = s.trim().split(/\s+/);
+  for (let i = 0; i < w.length; i++) {
+    if (!DETERMINERS.has(w[i].toLowerCase())) continue;
+    let j = i + 1;
+    while (j < w.length && !FUNCTION_WORDS.has(w[j].toLowerCase()) && !DETERMINERS.has(w[j].toLowerCase()) && !TAIL.has(w[j].toLowerCase()) && !/^[A-Z]/.test(w[j])) j++;
+    const run = w.slice(i + 1, j);
+    if (run.slice(0, -1).filter((x) => !PLAIN_ADJ.has(x.toLowerCase())).length >= 2) return [...w.slice(0, i + 1), ...run.slice(-2), ...w.slice(j)].join(" ");
+  }
+  return s.trim();
+}
+
 const syl = (word: string) => {
   let w = word.toLowerCase().replace(/[^a-z]/g, "");
   if (w.length <= 3) return w ? 1 : 0;
@@ -315,11 +328,25 @@ export function plainProblems(text: string, known = ""): string[] {
   if (long) out.push(`a sentence is ${words(long)} words: 18 max, one idea each`);
   if (/\b(as if|as though)\b/i.test(t) || /(?<!\b(look|looks|looked|looking|feel|feels|felt|sound|sounds|smell|smells|just|would|not|nothing|anything|something))\s+like (a|an|the|some)\b/i.test(t)) out.push("no similes (\"like popcorn\"): say what happens");
   if (/\b(zero|percent|cases|data|statistics|records show|in theory|technically|officially|literally)\b/i.test(t)) out.push("no counting, measuring or official talk (\"fits zero past cases\"): say what someone sees or does");
-  if (/hear(s|d)?[^.]{0,24}(blink|glow|light|color|colour|flash)|see(s)?[^.]{0,24}(hum|sound|noise|song|beep)|mid [a-z]+/i.test(t)) out.push("say only what someone could really see, hear or do (you hear a sound, you see a light), in plain words");
+  if (/hear(s|d)?[^.]{0,24}(blink|glow|light|color|colour|flash)|sees?[^.]{0,24}(hum|sound|noise|song|beep)|mid (?!air)[a-z]+/i.test(t)) out.push("say only what someone could really see, hear or do (you hear a sound, you see a light), in plain words");
   const knownSet = new Set(String(known).toLowerCase().split(/[^a-z]+/).filter(Boolean));
-  const hard = t.split(/[^A-Za-z']+/).filter((w) => w && !/^[A-Z]/.test(w) && syl(w) >= 4 && !knownSet.has(w.toLowerCase()));
+  const hard = t.split(/[^A-Za-z']+/).filter((w) => w && !/^[A-Z]/.test(w) && syl(w) >= 4 && !/(ly|ing|ed|s)$/.test(w) && !knownSet.has(w.toLowerCase()));
   if (hard.length >= 2) out.push(`hard words (${hard.slice(0, 3).join(", ")}): use short everyday words`);
   return out;
+}
+
+/** A 5-word run of the outcome that already happened in an earlier moment ("admits she hid the dog because"), or "". */
+export function repeatsMoment(text: string, moments: string[], plan = "") {
+  const w = norm(text).split(" ");
+  const own = new Set(planWords(plan));
+  const past = moments.map((m) => ` ${norm(m)} `);
+  for (let i = 0; i + 5 <= w.length; i++) {
+    const run = w.slice(i, i + 5);
+    const content = run.filter((x) => !FUNCTION_WORDS.has(x));
+    // The player's own words may come back (they chose them again); the DM's own beats may not.
+    if (content.length >= 3 && !content.every((x) => own.has(stem(x))) && past.some((m) => m.includes(` ${run.join(" ")} `))) return run.join(" ");
+  }
+  return "";
 }
 
 /** Everything code can check about a proposal. Each string is a problem the retry is told to fix. */
@@ -329,6 +356,8 @@ export function checkTurn(p: TurnProposal, ctx: { state: StoryState; hero: strin
   if (!o) return ["outcome is empty"];
   if (ctx.plan && !usesPlan(o, ctx.plan)) out.push(`the plan is the cause: the outcome must use the player's own key word (one of: ${planWords(ctx.plan).slice(0, 5).join(", ")})`);
   if (ctx.hook_due && ctx.state.hook && !usesPlan(`${o} ${p.scene}`, ctx.state.hook)) out.push("keep the opener's hook in play (state.hook) in this act");
+  const retold = repeatsMoment(o, ctx.state.last_moments, ctx.plan);
+  if (retold) out.push(`repeats an earlier moment ("${retold}"): something new happens now, and what was learned stays learned`);
   if (/\b(still right there|isn't solved yet|is not solved yet)\b/i.test(o)) out.push("banned filler: never 'still right there' or 'isn't solved yet'; say what the action did");
   if (sentences(o).length > 2) out.push(`outcome has ${sentences(o).length} sentences (2 max)`);
   if (words(o) > 30) out.push(`outcome is ${words(o)} words (30 max)`);
@@ -374,12 +403,12 @@ export function actOf(progress: number) {
 
 /**
  * The act after `turn` turns of `turns`: the turns split as evenly as they can over 3 acts, act 1 never longer than
- * the others (4 turns: 1 / 2 / 1; 6 turns: 2 / 2 / 2; 3 turns: 1 / 1 / 1).
+ * the others (3 turns: 1/1/1; 4: 1/2/1; 5: 1/2/2; 6: 2/2/2; 8: 2/3/3).
  */
 export function actClock(turn: number, turns: number) {
   const T = Math.max(1, turns || 1);
-  const a2 = Math.max(1, Math.round(T / 3));
-  const a3 = Math.max(a2 + 1, Math.round((2 * T) / 3));
+  const a2 = Math.max(1, Math.floor(T / 3));
+  const a3 = Math.max(a2 + 1, a2 + Math.ceil((T - a2) / 2));
   return turn >= a3 ? 3 : turn >= a2 ? 2 : 1;
 }
 
@@ -413,7 +442,7 @@ export function applyTurn(
     cast,
     facts,
     open_thread: clip(p.open_thread, 120) || state.open_thread,
-    last_moments: [...state.last_moments, clip(p.outcome, 240)].slice(-3),
+    last_moments: [...state.last_moments, clip(p.outcome, 240)].slice(-6),
     memorable: mem,
     right_now: progress >= 100 ? state.finish_line : rn,
     goals_done: [...state.goals_done, rn].slice(-12),

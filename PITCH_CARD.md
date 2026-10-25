@@ -110,7 +110,7 @@ heroes are pre-painted, so they're free. The live news search is cached for 4 ho
 
 ### Why a non-Meta voice
 **"Why a non-Meta narrator?"** Meta has no text-to-speech model; Muse Voice Transcribe only listens. So the voice
-is the one job that had to leave Meta. We compared voices by ear and picked ElevenLabs (Eleven v3), with OpenAI TTS
+is the one job that had to leave Meta. We compared voices by ear and picked ElevenLabs (Eleven v3 for the story beats, Flash for instant turn lines), with OpenAI TTS
 as the automatic backup and plain text if both fail. Meta's team told us on Saturday to pick the best model per job,
 and we tested every job (design/23, design/26).
 
@@ -133,7 +133,7 @@ recording is why we rebuilt it (design/33, design/35).
 ### AI depth
 **"How exactly is Muse used?"** Muse Spark: the storyability and safety gate on the news, every story opening (high
 effort, checked for reading level), every ruling (minimal effort), every turn (what happened, what changed, the next
-step, how much progress, and the hand-off to the next player), the narrator and art-theme casting, the ending. Muse Image: hero portraits and a new scene with your heroes for every decision. Muse Voice Transcribe:
+step, how much progress, and the hand-off to the next player), the art theme per story, the ending. Muse Image: hero portraits and a new scene with your heroes for every decision. Muse Voice Transcribe:
 optional voice input (typing is the default so the room talks to each other). Plus an MCP connector so Muse, the
 agent, can start a game night and draft the invite. Take Muse away and there is no game.
 **"Why not just ChatGPT?"** That's one person and a chatbot. This is a room: one shared screen, phones as
@@ -151,7 +151,7 @@ night becomes "I didn't know that about you." That came from Meta's own feedback
 heavier news with guardrails, for groups who want to talk about things that matter. Not tonight's build.
 
 ### Novice judge
-CD: "This is my first hackathon. The idea, the look, the narrator cast and every creative call are mine."
+CD: "This is my first hackathon. The idea, the look, the narrator's voice and every creative call are mine."
 
 ## If something breaks (stage or table)
 - **A painting is slow:** say nothing; the old painting stays up and the new one fades in.

@@ -11,8 +11,8 @@ import {
   clampOutcome,
   fallbackProposal,
   fixPronouns,
-  plainProblems,
   sentences,
+  trimPile,
   usesPlan,
   type Grade,
   type StoryState,
@@ -76,6 +76,7 @@ READ-ALOUD TEST (hard rule): the narrator reads your lines ONCE to a noisy room.
 11. HAND-OFF: scene (1 sentence, 24 words max) says where things stand now and addresses next_player by name with the new obstacle ("Juno, the bison is staring at the hay."). If next_player is "", address the whole group.
 12. CALLBACKS: at most once before the ending, when it fits, pay off a line from memorable in a new way.
 13. Stay inside real_event: its kind of place, its real roles (as cast), its everyday objects, its real stakes. The fantasy problem is the one twist on top.
+NEVER RETELL: read last_moments. Never repeat a moment that already happened (a secret told stays told, a thing found stays found); build on it instead.
 14. THE PLAN IS THE CAUSE: the outcome uses the player's own key word or idea from plan (their noun, their joke: chess stays chess, a kazoo stays a kazoo). Never wash the idea into something safer or smarter.
 15. A SUCCESS CAN FINISH THE STEP: if this plan solved right_now, set step_solved true; it is solved, it stays solved (it becomes a fact), and the next twist arrives BECAUSE of it. Nothing achieved is ever undone, not even by a later miss.
 16. THREE ACTS: act 1, act 2, act 3, then the finale, each a different situation. When act_changes_next is true, the scene opens the next act: a new place or a new turn of the problem, caused by what just happened. Keep hook (the opener's twist) in play: it must show up in act 2 and in the finale push.
@@ -180,7 +181,7 @@ export async function runTurn(i: TurnInput, rating: Rating): Promise<TurnResult>
     const left = TURN_TOTAL_MS - (Date.now() - t0);
     // A hard problem (the plan, the hero, a friend, game words) is worth one retry if 6 s are left; soft ones are
     // fixed in code or let go (the better draft already won).
-    const hardNow = probs.some((x) => HARD.test(x));
+    const hardNow = probs.some((x) => HARD.test(x) || REDO.test(x));
     if (hardNow && left > 6_000) {
       try {
         const again = await call(`\n\nYour last answer had problems. Fix ALL of them and keep what worked.\nLAST ANSWER: ${JSON.stringify(p)}\nPROBLEMS:\n${probs.map((x) => `- ${x}`).join("\n")}`, left);
@@ -209,6 +210,7 @@ export async function runTurn(i: TurnInput, rating: Rating): Promise<TurnResult>
   p.outcome = clampOutcome(p.outcome);
   if (nextPlayer && !new RegExp(`\\b${nextPlayer.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`).test(p.scene)) p.scene = p.scene ? `${nextPlayer}, ${p.scene.charAt(0).toLowerCase()}${p.scene.slice(1)}` : `${nextPlayer}, you're up.`;
   p.scene = sentences(p.scene)[0] ?? p.scene;
+  p.right_now = trimPile(p.right_now);
   const applied = applyTurn(state, p, { hero, attempt: i.attempt, grade, depth: i.depth });
   console.log(`[turn] ${grade} ${hero} ${Date.now() - t0}ms progress ${state.progress}->${applied.state.progress}${fallback ? " FALLBACK" : ""}${probs.length ? ` problems: ${probs.join(" | ")}` : ""}`);
   return { outcome: p.outcome, scene: p.scene, right_now: applied.state.right_now, progress: applied.state.progress, progress_delta: applied.delta, progress_why: String(p.progress_why ?? "").slice(0, 140), finale: applied.finale, act: applied.state.act, act_changed: applied.act_changed, state: applied.state, problems: probs, fallback };
@@ -217,7 +219,9 @@ export async function runTurn(i: TurnInput, rating: Rating): Promise<TurnResult>
 const HARD = /must name the acting hero|game words|never name|outcome is empty|the plan is the cause|banned filler/;
 const TURN_PARALLEL = Math.max(1, Math.min(3, Number(process.env.TURN_PARALLEL) || 2));
 const GRACE_MS = 2_500;
-const score = (probs: string[]) => probs.filter((x) => HARD.test(x)).length * 10 + probs.length;
+// A retold moment isn't worth the plan-aware fallback, but it is worth waiting for the other draft or one retry.
+const REDO = /repeats an earlier moment/;
+const score = (probs: string[]) => probs.filter((x) => HARD.test(x) || REDO.test(x)).length * 10 + probs.length;
 
 /**
  * Run `n` drafts in parallel. Resolves with the first draft that has no problems; otherwise, once a draft with only
@@ -239,7 +243,7 @@ function draftRace(call: () => Promise<TurnProposal>, check: (p: TurnProposal) =
           const probs = check(p);
           if (!best || score(probs) < score(best.probs)) best = { p, probs };
           if (!probs.length) return finish();
-          if (!probs.some((x) => HARD.test(x))) setTimeout(finish, GRACE_MS);
+          if (!probs.some((x) => HARD.test(x) || REDO.test(x))) setTimeout(finish, GRACE_MS);
         })
         .catch((e) => console.warn(`[turn] draft failed: ${(e as Error).message}`))
         .finally(() => ++done === n && finish());
@@ -283,7 +287,7 @@ export async function runEnding(input: Any, rating: Rating) {
     won: !!input.won,
     players: Array.isArray(input.players) ? input.players.slice(0, 8) : [],
   };
-  const call = (extra = "") => museJSON<Any>({ task: `story-end-${rating}`, model: TURN_MODEL, effort: TURN_EFFORT, system: withRating(STORY_END_SYSTEM, rating), schema: STORY_END_SCHEMA, user: JSON.stringify(user) + extra, timeoutMs: 12_000, maxTokens: 2500 });
+  const call = (extra = "", timeoutMs = 12_000) => museJSON<Any>({ task: `story-end-${rating}`, model: TURN_MODEL, effort: TURN_EFFORT, system: withRating(STORY_END_SYSTEM, rating), schema: STORY_END_SCHEMA, user: JSON.stringify(user) + extra, timeoutMs, maxTokens: 2500 });
   // The final plan is the cause, and the ending stays 2 plain sentences: one retry with the problems if not.
   const planRaw = String(input.plan_raw ?? input.plan ?? "").replace(/<[^>]*>/g, " ");
   const check = (d: Any) => {
@@ -291,15 +295,16 @@ export async function runEnding(input: Any, rating: Rating) {
     const out: string[] = [];
     if (!usesPlan(e, planRaw)) out.push("the ending must use the final plan's own key word");
     if (sentences(e).length > 2 || e.split(/\s+/).length > 32) out.push("exactly 2 short sentences, 30 words max");
-    out.push(...plainProblems(e, `${planRaw} ${user.winner.name}`));
     return out;
   };
   const t0 = Date.now();
   const d = await call();
+  // The host waits 15 s in all: retry only a hard miss (the plan, the length) and only inside ~13.5 s.
   const probs = check(d);
-  if (!probs.length || Date.now() - t0 > 7_000) return d;
+  const left = 13_500 - (Date.now() - t0);
+  if (!probs.length || left < 4_000) return d;
   try {
-    const again = await call(`\n\nYour last answer had problems. Fix them.\nLAST ANSWER: ${JSON.stringify(d)}\nPROBLEMS:\n${probs.map((x) => `- ${x}`).join("\n")}`);
+    const again = await call(`\n\nYour last answer had problems. Fix them.\nLAST ANSWER: ${JSON.stringify(d)}\nPROBLEMS:\n${probs.map((x) => `- ${x}`).join("\n")}`, left);
     return check(again).length < probs.length ? again : d;
   } catch {
     return d;

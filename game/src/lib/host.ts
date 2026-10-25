@@ -362,7 +362,8 @@ export function loadShelf(): ShelfBook[] {
 function fallbackEnding(ending: Ending, name: string, attempt: string, finish: string) {
   const did = (attempt || `${name} goes for it`).replace(/[.!]+$/, "");
   const goal = finish.replace(/[.!]+$/, "").replace(/^./, (c) => c.toLowerCase());
-  if (ending === "TRIUMPHANT") return `${did}, and it works. Together, the heroes ${goal || "pull it off"}.`;
+  // The finish line is usually verb-first ("Get the dog home"); anything else is said as a plain result.
+  if (ending === "TRIUMPHANT") return !goal || /^(the|a|an|it|they|we|everyone)/i.test(goal) ? `${did}, and it works. The heroes pull it off together.` : `${did}, and it works. Together, the heroes ${goal}.`;
   if (ending === "BITTERSWEET") return `${did}, and it mostly works. The job gets done, but one silly thing never goes back to normal.`;
   return `${did}, but it doesn't quite work. Everyone is fine, and somehow the town likes it better this way.`;
 }
@@ -2013,7 +2014,9 @@ export class GameHost {
     vp.then(() => (settled = true));
     // Only if the ruling isn't already in, say so after a moment.
     setTimeout(() => !settled && this.state.phase === "ruling" && this.set({ busy: "The DM is reading the plan…" }), 600);
+    const asked = Date.now();
     const v = await vp;
+    console.info(`[wait] ruling ${Date.now() - asked}ms (${finale ? "finale" : `turn ${turn + 1}`})`);
     if (this.state.phase !== "ruling" || this.state.turnIndex !== turn || this.state.finale !== finale) return;
     const judged = { ...pitch, verdict: v };
     this.noteRuling(judged, v);
@@ -2558,6 +2561,7 @@ export class GameHost {
     tp.then(() => (settled = true));
     setTimeout(() => !settled && this.state.phase === "outcome" && this.set({ busy: "The DM is writing it down…" }), 600);
     // The call started at the ruling; a late answer is kept as long as nothing is on screen yet (design/33).
+    const landed = Date.now();
     const d = (await withTimeout(tp, 9000, () => null)) ?? this.localTurn(pitch, roll);
     if ((this.state.phase as string) !== "outcome") return;
     const g = gradeRoll(roll.total, roll.kept);
@@ -2573,6 +2577,7 @@ export class GameHost {
     if (d.problems?.length) this.note("fallback", "Checks", d.problems.slice(0, 3).join("; "));
     if (d.right_now && d.right_now !== this.state.nowGoal) this.note("scene", "Right now", d.right_now);
     this.set({ outcome: d.outcome, busy: "", situation: d.scene || this.state.situation, nowGoal: d.right_now || this.state.nowGoal, progress: d.progress, act: d.act });
+    console.info(`[wait] outcome ${Date.now() - landed}ms after the die landed (turn ${this.state.turnIndex + 1}${d.fallback ? ", fallback" : ""})`);
     const spoken = this.play(clip);
     this.setTimer(spoken ? Math.max(spoken + 1000, 4500) : outcomeMs(d.outcome), () => this.startTurn(this.state.turnIndex + 1));
   }

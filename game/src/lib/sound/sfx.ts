@@ -77,7 +77,7 @@ export interface SfxOpts {
 }
 
 const OUT_LEVEL = 0.42;
-const TONE_HZ = 4000; // nothing sharp above this
+const TONE_HZ = 5600; // nothing sharp above this (was 4000: the CD found the effects "a little muffled")
 
 let fx: { ctx: AudioContext; out: GainNode; verb: GainNode } | null = null;
 
@@ -108,7 +108,7 @@ function makeChain(c: BaseAudioContext, dest: AudioNode, outLevel: number, room?
   lp.Q.value = 0.5;
   const verb = c.createGain();
   const send = c.createGain();
-  send.gain.value = 0.3 / 0.38; // the effects' old room return (0.3) through the shared room's (0.38)
+  send.gain.value = 0.22 / 0.38; // a drier room than the music's (was 0.3): clearer, less muffled
   verb.connect(send);
   send.connect(room ?? makeRoom(c, lp).input);
   // a gentle peak catcher so short clicks never poke above the music bed
@@ -118,12 +118,19 @@ function makeChain(c: BaseAudioContext, dest: AudioNode, outLevel: number, room?
   comp.ratio.value = 6;
   comp.attack.value = 0.001;
   comp.release.value = 0.12;
+  // a small presence lift where clicks and plucks read clearly (subtle: the CD likes the current feel)
+  const presence = c.createBiquadFilter();
+  presence.type = "peaking";
+  presence.frequency.value = 3800;
+  presence.Q.value = 0.8;
+  presence.gain.value = 2;
   out.connect(lp);
   // and a soft ceiling at -14 dBFS: millisecond click peaks are rounded off, never poke above the music
   const ceil = c.createWaveShaper();
   ceil.curve = ceilingCurve();
   ceil.oversample = "2x";
-  lp.connect(comp);
+  lp.connect(presence);
+  presence.connect(comp);
   comp.connect(ceil);
   ceil.connect(dest);
   return { out, verb };

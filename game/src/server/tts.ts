@@ -48,8 +48,69 @@ function wavFromPcm(pcm: Buffer): Buffer {
  * Raw 16-bit PCM for playback: an even byte count, scaled down only if it would clip, and a 5 ms
  * fade at each end so a clip never starts or stops with a click.
  */
+/**
+ * Smooth delivery (CD: "a bit choppy"): any pause longer than 0.3 s inside a line is shortened to 0.3 s and lead-in
+ * silence to 0.06 s. Only near-silence (under -38 dBFS: silence and breath noise) is removed, with a 6 ms crossfade
+ * at each cut, so nothing is time-stretched (that is what sounded echoey).
+ */
+export function trimPauses(pcm: Buffer): Buffer {
+  const n = pcm.length / 2;
+  const at = (i: number) => pcm.readInt16LE(i * 2);
+  const QUIET = 410; // -38 dBFS: silence and breath noise, never a word
+  const win = Math.floor(RATE * 0.01); // 10 ms blocks
+  const maxGap = Math.floor(RATE * 0.3);
+  const lead = Math.floor(RATE * 0.06);
+  const xf = Math.floor(RATE * 0.006);
+  const loud: boolean[] = [];
+  for (let b = 0; b * win < n; b++) {
+    let peak = 0;
+    for (let i = b * win; i < Math.min(n, (b + 1) * win); i++) peak = Math.max(peak, Math.abs(at(i)));
+    loud.push(peak > QUIET);
+  }
+  const first = loud.indexOf(true);
+  if (first < 0) return pcm;
+  // keep-ranges in samples
+  const keep: [number, number][] = [];
+  let start = Math.max(0, first * win - lead);
+  let b = first;
+  while (b < loud.length) {
+    if (loud[b]) { b++; continue; }
+    let e = b;
+    while (e < loud.length && !loud[e]) e++;
+    const gap = (e - b) * win;
+    if (e < loud.length && gap > maxGap) {
+      // keep half the allowed pause on each side of the cut
+      keep.push([start, b * win + maxGap / 2]);
+      start = e * win - maxGap / 2;
+    }
+    b = e;
+  }
+  const last = loud.lastIndexOf(true);
+  const end = Math.min(n, (last + 1) * win + Math.floor(RATE * 0.25)); // 0.25 s of tail after the last sound
+  keep.push([start, end]);
+  if (keep.length === 1 && keep[0][0] === 0 && end === n) return pcm;
+  const out: number[] = [];
+  for (const [a, z] of keep) {
+    for (let i = a; i < z; i++) {
+      const v = at(i);
+      const k = i - a;
+      if (out.length >= xf && k < xf) {
+        // crossfade into the previous range's tail
+        const j = out.length - xf + k;
+        const t = k / xf;
+        out[j] = Math.round(out[j] * (1 - t) + v * t);
+        continue;
+      }
+      out.push(v);
+    }
+  }
+  const buf = Buffer.alloc(out.length * 2);
+  for (let i = 0; i < out.length; i++) buf.writeInt16LE(Math.max(-32768, Math.min(32767, out[i])), i * 2);
+  return buf;
+}
+
 function cleanPcm(raw: Buffer): Buffer {
-  const pcm = raw.length % 2 ? raw.subarray(0, raw.length - 1) : Buffer.from(raw);
+  const pcm = trimPauses(raw.length % 2 ? raw.subarray(0, raw.length - 1) : Buffer.from(raw));
   const n = pcm.length / 2;
   let peak = 1;
   for (let i = 0; i < n; i++) peak = Math.max(peak, Math.abs(pcm.readInt16LE(i * 2)));
@@ -57,11 +118,12 @@ function cleanPcm(raw: Buffer): Buffer {
   // scaled down if it would clip.
   const ceiling = 32_000;
   const gain = peak > ceiling ? ceiling / peak : 1;
-  const fade = Math.min(Math.floor(RATE * 0.005), Math.floor(n / 2)); // 5 ms edge fades, nothing else
+  const fade = Math.min(Math.floor(RATE * 0.005), Math.floor(n / 2)); // 5 ms fade in
+  const fadeOut = Math.min(Math.floor(RATE * 0.02), Math.floor(n / 2)); // 20 ms fade out: an end never clicks
   for (let i = 0; i < n; i++) {
     let g = gain;
     if (i < fade) g *= i / fade;
-    else if (i >= n - fade) g *= (n - 1 - i) / fade;
+    else if (i >= n - fadeOut) g *= (n - 1 - i) / fadeOut;
     if (g !== 1) pcm.writeInt16LE(Math.max(-32768, Math.min(32767, Math.round(pcm.readInt16LE(i * 2) * g))), i * 2);
   }
   return pcm;
@@ -85,7 +147,6 @@ async function openai(voice: VoiceId, style: string, text: string, timeoutMs: nu
               voice: VOICES[voice].openai,
               input: text,
               instructions: `${style || "Read this as a storyteller"}. ${VOICE_DIRECTION}`,
-              speed: 1.1,
               response_format: "pcm",
             },
       ),
@@ -104,28 +165,107 @@ async function openai(voice: VoiceId, style: string, text: string, timeoutMs: nu
 // ElevenLabs (TTS_PROVIDER=elevenlabs). The CD found OpenAI "robotic" with harsh S sounds; bake-off in
 // devpost-media/voice-bakeoff. Flash v2.5 reads live lines (~180 ms to first byte); v3 is more expressive but had a
 // 10.7 s cold start, so it only reads text made ahead of time (`ahead`, e.g. openers during the vote).
-// Voice per persona = the CD's picks from the bake-off (Sun AM): Sarah, George, Charlie. Juniper is no longer cast;
-// it reads with George if an old cast still names it.
 type ElevenModel = "eleven_flash_v2_5" | "eleven_v3";
 type ElevenSettings = { stability: number; similarity_boost: number; style: number; use_speaker_boost: boolean; speed?: number };
 const FLASH: ElevenSettings = { stability: 0.35, similarity_boost: 0.8, style: 0, use_speaker_boost: true, speed: 1.1 };
 const V3: ElevenSettings = { stability: 0, similarity_boost: 0.8, style: 0.45, use_speaker_boost: true }; // v3 takes stability 0 / 0.5 / 1
+// ONE narrator for every story (CD, Sun AM): Sarah, at the bake-off clip's settings the CD picked (v3 funny: stability 0,
+// similarity 0.8, style 0.45, speaker boost). Every persona id maps to her, so casting and host.ts stay as they are.
+const SARAH = { voiceId: "EXAVITQu4vr4xnSDxMaL", voice: "Sarah", live: "eleven_flash_v2_5", ahead: "eleven_v3", settings: { eleven_flash_v2_5: FLASH, eleven_v3: V3 } } as const;
 export const ELEVEN: Record<VoiceId, { voiceId: string; voice: string; live: ElevenModel; ahead: ElevenModel; settings: Partial<Record<ElevenModel, ElevenSettings>> }> = {
-  vesper: { voiceId: "EXAVITQu4vr4xnSDxMaL", voice: "Sarah", live: "eleven_flash_v2_5", ahead: "eleven_v3", settings: { eleven_flash_v2_5: FLASH, eleven_v3: V3 } },
-  hollis: { voiceId: "JBFqnCBsd6RMkjVDRZzb", voice: "George", live: "eleven_flash_v2_5", ahead: "eleven_v3", settings: { eleven_flash_v2_5: FLASH, eleven_v3: V3 } },
-  wren: { voiceId: "IKne3meq5aSn9XLyUdCD", voice: "Charlie", live: "eleven_flash_v2_5", ahead: "eleven_v3", settings: { eleven_flash_v2_5: FLASH, eleven_v3: V3 } },
-  juniper: { voiceId: "JBFqnCBsd6RMkjVDRZzb", voice: "George", live: "eleven_flash_v2_5", ahead: "eleven_v3", settings: { eleven_flash_v2_5: FLASH, eleven_v3: V3 } }, // not cast
+  vesper: SARAH,
+  hollis: SARAH,
+  wren: SARAH,
+  juniper: SARAH,
 };
 const ELEVEN_FIRST_BYTE_MS = 4_000; // slower than this to start = fall back to OpenAI
 let elevenOffUntil = 0; // out of characters / bad key: skip ElevenLabs for a while instead of paying the wait every line
 
-/** v3 reads [audio tags]; Flash would say them out loud, so they're dropped for it. */
-function elevenText(model: ElevenModel, text: string) {
-  return model === "eleven_v3" ? text : text.replace(/\[[^\]]{1,30}\]\s*/g, "").trim();
+// ---- credit guard: ONE provider per game, so the narrator's voice never switches mid-game ----
+// Billing (measured from the `character-cost` header): v3 = 1 credit per character, Flash v2.5 = 0.5.
+// Estimated per game with v3 for openers/scenes/endings and Flash for live lines (3 players): Full ~2,500,
+// Quick ~2,000, judge ~1,150 (its stored opener is free once cached). The real number is logged after each game.
+const GAME_CREDITS = Number(process.env.ELEVENLABS_GAME_CREDITS) || 3_000; // less than this left = OpenAI for the game
+const NEW_GAME_IDLE_MS = 6 * 60_000; // no narration this long = the next line starts a new game (when the TV doesn't say)
+type Decision = { provider: "elevenlabs" | "openai"; remaining: number | null; why: string; at: number; credits: number };
+const gs = globalThis as unknown as { __gpTtsGame?: { decision: Promise<Decision> | null; lastAt: number; current: Decision | null; subUntil: number } };
+const game = (gs.__gpTtsGame ??= { decision: null, lastAt: 0, current: null, subUntil: 0 });
+
+/** Credits left this month, from the subscription endpoint. null = unknown (the key lacks the User: Read permission). */
+async function elevenRemaining(): Promise<number | null> {
+  const k = process.env.ELEVENLABS_API_KEY;
+  if (!k || Date.now() < game.subUntil) return null;
+  try {
+    const res = await fetch("https://api.elevenlabs.io/v1/user/subscription", { headers: { "xi-api-key": k }, signal: AbortSignal.timeout(3_000) });
+    if (!res.ok) {
+      game.subUntil = Date.now() + 10 * 60_000; // don't ask again for a while
+      console.warn(`[tts] can't read ElevenLabs credits (HTTP ${res.status}); give the key the "User: Read" permission for the guard`);
+      return null;
+    }
+    const j = (await res.json()) as { character_limit?: number; character_count?: number };
+    return typeof j.character_limit === "number" && typeof j.character_count === "number" ? j.character_limit - j.character_count : null;
+  } catch {
+    return null;
+  }
 }
 
-/** Streams 24 kHz PCM; aborts if the first audio byte takes over 4 s. null on any failure (caller falls back). */
+async function decide(): Promise<Decision> {
+  const at = Date.now();
+  if (process.env.TTS_PROVIDER !== "elevenlabs" || !process.env.ELEVENLABS_API_KEY) return { provider: "openai", remaining: null, why: "TTS_PROVIDER is not elevenlabs", at, credits: 0 };
+  if (Date.now() < elevenOffUntil) return { provider: "openai", remaining: null, why: "ElevenLabs paused (out of credits or a key error)", at, credits: 0 };
+  const remaining = await elevenRemaining();
+  if (remaining != null && remaining < GAME_CREDITS)
+    return { provider: "openai", remaining, why: `only ${remaining} ElevenLabs credits left (a game needs ~${GAME_CREDITS})`, at, credits: 0 };
+  return { provider: "elevenlabs", remaining, why: remaining == null ? "credits unknown" : `${remaining} credits left`, at, credits: 0 };
+}
+
+/**
+ * The provider for the current game. Decided once at game start (the TV calls GET /api/tts?start=1), or on the first
+ * line after NEW_GAME_IDLE_MS of quiet, then kept for the whole game.
+ */
+export function gameProvider(start = false): Promise<Decision> {
+  const now = Date.now();
+  if (start || !game.decision || now - game.lastAt > NEW_GAME_IDLE_MS) {
+    const prev = game.current;
+    if (prev && prev.provider === "elevenlabs") console.log(`[tts] last game used ${Math.round(prev.credits)} ElevenLabs credits`);
+    game.current = null;
+    game.decision = decide().then((d) => {
+      game.current = d;
+      console.log(`[tts] this game reads with ${d.provider} (${d.why})`);
+      return d;
+    });
+  }
+  game.lastAt = now;
+  return game.decision;
+}
+
+/** v3 reads [audio tags]; Flash would say them out loud, so they're dropped for it. */
+function elevenText(model: ElevenModel, text: string) {
+  if (model !== "eleven_v3") return text.replace(/\[[^\]]{1,30}\]\s*/g, "").trim();
+  // v3 stops on its last sound (the bake-off's "cut-off last word"); a closing pause tag lets it finish cleanly
+  // (measured on Sarah: the last 20 ms went from -32 dB, cut, to a clean decay at -91 dB).
+  return /\]\s*$/.test(text) ? text : `${text} [short pause]`;
+}
+
+// Starter allows 3 requests at once (a 4th gets HTTP 429). The host asks for the outcome, the scene and the next turn
+// line together, so requests queue here instead.
+const ELEVEN_MAX_AT_ONCE = 3;
+let elevenActive = 0;
+const elevenQueue: (() => void)[] = [];
+
 async function eleven(voice: VoiceId, model: ElevenModel, text: string, timeoutMs: number): Promise<Buffer | null> {
+  if (elevenActive >= ELEVEN_MAX_AT_ONCE) await new Promise<void>((r) => elevenQueue.push(r));
+  elevenActive++;
+  try {
+    return await elevenOnce(voice, model, text, timeoutMs);
+  } finally {
+    elevenActive--;
+    elevenQueue.shift()?.();
+  }
+}
+
+/** Streams 24 kHz PCM; aborts if the first audio byte takes over 4 s. null on any failure. */
+async function elevenOnce(voice: VoiceId, model: ElevenModel, text: string, timeoutMs: number): Promise<Buffer | null> {
   const k = process.env.ELEVENLABS_API_KEY;
   if (!k || Date.now() < elevenOffUntil) return null;
   const cfg = ELEVEN[voice];
@@ -143,9 +283,11 @@ async function eleven(voice: VoiceId, model: ElevenModel, text: string, timeoutM
       const why = (await res.text().catch(() => "")).slice(0, 160).replace(/\s+/g, " ");
       // 401 = out of characters or a bad key, 402/403 = plan: stop trying for 10 minutes. Other errors: just this line.
       if ([401, 402, 403].includes(res.status)) elevenOffUntil = Date.now() + 10 * 60_000;
-      console.warn(`[tts] elevenlabs HTTP ${res.status} (${why}), falling back to OpenAI`);
+      console.warn(`[tts] elevenlabs HTTP ${res.status} (${why})`);
       return null;
     }
+    const cost = Number(res.headers.get("character-cost"));
+    if (Number.isFinite(cost) && game.current) game.current.credits += cost;
     const parts: Buffer[] = [];
     const reader = res.body.getReader();
     for (;;) {
@@ -159,7 +301,7 @@ async function eleven(voice: VoiceId, model: ElevenModel, text: string, timeoutM
     const pcm = Buffer.concat(parts);
     return pcm.length > 2_400 ? pcm : null; // under 50 ms of audio = something went wrong
   } catch (e) {
-    console.warn(`[tts] elevenlabs ${model} failed (${(e as Error).message}), falling back to OpenAI`);
+    console.warn(`[tts] elevenlabs ${model} failed (${(e as Error).message})`);
     return null;
   } finally {
     clearTimeout(first);
@@ -184,6 +326,9 @@ async function call(model: string, voice: VoiceId, style: string, text: string, 
 }
 
 export type SpeakOpts = { ahead?: boolean; timeoutMs?: number };
+/** Without an explicit `ahead`, lines this long (openers ~250-290 chars, endings ~260-375) read with v3: the TV asks
+ * for them early. Live outcome and turn lines are shorter and read with Flash (no wait). */
+const AHEAD_CHARS = 220;
 
 /** Reads a clip from memory, then disk, else makes it once (concurrent asks share one call) and caches it. */
 async function cached(id: string, provider: Clip["provider"], make: () => Promise<Clip | null>): Promise<Clip | null> {
@@ -226,7 +371,7 @@ function toClip(pcm: Buffer, provider: Clip["provider"]): Clip {
 async function elevenClip(voice: VoiceId, text: string, model: ElevenModel, timeoutMs: number) {
   const cfg = ELEVEN[voice];
   const body = elevenText(model, text);
-  const id = crypto.createHash("sha1").update(`el1|${cfg.voiceId}|${model}|${JSON.stringify(cfg.settings[model] ?? FLASH)}|${body}`).digest("hex");
+  const id = crypto.createHash("sha1").update(`el3|${cfg.voiceId}|${model}|${JSON.stringify(cfg.settings[model] ?? FLASH)}|${body}`).digest("hex");
   return cached(id, "elevenlabs", async () => {
     const t0 = Date.now();
     const pcm = await eleven(voice, model, text, timeoutMs);
@@ -239,7 +384,7 @@ async function elevenClip(voice: VoiceId, text: string, model: ElevenModel, time
 
 /** OpenAI first, then Gemini; cached by (voice, style, text). Throws when both fail. */
 async function openaiClip(voice: VoiceId, style: string, text: string, timeoutMs: number) {
-  const id = crypto.createHash("sha1").update(`v5|${voice}|${style}|${text}`).digest("hex"); // v3: speed 1.1, expressive direction, clean PCM
+  const id = crypto.createHash("sha1").update(`v6|${voice}|${style}|${text}`).digest("hex"); // v6: natural speed, smooth direction, pauses trimmed
   const clip = await cached(id, "openai", async () => {
     const t0 = Date.now();
     let pcm = await openai(voice, style, text, timeoutMs);
@@ -262,16 +407,24 @@ async function openaiClip(voice: VoiceId, style: string, text: string, timeoutMs
 }
 
 /**
- * One narrator line as WAV. TTS_PROVIDER=elevenlabs tries ElevenLabs first (v3 for `ahead` text, Flash for live
- * lines, Flash again if v3 is slow), then OpenAI, then Gemini. Default (openai): OpenAI, then Gemini.
+ * One narrator line as WAV, from the provider picked for this game (gameProvider). On ElevenLabs: v3 for `ahead`
+ * text, Flash for live lines; a failed line tries Flash, then Flash once more, then throws (that line is text only).
+ * It never falls back to OpenAI mid-game, so the narrator's voice never switches. An out-of-credits error stops
+ * ElevenLabs for 10 minutes, so the next game picks OpenAI. On OpenAI: OpenAI, then Gemini.
  */
 export async function speak(voice: VoiceId, style: string, text: string, opts: SpeakOpts = {}): Promise<Clip> {
   const timeoutMs = opts.timeoutMs ?? 20_000;
-  if (process.env.TTS_PROVIDER === "elevenlabs") {
+  if ((await gameProvider()).provider === "elevenlabs") {
     const cfg = ELEVEN[voice];
-    const model = opts.ahead ? cfg.ahead : cfg.live;
-    const clip = (await elevenClip(voice, text, model, timeoutMs)) ?? (model !== cfg.live ? await elevenClip(voice, text, cfg.live, timeoutMs) : null);
+    const model = (opts.ahead ?? text.length >= AHEAD_CHARS) ? cfg.ahead : cfg.live;
+    let clip = await elevenClip(voice, text, model, timeoutMs);
+    if (!clip && model !== cfg.live) clip = await elevenClip(voice, text, cfg.live, timeoutMs);
+    if (!clip && Date.now() >= elevenOffUntil) {
+      await new Promise((r) => setTimeout(r, 400)); // one retry, staggered
+      clip = await elevenClip(voice, text, cfg.live, timeoutMs);
+    }
     if (clip) return clip;
+    throw new Error("elevenlabs could not read this line: text only (no mid-game switch to another voice)");
   }
   return openaiClip(voice, style, text, timeoutMs);
 }
