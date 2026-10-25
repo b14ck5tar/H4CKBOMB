@@ -131,3 +131,18 @@ Full history and train of thought: `design/00-where-we-are.md`.
 - ✅ CD rule (Sun ~2 AM): perfect the core loop before ANY new feature. The fresh-eyes 'bold ideas' (roast intros, talent vote, real-vs-fake, anchor cameo, front-page keepsake) are parked.
 - ✅ Art: Neon Ink house style + 18 v2 heroes approved; each story still gets its own art theme (a variation on Neon Ink).
 - ✅ Pitch: both present. The CD is away 11 AM-4:30 PM (work) and back ~4:45 for the 5:30 pitch; the partner covers judging 2-5 PM. So the build must be stable by ~9:30 AM, the video recorded and the Devpost finalized before 11 AM.
+- ✅ Story = procedural rules (design/35 + CD refinements): logic chain from the player's literal action, everything possible, plain wording, the AI judges progress (code clamps), hand-off + callbacks + 'tell the table your plan'.
+
+## Sun ~4:15 AM: story tweaks (CD answers to design/35 push-back)
+1. Payoff consequence: yes, but **simple beats clever**. CD: rather "simple, playable and followable than complex and confusing". One plain cause and effect; no wordplay.
+2. Momentum by default: yes.
+3. Hybrid progress (the grade sets a range, the AI picks within it): yes, but it must be tuned with tests until it feels 9/10.
+4. Wild plans need big rolls: yes. Power scaling still applies: no hero massively out- or underperforms.
+5. Playful difficulty labels: yes.
+6. 6 AM freeze: decide when we get there.
+
+## Sun ~4:45 AM: generative openers + polish push
+- Quick Tale writes a live opener from fresh news during the lobby and hero creation (it was always curated, QUICK_IS_CURATED). A stored opener is the instant backup; `?judge=1` forces the stored one. (CD: "we need stuff generative flowing within a manageable time frame.")
+- Approved A (scene art follows the story; art never hidden by the UI on laptops), B (music polish), C (submission prep). Run agents in parallel.
+- Boulder opener renamed "The Boulder on the Edge"; spoilers removed from 3 more openers.
+- GAME.md: the one doc of all main ideas, weighted on the core-loop picker (design/24) and the procedural rules (design/35).
