@@ -31,6 +31,13 @@ import { evenStats } from "@/lib/rules";
 
 export const maxDuration = 60;
 
+/**
+ * One constant for the story-writing calls (outcome = what happened + situation + Right now, and the ending), so a
+ * model comparison is a one-line (or one env var) swap: STORY_MODEL=muse-wonder-1.0. Another provider would also need
+ * its own client in place of museJSON (same JSON-schema contract).
+ */
+const STORY_MODEL = process.env.STORY_MODEL || MODELS.writing;
+
 const TASKS = ["character", "scene", "verdict", "outcome", "round", "epilogue", "storybook", "kind", "cast", "bot"];
 
 /** Player-authored text is wrapped so the model treats it as in-world speech, never instructions. */
@@ -88,13 +95,13 @@ async function run(task: string, input: Any, rating: Rating) {
     case "cast":
       return museJSON({ task: t("cast"), model: MODELS.ruling, system: withRating(CAST_SYSTEM, rating), schema: CAST_SCHEMA, effort: "minimal", timeoutMs: 8000, maxTokens: 1200, user: JSON.stringify(input) });
     case "outcome":
-      return museJSON({ task: t("outcome"), model: MODELS.writing, system: withRating(OUTCOME_SYSTEM, rating), schema: OUTCOME_SCHEMA, effort: "low", timeoutMs: 12_000, maxTokens: 3000, user: JSON.stringify(input) });
+      return museJSON({ task: t("outcome"), model: STORY_MODEL, system: withRating(OUTCOME_SYSTEM, rating), schema: OUTCOME_SCHEMA, effort: "low", timeoutMs: 12_000, maxTokens: 3000, user: JSON.stringify(input) });
     case "round":
       return museJSON({ task: t("round"), system: withRating(ROUND_SYSTEM, rating), schema: ROUND_SCHEMA, effort: "low", timeoutMs: 14_000, user: JSON.stringify(input) });
     case "kind":
       return museJSON({ task: t("kind"), system: withRating(KIND_SYSTEM, rating), schema: KIND_SCHEMA, effort: "minimal", timeoutMs: 9000, maxTokens: 1200, user: JSON.stringify(input) });
     case "epilogue":
-      return museJSON({ task: t("epilogue"), system: withRating(input?.quick_tale ? EPILOGUE_SYSTEM + EPILOGUE_QUICK : EPILOGUE_SYSTEM, rating), schema: EPILOGUE_SCHEMA, effort: "low", timeoutMs: 15_000, maxTokens: 4000, user: JSON.stringify(input) });
+      return museJSON({ task: t("epilogue"), model: STORY_MODEL, system: withRating(input?.quick_tale ? EPILOGUE_SYSTEM + EPILOGUE_QUICK : EPILOGUE_SYSTEM, rating), schema: EPILOGUE_SCHEMA, effort: "low", timeoutMs: 15_000, maxTokens: 4000, user: JSON.stringify(input) });
     case "storybook":
       return museJSON({
         task: t("storybook"),
@@ -172,6 +179,15 @@ function scrubDeep(v: Any, key = ""): Any {
 
 const TIERS = ["clever", "solid", "risky", "wild", "miracle"];
 
+/** opener.real_setting {place_type, roles, situation, stakes, arc}, clipped; undefined when missing. */
+function realEvent(r: Any) {
+  if (!r || typeof r !== "object") return undefined;
+  const s = (x: unknown, n: number) => String(x ?? "").replace(/[<>]/g, "").replace(/\s+/g, " ").trim().slice(0, n);
+  const list = (x: unknown, k: number, n: number) => (Array.isArray(x) ? x.map((v) => s(v, n)).filter(Boolean).slice(0, k) : []);
+  const out = { place_type: s(r.place_type, 120), roles: list(r.roles, 5, 60), situation: s(r.situation, 200), stakes: s(r.stakes, 160), arc: list(r.arc, 5, 100) };
+  return out.place_type || out.situation ? out : undefined;
+}
+
 /** Every piece of player-written text is wrapped as <player_input>, wherever it rides along. */
 function wrapPlayerText(task: string, input: Any) {
   if (task === "kind") {
@@ -185,6 +201,9 @@ function wrapPlayerText(task: string, input: Any) {
     };
   }
   if (task === "verdict" || task === "outcome") input.plan = wrap("plan", input.plan, 200);
+  // The real event behind the story (opener.real_setting, spoiler-free): only its known fields, clipped.
+  if (["verdict", "outcome", "epilogue"].includes(task)) input.real_event = realEvent(input.real_event ?? input.story_so_far?.real_event);
+  if (input.story_so_far?.real_event) delete input.story_so_far.real_event;
   if (task === "round" && Array.isArray(input.actions))
     input.actions = input.actions.map((a: Any) => ({ ...a, pitch: wrap(a.hero_id, a.pitch), appeal: a.appeal ? wrap(`${a.hero_id}-appeal`, a.appeal) : "" }));
   if ((task === "storybook" || task === "epilogue") && Array.isArray(input.log))
@@ -215,7 +234,17 @@ export async function POST(req: Request) {
       const clean = (x: unknown) => String(x ?? "").replace(/<\/?player_input[^>]*>/g, "").trim();
       const text = clean(data.text);
       if (!text) throw new Error("empty outcome");
-      data = { text, situation: clean(data.situation).slice(0, 220), why: clean(data.why).slice(0, 180), now_goal: clean(data.now_goal).replace(/[.!]+$/, "").slice(0, 60) };
+      data = {
+        text,
+        situation: clean(data.situation).slice(0, 220),
+        why: clean(data.why).slice(0, 180),
+        now_goal: clean(data.now_goal).replace(/[.!]+$/, "").slice(0, 70),
+        // The story spine (host.ts storySoFar) and the decision's painting brief: these were dropped here before.
+        where: clean(data.where).slice(0, 80),
+        changed: clean(data.changed).slice(0, 120),
+        new_prop: clean(data.new_prop).slice(0, 40),
+        scene: clean(data.scene).slice(0, 260),
+      };
     }
     if (task === "kind") {
       // The sentence must finish the frame and stay a sentence; otherwise use the safe local version.

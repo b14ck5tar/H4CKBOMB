@@ -4,7 +4,7 @@ import { ART_STYLES, isArtStyle } from "@/lib/artStyles";
 
 // Edit prompts for /v1/images/edits. Images are captioned by index (Muse reads parts in order).
 // Bump PROMPT_VERSION whenever the wording changes: it is part of the cache key.
-export const PROMPT_VERSION = "v2";
+export const PROMPT_VERSION = "v3";
 
 const clip = (s: string, n: number) => (s.length > n ? s.slice(0, n).replace(/\s+\S*$/, "") : s);
 
@@ -23,7 +23,8 @@ function ratingLine(rating?: string) {
 }
 
 function heroList(heroes: ArtHero[]) {
-  return heroes.map((h, i) => `Image ${i + 2}: ${describeHero(h)}.`).join(" ");
+  // The name ties a hero in the story brief ("Gus shoves the cart") to their portrait.
+  return heroes.map((h, i) => `Image ${i + 2}: ${h.name ? `${clip(h.name, 30)}, ` : ""}${describeHero(h)}.`).join(" ");
 }
 
 export function sceneEditPrompt(o: { heroes: ArtHero[]; sceneText: string; moment?: string; rating?: string; style?: string }) {
@@ -50,18 +51,21 @@ export function sceneEditPrompt(o: { heroes: ArtHero[]; sceneText: string; momen
 }
 
 /**
- * design/24 P4 v2: a decision's painting is a NEW scene, not an edit. The previous picture and the portraits are
- * references for character and style only; the place, camera and composition follow the new situation.
+ * design/24 P4 v3 (story director): a decision's painting is a NEW shot of what just happened, set in the real kind
+ * of place the story is happening in. The previous picture and the portraits are references for style and character
+ * only. `moment` is the outcome's scene brief (where, who does what, the visible result), `sceneText` the new
+ * situation, `setting` the real event's place_type (spoiler-free, e.g. "a giant vegetable weigh-in at a county show").
  */
-export function newScenePrompt(o: { heroes: ArtHero[]; sceneText: string; moment?: string; rating?: string; style?: string }) {
+export function newScenePrompt(o: { heroes: ArtHero[]; sceneText: string; moment?: string; setting?: string; rating?: string; style?: string }) {
   const st = isArtStyle(o.style) && o.style !== "neon" ? ART_STYLES[o.style] : null;
   const n = o.heroes.length;
   return [
     `Image 1 is the PREVIOUS picture of our story: use it ONLY for the art style, color mood and the look of the world. Image${n > 1 ? `s 2 to ${n + 1} are reference portraits` : " 2 is a reference portrait"} of our cartoon hero${n > 1 ? "es" : ""}.`,
-    `Paint a NEW illustration of the next moment of the story${o.moment ? `: ${clip(o.moment, 280)}` : ""}.`,
-    o.sceneText ? `Where we are now: ${clip(o.sceneText, 240)}` : "",
-    `This must look like a different shot from Image 1: a new camera angle, new framing and a new composition that fit this moment. If the story has moved somewhere new (inside a machine, onto a roof, across a giant chess board), paint that new place. Do not copy Image 1's layout.`,
-    `The heroes, from left to right: ${heroList(o.heroes)} Show them in the middle of the action, full body, big enough to read, each clearly recognizable from their portrait: same face, body shape, colors, outfit and prop.${ratingLine(o.rating)}`,
+    `Paint a NEW illustration of the moment that just happened${o.moment ? `: ${clip(o.moment, 300)}` : ""}.`,
+    o.setting ? `The place is ${clip(o.setting, 120)}, painted as a real, specific modern location of that kind, with two or three ordinary details that make it believable, and the one impossible thing of our story in it.` : "",
+    o.sceneText ? `What the picture must show right now: ${clip(o.sceneText, 240)}` : "",
+    `Show the RESULT clearly: what changed because of what the heroes did (something lifted, spilled, stuck, glowing, running away) is the focal point and easy to read at a glance. A new camera angle and a new composition that fit this moment; if the story moved somewhere new, paint that place. Do not copy Image 1's layout.`,
+    `The heroes, from left to right: ${heroList(o.heroes)} Show them in the middle of the action, full body, big enough to read, each clearly recognizable from their portrait by face shape, body shape, colors, outfit and prop, drawn in this picture's graphic style. Any other people are background figures in plain clothes.${ratingLine(o.rating)}`,
     st ? `Style: ${st.prompt}. ${NEGATIVE}` : `${STYLE}. ${COLOR} ${NEGATIVE}`,
   ]
     .filter(Boolean)

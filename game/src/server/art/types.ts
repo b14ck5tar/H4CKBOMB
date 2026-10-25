@@ -42,6 +42,8 @@ export type SceneArtRequest = Common & {
   moment?: string;
   /** design/24 P5b: one art style per story (lib/artStyles.ts). Missing = Neon Uncanny. Changes the cache key. */
   style?: string;
+  /** The real event's kind of place (opener.real_setting.place_type, spoiler-free). Paints the new shot there. */
+  setting?: string;
   /** true = paint a NEW shot of the next moment (sceneText + moment); Image 1 is only a style/continuity reference. */
   newScene?: boolean;
 };
