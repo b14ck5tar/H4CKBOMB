@@ -76,7 +76,7 @@ export class WatchSource {
   canBegin() {
     return false;
   }
-  begin() {}
+  async begin() {}
   nextTale() {}
   setMode() {}
   setRating() {}

@@ -116,7 +116,6 @@ const AWAY_AFTER_TIMEOUTS = 2;
 export const MONTAGE_PANEL_MS = 4800; // one ending-montage panel on the TV
 const DANGER_MAX = 3;
 /** design/35 rule 4: progress is decided by code from the grade, never by the AI. */
-const QUICK_IS_CURATED = true; // judge mode (CD, Sun)
 /** The house ranking of the hand-made stories (Quick Tale opens on the first one a table hasn't played). */
 const FEATURED = ["rust-wyrm", "hanging-boulder", "cornfield-dome", "galactic-signal", "billion-pearls", "idle-island", "returned-otter", "littlest-gardener"]; // the danger meter's top: at full, the finale gets a -3 shift
 const PRESENCE_ONLY = new Set(["hello", "ping", "away"]); // these don't count as "I'm back"
@@ -1021,7 +1020,11 @@ export class GameHost {
   }
 
   // ---------- Quick Tale: a fresh live story, made while people join ----------
-  private quickPrep: { seed: QuestSeed | null; ready: boolean } | null = null;
+  private quickPrep: { seed: QuestSeed | null; ready: boolean; p: Promise<QuestSeed | null> } | null = null;
+  /** Judge-safe switch (/tv?judge=1): Quick Tale always plays a saved story, never waits on a live one. */
+  judge = false;
+  /** When the lobby opened (to measure how long the live Quick Tale story takes). */
+  private lobbyAt = Date.now();
 
   /** Stories this TV played lately (localStorage), so Quick Tale doesn't repeat them. */
   private recentStories(): string[] {
@@ -1058,25 +1061,28 @@ export class GameHost {
    * during the lobby. If it isn't ready by Start, a curated story (also not played lately) stands in.
    */
   private prepareQuick() {
-    this.prepareVote();
-    if (!FEATURES.liveNews || this.state.source !== "news" || this.pinned || this.quickPrep || this.state.phase !== "lobby") return;
-    if (QUICK_IS_CURATED) return; // judge mode: Quick Tale plays a hand-made story, so no live one is written for it
+    if (this.state.mode === "full") this.prepareVote();
+    if (!FEATURES.liveNews || this.judge || this.state.source !== "news" || this.pinned || this.quickPrep || this.state.phase !== "lobby") return;
     const recent = new Set(this.recentStories());
     const pool = this.newsCands.filter((c) => !recent.has(c.headline));
     if (!pool.length) return;
     const c = pool[0]; // /api/news sends only stories that pass the storyability gate, best first
     const optionId = `news-${c.id}`;
-    const prep: { seed: QuestSeed | null; ready: boolean } = { seed: null, ready: false };
+    // The live opener is written while people join and make heroes (that takes longer than the ~30 s call).
+    const p = this.prepareStory(optionId, { mode: "news", source: { headline: c.headline, snippet: c.snippet, source: c.source, url: c.url, date: c.date } }, (o) => newsSeed(optionId, c, o)).catch(() => null);
+    const prep: { seed: QuestSeed | null; ready: boolean; p: Promise<QuestSeed | null> } = { seed: null, ready: false, p };
     this.quickPrep = prep;
-    this.prepareStory(optionId, { mode: "news", source: { headline: c.headline, snippet: c.snippet, source: c.source, url: c.url, date: c.date } }, (o) => newsSeed(optionId, c, o))
-      .then(async (seed) => {
-        if (!seed) return;
-        prep.seed = seed;
-        prep.ready = !!(await (this.plateP.get(seed.id) ?? Promise.resolve(null)));
-        if (prep.ready) this.note("source", "Quick Tale", `Tonight's live quest is ready: "${seed.quest_title}".`);
-        if (prep.ready && this.quick) this.prewarm(seed);
-      })
-      .catch(() => {});
+    p.then((seed) => {
+      const secs = ((Date.now() - this.lobbyAt) / 1000).toFixed(1);
+      if (!seed) {
+        this.note("fallback", "Quick Tale", `The live story couldn't be written (${secs}s after the lobby opened); a saved story will play.`);
+        return;
+      }
+      prep.seed = seed;
+      prep.ready = true;
+      this.note("source", "Quick Tale", `Live story from today's news is ready ${secs}s after the lobby opened: "${seed.quest_title}".`);
+      if (this.quick) this.prewarm(seed);
+    });
   }
 
   /** Full Story's three quests, written (and painted) in parallel the moment Odd news is on and news is in. */
@@ -1442,7 +1448,7 @@ export class GameHost {
     return playing && (this.quick ? !!this.seed || this.state.questOptions.length > 0 : this.state.questOptions.length > 0);
   }
 
-  begin() {
+  async begin() {
     if (!this.canBegin()) return;
     // Custom heroes that are still drawing come along: they finish in the background during the story vote.
     const players = this.state.players
@@ -1497,8 +1503,16 @@ export class GameHost {
     // Quick Tale (judge mode): the best hand-made story this table hasn't played. Full Story: the table votes,
     // unless one was picked by link.
     if (this.quick && !this.pinned && this.state.source !== "ours") {
-      this.useQuest(this.freshCurated());
-      this.note("source", "Quick Tale", "A hand-made top story, picked for a first game. Full Story plays this week's live news.");
+      const prep = this.quickPrep;
+      const live = this.judge || !prep ? null : prep.seed ?? (await withTimeout(prep.p, 2000, () => null));
+      if (live) {
+        this.useQuest(live.id);
+        this.quickPrep = null; // used: the next group gets a fresh one
+        this.note("source", "Quick Tale", "Live story from today's news.");
+      } else {
+        this.useQuest(this.freshCurated());
+        this.note("source", "Quick Tale", this.judge ? "Saved story (judge mode)." : "Saved story: the live one wasn't ready in time.");
+      }
     }
     if (this.state.source === "ours") return this.startStoryWrite();
     if (!this.quick && !this.pinned) return this.startStoryVote();
@@ -3089,6 +3103,7 @@ export class GameHost {
   /** "Next chapter": same heroes and titles, new story. */
   nextTale() {
     this.clearTimer();
+    this.lobbyAt = Date.now();
     if (this.finalSafety) clearTimeout(this.finalSafety);
     this.finalSafety = null;
     this.startedAt = 0;
