@@ -104,6 +104,8 @@ async function run(task: string, input: Any, rating: Rating) {
         effort: "low",
         user: JSON.stringify({
           concept: wrapOpt("p", cleanText(input.concept, 200), 200),
+          // The player's chosen hero name (kept exactly; host.ts also forces it onto the card).
+          chosen_name: cleanText(input.chosen_name, 20) || undefined,
           real: { skill: wrapOpt("skill", real.skill, 120), fear: wrapOpt("fear", real.fear, 120) },
           party_so_far: input.partySoFar ?? [],
           avoid_names: input.avoidNames ?? [],
