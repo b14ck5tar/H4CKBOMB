@@ -21,7 +21,7 @@ come from real life, so the ending starts a real conversation: "wait, that actua
 A laptop or TV is the table. Phones scan a QR code and become controllers. No app, no accounts, no prep. 2 to 6
 players in one room. Quick Tale is about 5 minutes (one turn each); a Full Story 10 to 15.
 
-1. **Make a hero.** Describe them in one line and answer one question: "What's your secret talent?" Muse paints the
+1. **Make a hero.** Describe them in one line and answer one question: "What's your secret strength?" Muse paints the
    hero in our house style, Neon Ink (hand-inked lines, flat neon color). Or grab one of 18 ready-made heroes and
    play right away. Your real answer stays secret until the end.
 2. **Pick tonight's story.** Two sources, both true:
@@ -56,7 +56,7 @@ players in one room. Quick Tale is about 5 minutes (one turn each); a Full Story
    +2). Then the whole table shakes their phones at the same moment to roll one shared die.
 9. **Based on a true story.** A "because of you" montage credits every player by name for what they did and calls
    back a funny moment. The real event only set the scene; the ending is yours. So the reveal comes in two beats:
-   *What you did* (your story, and a "Solved by" line crediting each player's real secret talent), then *What really
+   *What you did* (your story, and a "Solved by" line crediting each player's real secret strength), then *What really
    happened*: the real article and how it really ended, so you see where you matched reality and where you went wild.
    In Our stories it says *Based on Ava's true story* and shows how it really ended for her. A keepsake QR lets everyone take the story home.
 

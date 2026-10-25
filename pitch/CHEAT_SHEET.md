@@ -27,12 +27,12 @@ the TV runs."
 
 ## The visit
 1. QR card first, then the pitch. "It's a whole game in about five minutes. The best part is the last 30 seconds."
-2. Heroes: "Muse is painting you as a cartoon. Your secret talent comes back at the end."
+2. Heroes: "Muse is painting you as a cartoon. Your secret strength comes back at the end."
 3. Start. Over the opener, once: "Muse wrote this and painted you in." Then quiet.
 4. Turn 1: "Everyone else, send [A] an idea. Use a friend's and you get plus one." / "Which one made you laugh?"
 5. "Swipe up to throw." / "Every number is its own outcome. Code rolls, never the AI."
 6. Finale: "Everyone back one plan, not your own. Then everyone shakes at once."
-7. Reveal: "What you did", then "What really happened". "That's how it really went." "That's the talent you
+7. Reveal: "What you did", then "What really happened". "That's how it really went." "That's the strength you
    typed." "Take it home."
 8. Close: "Your friends' ideas were your best move. Muse wrote, judged and painted every decision; code rolled the
    dice. It was based on a true story. And you just played it."

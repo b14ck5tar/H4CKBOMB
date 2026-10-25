@@ -59,7 +59,7 @@ Start every recording before the lobby (in the edit, line the tracks up on the f
 2. **Phone A (and B if you can):** screen recording, mic off, "Show touches" on (Android).
 
 Play these moves (plan the moves, not the words):
-- [ ] Type a custom hero ("a night-shift baker who argues with her sourdough") and a real secret talent.
+- [ ] Type a custom hero ("a night-shift baker who argues with her sourdough") and a real secret strength.
 - [ ] Your turn: pick a test player's (or a friend's) idea, so "+1" and their name show on screen.
 - [ ] With a second real player: they read their plan to the table first, then send it.
 - [ ] Use plans with one clear noun (a ladder, a cinnamon roll, a marching band).

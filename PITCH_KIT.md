@@ -42,7 +42,7 @@ and the game). One risk: HackTX's own judges hear "denied"; say it with a smile,
   the dice; the AI never picks a number or rates a person."
 - **Originality (1:25-1:45):** "And the twist: every story starts from something that really happened, but you
   decide where it goes. At the end the TV shows what you did, then what really happened, side by side, and 'Solved
-  by' the secret talent you typed when you joined."
+  by' the secret strength you typed when you joined."
 - **Working demo (1:45-2:00):** "You don't have to take our word for it. Scan this, you're in."
 
 ## 3. The table run-of-show (judge mode)
@@ -91,14 +91,14 @@ built (0121947, in main). `judge=1` also forces Quick
 | Clock | Do / say |
 |---|---|
 | 0:00 | Hand them the QR card first. 30-second pitch (section 1) while they scan. |
-| 0:30 | Heroes: "Muse is painting you as a cartoon right now. The secret talent comes back at the end." |
+| 0:30 | Heroes: "Muse is painting you as a cartoon right now. The secret strength comes back at the end." |
 | 0:50 | Press Start. "This story hides something that really happened. You find out at the end." |
 | 1:00 | Over the opener, once, quietly: "Muse wrote this and painted you in." Then stop talking. |
 | 1:15 | Turn 1: "Everyone else, send [A] an idea. [A], use a friend's and you get plus one." Coach: "Which one made you laugh?" Then silence. |
 | 2:00 | "Swipe up to throw." On the meter: "Every number is its own outcome. Code rolls, never the AI." |
 | 2:15-3:45 | Turns 2-3. Only say whose turn it is. |
 | 3:50 | "Last move. Everyone write one, then back one plan, not your own. Then everyone shakes at once." |
-| 5:15 | Reveal, two beats: "What you did" (5 s), then "What really happened". Point: "That's how it really went." "And that's the talent you typed." "Take it home" (keepsake QR). |
+| 5:15 | Reveal, two beats: "What you did" (5 s), then "What really happened". Point: "That's how it really went." "And that's the strength you typed." "Take it home" (keepsake QR). |
 | 5:40 | The close (below), then questions. |
 
 **Talking rule:** talk before Start and at the reveal; in between, only names and one coaching line. When judges
