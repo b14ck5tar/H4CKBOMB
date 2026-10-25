@@ -170,3 +170,4 @@ Full history and train of thought: `design/00-where-we-are.md`.
 - ✅ Vesper = Sarah, Hollis = George, Wren = Charlie (all Eleven v3, the expressive model). Juniper had no pick: dropped, the AI casts from 3 voices (lead's call: every voice in the game is one the CD approved by ear).
 - ⚠️ Vesper: the CD ticked Lily once and Sarah twice; lead went with Sarah.
 - ✅ (Sun ~4:45 AM) CD answers: buy the ElevenLabs $5 Starter plan (the CD buys it; voice flips the provider after). Art: a new painting EVERY turn (the act/win/finale-only cadence is reverted). Quick Tale = 1 turn each (~5 min); Full keeps 2 each at 2-4 players, 1 at 5+. Gemini track: off. Sound fixes (605476d): the CD says they sound good.
+- ✅ Sound effects approved by the CD ("cool, a little muffled but nice"); voice brightens them slightly.
