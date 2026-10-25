@@ -56,7 +56,7 @@ export function nowText(s: GameState, me?: string): string {
     case "epilogue":
       return "How it ended";
     case "reveal":
-      return "This really happened";
+      return "This really happened. Look at the TV";
     case "storybook":
       return me ? "Your keepsake" : "Scan to take your tale home";
     default:

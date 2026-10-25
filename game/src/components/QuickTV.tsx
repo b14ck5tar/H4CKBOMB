@@ -797,14 +797,25 @@ function RevealCard({ host, s }: { host: Stage; s: GameState }) {
   const t = useElapsed(true, 40);
   const typed = !rs ? 0 : reduced ? rs.headline.length : Math.max(0, Math.min(rs.headline.length, Math.floor((t - 600) / 32)));
   useEffect(() => {
-    if (rs?.link) QRCode.toDataURL(rs.link, { margin: 1, width: 220, color: { dark: "#151515", light: "#f3efe4" } }).then(setQr);
+    if (rs?.link && /^https?:/.test(rs.link)) QRCode.toDataURL(rs.link, { margin: 1, width: 220, color: { dark: "#151515", light: "#f3efe4" } }).then(setQr);
     sfx.whoosh();
   }, [rs?.link]);
   if (!rs || !seed) return null;
   const f = s.final;
+  const personal = !!seed.author;
   return (
     <div className="qt-stage qt-center">
       <div className="qt-reveal">
+        {personal ? (
+          // Our stories: it really happened to someone at this table. Their real ending, finally.
+          <div className="qt-paper qt-slide-l">
+            <p className="qt-paper-kicker">This really happened to {seed.author!.name}</p>
+            <h2 className="qt-paper-head">{rs.headline}</h2>
+            <p className="text-[1.15rem] leading-snug mt-3 text-[#333] line-clamp-3">{seed.the_threat.mapped_from}</p>
+            <p className="qt-paper-meta mt-4">How it really ended</p>
+            <p className="text-[1.5rem] leading-snug mt-1 line-clamp-5">{rs.summary}</p>
+          </div>
+        ) : (
         <div className="qt-paper qt-slide-l">
           <p className="qt-paper-kicker">This really happened</p>
           <h2 className="qt-paper-head" style={{ fontSize: rs.headline.length > 90 ? "1.85rem" : undefined }}>
@@ -822,20 +833,27 @@ function RevealCard({ host, s }: { host: Stage; s: GameState }) {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             {qr ? <img src={qr} alt="QR code to the real article" className="w-24 h-24 shrink-0" /> : <div className="w-24 h-24 shrink-0" />}
           </div>
-          <p className="text-[1.25rem] leading-snug mt-3 line-clamp-3">{rs.summary}</p>
-          <p className="text-[1rem] leading-snug mt-2 text-[#444] line-clamp-2">
-            <b>Officially:</b> {seed.the_threat.mapped_from}
-          </p>
+          <p className="text-[1.2rem] leading-snug mt-3 line-clamp-3">{rs.summary}</p>
+          {rs.now ? (
+            <p className="text-[1.05rem] leading-snug mt-3 line-clamp-3">
+              <b>What&apos;s happening now:</b> {rs.now}
+            </p>
+          ) : (
+            <p className="text-[1rem] leading-snug mt-2 text-[#444] line-clamp-2">
+              <b>Officially:</b> {seed.the_threat.mapped_from}
+            </p>
+          )}
         </div>
+        )}
         <div className="qt-seam" aria-hidden>
           <span>vs</span>
         </div>
         <div className="qt-glass qt-uncovered qt-slide-r !justify-center">
           <p className="font-ui uppercase tracking-[0.3em] text-lg text-[var(--signal)]">Your version</p>
-          <h2 className="font-display text-6xl uppercase leading-none text-[var(--crimson)] qt-glow">{seed.the_threat.name}</h2>
-          {(s.recap || s.epilogue) && <p className="text-[1.6rem] leading-snug qt-rise" style={{ animationDelay: "0.9s" }}>{s.recap || s.epilogue}</p>}
+          <h2 className={`font-display uppercase leading-none text-[var(--crimson)] qt-glow ${seed.the_threat.name.length > 18 ? "text-5xl" : "text-6xl"}`}>{seed.the_threat.name}</h2>
+          {(s.recap || s.epilogue) && <p className="text-[1.45rem] leading-snug qt-rise line-clamp-4" style={{ animationDelay: "0.9s" }}>{s.recap || s.epilogue}</p>}
           {s.solvedBy && (
-            <p className="font-heading text-3xl uppercase leading-tight text-[var(--gilt-bright)] qt-rise" style={{ animationDelay: "1.4s" }}>
+            <p className="font-heading text-[1.7rem] uppercase leading-tight text-[var(--gilt-bright)] qt-rise" style={{ animationDelay: "1.4s" }}>
               {s.solvedBy}
             </p>
           )}
