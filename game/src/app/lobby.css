@@ -881,7 +881,7 @@
   80% { opacity: 0.75; }
 }
 .lb-join-head {
-  margin: 0 0 calc(var(--u) * 0.8);
+  margin: 0 0 calc(var(--u) * 0.5);
   font-family: var(--font-display), Impact, sans-serif;
   font-size: calc(var(--u) * 3.3);
   line-height: 1;
@@ -894,8 +894,8 @@
 }
 .lb-qr {
   position: relative;
-  width: calc(var(--u) * 21);
-  height: calc(var(--u) * 21);
+  width: calc(var(--u) * 19.5); /* 21 -> 19.5: room for the copyable join link under the code */
+  height: calc(var(--u) * 19.5);
   padding: calc(var(--u) * 0.6);
   background: #fff;
   border-radius: calc(var(--u) * 0.35);
@@ -926,7 +926,7 @@
 .lb-code {
   display: flex;
   gap: calc(var(--u) * 0.7);
-  margin-top: calc(var(--u) * 1.5);
+  margin-top: calc(var(--u) * 1);
 }
 .lb-code-ch {
   --tone: var(--pink);
@@ -1227,3 +1227,49 @@
 .lb-how-dm { color: rgba(242, 236, 255, 0.85); }
 .lb-pitch-sub,
 .lb-status { text-shadow: 0 calc(var(--u) * 0.12) 0 #000, 0 0 calc(var(--u) * 0.8) #000, 0 0 calc(var(--u) * 1.8) rgba(6, 3, 12, 0.9); }
+
+/* The join link under the code: two short lines (host, then /play?code=ABCD) + a Copy chip; click anywhere copies. */
+.lb-copy {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--u) * 0.8);
+  width: 100%;
+  margin-top: calc(var(--u) * 0.5);
+  padding: calc(var(--u) * 0.3) calc(var(--u) * 0.6);
+  background: rgba(10, 6, 18, 0.55);
+  border: calc(var(--u) * 0.12) dashed rgba(207, 196, 232, 0.35);
+  border-radius: calc(var(--u) * 0.6);
+  cursor: pointer;
+  white-space: normal;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+.lb-copy:hover { border-color: var(--lime); background: rgba(10, 6, 18, 0.75); }
+.lb-copy-link {
+  display: block;
+  min-width: 0;
+  max-width: calc(var(--u) * 18);
+  font-family: var(--font-heading), sans-serif;
+  font-weight: 700;
+  font-size: calc(var(--u) * 1.15);
+  line-height: 1.2;
+  color: #cfc4e8;
+  text-align: left;
+  user-select: all;
+}
+.lb-copy-link b { display: inline-block; white-space: nowrap; font-weight: 800; font-size: calc(var(--u) * 1.35); color: #fff; }
+.lb-copy-btn {
+  flex: none;
+  padding: calc(var(--u) * 0.35) calc(var(--u) * 0.8) calc(var(--u) * 0.25);
+  font-family: var(--font-display), Impact, sans-serif;
+  font-size: calc(var(--u) * 1.2);
+  text-transform: uppercase;
+  color: var(--ink, #0a0612);
+  background: var(--cyan, #3de7ff);
+  border-radius: calc(var(--u) * 0.4);
+  transform: skewX(-8deg);
+}
+.lb-copy.is-copied { border-color: var(--lime); }
+.lb-copy.is-copied .lb-copy-btn { background: var(--lime); animation: lb-copied 0.4s cubic-bezier(0.2, 1.6, 0.4, 1); }
+@keyframes lb-copied { from { transform: skewX(-8deg) scale(1.35); } to { transform: skewX(-8deg); } }
