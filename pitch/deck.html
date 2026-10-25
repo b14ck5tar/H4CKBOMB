@@ -45,14 +45,13 @@ body{font-family:var(--body);color:var(--text);-webkit-font-smoothing:antialiase
 
 @keyframes rise{from{opacity:0;transform:translateY(26px)}to{opacity:1;transform:none}}
 .active .rise{animation:rise .7s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i,0)*.14s + .15s)}
-@keyframes drip{0%,100%{filter:drop-shadow(0 0 30px rgba(255,46,126,.55))}50%{filter:drop-shadow(0 0 60px rgba(61,231,255,.6))}}
 @keyframes drift{from{transform:scale(1.04) translateX(0)}to{transform:scale(1.12) translateX(-30px)}}
 @keyframes pulse{50%{opacity:.35}}
 
 /* 1 title: the lobby look (painted scene + neon logo) */
 #s1 .bgimg{background-image:url(gp-heroes.jpg);animation:drift 24s ease-in-out infinite alternate}
 #s1 .shade{background:linear-gradient(90deg,rgba(10,6,18,.95) 0%,rgba(10,6,18,.78) 44%,rgba(10,6,18,.15) 100%),linear-gradient(0deg,rgba(10,6,18,.9),transparent 50%)}
-#s1 .logo{position:absolute;left:40px;top:60px;width:1040px;height:693px;background:url(gp-logo.jpg) center/contain no-repeat;mix-blend-mode:screen;animation:drip 4s ease-in-out infinite}
+#s1 .logo{position:absolute;left:40px;top:60px;width:1040px;height:693px;background:url(gp-logo.jpg) center/contain no-repeat;mix-blend-mode:screen}
 #s1 .wrap{position:absolute;left:90px;bottom:90px;right:90px}
 #s1 .tag{font-size:62px;line-height:1.12;max-width:1150px;font-weight:700;text-shadow:0 4px 30px rgba(0,0,0,.8)}
 #s1 .tag em{font-style:normal;color:var(--orange)}
@@ -90,8 +89,8 @@ body{font-family:var(--body);color:var(--text);-webkit-font-smoothing:antialiase
 
 /* 5 every decision gets painted */
 #s5 h2{font-size:96px;margin-top:22px;max-width:1740px}
-#s5 .film{position:absolute;left:90px;right:90px;top:390px;display:grid;grid-template-columns:repeat(3,1fr);gap:56px}
-#s5 .fr{position:relative;height:380px;border-radius:22px;background:#000 center/cover no-repeat;border:3px solid var(--line)}
+#s5 .film{position:absolute;left:90px;right:90px;top:320px;display:grid;grid-template-columns:repeat(3,1fr);gap:56px}
+#s5 .fr{position:relative;height:440px;border-radius:22px;background:#000 center/cover no-repeat;border:3px solid var(--line)}
 #s5 .fr:not(:last-child)::after{content:"";position:absolute;right:-48px;top:50%;width:40px;height:44px;transform:translateY(-50%);background:var(--orange);clip-path:polygon(25% 10%,100% 50%,25% 90%,45% 50%)}
 #s5 .fr span{position:absolute;left:16px;top:16px;font-family:var(--mono);font-weight:600;font-size:22px;letter-spacing:.08em;text-transform:uppercase;background:rgba(10,6,18,.85);padding:6px 14px;border-radius:8px;color:var(--orange)}
 #s5 .cast{position:absolute;left:90px;right:90px;bottom:80px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
@@ -100,7 +99,7 @@ body{font-family:var(--body);color:var(--text);-webkit-font-smoothing:antialiase
 
 /* 6 ending */
 #s6 h2{font-size:132px;margin-top:22px}
-#s6 .shot{left:760px;top:250px;width:1080px;height:720px;background-image:url(gp-reveal.jpg);border-color:var(--orange);box-shadow:0 0 0 8px rgba(255,182,72,.14),0 0 90px rgba(255,182,72,.3)}
+#s6 .shot{left:820px;top:300px;width:1020px;height:680px;background-image:url(gp-reveal.jpg);border-color:var(--orange);box-shadow:0 0 0 8px rgba(255,182,72,.14),0 0 90px rgba(255,182,72,.3)}
 #s6 .beats{position:absolute;left:90px;top:300px;width:620px;display:flex;flex-direction:column;gap:34px}
 #s6 .beats div{font-size:46px;font-weight:700;line-height:1.12;padding-left:30px;border-left:10px solid var(--ac)}
 #s6 .beats small{display:block;font-family:var(--mono);font-size:24px;letter-spacing:.1em;text-transform:uppercase;color:var(--ac);font-weight:600;margin-bottom:6px}
@@ -116,9 +115,9 @@ body{font-family:var(--body);color:var(--text);-webkit-font-smoothing:antialiase
 #s7 .mp.alt{border-color:var(--dim);background:rgba(185,174,214,.1);color:var(--dim)}
 #s7 .built{position:absolute;right:90px;top:150px;width:660px;background:rgba(21,14,34,.94);border:3px solid var(--teal);border-radius:24px;padding:34px 38px;box-shadow:0 0 60px rgba(44,245,192,.18)}
 #s7 .built h3{font-family:var(--mono);font-weight:600;font-size:26px;letter-spacing:.12em;text-transform:uppercase;color:var(--teal)}
-#s7 .built p.lead{font-family:var(--display);font-size:58px;text-transform:uppercase;line-height:1.02;margin:12px 0 24px}
-#s7 .stat{display:flex;align-items:baseline;gap:20px;margin-top:20px}
-#s7 .stat b{font-family:var(--display);font-weight:400;font-size:76px;color:var(--teal);min-width:200px;line-height:1}
+#s7 .built p.lead{font-family:var(--display);font-size:50px;text-transform:uppercase;line-height:1.02;margin:12px 0 24px}
+#s7 .stat{display:flex;align-items:center;gap:20px;margin-top:22px}
+#s7 .stat b{flex:none;width:195px;font-family:var(--display);font-weight:400;font-size:64px;color:var(--teal);line-height:1}
 #s7 .stat span{font-size:30px;font-weight:700;line-height:1.15}
 
 /* 8 close */
@@ -224,7 +223,7 @@ body{font-family:var(--body);color:var(--text);-webkit-font-smoothing:antialiase
 <!-- 5 PAINTED + NARRATED -->
 <section class="slide" id="s5" aria-label="Every decision gets painted">
   <div class="kicker rise" style="--i:0"><i></i>Every decision</div>
-  <h2 class="h rise" style="--i:1">A new painting. <span class="m">A narrator</span> cast for the story.</h2>
+  <h2 class="h rise" style="--i:1">A new painting. <span class="m">A narrator</span> to match.</h2>
   <div class="film">
     <div class="fr rise" style="--i:2;background-image:url(scene_boulder.webp)"><span>Painted by Muse Image</span></div>
     <div class="fr rise" style="--i:3;background-image:url(scene_signal.webp)"><span>Painted by Muse Image</span></div>
@@ -236,7 +235,7 @@ body{font-family:var(--body);color:var(--text);-webkit-font-smoothing:antialiase
     <span class="pill" style="--ac:var(--teal)">Juniper</span>
     <span class="pill" style="--ac:var(--cyan)">Hollis</span>
     <span class="pill" style="--ac:var(--orange)">Wren</span>
-    <span class="lbl" style="margin-left:24px">+ 6 art styles, one per story</span>
+    <span class="lbl" style="margin-left:24px">+ 6 art styles</span>
   </div>
   <aside class="notes">
     (~12 s) "Then Muse writes what happens at exactly that grade, paints your heroes into a brand-new scene for every decision, and casts a narrator to read it. A bad roll never stops the story. It just makes it funnier."

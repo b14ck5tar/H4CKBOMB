@@ -1,12 +1,13 @@
 # Group Project (Devpost text, final build)
 
 > **Before pasting (Sun, after feature freeze at 10 AM; deadline 11:30 AM).** This block is not for Devpost.
-> As of Sun ~1 AM these were decided but not yet in the code. Check each on the deployed build. If one did not ship,
-> delete the matching sentence marked ⟦check⟧ below and remove the ⟦check⟧ markers from the rest.
-> - ⟦check 1⟧ "Based on a true story" title on the reveal.
-> - ⟦check 2⟧ The graded outcome meter on the TV (DISASTER ... LEGENDARY). The grading itself is shipped (lib/grade.ts).
-> - Not claimed below (add one plain sentence to step 7 or 8 only if it shipped): the "because of you" ending
->   montage, and the danger meter.
+> Check each ⟦check⟧ item on the deployed build. If one did not ship, delete the matching sentence below; then
+> remove all ⟦check⟧ markers before pasting.
+> - ⟦check 1⟧ "Based on a true story" on the reveal: in the code since commit f61a655 (Sun ~1 AM). Just confirm it deployed.
+> - ⟦check 2⟧ The graded outcome meter on the TV (DISASTER ... LEGENDARY): being built Sun ~1 AM (tvskin/QualityMeter).
+>   The grading itself is shipped (lib/grade.ts).
+> - Not claimed below (add one plain sentence to step 8 only if it shipped): the "because of you" ending montage
+>   (being built Sun ~1 AM, tvskin/EndingMontage), and the danger meter.
 > Also: paste the video link, upload `devpost-media/gallery/*` (re-shoot `4-phones.jpg`: it still shows the old
 > "Needs 11+" roll button), and confirm groupproject-game.vercel.app runs the final build.
 
