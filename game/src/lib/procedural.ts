@@ -67,6 +67,8 @@ export type TurnProposal = {
   memorable: string;
   /** true when this plan solved the current step (only counts on a success): the act moves on. */
   step_solved: boolean;
+  /** One sound effect id for this slide (lib/storySfx.ts), or "". */
+  sfx?: string;
 };
 
 /** What the TV shows for one turn, plus the next state. */
@@ -83,6 +85,8 @@ export type TurnResult = {
   state: StoryState;
   problems: string[];
   fallback: boolean;
+  /** The slide's sound effect (a valid id or ""). */
+  sfx?: string;
 };
 
 const clip = (s: unknown, n: number) => String(s ?? "").replace(/[<>{}]/g, "").replace(/\s+/g, " ").trim().slice(0, n);

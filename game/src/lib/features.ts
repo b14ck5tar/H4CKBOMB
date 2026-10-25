@@ -32,6 +32,8 @@ export const FEATURES = {
   heroArt: true,
   /** AI plan suggestions on phones (they made everyone's plans the same). */
   suggestions: false,
+  /** One AI-picked sound effect per story slide (lib/storySfx.ts, game/public/sfx/). Voice owns it; ships off unless solid. */
+  storySfx: false,
 } as const;
 
 export type Feature = keyof typeof FEATURES;

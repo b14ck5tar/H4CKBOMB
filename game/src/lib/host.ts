@@ -35,6 +35,7 @@ import { openRoom, type Msg, type Transport } from "./transport";
 import { mask } from "./mask";
 import { QUICK, coldOpenTimeline } from "./quick";
 import { FEATURES } from "./features";
+import { pickStorySfx } from "./storySfx";
 import { Bots } from "./bots";
 import { TIER_SHIFT, gradeRoll } from "./grade";
 import { applyTurn, fallbackProposal, quipOk, stateFromOpener, type StoryState, type TurnResult } from "./procedural";
@@ -437,7 +438,7 @@ export class GameHost {
   private finalPitch: Pitch | null = null;
   private artP = new Map<string, Promise<void>>(); // `${questId}:${scene}` -> hero-painted scene art in flight
   private artSeq = 10; // keys for per-decision paintings in sceneImages (0-2 are the plates)
-  private epilogueP: Promise<{ ending: string; line: string; recap: string; skills: Record<string, string> | null }> | null = null;
+  private epilogueP: Promise<{ ending: string; line: string; recap: string; skills: Record<string, string> | null; sfx?: string }> | null = null;
   private endingAt = 0;
   private storybookP: Promise<Storybook> | null = null;
   private reactionId = 0;
@@ -1756,6 +1757,14 @@ export class GameHost {
   }
 
   /** The hand-written opener: read aloud (if the voice is ready) while it reveals line by line. Space skips. */
+  /** The slide's sound effect (CD): Muse picked it in the turn or ending call; the TV plays it. Off unless FEATURES.storySfx. */
+  private playStorySfx(id?: string) {
+    const ok = pickStorySfx(id);
+    if (!FEATURES.storySfx || !ok) return;
+    this.set({ sfx: { id: ok, at: Date.now() } });
+    this.note("scene", "Sound", `Muse picked: ${ok}`);
+  }
+
   private async openStory() {
     this.clearTimer();
     const sc = this.sceneList[0];
@@ -1784,6 +1793,8 @@ export class GameHost {
       busy: "",
     });
     this.note("scene", "The opener", `"${sc.title}". Goal for the whole story: ${end(sc.goal)}`);
+    // The judge stories carry their opener's sound effect in the seed (quick_scene.sfx).
+    this.playStorySfx((sc as { sfx?: string }).sfx);
     const first = this.state.turnOrder[0];
     if (first) void this.voiceFor(this.turnLine(first));
     const spoken = this.play(clip, TITLE_BEAT_MS);
@@ -2661,6 +2672,7 @@ export class GameHost {
     if (d.problems?.length) this.note("fallback", "Checks", d.problems.slice(0, 3).join("; "));
     if (d.right_now && d.right_now !== this.state.nowGoal) this.note("scene", "Right now", d.right_now);
     this.set({ outcome: d.outcome, busy: "", situation: d.scene || this.state.situation, nowGoal: d.right_now || this.state.nowGoal, progress: d.progress, act: d.act });
+    this.playStorySfx(d.sfx);
     console.info(`[wait] outcome ${Date.now() - landed}ms after the die landed (turn ${this.state.turnIndex + 1}${d.fallback ? ", fallback" : ""})`);
     const spoken = this.play(clip);
     this.setTimer(spoken ? Math.max(spoken + 1000, 4500) : outcomeMs(d.outcome), () => this.startTurn(this.state.turnIndex + 1));
@@ -2780,10 +2792,10 @@ export class GameHost {
     const sc = this.sceneList[this.state.sceneIndex];
     const heroes = this.heroes().map((p) => ({ id: p.id, name: p.hero!.name }));
     const winner = this.heroName(pitch.playerId);
-    const fb = () => ({ ending: fallbackEnding(ending, winner, pitch.verdict && !pitch.verdict.fallback ? pitch.verdict.interpretation : "", this.story?.finish_line ?? ""), line: FALLBACK_LINE[ending], recap: "", skills: null as Record<string, string> | null });
+    const fb = () => ({ ending: fallbackEnding(ending, winner, pitch.verdict && !pitch.verdict.fallback ? pitch.verdict.interpretation : "", this.story?.finish_line ?? ""), line: FALLBACK_LINE[ending], recap: "", skills: null as Record<string, string> | null, sfx: "" });
     this.epilogueP = this.viaAI(
       "The ending",
-      this.ask<{ ending: string; line: string; recap: string; skills?: { id: string; phrase: string }[] }>("story_end", {
+      this.ask<{ ending: string; line: string; recap: string; skills?: { id: string; phrase: string }[]; sfx?: string }>("story_end", {
         state: this.story,
         winner_hero: { name: winner, pronouns: this.player(pitch.playerId)?.hero?.pronouns || "they/them" },
         plan: pitch.text,
@@ -2814,6 +2826,7 @@ export class GameHost {
               line: (d.line ?? "").trim() || fb().line,
               recap: (d.recap ?? "").trim(),
               skills: Array.isArray(d.skills) ? Object.fromEntries(d.skills.filter((x) => x && typeof x.id === "string").map((x) => [x.id, String(x.phrase ?? "").trim()])) : null,
+              sfx: pickStorySfx(d.sfx),
             }
           : null,
       fb,
@@ -2891,6 +2904,7 @@ export class GameHost {
     const clip = await this.voiceBy(e.ending, (this.endingAt || Date.now()) + 3000);
     if (this.state.phase !== "final_result") return;
     this.set({ phase: "outcome", outcome: e.ending, busy: "", ready: [] });
+    this.playStorySfx(e.sfx);
     const spoken = this.play(clip);
     this.setTimer(spoken ? Math.max(spoken + 1200, 4500) : outcomeMs(e.ending), () => this.runEnding(plan));
   }
