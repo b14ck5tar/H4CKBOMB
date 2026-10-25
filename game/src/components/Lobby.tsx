@@ -14,7 +14,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import QRCode from "qrcode";
 import type { GameMode, Player, Rating } from "@/lib/types";
 import { RATINGS, RATING_LABEL } from "@/lib/rating";
-import { STAT_LABEL } from "@/lib/rules";
+import { STAT_LABEL, STAT_LEGEND } from "@/lib/rules";
 import { playSfx, unlockAudio, useMusic, useSoundPrefs } from "@/lib/sound";
 import { mask } from "@/lib/mask";
 import { shortName } from "@/lib/now";
@@ -487,7 +487,10 @@ export function Lobby(props: LobbyProps) {
           <li>
             <Pips n={3} /> Roll
           </li>
-          <li className="lb-how-dm">Your Dungeon Master: Muse</li>
+          <li className="lb-how-dm">
+            Your Dungeon Master: Muse
+            <span className="lb-legend">{STAT_LEGEND}</span>
+          </li>
         </ol>
 
         {attract ? (

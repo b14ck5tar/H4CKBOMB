@@ -1273,3 +1273,7 @@
 .lb-copy.is-copied { border-color: var(--lime); }
 .lb-copy.is-copied .lb-copy-btn { background: var(--lime); animation: lb-copied 0.4s cubic-bezier(0.2, 1.6, 0.4, 1); }
 @keyframes lb-copied { from { transform: skewX(-8deg) scale(1.35); } to { transform: skewX(-8deg); } }
+
+/* The stat legend under the DM credit: what Guts / Brains / Charm mean (CD). */
+.lb-how-dm { display: flex; flex-direction: column; gap: calc(var(--u) * 0.15); }
+.lb-legend { font-size: calc(var(--u) * 1.1); font-weight: 700; font-style: normal; color: #c6ff2e; letter-spacing: 0.02em; }

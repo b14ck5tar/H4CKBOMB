@@ -2,7 +2,7 @@
 /** Hero trading cards for the phone: the big one (your card), the mini one (ready-made picks), a row (a friend). */
 import { heroPortrait } from "@/lib/heroArt";
 import type { Hero, Player, Stat } from "@/lib/types";
-import { STAT_LABEL } from "@/lib/rules";
+import { STAT_LABEL, STAT_LEGEND } from "@/lib/rules";
 import { D20Glyph, Face } from "./kit";
 
 const fmt = (n: number) => (n > 0 ? `+${n}` : n < 0 ? `−${-n}` : "0");
@@ -63,6 +63,7 @@ export function HeroTCG({ player, portrait, number, tag = "Hero", backText }: { 
           <div className="pk-tcg-sheet">
             <span className="pk-tcg-epi">{h?.epithet ?? ""}</span>
             {h && <StatRow hero={h} />}
+            {h && <span className="pk-stat-legend">{STAT_LEGEND}</span>}
             {h?.ability?.name && (
               <span className="pk-ability">
                 <b>{h.ability.name}</b>

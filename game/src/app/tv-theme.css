@@ -3071,3 +3071,65 @@
   .tvx-payoff-burst { display: none; }
   @keyframes tvx-payoff-fade { 0%, 100% { opacity: 0; } 15%, 75% { opacity: 1; } }
 }
+
+/* The reveal in two beats: WHAT YOU DID (your story, full width, with its heroes) -> WHAT REALLY HAPPENED (the real
+   clipping big, the take-home QR beside it). Each is a full moment; nothing is cramped side by side. */
+.tvx-beat-label {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(var(--u) * 1.4);
+  margin: 0;
+  text-align: center;
+  font-family: var(--font-display), Impact, sans-serif;
+  font-size: calc(var(--u) * 5.6);
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--lime);
+  text-shadow: calc(var(--u) * 0.35) calc(var(--u) * 0.35) 0 #000, 0 0 calc(var(--u) * 2) rgba(198, 255, 46, 0.4);
+  --r0: -5deg;
+  --r1: -2deg;
+  animation: tvx-slam 0.7s cubic-bezier(0.2, 1.5, 0.4, 1) both 0.1s;
+}
+.is-real .tvx-beat-label { color: var(--gold); text-shadow: calc(var(--u) * 0.35) calc(var(--u) * 0.35) 0 #000, 0 0 calc(var(--u) * 2) rgba(255, 210, 63, 0.45); }
+/* beat 1: your story, centered and big */
+.tvx-yours-solo {
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  top: calc(var(--u) * 9.5);
+  width: calc(var(--u) * 64);
+  min-height: 0;
+  padding: calc(var(--u) * 2.2) calc(var(--u) * 3);
+  transform: rotate(0.8deg);
+  animation: tvx-rise 0.7s cubic-bezier(0.25, 1.4, 0.45, 1) both 0.35s;
+}
+.tvx-yours-solo .tvx-yours-title { font-size: calc(var(--u) * 4.6); }
+.tvx-yours-solo .tvx-yours-txt { font-size: calc(var(--u) * 2.3); line-height: 1.35; }
+.tvx-yours-solo .tvx-yours-solved { font-size: calc(var(--u) * 2); animation-delay: 1.4s; }
+.tvx-yours-solo .tvx-yours-stamp { animation-delay: 1.8s; }
+.tvx-yours-crew { display: flex; flex-wrap: wrap; gap: calc(var(--u) * 1.4); margin: 0; }
+.tvx-yours-hero {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--u) * 0.6);
+  font-family: var(--font-heading), sans-serif;
+  font-weight: 800;
+  font-size: calc(var(--u) * 1.8);
+  text-transform: uppercase;
+  color: #fff;
+}
+/* beat 2: the real story, big, with the QR beside it */
+.is-real .tvx-reveal-title { top: calc(var(--u) * 8); --r0: -4deg; animation-delay: 0.25s; }
+.is-real .tvx-reveal-small { font-size: calc(var(--u) * 2.6); }
+.is-real .tvx-reveal-big { font-size: calc(var(--u) * 4); }
+.tvx-clip-solo {
+  left: calc(var(--u) * 7);
+  top: calc(var(--u) * 15);
+  width: calc(var(--u) * 58);
+  min-height: calc(var(--u) * 24);
+  animation-delay: 0.45s;
+}
+.tvx-clip-solo .tvx-clip-sum { font-size: calc(var(--u) * 1.9); }
+.tvx-clip-solo .tvx-clip-now { font-size: calc(var(--u) * 1.9); }
+.is-real .tvx-take { left: calc(var(--u) * 70); top: calc(var(--u) * 16); width: calc(var(--u) * 20); animation-delay: 0.7s; }

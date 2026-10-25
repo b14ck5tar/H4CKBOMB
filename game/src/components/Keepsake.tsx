@@ -1,20 +1,29 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import QRCode from "qrcode";
 import type { Stage } from "./TV";
-import type { GameState } from "@/lib/types";
+import type { GameState, Storybook } from "@/lib/types";
 import { buildKeepsake, fitKeepsake } from "@/lib/keepsake";
 
 /** Storybook "take it home" panel: a QR to /tale#<the whole story>. Nothing is uploaded anywhere. */
 export function KeepsakeQR({ host, s, size = 300, bare = false }: { host: Stage; s: GameState; size?: number; bare?: boolean }) {
   const [qr, setQr] = useState("");
   const [url, setUrl] = useState("");
-  const book = s.storybook;
+  // The QR goes up as soon as the story is told (CD: "Binding your storybook" took 7 s): a provisional keepsake from
+  // the ending, replaced by the full storybook (awards, moral) the moment it arrives.
+  const stub = useMemo<Storybook | null>(
+    () =>
+      s.storybook || !(s.recap || s.epilogue)
+        ? null
+        : { title: s.quest?.title || "Our story", dedication: "", pages: [{ text: s.recap || s.epilogue, image_ref: "" }], hero_pages: [], moral: "", real_story_bridge: "" },
+    [s.storybook, s.recap, s.epilogue, s.quest?.title],
+  );
+  const book = s.storybook ?? stub;
   useEffect(() => {
     if (!book) return;
     let alive = true;
     const k = buildKeepsake(
-      s,
+      { ...s, storybook: book },
       { cover: host.sceneImages[s.scenes.length - 1] ?? host.sceneImages[0], portraits: host.portraits },
       host.realStory,
     );
@@ -31,7 +40,7 @@ export function KeepsakeQR({ host, s, size = 300, bare = false }: { host: Stage;
     return () => {
       alive = false;
     };
-    // The story is final once the storybook exists.
+    // Rebuilt once more when the full storybook replaces the provisional one.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [book]);
   if (!book) return null;
