@@ -190,6 +190,11 @@ function splitPhrases(s: string): string[] {
   return out;
 }
 
+/** How many reveal steps TypeReveal uses for a text (to pace it to a voice clip). */
+export function phraseCount(text: string) {
+  return Math.max(1, splitPhrases(text ?? "").filter((p) => p !== "\n").length + 1);
+}
+
 export function TypeReveal({ text, phraseMs = 380, className }: { text: string; phraseMs?: number; className?: string }) {
   const { lead, gap, phrases } = useMemo(() => {
     const t = text ?? "";

@@ -15,7 +15,7 @@ import { mask } from "@/lib/mask";
 import type { GameState, Pitch, Player, RollResult, Tier } from "@/lib/types";
 import { D20 } from "./D20";
 import { Stamp } from "./Stamp";
-import { ScreenFlash, TypeReveal } from "./Effects";
+import { ScreenFlash, TypeReveal, phraseCount } from "./Effects";
 import { Reactions } from "./Reactions";
 import { Avatar, Hope, ThankHearts, useFastNow } from "./TV";
 import { KeepsakeQR } from "./Keepsake";
@@ -330,7 +330,7 @@ function ColdOpen({ host, s }: { host: Stage; s: GameState }) {
           </h1>
         </div>
       )}
-      {title && <TitleCard s={s} kicker="Tonight we find out why" sub="A quick tale · about three minutes" />}
+      {title && <TitleCard s={s} kicker={s.cast ? `Tonight: ${s.cast.kind}` : "Tonight we find out why"} sub={s.cast ? `A quick tale · narrated by ${s.cast.name}` : "A quick tale · about four minutes"} />}
     </div>
   );
 }
@@ -366,14 +366,25 @@ function Narration({ s, onTitle }: { s: GameState; onTitle: (on: boolean) => voi
   const npc = s.npcLine?.speaker && s.npcLine?.line ? s.npcLine : null;
   const all = npc ? [...lines, npc.line] : lines;
   // The same pacing the table's timer uses (lib/rules.ts), so the last line lands just before plans open.
+  const voiceMs = s.voice?.ms ?? 0;
   const starts = useMemo(() => {
+    if (voiceMs) {
+      // In step with the narrator: each line appears when the voice reaches it (by share of characters).
+      const total = all.reduce((n, l) => n + l.length, 0) || 1;
+      let chars = 0;
+      return all.map((l) => {
+        const at = TITLE_BEAT_MS + Math.round((chars / total) * voiceMs);
+        chars += l.length;
+        return at;
+      });
+    }
     let t = TITLE_BEAT_MS + 600;
     return all.map((l) => {
       const at = t;
       t += lineMs(l);
       return at;
     });
-  }, [all.join("|")]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [all.join("|"), voiceMs]); // eslint-disable-line react-hooks/exhaustive-deps
   const reduced = usePrefersReducedMotion();
   const t = useElapsed(true, 100);
   const shown = reduced ? all.length : starts.filter((at) => t >= at).length;
@@ -660,7 +671,7 @@ function Outcome({ host, s }: { host: Stage; s: GameState }) {
           <div className="flex flex-col gap-3 min-w-0 flex-1">
             <Stamp text={BAND_LABEL[r.band]} sub={`rolled ${r.kept}`} size="md" tone={bandTone(r.band)} slam={false} rotate={-3} />
             {s.outcome ? (
-              <TypeReveal text={s.outcome} className="qt-narration" phraseMs={300} />
+              <TypeReveal text={s.outcome} className="qt-narration" phraseMs={s.voice ? Math.max(150, Math.round(s.voice.ms / phraseCount(s.outcome))) : 300} />
             ) : (
               <p className="font-heading text-3xl uppercase text-parchment/70 qt-throb">{s.busy || "…"}</p>
             )}
@@ -752,7 +763,7 @@ function EndingSlot({ s }: { s: GameState }) {
       {s.epilogue ? (
         <div className="max-w-[64rem] flex flex-col gap-6 text-center">
           <p className="font-ui uppercase tracking-[0.4em] text-lg text-[var(--gilt-bright)]">How it ended</p>
-          <TypeReveal text={s.epilogue} className="qt-epilogue" phraseMs={380} />
+          <TypeReveal text={s.epilogue} className="qt-epilogue" phraseMs={s.voice ? Math.max(150, Math.round(s.voice.ms / phraseCount(s.epilogue))) : 380} />
         </div>
       ) : (
         <p className="font-heading text-3xl uppercase text-parchment/70 qt-throb">{s.busy || "…"}</p>
@@ -914,7 +925,29 @@ function moodFor(s: GameState, title: boolean): Mood {
   return "scene";
 }
 
+/** Plays the narrator's current line on the TV (respects mute). Text never waits for it. */
+function useNarrator(host: Stage, s: GameState) {
+  const id = s.voice?.id ?? 0;
+  useEffect(() => {
+    if (!id || !s.voice) return;
+    const url = host.voiceUrl(id);
+    if (!url) return;
+    const audio = new Audio(url);
+    audio.playbackRate = 1.25;
+    (audio as HTMLAudioElement & { preservesPitch?: boolean }).preservesPitch = true;
+    const t = setTimeout(() => {
+      if (!sfx.muted()) audio.play().catch(() => {});
+    }, s.voice.delay);
+    return () => {
+      clearTimeout(t);
+      audio.pause();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+}
+
 export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameState; onNotes?: () => void; notesOpen?: boolean }) {
+  useNarrator(host, s);
   const [reactions, setReactions] = useState<{ id: number; emoji: string; color?: string }[]>([]);
   useEffect(
     () =>
@@ -950,7 +983,7 @@ export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameS
           <ColdOpen host={host} s={s} />
         ) : (
           <div className="qt-stage qt-cold">
-            <TitleCard s={s} kicker="Tonight's story" sub="Three scenes · about seven minutes" />
+            <TitleCard s={s} kicker={s.cast ? `Tonight: ${s.cast.kind}` : "Tonight's story"} sub={s.cast ? `Narrated by ${s.cast.name}` : "\u00a0"} />
           </div>
         );
       break;

@@ -145,6 +145,26 @@ export const SCENE_SCHEMA = obj({
   music: { type: "string", enum: ["calm", "eerie", "tense", "epic"] },
 });
 
+// ---------- Casting the narrator (design/24 P5) ----------
+export const CAST_SYSTEM = `You cast the narrator for a party game's story, read aloud by a text-to-speech voice. Pick the ONE voice that best fits the story's mood, and write how it should be read.
+Voices:
+- vesper (female): warm, low, intimate. Mysteries, eerie stories, late-night tales.
+- ash (male): deep, smoky, calm. Creepy stories, legends, big strange things.
+- juniper (female): bright, gentle, smiling. Nature, animals, kids' stories, happy news.
+- hollis (male): smooth, dry, documentary. Science, space, nature documentaries.
+- wren (neutral): easygoing, playful, light. Silly stories, odd news, comedy.
+Rules: a creepy story gets a hushed ghost-story telling; nature gets a warm documentary; silly gets playful. For a KIDS audience never pick a scary reading.
+- voice: one id from the list.
+- style: 18 words max, starting "Read this as", how to read it (mood, tone). Never ask for slow reading or long pauses.
+- kind: 6 words max, lowercase, what kind of story this is, for a title card ("a spooky small-town mystery").
+Return ONLY the JSON the schema asks for.`;
+
+export const CAST_SCHEMA = obj({
+  voice: { type: "string", enum: ["vesper", "ash", "juniper", "hollis", "wren"] },
+  style: str,
+  kind: str,
+});
+
 // ---------- Ruling (one winning plan) ----------
 // Rubric v2 from design/23-model-choices.md (8/8 consistent across 3 runs on spark-1.3 minimal, vs 5-7/8 before).
 export const RULING_SYSTEM = `${DM_CORE}

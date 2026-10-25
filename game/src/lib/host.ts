@@ -27,6 +27,7 @@ import {
   judge,
   needOnDie,
   endingFromBand,
+  TITLE_BEAT_MS,
   narrationMs,
   readMs,
 } from "./rules";
@@ -34,6 +35,7 @@ import { openRoom, type Msg, type Transport } from "./transport";
 import { mask } from "./mask";
 import { QUICK, coldOpenTimeline } from "./quick";
 import { FEATURES } from "./features";
+import { DEFAULT_CAST, VOICES, isVoice } from "./voices";
 import { DEFAULT_RATING, isRating, questAllowed } from "./rating";
 import { HEAVY, fearPhrase, realOf, skillPhrase, solvedByLine } from "./real";
 import type {
@@ -108,6 +110,12 @@ const AWAY_SILENCE_MS = 25_000;
 const AWAY_AFTER_TIMEOUTS = 2;
 const PRESENCE_ONLY = new Set(["hello", "ping", "away"]); // these don't count as "I'm back"
 const BAND_RANK: Record<Band, number> = { LEGENDARY: 0, SUCCESS: 1, YES_BUT: 2, FAIL: 3, CATASTROPHE: 4 };
+
+/** What the narrator reads for the opener: the narration, then the character's line. */
+function openerText(sc: SeedScene) {
+  const npc = sc.npc_line?.speaker && sc.npc_line?.line ? ` ${sc.npc_line.speaker} says: "${sc.npc_line.line}"` : "";
+  return `${sc.narration}${npc}`;
+}
 
 /** One action, ~140 characters, one line. */
 function cleanPlan(text: unknown) {
@@ -241,11 +249,13 @@ export class GameHost {
   private pinned = false; // a story was picked by link, so Full Story skips the vote
   private pendingRoll: RollResult | null = null;
   private outcomeP: Promise<{ text: string; situation: string; why: string }> | null = null;
+  private outcomeAt = 0; // when the outcome text arrived (its audio was asked for then)
   private finalRoll: RollResult | null = null;
   private finalPitch: Pitch | null = null;
   private artP = new Map<string, Promise<void>>(); // `${questId}:${scene}` -> hero-painted scene art in flight
   private artSeq = 10; // keys for per-decision paintings in sceneImages (0-2 are the plates)
   private epilogueP: Promise<{ ending: string; line: string; recap: string }> | null = null;
+  private endingAt = 0;
   private storybookP: Promise<Storybook> | null = null;
   private reactionId = 0;
   private lastReact: Record<string, number> = {};
@@ -318,6 +328,8 @@ export class GameHost {
       turnIndex: 0,
       ideas: {},
       finale: false,
+      cast: null,
+      voice: null,
       artKey: -1,
       boosts: {},
       rolls: [],
@@ -1085,6 +1097,8 @@ export class GameHost {
       turnIndex: 0,
       ideas: {},
       finale: false,
+      cast: null,
+      voice: null,
       artKey: -1,
       solvedBy: "",
       round: null,
@@ -1172,6 +1186,8 @@ export class GameHost {
       turnIndex: 0,
       ideas: {},
       finale: false,
+      cast: null,
+      voice: null,
       artKey: -1,
     });
     this.note("safety", "Why it's safe", SAFETY_NOTES[seed.id] ?? SAFETY_GENERIC);
@@ -1184,11 +1200,16 @@ export class GameHost {
     );
     const n = this.state.turnOrder.length;
     this.note("turn", "Turns", `${n} turns (${this.heroes().length} players × ${this.heroes().length ? n / this.heroes().length : 0}), then the grand finale. The opener and the goal were written by the team; the AI writes what each action does.`);
-    this.set({ phase: "quest", sceneIndex: 0, narration: "", sceneTitle: "", goal: "", ready: [] });
+    this.set({ phase: "quest", sceneIndex: 0, narration: "", sceneTitle: "", goal: "", ready: [], cast: null, voice: null });
     this.getSceneArt(0);
+    this.askCast(seed);
+    this.openerAsked = Date.now();
+    this.voiceFor(openerText(opener));
     const ms = quick ? coldOpenTimeline(seed.the_real_story.headline).total : TITLE_CARD_MS;
     this.setTimer(ms, () => this.openStory());
   }
+
+  private openerAsked = 0;
 
   /** Turn order: everyone in join order, repeated. 2-4 players get 2 turns each, 5-8 get 1, Quick Tale 1. */
   private makeTurnOrder() {
@@ -1201,11 +1222,14 @@ export class GameHost {
     return this.state.finale;
   }
 
-  /** The hand-written opener: it reveals line by line on the TV and moves on by itself (Space skips). */
-  private openStory() {
+  /** The hand-written opener: read aloud (if the voice is ready) while it reveals line by line. Space skips. */
+  private async openStory() {
     this.clearTimer();
     const sc = this.sceneList[0];
     if (!sc) return;
+    // The opener's audio was asked for at the title card; wait at most 5 s from then, else text only.
+    const clip = await this.voiceBy(openerText(sc), this.openerAsked + 5000);
+    if (this.state.phase !== "quest") return;
     this.set({
       phase: "narrating",
       sceneIndex: 0,
@@ -1226,7 +1250,9 @@ export class GameHost {
       busy: "",
     });
     this.note("scene", "The opener", `"${sc.title}". Goal for the whole story: ${end(sc.goal)}`);
-    this.setTimer(narrationMs(sc.narration, sc.npc_line?.line ?? ""), () => this.startTurn(0));
+    const spoken = this.play(clip, TITLE_BEAT_MS);
+    const ms = spoken ? TITLE_BEAT_MS + spoken + 1800 : narrationMs(sc.narration, sc.npc_line?.line ?? "");
+    this.setTimer(ms, () => this.startTurn(0));
   }
 
   // ---------- turns: one owner, everyone else suggests ----------
@@ -1237,6 +1263,7 @@ export class GameHost {
   /** The owner of turn i, skipping anyone who's away (they can come back later). Past the last turn: the finale. */
   private startTurn(i: number) {
     this.clearTimer();
+    this.set({ voice: null });
     this.giveLateHeroes();
     const order = this.state.turnOrder;
     let k = i;
@@ -1463,7 +1490,12 @@ export class GameHost {
     this.set({ pitches: this.state.pitches.map((x) => (x.id === pitch.id ? judged : x)), busy: "", rolls: [{ ...roll, dice: [], kept: 0 }], revealed: [] });
     if (finale) return this.setTimer(RULING_MS, () => this.startFinalRoll(judged, roll));
     this.pendingRoll = roll;
+    this.outcomeAt = 0;
     this.outcomeP = this.askOutcome(judged, roll);
+    this.outcomeP.then((o) => {
+      this.outcomeAt = Date.now();
+      this.voiceFor(o.text);
+    });
     this.setTimer(RULING_MS, () => this.startRoll());
   }
 
@@ -1512,6 +1544,90 @@ export class GameHost {
   }
 
   private lastArtAsked = 0;
+
+  // ---------- the narrator's voice (design/24 P5) ----------
+  /** Narration plays a little faster than Gemini reads it: the house style is calm, and a party can't wait. */
+  static VOICE_RATE = 1.25;
+  private voiceClips = new Map<string, Promise<{ url: string; ms: number } | null>>();
+  private voiceUrls: Record<number, string> = {};
+  private voiceSeq = 0;
+  private castP: Promise<NonNullable<GameState["cast"]>> | null = null;
+
+  /** The audio for voice line `id` (the TV plays it; nothing goes over the network to phones). */
+  voiceUrl(id: number) {
+    return this.voiceUrls[id] ?? "";
+  }
+
+  /** At game start the AI casts one narrator for the story's mood and writes how to read it. */
+  private askCast(seed: QuestSeed) {
+    const fb = () => ({ voice: DEFAULT_CAST.voice, name: VOICES[DEFAULT_CAST.voice].name, style: DEFAULT_CAST.style, kind: "a strange true story" });
+    this.castP = this.viaAI(
+      "Casting the narrator",
+      this.ask<{ voice: string; style: string; kind: string }>("cast", {
+        title: seed.quest_title,
+        premise: seed.fairytale_premise,
+        category: seed.category ?? "",
+        tone: seed.tone ?? "",
+      }),
+      8000,
+      (d, f) => (f || !isVoice(d?.voice) ? fb() : { voice: d.voice, name: VOICES[d.voice].name, style: String(d.style ?? "").slice(0, 160) || DEFAULT_CAST.style, kind: String(d.kind ?? "").slice(0, 60) || "a strange true story" }),
+      fb,
+    ).then((cast) => {
+      this.set({ cast });
+      this.note("hero", "Narrator", `Cast ${cast.name} (${VOICES[cast.voice as keyof typeof VOICES]?.gemini ?? cast.voice} voice) for ${cast.kind}: "${cast.style}".`);
+      return cast;
+    });
+    return this.castP;
+  }
+
+  /**
+   * One line of narration as audio: cast voice + style + a brisk-pace note. Cached per text. Resolves null on any
+   * failure, and callers never wait more than 5 s for it: the story falls back to text alone.
+   */
+  private voiceFor(text: string) {
+    const clean = text.replace(/\s+/g, " ").trim();
+    if (!clean || !FEATURES.voice) return Promise.resolve(null);
+    const hit = this.voiceClips.get(clean);
+    if (hit) return hit;
+    const p = (async () => {
+      const cast = await (this.castP ?? Promise.resolve(null));
+      if (!cast) return null;
+      try {
+        const res = await fetch("/api/tts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: clean, voice: cast.voice, style: `${cast.style}, at a brisk, flowing storytelling pace with only short pauses` }),
+        });
+        if (!res.ok) return null;
+        const ms = Number(res.headers.get("X-Audio-Ms") ?? 0);
+        const url = URL.createObjectURL(await res.blob());
+        return { url, ms: Math.round(ms / GameHost.VOICE_RATE) };
+      } catch {
+        return null;
+      }
+    })();
+    this.voiceClips.set(clean, p);
+    return p;
+  }
+
+  /** Wait for a clip at most until `deadline` (ms since epoch). null = read it as text. */
+  private async voiceBy(text: string, deadline: number) {
+    const left = deadline - Date.now();
+    if (left <= 0) return null;
+    return withTimeout(this.voiceFor(text), left, () => null);
+  }
+
+  /** Start reading a line aloud on the TV (after `delay` ms). Returns how long it takes, 0 if text only. */
+  private play(clip: { url: string; ms: number } | null, delay = 0) {
+    if (!clip) {
+      this.set({ voice: null });
+      return 0;
+    }
+    const id = ++this.voiceSeq;
+    this.voiceUrls[id] = clip.url;
+    this.set({ voice: { id, ms: clip.ms, delay } });
+    return clip.ms;
+  }
 
   /** One d20 + the stat the DM picked + 1 for a friend's idea, against the tier's target. All in code. */
   private makeRoll(pitch: Pitch, die = d20()): RollResult {
@@ -1599,19 +1715,23 @@ export class GameHost {
     this.clearTimer();
     const roll = this.state.rolls[0];
     const pitch = this.state.pitches.find((p) => p.playerId === roll.playerId)!;
-    this.set({ phase: "outcome", outcome: "", ready: [] });
+    this.set({ phase: "outcome", outcome: "", ready: [], voice: null });
     let settled = false;
     const op = this.outcomeP ?? Promise.resolve({ text: FALLBACK_OUTCOME[roll.band].replaceAll("{name}", this.heroName(roll.playerId)), situation: "", why: "" });
     op.then(() => (settled = true));
     setTimeout(() => !settled && this.state.phase === "outcome" && this.set({ busy: "The DM is writing it down…" }), 600);
     const { text, situation, why } = await op;
     if ((this.state.phase as string) !== "outcome") return;
+    // The outcome's audio was asked for the moment its text arrived; give it until 5 s after that, else text only.
+    const clip = await this.voiceBy(text, (this.outcomeAt || Date.now()) + 5000);
+    if ((this.state.phase as string) !== "outcome") return;
     this.recordWin(pitch, roll, text);
     if (why) this.note("ruling", "Why it went that way", why);
     if (situation) this.note("scene", "Now", situation);
     // The story branches: the next turn starts from what just happened.
     this.set({ outcome: text, busy: "", situation: situation || this.state.situation });
-    this.setTimer(outcomeMs(text), () => this.startTurn(this.state.turnIndex + 1));
+    const spoken = this.play(clip);
+    this.setTimer(spoken ? Math.max(spoken + 1800, 5000) : outcomeMs(text), () => this.startTurn(this.state.turnIndex + 1));
   }
 
   /** The turn's result goes in the log (keepsake, DM's Notes, the next turn's "earlier"). */
@@ -1746,6 +1866,11 @@ export class GameHost {
       (d, f) => (f ? fb() : d?.ending?.trim() ? { ending: d.ending.trim(), line: (d.line ?? "").trim() || fb().line, recap: (d.recap ?? "").trim() } : null),
       fb,
     );
+    this.endingAt = 0;
+    this.epilogueP.then((e) => {
+      this.endingAt = Date.now();
+      this.voiceFor(e.ending);
+    });
     const images = this.artCount().map((i) => `scene_${i + 1}`);
     const log = [...this.state.log, { scene: this.state.sceneIndex, heroId: pitch.playerId, hero: winner, pitch: pitch.text, band: roll.band, headline: sc?.title ?? "", narration: `(the finale: ${ending.toLowerCase()})`, rescue: false }];
     const bookFallback = (): Storybook => ({
@@ -2024,11 +2149,14 @@ export class GameHost {
     this.set({ phase: "epilogue", busy: "The DM wraps it up…", ready: [] });
     const { ending, line, recap } = await this.epilogueP!;
     if (this.state.phase !== "epilogue") return;
+    const clip = await this.voiceBy(ending, (this.endingAt || Date.now()) + 5000);
+    if (this.state.phase !== "epilogue") return;
     this.set({ epilogue: ending, endingLine: line, recap: recap || this.state.log.map((l) => l.narration).slice(0, 1).join(" "), busy: "" });
     // The finale's log line becomes the real ending, for the keepsake.
     const log = this.state.log.map((l, i, all) => (i === all.length - 1 ? { ...l, narration: ending } : l));
     this.set({ log });
-    this.setTimer(Math.min(12_000, Math.max(8000, ending.split(/\s+/).length * 330 + 3500)), done);
+    const spoken = this.play(clip);
+    this.setTimer(spoken ? Math.max(spoken + 2000, 6000) : Math.min(12_000, Math.max(8000, ending.split(/\s+/).length * 330 + 3500)), done);
   }
 
   private startReveal() {

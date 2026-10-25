@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { MODELS, museJSON } from "@/server/muse";
 import {
+  CAST_SCHEMA,
+  CAST_SYSTEM,
   CHARACTER_SCHEMA,
   CHARACTER_SYSTEM,
   EPILOGUE_QUICK,
@@ -27,7 +29,7 @@ import { evenStats } from "@/lib/rules";
 
 export const maxDuration = 60;
 
-const TASKS = ["character", "scene", "verdict", "outcome", "round", "epilogue", "storybook", "kind"];
+const TASKS = ["character", "scene", "verdict", "outcome", "round", "epilogue", "storybook", "kind", "cast"];
 
 /** Player-authored text is wrapped so the model treats it as in-world speech, never instructions. */
 function wrap(id: string, text: string, max = 240) {
@@ -79,6 +81,8 @@ async function run(task: string, input: Any, rating: Rating) {
     case "verdict":
       // One winning plan per call: spark-1.3 at minimal effort answers in 1-2 s (design/23).
       return museJSON({ task: t("ruling"), model: MODELS.ruling, system: withRating(RULING_SYSTEM, rating), schema: RULING_SCHEMA, effort: "minimal", timeoutMs: 9000, maxTokens: 1500, user: JSON.stringify(input) });
+    case "cast":
+      return museJSON({ task: t("cast"), model: MODELS.ruling, system: withRating(CAST_SYSTEM, rating), schema: CAST_SCHEMA, effort: "minimal", timeoutMs: 8000, maxTokens: 1200, user: JSON.stringify(input) });
     case "outcome":
       return museJSON({ task: t("outcome"), model: MODELS.writing, system: withRating(OUTCOME_SYSTEM, rating), schema: OUTCOME_SCHEMA, effort: "low", timeoutMs: 12_000, maxTokens: 3000, user: JSON.stringify(input) });
     case "round":
@@ -109,6 +113,8 @@ function fallback(task: string, input: Any) {
       return fallbackScene(input.hero_ids ?? [], input.scene_plan ?? {}, input.state?.party ?? []);
     case "verdict":
       return fallbackRuling(STATS.includes(input?.hero?.best_stat) ? input.hero.best_stat : "brave");
+    case "cast":
+      return { voice: "ash", style: "Read this as a low, smoky, mysterious late-night storyteller", kind: "a strange true story" };
     case "outcome":
       return fallbackOutcome(cleanText(input?.hero?.name, 40), input?.band);
     case "round":
