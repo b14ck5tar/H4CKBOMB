@@ -59,6 +59,7 @@ export interface BotHost {
   storySoFar(): object;
   deadline(): number; // when the current phase's timer runs out (ms since epoch), 0 if none
   turnMs(): number;
+  humansPlaying(): boolean;
   ask(input: object): Promise<string>;
 }
 
@@ -266,11 +267,15 @@ export class Bots {
     text = String(text ?? "").replace(/["“”]/g, "").replace(/\s+/g, " ").trim().split(" ").slice(0, 12).join(" ");
     // Never the same idea twice (or one somebody already tried): fall back to an unused canned move.
     const seen = [...this.said, ...Object.values(s.ideas), ...s.log.map((l) => l.pitch)];
+    // A real suggestion is a little sentence: under 3 words ("Idk", "Meow") never goes out.
+    if (text.split(/\s+/).filter(Boolean).length < 3) text = "";
     if (!text || seen.some((x) => similar(x, text))) {
       const fresh = b.who.canned.filter((c) => !seen.some((x) => similar(x, c)));
       text = pick(fresh.length ? fresh : b.who.canned);
     }
     this.said = [...this.said, text].slice(-20);
+    // With real people at the table, test players write clean, plain ideas (no "lol", no typos).
+    if (this.host.humansPlaying()) return text.replace(/\s*\b(lol|lmao|haha+)\b\s*/gi, " ").trim();
     return Math.random() < b.who.typo ? typo(text) : text;
   }
 }

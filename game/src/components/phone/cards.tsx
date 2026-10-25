@@ -1,5 +1,6 @@
 "use client";
 /** Hero trading cards for the phone: the big one (your card), the mini one (ready-made picks), a row (a friend). */
+import { heroPortrait } from "@/lib/heroArt";
 import type { Hero, Player, Stat } from "@/lib/types";
 import { STAT_LABEL } from "@/lib/rules";
 import { D20Glyph, Face } from "./kit";
@@ -114,7 +115,7 @@ export function HeroMini({
       <span className="pk-mini-in">
         <span className="pk-mini-art">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={`/heroes/${id}.webp`} alt="" loading="lazy" />
+          <img src={heroPortrait(id)} alt="" loading="lazy" />
           <span className="pk-sheen" aria-hidden />
           <span className="pk-mini-best">
             {fmt(hero.stats[best])} {STAT_LABEL[best]}

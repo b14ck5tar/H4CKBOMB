@@ -21,6 +21,7 @@ export function SuggestScreen({
   max,
   onIdea,
   onTyping,
+  voice = false,
   timer,
 }: {
   /** the turn owner (turnOwner(state)) */
@@ -36,6 +37,8 @@ export function SuggestScreen({
   max: number;
   onIdea: (text: string) => void;
   onTyping?: () => void;
+  /** show the small "hold to speak" under the box (typing stays the default) */
+  voice?: boolean;
   timer?: TimerSpec;
 }) {
   const [text, setText] = useState("");
@@ -80,7 +83,7 @@ export function SuggestScreen({
             setEditing(false);
           }}
         >
-          <PlanBox value={text} onChange={setText} max={max} onTyping={onTyping} placeholder={`What should ${first} do?`} hint="One action. Make it fit their hero." />
+          <PlanBox value={text} onChange={setText} max={max} onTyping={onTyping} placeholder={`What should ${first} do?`} hint="One action. Make it fit their hero." onVoice={voice ? setText : undefined} />
           <div className="pk-bottom">
             <GameButton type="submit" tone="cyan" disabled={!text.trim()}>
               Send my idea

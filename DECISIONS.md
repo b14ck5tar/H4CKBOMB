@@ -120,3 +120,54 @@ Full history and train of thought: `design/00-where-we-are.md`.
 - ✅ Tagline: "Group Project: the one group project where everyone actually shows up."
 - ✅ Fail forward: every turn advances one step; the grade picks a better or worse branch.
 - ✅ Blind model bake-off for storytelling (Spark minimal vs Spark high vs Wonder, plus Claude/GPT if keys are added).
+- ✅ Join question: "What's your secret talent?" (replaces "weirdly good at").
+- ✅ Odd-news stories must pass a storyability gate (clear situation, problem + stakes, visual setting, a real 3-4 step arc, a payoff at the reveal; fantasy twist improves rather than confuses). No more grasping at random articles.
+- ✅ The in-game look = the tvskin mockups (turn card + idea bubbles, 1-20 quality meter, HUD with ladder + danger). Everything animated, nothing stiff. Top priority for the builder.
+- ✅ Art: a house style blending A (lively comic color/energy) + B (bold ink, flat neon, graphic readability); less glossy-AI; C rejected (unsettling). 12 new ready-made heroes in that style.
+- ✅ Voice: raw OpenAI audio has no static, so no processing. Cast: sage, coral, fable, shimmer (tts-1-hd); onyx dropped. One narrator per game.
+- ✅ Stories: a library of gated good stories; past week, then past month, then library, then curated.
+- ✅ Judge demo: a guaranteed-great curated story. Bots: none for judges (1-2 only if needed).
+- ✅ House art style "Neon Ink" (A+B blend) + 12 new heroes (v2) replace the old 6.
+- ✅ CD rule (Sun ~2 AM): perfect the core loop before ANY new feature. The fresh-eyes 'bold ideas' (roast intros, talent vote, real-vs-fake, anchor cameo, front-page keepsake) are parked.
+- ✅ Art: Neon Ink house style + 18 v2 heroes approved; each story still gets its own art theme (a variation on Neon Ink).
+- ✅ Pitch: both present. The CD is away 11 AM-4:30 PM (work) and back ~4:45 for the 5:30 pitch; the partner covers judging 2-5 PM. So the build must be stable by ~9:30 AM, the video recorded and the Devpost finalized before 11 AM.
+- ✅ Story = procedural rules (design/35 + CD refinements): logic chain from the player's literal action, everything possible, plain wording, the AI judges progress (code clamps), hand-off + callbacks + 'tell the table your plan'.
+
+## Sun ~4:15 AM: story tweaks (CD answers to design/35 push-back)
+1. Payoff consequence: yes, but **simple beats clever**. CD: rather "simple, playable and followable than complex and confusing". One plain cause and effect; no wordplay.
+2. Momentum by default: yes.
+3. Hybrid progress (the grade sets a range, the AI picks within it): yes, but it must be tuned with tests until it feels 9/10.
+4. Wild plans need big rolls: yes. Power scaling still applies: no hero massively out- or underperforms.
+5. Playful difficulty labels: yes.
+6. 6 AM freeze: decide when we get there.
+
+## Sun ~4:45 AM: generative openers + polish push
+- Quick Tale writes a live opener from fresh news during the lobby and hero creation (it was always curated, QUICK_IS_CURATED). A stored opener is the instant backup; `?judge=1` forces the stored one. (CD: "we need stuff generative flowing within a manageable time frame.")
+- Approved A (scene art follows the story; art never hidden by the UI on laptops), B (music polish), C (submission prep). Run agents in parallel.
+- Boulder opener renamed "The Boulder on the Edge"; spoilers removed from 3 more openers.
+- GAME.md: the one doc of all main ideas, weighted on the core-loop picker (design/24) and the procedural rules (design/35).
+
+## Sun ~5:15 AM: danger meter cut, turn counts, campaign idea, pitch kit
+- Danger meter cut entirely (CD: "never understood it"). One meter only: progress with 3 act dots.
+- Turns: 2-4 players = 2 turns each, 5+ players = 1 turn each, in every mode (humans only).
+- Campaign mode (heroes carry over into the next story with upgrades, like real D&D): proposal only. The proposal-only list will be trimmed to a top 3 for the pitch.
+- Started PITCH_KIT.md: pitches, judge-table run-of-show, AI explanation, how-we-built-it, judge FAQ, talking tips, rehearsal.
+
+## Sun ~5:45 AM: CD answers before the session split
+- Non-negotiables for every session: **players' ideas drive the story**, and **silky smooth, moderately fast**: nobody waits more than about 5 s. Be as efficient as possible, and keep generating ahead: start every AI call the moment its inputs exist, so the answers are ready and quality has time. (Simple-beats-clever and the social rules stay as decided earlier.)
+- Priority: everything at a high standard. **Story quality is the weak point**, plus preparing for the actual judging. Art, looks, sound and smoothness need only small touch-ups.
+- Judge mode: `/tv?judge=1` = 1 turn each, max 3 turns, then the finale everyone plays (about 5 min). Normal games keep 2 each at 2-4 players and 1 each at 5+.
+- Handoff: a short GAME.md (the shared truth) plus a tailored brief per session.
+
+## Sun ~4:15 AM (laptop clock): GAME.md rewritten (lead session)
+- GAME.md cut to ~2 pages: final answers only, "Conflicts found" resolved and removed. Resolved with: danger meter cut; turns 2-4 = 2 each, 5+ = 1 (humans only); judge mode 1 turn each, max 3, then the finale; "Based on a true story"; "What's your secret talent?"; friend's idea +1; Quick Tale live opener with stored backup, `?judge=1` forces stored; narrator ElevenLabs vs OpenAI (CD picking voices); Neon Ink + per-story themes; no pass-line numbers.
+- ⚠️ Quick Tale turn timer: GAME.md follows the code's 45 s (the 100-persona sim found 30 s too tight), not the Sat 8 PM 30 s. Change it back if the CD wants.
+- ✅ CD standing rule (relayed by the coordinator): when a session thinks something should be done a certain way, do it, and tell the CD explicitly WHY in plain words. Check old-iteration ideas against GAME.md and the latest DECISIONS before reusing them.
+- ⏳ Narrator voice per persona (Vesper, Wren, Juniper, Hollis) from the bake-off page: the CD picks; voice session applies it.
+- Clock note: the laptop says ~4:30 AM CDT. Some earlier entry times ("5:45 AM", "8:40 AM") ran ahead of it; trust the laptop clock.
+
+## Sun ~4:35 AM: narrator voices (CD picks, ElevenLabs v3)
+- ✅ Vesper = Sarah, Hollis = George, Wren = Charlie (all Eleven v3, the expressive model). Juniper had no pick: dropped, the AI casts from 3 voices (lead's call: every voice in the game is one the CD approved by ear).
+- ⚠️ Vesper: the CD ticked Lily once and Sarah twice; lead went with Sarah.
+- ✅ (Sun ~4:45 AM) CD answers: buy the ElevenLabs $5 Starter plan (the CD buys it; voice flips the provider after). Art: a new painting EVERY turn (the act/win/finale-only cadence is reverted). Quick Tale = 1 turn each (~5 min); Full keeps 2 each at 2-4 players, 1 at 5+. Gemini track: off. Sound fixes (605476d): the CD says they sound good.
+- ✅ Sound effects approved by the CD ("cool, a little muffled but nice"); voice brightens them slightly.

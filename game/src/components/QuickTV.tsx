@@ -4,6 +4,7 @@
  * The painted scene stays on screen the whole time (Ken Burns drift, parallax motes, scrim) and crossfades when the
  * scene changes or the hero-painted version arrives. Each moment is one overlay with ONE "Now:" line.
  */
+import { heroPortrait } from "@/lib/heroArt";
 import { useEffect, useMemo, useRef, useState } from "react";
 import QRCode from "qrcode";
 import type { Stage } from "./TV";
@@ -21,8 +22,9 @@ import { Reactions } from "./Reactions";
 import { Avatar, Hope, ThankHearts, useFastNow } from "./TV";
 import { KeepsakeQR } from "./Keepsake";
 import { FEATURES } from "@/lib/features";
-import { music, playSfx, useMusic } from "@/lib/sound";
-import { EndingMontage, HudStrip, OutcomeCaption, PlanCard, QualityMeter, SuggestionBubbles, TurnCard, TvStage, TIER_LOOK } from "@/components/tvskin";
+import { dice, music, playSfx, useMusic } from "@/lib/sound";
+import { EndingMontage, FinalePitch, FinaleShake, FinaleVote, HudStrip, OutcomeCaption, Particles, PhaseSwap, PlanCard, QualityMeter, SuggestionBubbles, TurnCard, TvStage, TIER_LOOK } from "@/components/tvskin";
+import { QUICK_TURN_MS, TURN_MS, VOTE_MS } from "@/lib/rules";
 import type { CardHero, MontagePanel } from "@/components/tvskin";
 import { TIER_SHIFT, gradeRoll } from "@/lib/grade";
 import { speakableName } from "@/lib/now";
@@ -116,20 +118,24 @@ const MOTES = Array.from({ length: 22 }, (_, i) => {
   };
 });
 
-function Backdrop({ url, mood }: { url?: string; mood: Mood }) {
+function Backdrop({ url, mood, onNew }: { url?: string; mood: Mood; onNew?: () => void }) {
   // Crossfade: every new picture is a new layer that fades in over the old one, once it has loaded (never a flash).
   const [layers, setLayers] = useState<{ url: string; id: number; anim: "push" | "drift" }[]>([]);
   const id = useRef(0);
+  const shown = useRef(0);
   useEffect(() => {
     if (!url) return;
     let alive = true;
     const img = new Image();
-    const add = () =>
-      alive &&
+    const add = () => {
+      if (!alive) return;
       setLayers((ls) => {
         if (ls[ls.length - 1]?.url === url) return ls;
         return [...ls.slice(-1), { url, id: ++id.current, anim: mood === "push" ? "push" : "drift" }];
       });
+      // A fresh Muse painting (not the first picture, not a pre-painted plate): let the table see it.
+      if (shown.current++ > 0 && url.startsWith("data:")) onNew?.();
+    };
     img.onload = add;
     img.onerror = add;
     img.src = url;
@@ -266,14 +272,7 @@ function GoalBar({ s }: { s: GameState }) {
                 ))}
               </span>
             )}
-            {s.ladder.length > 1 && (
-              <span className="gp-danger" title={`Danger ${s.danger} of 3${s.danger >= 3 ? ": the finale gets −3" : ""}`}>
-                Danger
-                {[0, 1, 2].map((i) => (
-                  <i key={i} className={i < s.danger ? "on" : ""} />
-                ))}
-              </span>
-            )}
+
           </span>
           <span className="gp-goal-t">{now || s.goal}</span>
         </div>
@@ -740,27 +739,33 @@ function Roll({ host, s }: { host: Stage; s: GameState }) {
   const [flash, setFlash] = useState<{ kind: "legendary" | "catastrophe" | null; n: number }>({ kind: null, n: 0 });
   useEffect(() => {
     if (!shown || !r) return;
-    sfx.diceRoll(ROLL_ANIM_MS - 300);
+    const ms = ROLL_ANIM_MS - 200;
+    music.cue("riser", { ms });
+    dice.throw();
+    // The table hits match ThrowFlight's bounces: flight ends at 55%, then two smaller hops.
+    const hits = [0.55, 0.7525, 0.8875].map((f, n) => setTimeout(() => dice.bounce(n), ms * f));
     const t = setTimeout(() => {
       setSettled(true);
-      sfx.diceLand();
-      if (r.band === "LEGENDARY") {
-        sfx.choir();
-        setFlash((f) => ({ kind: "legendary", n: f.n + 1 }));
-      } else if (r.band === "CATASTROPHE") {
-        sfx.recordScratch();
-        setFlash((f) => ({ kind: "catastrophe", n: f.n + 1 }));
-      }
-    }, ROLL_ANIM_MS - 200);
-    return () => clearTimeout(t);
+      dice.land();
+      const g = gradeRoll(r.total, r.kept);
+      music.cue("hit", { grade: g.branch === "worse" ? "down" : g.branch === "mixed" ? "neutral" : "up" });
+      if (r.kept === 20) setFlash((f) => ({ kind: "legendary", n: f.n + 1 }));
+      else if (r.kept === 1) setFlash((f) => ({ kind: "catastrophe", n: f.n + 1 }));
+    }, ms);
+    return () => {
+      clearTimeout(t);
+      hits.forEach(clearTimeout);
+    };
   }, [shown]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!r || !pl) return null;
   return (
     <div className="qt-stage qt-center !gap-6">
       <ScreenFlash kind={flash.kind} trigger={flash.n} />
+      <div style={{ opacity: settled ? 0 : 1, transition: "opacity 0.5s ease 0.3s" }}>
       <ThrowFlight fling={s.fling} thrown={shown} ms={ROLL_ANIM_MS - 200}>
         <D20 value={shown ? r.kept : null} rolling={shown && !settled} size={300} tone={settled && r.band === "CATASTROPHE" ? "crimson" : "gold"} />
       </ThrowFlight>
+      </div>
       {settled && (
         <TvStage>
           <SkinMeter s={s} r={r} />
@@ -837,7 +842,7 @@ function ThrowFlight({ fling, thrown, ms, children }: { fling: GameState["fling"
 }
 
 // ---------- the in-game TV skin (components/tvskin): what a real game looks like, piece by piece ----------
-const portraitOf = (host: Stage, p: Player) => (p.pick ? `/heroes/${p.pick}.webp` : host.thumbs[p.id] ?? host.portraits[p.id]);
+const portraitOf = (host: Stage, p: Player) => (p.pick ? heroPortrait(p.pick) : host.thumbs[p.id] ?? host.portraits[p.id]);
 const cardHero = (host: Stage, p: Player): CardHero => ({
   name: p.hero?.name ?? p.name,
   epithet: p.hero?.epithet,
@@ -847,13 +852,13 @@ const cardHero = (host: Stage, p: Player): CardHero => ({
 });
 const GRADE_COLOR: Record<string, string> = { DISASTER: "#ff3b4e", SETBACK: "#ff6b3d", PARTIAL: "#ffad3b", PROGRESS: "#3de7ff", GREAT: "#2cf5c0", LEGENDARY: "#ffd23f" };
 
-/** The HUD under the top bar: the ladder (one dot per turn, the finale on top), Right now, the goal, the danger bar. */
+/** The HUD under the top bar: progress as 3 act dots and the crown, Right now, the goal. One meter only. */
 function SkinHud({ s }: { s: GameState }) {
   if (!s.goal) return null;
   return (
     <HudStrip
-      ladder={s.ladder.length > 1 ? { steps: s.ladder.length, at: s.step, now: s.nowGoal || s.goal, goal: s.goal } : { steps: 1, at: 0, now: s.nowGoal || s.goal, goal: s.goal }}
-      danger={{ level: s.danger, max: 3 }}
+      // 3 acts plus the finale crown, driven by progress (0-100) and the act clock: no fixed beats (design/35).
+      ladder={{ steps: 4, at: s.finale || (s.progress ?? 0) >= 100 ? 3 : Math.max((s.progress ?? 0) >= 67 ? 2 : (s.progress ?? 0) >= 34 ? 1 : 0, (s.act ?? 1) - 1), now: s.nowGoal || s.goal, goal: s.goal }}
     />
   );
 }
@@ -870,7 +875,14 @@ function SkinTurn({ host, s }: { host: Stage; s: GameState }) {
     .filter((x): x is NonNullable<typeof x> => !!x);
   return (
     <>
-      <TurnCard hero={cardHero(host, owner)} playedBy={speakableName(owner.name)} turn={{ n: s.turnIndex + 1, of: s.turnOrder.length }} prompt="Everyone else: suggest a move on your phone" k={`${owner.id}-${s.turnIndex}`} />
+      <TurnCard
+        hero={cardHero(host, owner)}
+        playedBy={speakableName(owner.name)}
+        turn={{ n: s.turnIndex + 1, of: s.turnOrder.length }}
+        // Talk-out-loud cue (design/35 rule 14): while the owner types, the TV invites them to tell the table.
+        prompt={s.typing.includes(owner.id) ? `${speakableName(owner.name)}, tell the table your plan.` : "Everyone else: suggest a move on your phone"}
+        k={`${owner.id}-${s.turnIndex}`}
+      />
       <SuggestionBubbles items={items} />
     </>
   );
@@ -898,6 +910,7 @@ function SkinPlan({ host, s }: { host: Stage; s: GameState }) {
       shift={r?.playerId === pl.id ? r.tierMod : TIER_SHIFT[v.tier]}
       stat={{ label: STAT_LABEL[v.stat], value: pl.hero?.stats[v.stat] ?? 0 }}
       credit={credit ? { name: shortName(credit.hero?.name ?? credit.name), color: credit.color, bonus: 1 } : undefined}
+      cta={s.phase === "roll" ? `${shortName(pl.hero?.name)}: swipe up on your phone to throw` : undefined}
     />
   );
 }
@@ -961,27 +974,87 @@ function SkinEnding({ host, s }: { host: Stage; s: GameState }) {
   }));
   const f = s.final;
   const start = s.phase === "epilogue" ? 0 : panels.length;
-  if (!rs || !seed) return null;
+  // Never skip the reveal: if a story arrived without its article fields, show what we do know.
+  const real = {
+    headline: rs?.headline || seed?.the_threat?.mapped_from || "A real story from this week",
+    source: rs?.source || "",
+    date: rs?.date || "",
+    summary: rs?.summary || seed?.the_threat?.mapped_from || "",
+    link: rs?.link || "",
+    now: rs?.now || "",
+  };
   return (
     <EndingMontage
       panels={panels}
       start={start}
       panelMs={MONTAGE_PANEL_MS}
       reveal={{
-        headline: rs.headline,
-        source: rs.source,
-        date: rs.date,
-        summary: dedupeSentences(rs.summary),
-        now: knownNow(rs.now) || undefined,
-        articleUrl: rs.link || undefined,
-        author: seed.author?.name,
-        yourTitle: s.quest?.title ?? seed.quest_title,
+        headline: real.headline,
+        source: real.source,
+        date: real.date,
+        summary: dedupeSentences(real.summary),
+        now: knownNow(real.now) || undefined,
+        articleUrl: real.link || undefined,
+        author: seed?.author?.name,
+        yourTitle: s.quest?.title ?? seed?.quest_title ?? "Your story",
         yourVersion: s.recap || s.epilogue,
         solvedBy: s.solvedBy || undefined,
         ending: f ? ENDING_LABEL[f.ending] : undefined,
         endingColor: f?.ending === "TRIUMPHANT" ? "#ffd23f" : f?.ending === "BITTERSWEET" ? "#2cf5c0" : "#ff2e7e",
       }}
-      keepsake={s.storybook ? <KeepsakeQR host={host} s={s} size={260} /> : undefined}
+      keepsake={s.storybook ? <KeepsakeQR host={host} s={s} size={260} bare /> : undefined}
+    />
+  );
+}
+
+/** The finale in the TV skin: WRITE (sealed plans fly in), BACK (vote), ARM → 3-2-1 → SHAKE → ROLLING. */
+const finaleHeroes = (host: Stage, s: GameState) =>
+  s.players.filter((p) => p.hero).map((p) => ({ id: p.id, name: shortName(p.hero?.name ?? p.name), color: p.color, portrait: portraitOf(host, p) }));
+
+function SkinFinalePitch({ host, s }: { host: Stage; s: GameState }) {
+  return (
+    <FinalePitch
+      heroes={finaleHeroes(host, s)}
+      plans={s.pitches.map((p) => ({ id: p.id, playerId: p.playerId }))}
+      typing={s.typing}
+      situation={s.situation}
+      deadlineAt={host.deadlineAt || undefined}
+      totalSeconds={(s.mode === "quick" ? QUICK_TURN_MS : TURN_MS) / 1000}
+    />
+  );
+}
+
+function SkinFinaleVote({ host, s }: { host: Stage; s: GameState }) {
+  const el = eligibleIds(s);
+  return (
+    <FinaleVote
+      heroes={finaleHeroes(host, s)}
+      plans={s.pitches.map((p) => ({ id: p.id, playerId: p.playerId, text: p.auto ? "…" : p.verdict?.interpretation && !p.verdict.fallback ? p.verdict.interpretation : planText(p), eligible: el.has(p.id) }))}
+      votes={s.votes}
+      deadlineAt={host.deadlineAt || undefined}
+      totalSeconds={VOTE_MS / 1000}
+    />
+  );
+}
+
+function SkinFinaleShake({ host, s }: { host: Stage; s: GameState }) {
+  const f = s.final;
+  const stage = (f?.stage ?? "arm") as "arm" | "count" | "shake" | "tumble";
+  const now = useFastNow(stage === "count");
+  const left = host.deadlineAt ? Math.max(0, host.deadlineAt - now) : 0;
+  const beat = stage === "count" ? Math.max(1, Math.min(3, Math.ceil(left / 1000))) : undefined;
+  const heroes = finaleHeroes(host, s);
+  const w = winnerPid(s) || f?.best || "";
+  const pitch = s.pitches.find((p) => p.playerId === w);
+  return (
+    <FinaleShake
+      stage={stage}
+      heroes={heroes}
+      armed={f?.armed}
+      shook={f?.shook}
+      beat={beat}
+      planBy={heroes.find((h) => h.id === w)}
+      plan={pitch ? (pitch.verdict?.interpretation && !pitch.verdict.fallback ? pitch.verdict.interpretation : planText(pitch)) : undefined}
     />
   );
 }
@@ -1332,31 +1405,23 @@ function useStorySound(s: GameState) {
   useEffect(() => {
     if (resolved) music.swell(0.5, 2500);
   }, [resolved]);
+  // The TurnCard plays its own slam and the QualityMeter its own result sound; the music adds the cues around them.
   const turnKey = s.phase === "turn" ? s.turnIndex : -1;
   useEffect(() => {
-    if (turnKey >= 0) playSfx("turnStart");
+    if (turnKey >= 0) music.cue("yourTurn");
   }, [turnKey]);
   const r = s.rolls[0];
-  const landed = (s.phase === "roll" && s.revealed.length > 0) || s.phase === "final_result";
-  const band = landed ? r?.band : undefined;
+  const hitGrade = (x?: RollResult) => {
+    const g = x ? gradeRoll(x.total, x.kept) : null;
+    return !g ? "neutral" : g.branch === "worse" ? "down" : g.branch === "mixed" ? "neutral" : "up";
+  };
   useEffect(() => {
-    if (!band) return;
-    const t = setTimeout(() => {
-      if (band === "LEGENDARY") {
-        playSfx("nat20");
-        music.swell(1, 4000);
-      } else if (band === "CATASTROPHE") playSfx("nat1");
-      else if (band === "SUCCESS") playSfx("success");
-      else if (band === "YES_BUT") playSfx("partial");
-      else playSfx("fail");
-    }, s.phase === "final_result" ? 0 : ROLL_ANIM_MS);
-    return () => clearTimeout(t);
-  }, [band, s.phase]);
-  useEffect(() => {
+    if (s.phase === "final_roll" && (s.final?.stage === "arm" || s.final?.stage === "count")) music.cue("finale", { ms: 9000 });
     if (s.phase === "final_roll" && s.final?.stage === "shake") playSfx("finaleShake", { ms: 2000 });
-    if (s.phase === "final_roll" && s.final?.stage === "landed") music.swell(1, 3500);
-    if (s.phase === "reveal") playSfx("reveal");
+    if (s.phase === "final_result") music.cue("hit", { grade: hitGrade(r) });
+    if (s.phase === "reveal") music.cue("resolve");
     if (s.phase === "storybook") playSfx("keepsake");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [s.phase, s.final?.stage]);
 }
 
@@ -1390,6 +1455,21 @@ export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameS
     });
   }, [plates]);
   const [title, setTitle] = useState(false);
+  // A new painting landed while the table is talking: the skin steps back for a beat so everyone sees it.
+  const [peek, setPeek] = useState(false);
+  const phaseNow = useRef(s.phase);
+  phaseNow.current = s.phase;
+  const peekT = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const onNewArt = useMemo(
+    () => () => {
+      if (!["turn", "narrating", "pitch"].includes(phaseNow.current)) return;
+      setPeek(true);
+      if (peekT.current) clearTimeout(peekT.current);
+      peekT.current = setTimeout(() => setPeek(false), 3200);
+    },
+    [],
+  );
+  useEffect(() => () => void (peekT.current && clearTimeout(peekT.current)), []);
   const mood = moodFor(s, title && s.phase === "narrating");
   // The latest painting of what the heroes did, once there is one; before that, the (hero-painted) plate.
   const painted = s.artKey >= 0 ? host.sceneImages[s.artKey] : undefined;
@@ -1422,10 +1502,8 @@ export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameS
       main = null; // the tvskin TurnCard + SuggestionBubbles (below)
       break;
     case "pitch":
-      main = <Planning host={host} s={s} />;
-      break;
     case "vote":
-      main = <Vote host={host} s={s} />;
+      main = null; // the tvskin FinalePitch / FinaleVote (below)
       break;
     case "ruling":
       main = null; // the tvskin PlanCard (below)
@@ -1438,7 +1516,8 @@ export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameS
       break;
     case "final_roll":
     case "final_result":
-      main = <Final host={host} s={s} />;
+      // ARM, 3-2-1, SHAKE, ROLLING are the tvskin FinaleShake (below); the landing keeps the die + quality meter.
+      main = s.phase === "final_result" || s.final?.stage === "landed" ? <Final host={host} s={s} /> : null;
       break;
     case "epilogue":
     case "reveal":
@@ -1454,9 +1533,14 @@ export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameS
   }
 
   const inScene = SCENE_PHASES.includes(s.phase);
+  // One key per skin "beat": the plan card stays the same beat from the ruling until the throw.
+  const skinKey =
+    s.phase === "final_roll" ? "finale-shake" :
+    s.phase === "turn" ? `turn-${s.turnIndex}` : s.phase === "ruling" || (s.phase === "roll" && !s.revealed.length) ? `plan-${s.turnIndex}-${s.finale}` : s.phase === "outcome" ? `out-${s.turnIndex}` : s.phase;
   return (
     <div className="qt-root" onPointerDown={() => sfx.unlock()}>
-      <Backdrop url={art} mood={mood} />
+      <Backdrop url={art} mood={mood} onNew={onNewArt} />
+      <Particles count={28} seed={s.turnIndex + 1} />
       <div key={shot} className="qt-dip" aria-hidden />
       {s.phase !== "quest" && !["epilogue", "reveal", "storybook"].includes(s.phase) && <QTopBar host={host} s={s} onNotes={onNotes} notesOpen={notesOpen} />}
       {s.phase === "quest" && !host.readOnly && (
@@ -1470,16 +1554,21 @@ export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameS
       </div>
       {/* The in-game TV skin over the scene: HUD, turn card + suggestions, the plan, the caption. */}
       {(inScene || s.phase === "final_roll" || s.phase === "final_result") && !(title && s.phase === "narrating") && (
-        <TvStage>
-          <SkinHud s={s} />
-          {s.phase === "turn" && <SkinTurn host={host} s={s} />}
-          {s.phase === "ruling" && <SkinPlan host={host} s={s} />}
-          {s.phase === "outcome" && <SkinOutcome s={s} />}
+        <TvStage className={peek ? "is-peek" : ""}>
+          {s.phase !== "vote" && <SkinHud s={s} />}
+          <PhaseSwap k={skinKey}>
+            {s.phase === "turn" && <SkinTurn host={host} s={s} />}
+            {(s.phase === "ruling" || (s.phase === "roll" && !s.revealed.length)) && <SkinPlan host={host} s={s} />}
+            {s.phase === "outcome" && <SkinOutcome s={s} />}
+            {s.phase === "pitch" && <SkinFinalePitch host={host} s={s} />}
+            {s.phase === "vote" && <SkinFinaleVote host={host} s={s} />}
+            {s.phase === "final_roll" && s.final?.stage !== "landed" && <SkinFinaleShake host={host} s={s} />}
+          </PhaseSwap>
         </TvStage>
       )}
       {["epilogue", "reveal", "storybook"].includes(s.phase) && <SkinEnding host={host} s={s} />}
       {/* One instruction pill, only where no skin piece already says what to do. */}
-      {["story_write", "story_vote", "pitch", "vote", "final_roll"].includes(s.phase) || (s.phase === "roll" && !s.revealed.length) ? <NowBanner s={s} /> : null}
+      {["story_write", "story_vote"].includes(s.phase) ? <NowBanner s={s} /> : null}
       {s.paused && (
         <div className="gp-paused" role="status">
           <p className="font-heading text-5xl uppercase">Reconnecting phones…</p>

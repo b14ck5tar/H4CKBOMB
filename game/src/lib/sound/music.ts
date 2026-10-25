@@ -6,26 +6,30 @@ import {
   emitChange,
   expRamp,
   getBuses,
+  getRoom,
   isRunning,
   isServer,
   onUnlock,
   peekCtx,
   ramp,
   readPref,
+  setRoomOn,
   writePref,
 } from "./context";
-import { dbToGain, reverbIR } from "./dsp";
-import { Kit } from "./instruments";
-import { MOODS, TRACKS, toMood, type Mood, type TrackDef, type TrackId } from "./tracks";
+import { CUE_NAMES, cueLength, playCue, type CueName, type CueOpts } from "./cues";
+import { dbToGain } from "./dsp";
+import { Kit, type Layers } from "./instruments";
+import { MOODS, TRACKS, layersFor, toMood, type Mood, type TrackDef, type TrackId } from "./tracks";
 
 /**
  * The music engine (one per page). Generative loops scheduled with a lookahead clock, crossfaded,
- * ducked under narration, and pushed by `setIntensity` for big moments.
+ * ducked under narration, shaped by `setIntensity` (adaptive layers) and punctuated by phase cues.
  *
  * Signal chain:
- *   track kits (crossfading) ──┬─> voice-pocket EQ ─> brightness LP ─> intensity gain ─> duck ─> volume ─> music bus
- *   shared reverb  <─ sends ───┘
- * The EQ cuts 2-4 kHz a little so narration always sits on top of the music.
+ *   track kits (crossfading) ──┬─> low cut ─> mud dip ─> voice-pocket dip ─> soft top ─> brightness LP ─> intensity gain ─┐
+ *   shared reverb  <─ sends ───┘                                                                                           │
+ *   cue kits (riser, hit, ...) ─────────────────────────────────────────────────────────────────────────> duck ─> volume ─> music bus
+ * The EQ dips 2.6 kHz a little so narration always sits on top of the music.
  */
 
 const BASE_LEVEL = dbToGain(-11); // ~-27 dBFS (K-weighted) at the default volume: well under a narrator at ~-18
@@ -33,7 +37,7 @@ const DUCK_DB = -12;
 const DUCK_ATTACK = 0.25; // seconds, linear in dB
 const DUCK_RELEASE = 0.6;
 const CROSSFADE_SEC = 2.6;
-const LOOKAHEAD = 0.35; // seconds scheduled ahead
+const LOOKAHEAD = 0.35; // seconds scheduled ahead (0.5 in lite mode, to ride out a busy main thread)
 const TICK_MS = 50;
 const ROTATE_KEY = "gp-music-rotate";
 
@@ -49,7 +53,9 @@ interface Playing {
 class MusicEngine {
   private ctx: AudioContext | null = null;
   private input: GainNode | null = null;
-  private reverb: ConvolverNode | null = null;
+  private revIn: GainNode | null = null; // music's send into the shared room
+  private revDuck: GainNode | null = null;
+  private revVol: GainNode | null = null;
   private bright: BiquadFilterNode | null = null;
   private lift: GainNode | null = null;
   private duckG: GainNode | null = null;
@@ -58,17 +64,45 @@ class MusicEngine {
   private playing: Playing[] = [];
   private timer: ReturnType<typeof setInterval> | null = null;
   private want: TrackId | null = null;
-  private intensity = 0;
+  private intensity = 0.2;
   private swellTimer: ReturnType<typeof setTimeout> | null = null;
+  private cueIn: GainNode | null = null;
+  private cues = new Map<CueName, { kit: Kit; timer: ReturnType<typeof setTimeout> }>();
+  private mode: "normal" | "suspense" | "tension" = "normal";
+  private modeTimer: ReturnType<typeof setTimeout> | null = null;
   private duckers = new Set<string>();
   private muted = false;
   private volume = 0.8;
   private prefsLoaded = false;
   private schedMs = 0;
   private schedTicks = 0;
+  private lite = false;
+  private lastTickAt = 0;
+  private slowTicks = 0;
+  private underrunsSeen = -1;
+  private nextHealthCheck = 0;
 
   constructor() {
-    if (!isServer()) onUnlock(() => this.resumeWanted());
+    if (isServer()) return;
+    onUnlock(() => this.resumeWanted());
+    // very small machines start light
+    if ((navigator.hardwareConcurrency ?? 8) <= 2) this.lite = true;
+  }
+
+  /**
+   * Lite mode: half the polyphony, single-oscillator pads, no reverb send, a longer lookahead. It turns on
+   * by itself if the browser reports audio underruns or the page's timers are starved, and stays on.
+   */
+  setLite(on: boolean) {
+    this.lite = !!on;
+    if (this.ctx) setRoomOn(!this.lite); // the real saving: the shared reverb is disconnected
+    for (const p of this.playing) p.kit.setLite(this.lite);
+    for (const c of this.cues.values()) c.kit.setLite(this.lite);
+    emitChange();
+  }
+
+  isLite() {
+    return this.lite;
   }
 
   /* ---------------- public API ---------------- */
@@ -102,7 +136,56 @@ class MusicEngine {
     for (const p of this.playing) this.kill(p, fadeSec);
   }
 
-  /** 0..1. Brightens the mix, lifts it ~3 dB and makes every track busier. Glides over `sec`. */
+  /**
+   * A phase cue in the key of the current track (works with no track too):
+   *   cue("riser", { ms })   suspense build into a roll; the drums step back while it rises
+   *   cue("hit", { grade })  the landing ("up" | "down" | "neutral"): boom + crash + chord, ends a riser/finale
+   *   cue("finale", { ms })  a short tension bed under the final roll (drone, heartbeat, ticking)
+   *   cue("resolve")         the reveal: a warm major bloom; ends any tension
+   *   cue("yourTurn")        a bright two-note sting
+   * Before the first gesture this is a no-op.
+   */
+  cue(name: CueName | string, opts: CueOpts = {}) {
+    const n = cueName(name);
+    if (!n || isServer() || !isRunning() || !this.ensureGraph() || !this.ctx || !this.cueIn || !this.revIn) return;
+    const ctx = this.ctx;
+    const live = this.playing.find((p) => !p.dying)?.def;
+    const key = live?.key ?? 62;
+    const minor = live?.minor ?? true;
+    if (n === "hit" || n === "resolve") {
+      this.endCue("riser", 0.12);
+      this.endCue("finale", n === "hit" ? 0.25 : 1.2);
+      this.setMode("normal", 0, n === "hit" ? 0.25 : 1.5);
+    }
+    this.endCue(n, 0.08); // a repeated cue restarts
+    try {
+      const kit = new Kit(ctx, this.cueIn, this.revIn, { bpm: live?.bpm ?? 100, pump: 0, width: 0.5, echo: { beats: 0.75, feedback: 0.28, tone: 2600 } });
+      if (this.lite) kit.setLite(true);
+      kit.setFade(1, 0.02);
+      const t0 = ctx.currentTime + 0.03;
+      playCue(n, kit, t0, key, minor, opts);
+      const len = cueLength(n, opts);
+      const timer = setTimeout(() => this.endCue(n, 0.6), len);
+      this.cues.set(n, { kit, timer });
+      if (n === "hit") for (const p of this.playing) if (!p.dying) p.kit.pump(t0, 0.6, 0.6);
+      if (n === "yourTurn") for (const p of this.playing) if (!p.dying) p.kit.pump(t0, 0.35, 0.4);
+      if (n === "riser") {
+        this.setMode("suspense", len + 600, 0.8);
+        ramp(this.bright!.frequency, 9500, len / 1000, ctx);
+      }
+      if (n === "finale") this.setMode("tension", len, 1.2);
+    } catch {
+      /* never let audio break the game */
+    }
+  }
+
+  /** Cut any running cue (riser, finale bed) and return to the normal mix. */
+  cueStop(fadeSec = 0.5) {
+    for (const n of CUE_NAMES) this.endCue(n, fadeSec);
+    this.setMode("normal", 0, 1);
+  }
+
+  /** 0..1. Adds layers (drums, bass, lead), brightens the mix and lifts it ~3.5 dB. Glides over `sec`. */
   setIntensity(v: number, sec = 1.2) {
     this.intensity = Math.max(0, Math.min(1, Number(v) || 0));
     this.applyIntensity(sec);
@@ -119,6 +202,25 @@ class MusicEngine {
       this.intensity = base;
       this.applyIntensity(2.5);
     }, holdMs);
+  }
+
+  /**
+   * A gentle "tape-slow" stumble for comic fails: the bed sinks (dark filter, -6 dB) for `sec`,
+   * then recovers. Used by the disaster sting; never stops the music.
+   */
+  stumble(sec = 0.5) {
+    const ctx = this.ctx;
+    if (!ctx || !this.bright || !this.lift || !this.playing.some((p) => !p.dying)) return;
+    const now = ctx.currentTime;
+    const f = this.bright.frequency;
+    const g = this.lift.gain;
+    for (const p of [f, g]) {
+      p.cancelScheduledValues(now);
+      p.setValueAtTime(p.value, now);
+    }
+    f.exponentialRampToValueAtTime(450, now + sec * 0.4);
+    g.linearRampToValueAtTime(g.value * dbToGain(-6), now + sec * 0.4);
+    setTimeout(() => this.applyIntensity(0.6), sec * 1000);
   }
 
   /** Duck under narration: -12 dB, ~250 ms down, ~600 ms back up. Keyed, so overlapping clips are fine. */
@@ -187,6 +289,12 @@ class MusicEngine {
     return this.intensity;
   }
 
+  /** Key of the track that is playing (the sound effects follow it), or null. */
+  keyInfo(): { key: number; minor: boolean } | null {
+    const def = this.playing.find((p) => !p.dying)?.def;
+    return def ? { key: def.key, minor: def.minor } : null;
+  }
+
   isDucked() {
     return this.duckers.size > 0;
   }
@@ -208,11 +316,50 @@ class MusicEngine {
       tickMs: this.schedTicks ? this.schedMs / this.schedTicks : 0,
       ticks: this.schedTicks,
       voices: this.playing.length,
+      lite: this.lite,
       state: peekCtx()?.state ?? "none",
     };
   }
 
   /* ---------------- internals ---------------- */
+
+  private endCue(n: CueName, fadeSec: number) {
+    const c = this.cues.get(n);
+    if (!c) return;
+    this.cues.delete(n);
+    clearTimeout(c.timer);
+    c.kit.setFade(0, fadeSec);
+    setTimeout(() => c.kit.dispose(), fadeSec * 1000 + 3500); // let reverb / echo tails ring out
+  }
+
+  /** suspense (riser): drums and lead step back; tension (finale bed): only a dark bed of the track remains. */
+  private setMode(m: "normal" | "suspense" | "tension", holdMs: number, sec: number) {
+    if (this.modeTimer) clearTimeout(this.modeTimer);
+    this.modeTimer = null;
+    this.mode = m;
+    if (m !== "normal" && holdMs > 0) this.modeTimer = setTimeout(() => this.setMode("normal", 0, 1.5), holdMs);
+    if (m === "tension" && this.ctx && this.bright) ramp(this.bright.frequency, 1600, sec, this.ctx);
+    if (m === "normal") this.applyIntensity(sec);
+    else this.applyLayers(sec);
+  }
+
+  private layersNow(def: TrackDef): Layers {
+    const l = { ...layersFor(this.intensity), ...(def.layers?.(this.intensity) ?? {}) };
+    if (this.mode === "suspense") {
+      l.drums *= 0.3;
+      l.lead *= 0.6;
+    } else if (this.mode === "tension") {
+      l.drums *= 0.12;
+      l.lead *= 0.1;
+      l.keys *= 0.5;
+      l.bass *= 0.6;
+    }
+    return l;
+  }
+
+  private applyLayers(sec: number) {
+    for (const p of this.playing) if (!p.dying) p.kit.setLayers(this.layersNow(p.def), sec);
+  }
 
   private loadPrefs() {
     if (this.prefsLoaded || isServer()) return;
@@ -238,15 +385,21 @@ class MusicEngine {
     const ctx = b.ctx;
     try {
       this.input = ctx.createGain();
-      const hp = ctx.createBiquadFilter();
-      hp.type = "highpass";
-      hp.frequency.value = 32;
-      // the "voice pocket": a gentle dip where speech intelligibility lives
-      const pocket = ctx.createBiquadFilter();
-      pocket.type = "peaking";
-      pocket.frequency.value = 2600;
-      pocket.Q.value = 0.8;
-      pocket.gain.value = -4;
+      const eq = (type: BiquadFilterType, f: number, q: number, gain = 0) => {
+        const n = ctx.createBiquadFilter();
+        n.type = type;
+        n.frequency.value = f;
+        n.Q.value = q;
+        n.gain.value = gain;
+        return n;
+      };
+      const hp = eq("highpass", 32, 0.7);
+      const mud = eq("peaking", 300, 1, -2); // no boxy low-mids
+      const pocket = eq("peaking", 2600, 0.8, -4); // the "voice pocket": where speech intelligibility lives
+      const top = eq("highshelf", 9000, 0.7, -2.5); // no harsh highs
+      hp.connect(mud);
+      mud.connect(pocket);
+      pocket.connect(top);
       this.bright = ctx.createBiquadFilter();
       this.bright.type = "lowpass";
       this.bright.Q.value = 0.5;
@@ -255,17 +408,24 @@ class MusicEngine {
       this.duckG = ctx.createGain();
       this.vol = ctx.createGain();
       this.vol.gain.value = 0;
-      this.reverb = ctx.createConvolver();
-      this.reverb.buffer = reverbIR(ctx, 2.8, 0.55, 0.02);
-      const revRet = ctx.createGain();
-      revRet.gain.value = 0.38;
-      this.reverb.connect(revRet);
-      revRet.connect(this.input);
+      // the send into the app's ONE shared room (context.ts), ducked and volumed like the dry music
+      const room = getRoom();
+      if (!room) return false;
+      setRoomOn(!this.lite);
+      this.revIn = ctx.createGain();
+      this.revDuck = ctx.createGain();
+      this.revVol = ctx.createGain();
+      this.revVol.gain.value = 0;
+      this.revIn.connect(this.revDuck);
+      this.revDuck.connect(this.revVol);
+      this.revVol.connect(room.input);
       this.input.connect(hp);
-      hp.connect(pocket);
-      pocket.connect(this.bright);
+      top.connect(this.bright);
       this.bright.connect(this.lift);
       this.lift.connect(this.duckG);
+      this.cueIn = ctx.createGain();
+      this.cueIn.gain.value = 0.85;
+      this.cueIn.connect(this.duckG);
       this.duckG.connect(this.vol);
       this.vol.connect(b.music);
       this.ctx = ctx;
@@ -284,15 +444,17 @@ class MusicEngine {
   }
 
   private switchTo(id: TrackId) {
-    if (!this.ensureGraph() || !this.ctx || !this.input || !this.reverb) return;
+    if (!this.ensureGraph() || !this.ctx || !this.input || !this.revIn) return;
     const live = this.playing.find((p) => !p.dying);
     if (live && live.def.id === id) return;
     const ctx = this.ctx;
     for (const p of this.playing) if (!p.dying) this.kill(p, CROSSFADE_SEC);
     const def = TRACKS[id];
     try {
-      const kit = new Kit(ctx, this.input, this.reverb, { bpm: def.bpm, ...def.kit });
+      const kit = new Kit(ctx, this.input, this.revIn, { bpm: def.bpm, ...def.kit });
+      if (this.lite) kit.setLite(true);
       kit.mix.gain.value = def.level;
+      kit.setLayers(this.layersNow(def), 0.05);
       // a fresh track waits a beat so the old one has started to fade
       const start = ctx.currentTime + (live ? 0.35 : 0.08);
       kit.setFade(1, live ? CROSSFADE_SEC : 1.2);
@@ -319,8 +481,9 @@ class MusicEngine {
     const ctx = this.ctx;
     if (!ctx) return;
     const t0 = performance.now();
+    this.healthCheck(ctx, t0);
     const now = ctx.currentTime;
-    const until = now + LOOKAHEAD;
+    const until = now + (this.lite ? 0.5 : LOOKAHEAD);
     for (const p of this.playing) {
       if (p.dying && now > p.dying) continue;
       const sp16 = 60 / p.def.bpm / 4;
@@ -374,12 +537,38 @@ class MusicEngine {
     this.schedTicks++;
   }
 
+  /** Auto-engage lite mode when the browser is struggling (audio underruns, starved timers, slow scheduling). */
+  private healthCheck(ctx: AudioContext, nowMs: number) {
+    if (this.lite) return;
+    const visible = typeof document === "undefined" || document.visibilityState === "visible";
+    if (visible && this.lastTickAt && nowMs - this.lastTickAt > 200) this.slowTicks++;
+    else if (this.slowTicks > 0 && nowMs - this.lastTickAt < 80) this.slowTicks -= 0.25;
+    this.lastTickAt = nowMs;
+    let why = "";
+    if (this.slowTicks >= 4) why = "starved timers";
+    if (this.schedTicks > 40 && this.schedMs / this.schedTicks > 4) why = "slow scheduling";
+    if (nowMs >= this.nextHealthCheck) {
+      this.nextHealthCheck = nowMs + 1000;
+      const stats = (ctx as AudioContext & { playbackStats?: { underrunEvents?: number } }).playbackStats;
+      const u = stats?.underrunEvents;
+      if (typeof u === "number") {
+        if (this.underrunsSeen >= 0 && u - this.underrunsSeen >= 3) why = "audio underruns";
+        this.underrunsSeen = u;
+      }
+    }
+    if (why) {
+      if (process.env.NODE_ENV !== "production") console.info(`[sound] lite mode on (${why})`);
+      this.setLite(true);
+    }
+  }
+
   private applyIntensity(sec: number) {
     const ctx = this.ctx;
     if (!ctx || !this.bright || !this.lift) return;
     const i = this.intensity;
-    ramp(this.bright.frequency, 5200 * Math.pow(12000 / 5200, i), sec, ctx);
+    if (this.mode === "normal") ramp(this.bright.frequency, 5200 * Math.pow(12000 / 5200, i), sec, ctx);
     ramp(this.lift.gain, dbToGain(3.5 * i), sec, ctx);
+    this.applyLayers(sec);
   }
 
   private applyDuck() {
@@ -387,6 +576,7 @@ class MusicEngine {
     if (!ctx || !this.duckG) return;
     const on = this.duckers.size > 0;
     expRamp(this.duckG.gain, on ? dbToGain(DUCK_DB) : 1, on ? DUCK_ATTACK : DUCK_RELEASE, ctx);
+    if (this.revDuck) expRamp(this.revDuck.gain, on ? dbToGain(DUCK_DB) : 1, on ? DUCK_ATTACK : DUCK_RELEASE, ctx);
   }
 
   private applyVolume(sec: number) {
@@ -394,10 +584,22 @@ class MusicEngine {
     if (!ctx || !this.vol) return;
     const v = this.muted ? 0 : BASE_LEVEL * this.volume * this.volume; // squared: a natural-feeling slider
     ramp(this.vol.gain, v, sec, ctx);
+    if (this.revVol) ramp(this.revVol.gain, v, sec, ctx);
   }
 }
 
 type Step = Parameters<TrackDef["step"]>[0];
+
+const CUE_ALIASES: Record<string, CueName> = {
+  riser: "riser", roll: "riser", suspense: "riser", build: "riser",
+  hit: "hit", land: "hit", landing: "hit", impact: "hit",
+  finale: "finale", tension: "finale", finalroll: "finale",
+  resolve: "resolve", reveal: "resolve",
+  yourturn: "yourTurn", turn: "yourTurn", turnstart: "yourTurn",
+};
+function cueName(x: string): CueName | null {
+  return CUE_ALIASES[String(x ?? "").toLowerCase().replace(/[^a-z]/g, "")] ?? null;
+}
 
 /** The singleton. Import { music } and call music.startLobby(), music.startStory("eerie"), ... */
 export const music = new MusicEngine();

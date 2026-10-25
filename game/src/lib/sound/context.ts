@@ -4,13 +4,15 @@
  * The one shared AudioContext for the whole app (music + every sound effect).
  *
  * Graph:  music bus ─┐
- *                    ├─> master (global mute) ─> limiter ─> speakers
- *         sfx bus  ──┘
+ *         sfx bus  ──┼─> master (global mute) ─> limiter ─> soft ceiling ─> speakers
+ *         room  ─────┘   (ONE shared reverb for music and effects; lite mode disconnects it)
  *
  * Browsers block audio until a user gesture. We never create the context before one (so there is no
  * "AudioContext was not allowed to start" warning), and a one-time listener on the first
  * click / tap / keypress unlocks it automatically. Everything here is a safe no-op on the server.
  */
+
+import { reverbIR } from "./dsp";
 
 export const ALL_MUTE_KEY = "ouar-muted"; // the existing TV mute button (sfx.setMuted) uses this key
 export const MUSIC_MUTE_KEY = "gp-music-muted";
@@ -71,12 +73,28 @@ export function getBuses(): Buses | null {
   if (!Ctor) return null;
   try {
     const ctx = new Ctor({ latencyHint: "playback" } as AudioContextOptions);
+    // Headroom: every music bed sits at the same loudness (peaks ~-14 dBFS) and effects peak at -14, so the mix
+    // keeps >6 dB of headroom. Behind that, a gentle compressor at -6 dBFS and a soft-clip ceiling at -1 dBFS:
+    // nothing can ever clip. It almost never acts; when it does, a 6 ms attack (not 3 ms) keeps it from riding
+    // single bass cycles, which clamped the bass peaks and sounded "staticky".
     const limiter = ctx.createDynamicsCompressor();
     limiter.threshold.value = -6;
     limiter.knee.value = 4;
-    limiter.ratio.value = 12;
-    limiter.attack.value = 0.002;
-    limiter.release.value = 0.2;
+    limiter.ratio.value = 8;
+    limiter.attack.value = 0.006;
+    limiter.release.value = 0.3;
+    const ceiling = ctx.createWaveShaper();
+    const n = 1024;
+    const curve = new Float32Array(new ArrayBuffer(n * 4));
+    // perfectly linear up to -6 dBFS, then a soft knee into a -1 dBFS ceiling
+    const lin = 0.5;
+    const room = 0.89 - lin;
+    for (let i = 0; i < n; i++) {
+      const x = (i / (n - 1)) * 2 - 1;
+      const ax = Math.abs(x);
+      curve[i] = Math.sign(x) * (ax <= lin ? ax : lin + room * Math.tanh((ax - lin) / room));
+    }
+    ceiling.curve = curve;
     const master = ctx.createGain();
     master.gain.value = allMuted ? 0 : 1;
     const music = ctx.createGain();
@@ -84,7 +102,8 @@ export function getBuses(): Buses | null {
     music.connect(master);
     sfx.connect(master);
     master.connect(limiter);
-    limiter.connect(ctx.destination);
+    limiter.connect(ceiling);
+    ceiling.connect(ctx.destination);
     buses = { ctx, master, music, sfx };
     ctx.addEventListener("statechange", () => {
       if (ctx.state === "running") fireUnlock();
@@ -208,6 +227,101 @@ export function emitChange() {
     } catch {
       /* ignore */
     }
+  }
+}
+
+/* ---------------- the shared room (one reverb for music + effects) ---------------- */
+
+export interface Room {
+  /** send into the room */
+  input: GainNode;
+  conv: ConvolverNode;
+}
+
+/**
+ * A mono 2.0 s convolver widened to stereo by a 13 ms offset on the right, with low and high cut and a small dip
+ * where speech lives. Measured offline: about a third of the CPU of the old 2.8 s stereo convolver.
+ */
+export function makeRoom(c: BaseAudioContext, dest: AudioNode, ret = 0.38): Room {
+  const input = c.createGain();
+  const conv = c.createConvolver();
+  conv.channelCount = 1;
+  conv.channelCountMode = "explicit";
+  conv.buffer = reverbIR(c, 2.0, 0.55, 0.02, 1);
+  const f = (type: BiquadFilterType, fr: number, q: number, gain = 0) => {
+    const n = c.createBiquadFilter();
+    n.type = type;
+    n.frequency.value = fr;
+    n.Q.value = q;
+    n.gain.value = gain;
+    return n;
+  };
+  const hp = f("highpass", 220, 0.6); // no reverb in the low end
+  const lp = f("lowpass", 5600, 0.6); // or the fizz
+  const pocket = f("peaking", 2600, 0.8, -4); // the voice pocket
+  const merge = c.createChannelMerger(2);
+  const wide = c.createDelay(0.05);
+  wide.delayTime.value = 0.013;
+  const out = c.createGain();
+  out.gain.value = ret;
+  input.connect(conv);
+  conv.connect(hp);
+  hp.connect(lp);
+  lp.connect(pocket);
+  pocket.connect(merge, 0, 0);
+  pocket.connect(wide);
+  wide.connect(merge, 0, 1);
+  merge.connect(out);
+  out.connect(dest);
+  return { input, conv };
+}
+
+let room: Room | null = null;
+let roomOn = true;
+let roomTimer: ReturnType<typeof setTimeout> | null = null;
+
+/** The app's one shared room (made on first use, after the buses). */
+export function getRoom(): Room | null {
+  if (room) return room;
+  const b = getBuses();
+  if (!b) return null;
+  try {
+    room = makeRoom(b.ctx, b.master);
+    if (!roomOn) {
+      room.input.gain.value = 0;
+      room.input.disconnect();
+    }
+    return room;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Lite mode's real saving: fade the room's input out, then disconnect it, so the convolver gets no input and the
+ * browser stops running it (a gain that only approaches 0 never lets it idle). Back on: reconnect and fade in.
+ */
+export function setRoomOn(on: boolean) {
+  if (roomOn === on) return;
+  roomOn = on;
+  if (!room || !buses) return;
+  const r = room;
+  const ctx = buses.ctx;
+  if (roomTimer) clearTimeout(roomTimer);
+  roomTimer = null;
+  try {
+    if (on) {
+      r.input.disconnect();
+      r.input.connect(r.conv);
+      ramp(r.input.gain, 1, 0.4, ctx);
+    } else {
+      ramp(r.input.gain, 0, 0.3, ctx);
+      roomTimer = setTimeout(() => {
+        if (!roomOn) r.input.disconnect();
+      }, 400);
+    }
+  } catch {
+    /* never let audio break the game */
   }
 }
 

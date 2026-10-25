@@ -4,12 +4,13 @@ import { museJSON } from "@/server/muse";
 import type { Rating } from "@/lib/types";
 import { dedupe, fetchArticleFacts, fetchSerpApiFixture, fetchSerpApiParams, normalizeTitle, serpApiCalls, type NewsItem } from "./sources";
 import { HARD_BLOCK, SOURCE_DENYLIST, softMatch } from "./filter";
+import { addToLibrary } from "./library";
 
 // "Odd news" story candidates for the story vote and the Quick Tale (design/24).
 // CD: "only choose ones that can be storytold/dramatized; otherwise we're grasping at straws."
-// SerpApi (3 narrative human-interest queries per 4 h refresh, random English editions worldwide) → dedupe →
+// SerpApi (2 past-week queries; 1 past-month query only if the week keeps < 3; random English editions) → dedupe →
 // regex block → rank (narrative words up, sports/business down) → enrich (free page fetch) → STORYABILITY GATE
-// (muse-spark-1.3, low, 3 parallel batches of 15): 7 scores
+// (muse-spark-1.3, low, parallel batches of 15) → top 10, also saved to the story library (library.ts).: 7 scores
 // 1-5, keep avg >= 4 with no score below 3 → top 10 by score. Never throws; [] on failure (client uses seeds).
 
 export const SCORE_KEYS = ["situation", "problem", "setting", "arc", "roles", "payoff", "fantasy_fit"] as const;
@@ -40,6 +41,7 @@ export interface CandidateStats {
   enriched: number;
   gated: number;
   picked: number;
+  phase?: "week" | "week+month";
   kept: { title: string; avg: number; scores: Scores }[];
   rejected: { title: string; reason: string; avg?: number; scores?: Scores }[];
   ms: number;
@@ -54,22 +56,23 @@ const MIN_AVG = 4;
 const MIN_ANY = 3;
 const MAX_AGE_MS = 35 * 24 * 3600 * 1000;
 const CACHE_TTL_MS = 4 * 3600 * 1000;
-const POOL_MAX_AGE_MS = 21 * 24 * 3600 * 1000; // a gated story stays in the pool for up to 3 weeks
 
 /** English Google News editions; three are picked at random per refresh so the places vary worldwide. */
 const EDITIONS = ["us", "gb", "au", "ca", "in", "nz", "ie", "za", "sg", "ph"];
 
-/** Three queries per refresh = 3 SerpApi credits per 4 h per server. Narrative human-interest, past few weeks. */
 // Phrases that describe something HAPPENING to someone. Single words like "giant", "legend", "championship" or
 // "baffled" pulled in sports and business pages (live test Sat night: 2-3 of ~37 passed the gate).
-const QUERIES = [
-  // lost and found, rescues, reunions
-  `"reunited with" OR "found after" OR "rescued from" OR "returned to its" OR "years later" OR "finally home" when:21d`,
-  // animals and things in odd places
-  `"on the loose" OR "escaped from" OR "wandered into" OR "stuck in a" OR "made itself at home" OR "unexpected visitor" when:21d`,
+// CD: "if none good for the past week, look at the past month." Budget: at most 3 SerpApi calls per refresh.
+/** Phase 1: the past week (2 calls). */
+const WEEK_QUERIES = [
+  // lost and found, rescues, reunions, animals and things in odd places
+  `"reunited with" OR "found after" OR "rescued from" OR "returned to its" OR "on the loose" OR "escaped from" OR "wandered into" when:7d`,
   // record attempts with a twist, town mix-ups, silly heists, mysteries solved
-  `"record attempt" OR "mix-up" OR "mystery solved" OR "statue stolen" OR "villagers" OR "residents puzzled" when:21d`,
+  `"record attempt" OR "mix-up" OR "mystery solved" OR "statue stolen" OR "villagers" OR "residents puzzled" OR "unexpected visitor" when:7d`,
 ];
+/** Phase 2, only if the week kept fewer than MIN_WEEK: the past month (1 call). */
+const MONTH_QUERY = `"reunited with" OR "found after" OR "on the loose" OR "record attempt" OR "mix-up" OR "mystery solved" OR "years later" when:30d`;
+const MIN_WEEK = 3;
 
 /** Narrative words that hint at a story with a scene, a problem and an outcome. Used only to rank before the gate. */
 const NARRATIVE =
@@ -77,7 +80,7 @@ const NARRATIVE =
 
 /** Not stories: sports, business, promos, interviews and opinion. Ranked down before the gate (the gate still decides). */
 const NOT_STORY =
-  /(football|rugby|cricket|league|match|score[ds]?|derby|tournament|season|coach|preview|interview|q&a|review|commentary|opinion|column|announces?|launch\w*|stock|deal|brand|sale|podcast|episode|trailer|album|tour)/gi;
+  /\b(football|rugby|cricket|league|match|score[ds]?|derby|tournament|season|coach|preview|interview|q&a|review|commentary|opinion|column|announces?|launch\w*|stock|deal|brand|sale|podcast|episode|trailer|album|tour)\b/gi;
 
 // Hard blocks for this mode. filter.ts HARD_BLOCK minus its "missing / arrest / trial" rule (a lost tortoise found
 // after years is exactly what we want), plus our own court/crime rule and heavy topics. The gate judges the rest.
@@ -173,7 +176,16 @@ type Cand = { item: NewsItem; facts: string; score: number };
 
 function snippetOf(c: Cand) {
   // The facts the client shows and later sends back to the opener: the publisher's own description first.
-  const base = c.facts || c.item.snippet;
+  const seen = new Set<string>();
+  const base = (c.facts || c.item.snippet)
+    .split(/(?<=[.!?])\s+/)
+    .filter((x) => {
+      const k = x.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 60);
+      if (!k || seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    })
+    .join(" ");
   const cut = base.slice(0, 420);
   const end = cut.lastIndexOf(". ");
   return (end > 120 ? cut.slice(0, end + 1) : cut).trim();
@@ -206,27 +218,12 @@ async function gateBatch(batch: Cand[]): Promise<Map<number, Gate>> {
 
 // ---------------------------------------------------------------- run
 
-async function run(stats: CandidateStats): Promise<NewsCandidate[]> {
-  const live = stats.live;
-  let raw: NewsItem[];
-  if (live) {
-    // NEWS_EDITIONS=gb,au,za pins the editions (tests: identical searches within an hour are free on SerpApi).
-    const pinned = (process.env.NEWS_EDITIONS ?? "").split(",").map((x) => x.trim()).filter((x) => EDITIONS.includes(x));
-    const eds = pinned.length >= QUERIES.length ? pinned.slice(0, QUERIES.length) : shuffle(EDITIONS).slice(0, QUERIES.length);
-    stats.editions = eds;
-    const before = serpApiCalls.count;
-    const res = await Promise.all(
-      QUERIES.map((q, i) => fetchSerpApiParams(`story-${eds[i]}`, { engine: "google_news", q, gl: eds[i], hl: "en" })),
-    );
-    stats.serpCalls = serpApiCalls.count - before;
-    raw = res.flat();
-  } else {
-    raw = await fetchSerpApiFixture();
-    stats.editions = ["fixture"];
-  }
-  stats.fetched = raw.length;
-  const all = dedupe(raw);
-  stats.deduped = all.length;
+type Good = { c: Cand; g: Gate; s: Scores; avg: number };
+
+/** Regex block → rank → enrich → storyability gate, for one batch of fetched items. Pushes rejects to stats. */
+async function gatePhase(raw: NewsItem[], stats: CandidateStats, live: boolean, skip: Set<string>): Promise<Good[]> {
+  const all = dedupe(raw).filter((i) => !skip.has(normalizeTitle(i.title)));
+  stats.deduped += all.length;
 
   const now = Date.now();
   const ok: Cand[] = [];
@@ -247,7 +244,7 @@ async function run(stats: CandidateStats): Promise<NewsCandidate[]> {
     if (/news\.google\.com/.test(item.link)) score -= 3; // can't enrich, so the gate and the opener have less to go on
     ok.push({ item, facts: "", score });
   }
-  stats.regexOk = ok.length;
+  stats.regexOk += ok.length;
   if (!ok.length) return [];
 
   // Light shuffle inside the ranking so equal scores don't always pick the same stories.
@@ -278,12 +275,13 @@ async function run(stats: CandidateStats): Promise<NewsCandidate[]> {
   for (let i = 0; i < cands.length; i += BATCH) batches.push(cands.slice(i, i + BATCH));
   const results = await Promise.all(batches.map((b) => gateBatch(b).catch((e) => (console.warn(`[news] gate batch failed: ${(e as Error).message}`), new Map<number, Gate>()))));
 
-  const good: { c: Cand; g: Gate; s: Scores; avg: number }[] = [];
+  const good: Good[] = [];
+  let gated = 0;
   batches.forEach((b, bi) =>
     b.forEach((c, i) => {
       const g = results[bi].get(i);
       if (!g) return;
-      stats.gated++;
+      gated++;
       const s = scoresOf(g);
       const avg = avgOf(s);
       const min = Math.min(...SCORE_KEYS.map((k) => s[k]));
@@ -291,7 +289,46 @@ async function run(stats: CandidateStats): Promise<NewsCandidate[]> {
       else stats.rejected.push({ title: c.item.title, reason: g.usable ? `storyability ${avg} (min ${min})` : `unsafe: ${g.reason}`, avg, scores: s });
     }),
   );
-  if (!stats.gated) throw new Error("storyability gate failed");
+  stats.gated += gated;
+  if (!gated) throw new Error("storyability gate failed");
+  return good;
+}
+
+async function run(stats: CandidateStats): Promise<NewsCandidate[]> {
+  const live = stats.live;
+  const serp = async (q: string, ed: string, label: string) => {
+    const before = serpApiCalls.count;
+    const items = await fetchSerpApiParams(`${label}-${ed}`, { engine: "google_news", q, gl: ed, hl: "en" });
+    stats.serpCalls += serpApiCalls.count - before;
+    return items;
+  };
+  // NEWS_EDITIONS=gb,au,za pins the editions (tests only; note SerpApi still bills repeated searches).
+  const pinned = (process.env.NEWS_EDITIONS ?? "").split(",").map((x) => x.trim()).filter((x) => EDITIONS.includes(x));
+  const eds = pinned.length >= 3 ? pinned.slice(0, 3) : shuffle(EDITIONS).slice(0, 3);
+
+  let good: Good[] = [];
+  if (live) {
+    // Phase 1: the past week.
+    stats.editions = eds.slice(0, 2);
+    const week = (await Promise.all(WEEK_QUERIES.map((q, i) => serp(q, eds[i], "week")))).flat();
+    stats.fetched += week.length;
+    good = await gatePhase(week, stats, live, new Set());
+    stats.phase = "week";
+    // Phase 2: widen to the past month only if the week is thin (1 more call, 3 in total).
+    if (good.length < MIN_WEEK) {
+      stats.editions.push(eds[2]);
+      stats.phase = "week+month";
+      const month = await serp(MONTH_QUERY, eds[2], "month");
+      stats.fetched += month.length;
+      const seen = new Set(week.map((i) => normalizeTitle(i.title)));
+      good = [...good, ...(await gatePhase(month, stats, live, seen).catch(() => []))];
+    }
+  } else {
+    const raw = await fetchSerpApiFixture();
+    stats.editions = ["fixture"];
+    stats.fetched = raw.length;
+    good = await gatePhase(raw, stats, live, new Set());
+  }
   good.sort((a, b) => b.avg - a.avg || b.c.score - a.c.score);
 
   const out = good.slice(0, WANT).map(({ c, g, s, avg }) => ({
@@ -309,13 +346,14 @@ async function run(stats: CandidateStats): Promise<NewsCandidate[]> {
   }));
   stats.kept = out.map((x) => ({ title: x.headline, avg: x.storyability, scores: x.scores }));
   stats.picked = out.length;
+  if (live && out.length) addToLibrary(out); // the "old database of good stories"
   return out;
 }
 
 // ---------------------------------------------------------------- cache
 
 type Cache = { at: number; list: NewsCandidate[]; stats: CandidateStats } | null;
-const g = globalThis as unknown as { __storyPool?: NewsCandidate[]; __storyNews?: Cache; __storyNewsLast?: CandidateStats; __storyNewsInflight?: Promise<{ list: NewsCandidate[]; stats: CandidateStats }> };
+const g = globalThis as unknown as { __storyNews?: Cache; __storyNewsLast?: CandidateStats; __storyNewsInflight?: Promise<{ list: NewsCandidate[]; stats: CandidateStats }> };
 
 /** All candidates (every rating), sorted by storyability, memoized 4 h per server instance. Empty results are never cached. */
 export async function getNewsCandidates(opts: { fresh?: boolean } = {}): Promise<{ list: NewsCandidate[]; stats: CandidateStats }> {
@@ -351,14 +389,6 @@ export async function getNewsCandidates(opts: { fresh?: boolean } = {}): Promise
     stats.ms = Date.now() - t0;
     console.log(`[news] candidates: ${list.length} kept of ${stats.gated} gated, ${stats.serpCalls} serpapi calls, ${stats.ms}ms`);
     g.__storyNewsLast = stats;
-    // Rolling pool: merge with stories that passed the gate in earlier refreshes (same server instance).
-    if (stats.live) {
-      const seen = new Set(list.map((x) => x.id));
-      const fresh = (x: NewsCandidate) => !x.date || Date.now() - Date.parse(x.date) < POOL_MAX_AGE_MS;
-      const old = (g.__storyPool ?? []).filter((x) => !seen.has(x.id) && fresh(x));
-      list = [...list, ...old].sort((a, b) => b.storyability - a.storyability).slice(0, WANT);
-      g.__storyPool = list;
-    }
     if (list.length) g.__storyNews = { at: Date.now(), list, stats };
     return { list, stats };
   })().finally(() => {

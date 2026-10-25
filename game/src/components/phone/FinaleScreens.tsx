@@ -20,8 +20,11 @@ export function FinalePitchScreen({
   max,
   onPitch,
   onTyping,
+  voice = false,
   timer,
 }: {
+  /** show the small "hold to speak" under the box (typing stays the default) */
+  voice?: boolean;
   /** this player's pitch text if already in (state.pitches) */
   sent?: string;
   goal?: string;
@@ -61,7 +64,7 @@ export function FinalePitchScreen({
         <Say text="What’s the *final move?*" />
       </div>
       <Goal goal={goal} />
-      <PlanBox value={text} onChange={setText} max={max} onTyping={onTyping} placeholder={`e.g. ${ex}`} hint="Everyone writes one. The table backs the best." />
+      <PlanBox value={text} onChange={setText} max={max} onTyping={onTyping} placeholder={`e.g. ${ex}`} hint="Everyone writes one. The table backs the best." onVoice={voice ? setText : undefined} />
       <div className="pk-bottom">
         <GameButton type="submit" tone="amber" xl disabled={!text.trim()}>
           Lock it in
@@ -255,7 +258,7 @@ export function ShakeScreen({
     return (
       <div className="pk-choices pk-center" style={{ flex: 1, justifyContent: "center", gap: 18 }}>
         <PhoneShakeIcon />
-        <Say text="*Shake* your phone!" />
+        <Say text="*SHAKE* your phone!" />
         <button className="pk-arcade is-shake" data-tone="amber" onClick={() => roll.current()} aria-label="Shake: roll the die">
           <span className="pk-arcade-halo" />
           <span className="pk-arcade-ring" />
@@ -274,13 +277,13 @@ export function ShakeScreen({
         <div className="pk-countdown">
           <span key={beat}>{beat}</span>
         </div>
-        <Say text="Battle cry on *SHAKE!*" small />
+        <Say text="Get ready to *shake*. Battle cry on SHAKE!" small />
       </div>
     );
   return (
     <div className="pk-choices pk-center" style={{ flex: 1, justifyContent: "center", gap: 18 }}>
       <Kicker tone="amber">The final roll · one die, all of you</Kicker>
-      <Say text={armed ? "Armed. Wait for *SHAKE*" : "Arm your *die*"} small />
+      <Say text={armed ? "Armed. Wait for *SHAKE*" : "Tap *ARM*"} small />
       <button
         className="pk-arcade"
         data-tone={armed ? "lime" : undefined}

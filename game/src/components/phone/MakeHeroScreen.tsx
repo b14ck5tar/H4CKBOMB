@@ -10,13 +10,24 @@ import type { Hero } from "@/lib/types";
 import { GameButton, Kicker, PrivacyLine, Say, vibrate } from "./kit";
 import { HeroMini } from "./cards";
 
-const EXAMPLES = [
-  "a night-shift barista who can hear electricity",
-  "a raccoon who works security at the mall",
-  "a grandma who's been a ghost hunter since 1974",
-  "a substitute teacher who is secretly a cryptid",
-  "an influencer whose phone sees the future, badly",
+/** Placeholder heroes, one per table (picked by room code). People, not animals in uniform, and none of the ready-mades. */
+export const HERO_PLACEHOLDERS = [
+  "a substitute teacher who has never once been surprised",
+  "a wedding planner who can calm any storm, even real ones",
+  "a retired stunt double with very loud knees",
+  "a tow-truck driver who can talk any car into starting",
+  "a museum night guard who knows every painting's gossip",
+  "a grandpa who has won every pie contest since 1981",
+  "a karaoke host who can hit any note, mostly the wrong one",
+  "a lost-and-found clerk who remembers every lost thing",
 ];
+
+/** The same placeholder for everyone at one table, a different one at the next. */
+export function placeholderFor(seed = "") {
+  let h = 0;
+  for (const c of seed) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return HERO_PLACEHOLDERS[h % HERO_PLACEHOLDERS.length];
+}
 const CARD_COLORS = ["#ff2e7e", "#3de7ff", "#ffad3b", "#c6ff2e", "#b46bff", "#ff6b3d"];
 
 export type ReadyHero = { id: string; pitch: string; hero: Hero };
@@ -26,7 +37,10 @@ export function MakeHeroScreen({
   takenIds = [],
   onCreate,
   onPick,
+  seed,
 }: {
+  /** the room code: picks the placeholder hero line */
+  seed?: string;
   readyMade: ReadyHero[];
   /** ready-made ids other players already took */
   takenIds?: string[];
@@ -36,7 +50,7 @@ export function MakeHeroScreen({
   const [text, setText] = useState("");
   const [skill, setSkill] = useState("");
   const [chosen, setChosen] = useState("");
-  const [ex] = useState(() => EXAMPLES[Math.floor(Math.random() * EXAMPLES.length)]);
+  const ex = `e.g. ${placeholderFor(seed)}`;
   return (
     <>
       <Kicker>Before the story</Kicker>

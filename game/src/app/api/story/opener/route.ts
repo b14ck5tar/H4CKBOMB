@@ -13,7 +13,7 @@ import { makeOpener, type NewsSource, type PartyMember, type PersonalSource } fr
 // safe:false → opener and ending_facts are null, and `message` is a gentle line for the author.
 // Always answers within ~25 s; on any AI failure it returns a canned opener with fallback:true.
 
-export const maxDuration = 30;
+export const maxDuration = 180; // normal calls answer in ~25 s; only dev pre-generation runs longer
 
 const s = (x: unknown) => (typeof x === "string" ? x : "");
 
@@ -42,6 +42,8 @@ export async function POST(req: Request) {
     if (!source.setup && !source.title) return NextResponse.json({ error: "source.setup is required" }, { status: 400 });
   }
 
-  const result = await makeOpener({ mode, rating, party, source });
+  // pregen (dev only): no 25 s limit, high effort until clean; scripts/pregen-openers.mjs fills the story library.
+  const pregen = process.env.NODE_ENV !== "production" && b.pregen === true;
+  const result = await makeOpener({ mode, rating, party, source, pregen, patient: b.patient === true });
   return NextResponse.json(result);
 }

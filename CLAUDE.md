@@ -1,11 +1,12 @@
-# Once Upon a Roll: working rules
+# Group Project: working rules
 
-HackTX '26 project (UT Austin, Oct 24–25 2026, theme "Once Upon a Hack"). A Jackbox-style co-op fairytale D&D night:
-the laptop/TV is the table, phones are controllers, Meta's Muse is the Dungeon Master, and every quest is a filtered
-real news story with a "this tale was inspired by real events" reveal at the end.
+HackTX '26 project (UT Austin, Oct 24–25 2026). A Jackbox-style co-op party game in modern urban fantasy (spooky-funny,
+not fairytale): the laptop/TV is the table, phones are controllers, Meta's Muse is the Dungeon Master, and every story
+really happened, either filtered odd news or a player's own true story ("Our stories"), with a "Based on a true story"
+reveal at the end. Tagline: "the one group project where everyone actually shows up."
 
 The team is a creative director (first hackathon; makes every creative call) plus a partner. Claude writes the code.
-Read `SPEC.md` first (the source of truth), then `design/` for the details behind each decision.
+Read `GAME.md` first (all main ideas; SPEC.md is stale), then `design/` for the details behind each decision.
 
 ## Deadlines (Austin time)
 - Soft submission: Sat 11:30 PM on hacktx26.devpost.com. Final: Sun 11:30 AM. Feature freeze: Sun 10 AM.

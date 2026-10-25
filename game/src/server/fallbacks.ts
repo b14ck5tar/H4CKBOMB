@@ -18,7 +18,7 @@ export function fallbackHero(real: RealAnswers = { skill: "", fear: "" }): Hero 
     concept_note: heavy ? "The notes got a little smudged, so the DM filled in the gaps." : "",
     stats: { brave: 1, clever: 3, charming: -1 },
     ability: skill
-      ? { name: "Weirdly Good At It", text: `Bring your ${skill} to any problem, and it helps.` }
+      ? { name: "Secret Talent", text: `Bring your ${skill} to any problem, and it helps.` }
       : { name: "Pocket Full of Stuff", text: "Pull exactly the right odd object from a pocket." },
     // Comedy in the fiction only: the hero has bad luck with it. Nobody is asked to do anything for real.
     flaw: fear ? `Has the worst luck with ${fear}, at the worst moments.` : "Narrates their own actions out loud, badly.",
@@ -35,7 +35,7 @@ export function fallbackHero(real: RealAnswers = { skill: "", fear: "" }): Hero 
 
 type PartyHero = { id?: string; ability?: { name?: string; text?: string } };
 
-/** A clue that still comes from the hero's own edge when the AI is down. Mirrored in host.ts (fallbackClue). */
+/** A clue from the hero's own edge (scene task only, which nothing calls now). */
 export function fallbackClue(h: PartyHero, location = "this place") {
   const name = String(h.ability?.name ?? "").trim();
   const text = String(h.ability?.text ?? "").trim().replace(/[.!]+$/, "");
@@ -58,22 +58,6 @@ export function fallbackScene(heroIds: string[], plan: { location?: string; seed
     clues: heroIds.map((id) => fallbackClue(party.find((p) => p.id === id) ?? { id }, where)),
     suggestions: heroIds.map((id) => ({ hero_id: id, ideas: ["Go straight at it", "Look for another way in", "Ask whoever's in charge"] })),
     music: "eerie",
-  };
-}
-
-export function fallbackVerdict(pitchId: string, bestStat: Verdict["stat"]): Verdict & { pitch_id: string } {
-  return {
-    pitch_id: pitchId,
-    interpretation: "Tries something bold and slightly unclear.",
-    stat: bestStat,
-    tier: "solid",
-    ability_fits: false,
-    flaw_walk_in: false,
-    quip: pick(["Sure. Roll for it.", "The DM allows it.", "Fine. Dice, please."]),
-    on_success: "It works.",
-    on_failure: "It doesn't.",
-    moderation: "ok",
-    reason: "Backup ruling: the AI didn't answer, so every plan counts as Solid",
   };
 }
 
@@ -102,7 +86,7 @@ export function fallbackRound(actions: { hero_id: string; hero_name?: string; ba
 }
 
 export const FALLBACK_EPILOGUE = {
-  ending: "The die lands, and somehow the plan holds. Everyone goes home with a story nobody will believe.",
+  ending: "The final plan goes off, and somehow it holds. Everyone goes home with a story nobody will believe.",
   line: "Nobody will believe it, but it happened.",
   recap: "",
 };
@@ -112,14 +96,14 @@ export function fallbackRuling(bestStat: Verdict["stat"]) {
   return { interpretation: "", stat: bestStat, tier: "solid" as const, reason: "Backup ruling: the AI didn't answer, so the plan counts as Solid", moderation: "ok" as const };
 }
 
-/** Outcome backup. Never quotes the plan: it was never reviewed. */
+/** Outcome backup for the old "outcome" task (the game now uses "turn"). Never quotes the plan: it was never reviewed. */
 export function fallbackOutcome(name: string, band: Band) {
   const n = name || "The hero";
   const lines: Record<Band, string> = {
     CATASTROPHE: `${n} tries it, and it goes wrong fast. Nobody is hurt, but the problem is now a little bigger.`,
-    FAIL: `${n} gives it a real try, but it doesn't work this time. The problem is still right there.`,
-    YES_BUT: `${n}'s plan helps a little, but it costs something. The problem isn't solved yet.`,
-    SUCCESS: `${n}'s plan works, and the heroes get one step closer. The problem isn't solved yet.`,
+    FAIL: `${n} gives it a real try, and it backfires. Now the problem has a new twist.`,
+    YES_BUT: `${n}'s plan works, with one small catch.`,
+    SUCCESS: `${n}'s plan works, and the way forward opens up.`,
     LEGENDARY: `${n}'s plan works better than anyone hoped, and the heroes get a big step closer.`,
   };
   return { text: lines[band] ?? lines.YES_BUT, situation: "", why: "", now_goal: "" };
@@ -154,7 +138,7 @@ export function fallbackStorybook(title: string, heroes: { id: string; name: str
     pages: [
       { text: "It started like any other night, which is how these things always start.", image_ref: images[0] },
       { text: "They tried things. Some of those things worked. Others are now stories for the wrong reasons.", image_ref: images[1] ?? images[0] },
-      { text: "But when it mattered, they rolled together.", image_ref: images[images.length - 1] },
+      { text: "But when it mattered, they stuck together.", image_ref: images[images.length - 1] },
       { text: "The town was, against every reasonable expectation, a little better than before.", image_ref: images[images.length - 1] },
     ],
     hero_pages: heroes.map((h) => ({ hero_id: h.id, best_moment: `${h.name} showed up, which is half of anything.`, award: "Showed Up" })),

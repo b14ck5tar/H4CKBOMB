@@ -3,7 +3,7 @@
  * 2. In TV(): before the Mirror switch add  if (s.phase === "lobby") return (<><Lobby {...props} />{overlays}{toast…}<Reactions items={reactions} /></>);
  *    (no TopBar/Footer: the lobby is full-bleed and has its own mute button).
  * 3. props: code={s.code} players={s.players} mode={s.mode} source={s.source} rating={s.rating}
- *    portraitOf={(p) => (p.pick ? `/heroes/${p.pick}.webp` : host.thumbs[p.id] ?? host.portraits[p.id])}
+ *    portraitOf={(p) => (p.pick ? `/heroes/v2/${p.pick}.webp` : host.thumbs[p.id] ?? host.portraits[p.id])}
  *    readOnly={host.readOnly} onMode={(m) => host.setMode(m)} onSource={(x) => host.setSource(x)} onRating={(r) => host.setRating(r)}
  *    canStart={host.canBegin()} onStart={() => host.begin()} localMode={host.transportKind === "local"}
  *    onAddBot={showBots ? () => host.addBot() : undefined}   (keep the old ?bots URL check)
@@ -19,6 +19,8 @@ import { playSfx, unlockAudio, useMusic, useSoundPrefs } from "@/lib/sound";
 import { mask } from "@/lib/mask";
 import { shortName } from "@/lib/now";
 import "@/app/lobby.css";
+import "@/app/tv-theme.css";
+import { Particles } from "./tvskin/motion";
 
 export type StorySource = "news" | "ours";
 
@@ -59,9 +61,8 @@ export interface LobbyProps {
 const MAX_PLAYERS = 6;
 const SLIDE_MS = 9000;
 
-// Hero-in-scene paintings lead; quest scenes fill in between them.
-// (The two otter paintings are left out: their pink-haired girl reads as one of the ready-made heroes.)
-const HERO_ART = ["/lobby/boulder_114b3c8fbac1bd2a55054597.webp", "/lobby/boulder_b9447c85d4cd071251affdf2.webp"];
+// The CD's v2 lobby paintings lead; quest scenes fill in between them. (The old /lobby/*.webp art is out.)
+const HERO_ART = ["array", "boulder", "bridge", "dome", "otter", "pumpkin"].map((n) => `/lobby/v2/${n}.webp`);
 const QUEST_ART = ["rust-wyrm", "galactic-signal", "hanging-boulder", "returned-otter", "cornfield-dome", "billion-pearls", "idle-island", "littlest-gardener"].flatMap(
   (q) => [1, 2, 3].map((n) => `/quests/${q}/scene_${n}.webp`),
 );
@@ -179,6 +180,7 @@ function HeroCardTile({ p, i, portrait }: { p: Player; i: number; portrait?: str
   return (
     <div className="lb-slot" style={style}>
       <span className="lb-burst" aria-hidden />
+      <div className="lb-float">
       <div className={`lb-card ${flipped ? "is-back" : ""}`}>
         <div className="lb-face lb-front" aria-hidden={flipped}>
           <div className="lb-portrait">
@@ -214,6 +216,7 @@ function HeroCardTile({ p, i, portrait }: { p: Player; i: number; portrait?: str
           <D20Glyph className="lb-back-d20" label="?" />
           <span className="lb-back-txt">{p.status === "building" ? "Painting a hero" : "Picking a hero"}</span>
         </div>
+      </div>
       </div>
       <span className="lb-who">{shortName(mask(p.name), 12)}</span>
     </div>
@@ -361,7 +364,9 @@ export function Lobby(props: LobbyProps) {
           : source === "ours"
             ? "First, everyone writes one small true story."
             : mode === "quick"
-              ? "One turn each. About five minutes."
+              ? players.filter((p) => !p.id.startsWith("bot-")).length >= 5
+                ? "One turn each. About five minutes."
+                : "Two turns each, then the grand finale."
               : "You’ll vote on tonight’s story first.";
 
   const cards = useMemo(() => players.slice(0, MAX_PLAYERS), [players]);
@@ -380,6 +385,7 @@ export function Lobby(props: LobbyProps) {
         <div className="lb-beam lb-beam-b" />
         <div className="lb-scrim" />
         <div className="lb-candle" />
+        <Particles count={36} seed={7} className="lb-particles" />
         <div className="lb-halftone" />
         <div className="lb-grain" />
         <div className="lb-vignette" />

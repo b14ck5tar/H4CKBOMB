@@ -4,8 +4,10 @@
  * goal card, chunky buttons, plan box, reactions, d20/d6 glyphs). Pure props, no GameHost or transport import,
  * so every screen previews at /phone-preview. Styles: app/phone-theme.css (imported here, pk-* classes).
  */
+import { heroPortrait } from "@/lib/heroArt";
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { Player } from "@/lib/types";
+import { MicButton } from "../MicButton";
 import "@/app/phone-theme.css";
 
 export type Send = (t: string, d?: Record<string, unknown>) => void;
@@ -20,7 +22,7 @@ export function vibrate(p: number | number[]) {
 /** The picture for a player's hero: the ready-made card art, else the painted portrait (if any). */
 export function heroImg(p?: Player | null, portrait?: string) {
   if (!p) return undefined;
-  return p.pick ? `/heroes/${p.pick}.webp` : portrait || undefined;
+  return p.pick ? heroPortrait(p.pick) : portrait || undefined;
 }
 
 /** ms left until deadlineAt, re-rendering every 250 ms while it runs. */
@@ -131,8 +133,22 @@ export function PrivacyLine({ children }: { children?: React.ReactNode }) {
   return (
     <p className="pk-privacy">
       <LockIcon />
-      <span>{children ?? "Your words go to Meta’s Muse AI to run tonight’s game. Nothing is saved after."}</span>
+      <span>{children ?? "No accounts. Your words go to Meta’s Muse AI to run the game; the TV keeps the finished tale, and our server caches the art and audio."}</span>
     </p>
+  );
+}
+
+/** The picture the TV is showing right now, small, in a glowing frame (so the phone never goes dark). */
+export function SceneThumb({ art, live = "Live on the TV" }: { art?: string; live?: string }) {
+  if (!art) return <TvGlyph />;
+  return (
+    <div className="pk-thumb" aria-hidden>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img key={art} src={art} alt="" />
+      <span className="pk-thumb-live">
+        <i /> {live}
+      </span>
+    </div>
   );
 }
 
@@ -392,6 +408,8 @@ export function PlanBox({
   label,
   hint = "One action. The DM takes it literally.",
   autoFocus,
+  using,
+  onVoice,
 }: {
   value: string;
   onChange: (t: string) => void;
@@ -401,14 +419,31 @@ export function PlanBox({
   label?: React.ReactNode;
   hint?: string;
   autoFocus?: boolean;
+  /** a friend's idea riding along with what you type: shows "Using Kai's idea ✕" on the box */
+  using?: { name: string; color?: string; text: string; onClear: () => void };
+  /** optional voice input, kept small and below the box (typing is the default) */
+  onVoice?: (text: string) => void;
 }) {
   const last = useRef(0);
   const f = Math.min(1, value.length / max);
   return (
-    <label className="pk-field">
+    <div className="pk-field">
       {label && <span className="pk-label">{label}</span>}
+      {using && (
+        <span className="pk-using" style={{ ["--c" as string]: using.color ?? "#c6ff2e" } as React.CSSProperties}>
+          <span className="pk-using-check" aria-hidden>✓</span>
+          <span className="pk-using-body">
+            <b>Using {using.name}’s idea</b>
+            <span>{using.text}</span>
+          </span>
+          <button type="button" className="pk-using-x" onClick={using.onClear} aria-label={`Stop using ${using.name}’s idea`}>
+            ✕
+          </button>
+        </span>
+      )}
       <textarea
         className="pk-input"
+        aria-label={typeof label === "string" ? label : "Your plan"}
         value={value}
         maxLength={max}
         placeholder={placeholder}
@@ -430,19 +465,24 @@ export function PlanBox({
           {value.length}/{max}
         </span>
       </span>
-    </label>
+      {onVoice && (
+        <div className="pk-mic">
+          <MicButton onTranscript={(t) => onChange(t.slice(0, max))} />
+        </div>
+      )}
+    </div>
   );
 }
 
 // ---------- reactions ----------
 /** Six chunky emoji tokens; each tap squashes the token and floats the emoji up (throttled like the old bar). */
-export function ReactionBar({ reactions, onReact }: { reactions: readonly string[]; onReact: (emoji: string) => void }) {
+export function ReactionBar({ reactions, onReact, big = false }: { reactions: readonly string[]; onReact: (emoji: string) => void; big?: boolean }) {
   const last = useRef(0);
   const [flies, setFlies] = useState<{ id: number; e: string; i: number; dx: number; rot: number }[]>([]);
   return (
     <div className="pk-bottom">
       <span className="pk-reacts-cap">Tap to react on the TV</span>
-      <div className="pk-reacts">
+      <div className={`pk-reacts ${big ? "pk-reacts-big" : ""}`}>
         {reactions.map((e, i) => (
           <button
             key={e}

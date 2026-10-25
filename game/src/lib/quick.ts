@@ -1,5 +1,5 @@
 /**
- * Quick Tale: the ~3 minute judge demo. One scene from a real headline, everyone pitches, Convince the DM, roll,
+ * Quick Tale: the ~5 minute mode. A real headline, short turns (friends suggest, the player picks, roll),
  * then straight to the all-together Final Roll, a short ending slot, the reveal and the keepsake.
  * Shared by the host (timers) and the TV (choreography) so the two never drift apart.
  */

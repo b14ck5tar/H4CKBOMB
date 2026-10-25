@@ -1,8 +1,9 @@
 import "server-only";
 import { museJSON, type Effort } from "@/server/muse";
-import { RATING_GUIDE } from "@/lib/rating";
+import { RATING_GUIDE, questAllowed } from "@/lib/rating";
 import type { Rating } from "@/lib/types";
 import { fetchArticleFacts } from "@/server/news/sources";
+import { attachOpener, libraryStory } from "@/server/news/library";
 import { openerExamplesPrompt } from "@/server/story-examples";
 import { fkGrade, inventedNames, sanitize, styleProblems, wordCount } from "./readability";
 
@@ -51,12 +52,18 @@ export type OpenerResult = {
   safe: boolean;
   fallback: boolean;
   message?: string; // when safe is false: a gentle line for the author's phone
-  meta: { grade: number; attempts: number; ms: number; problems: string[]; facts_fetched?: boolean };
+  meta: { grade: number; attempts: number; ms: number; problems: string[]; facts_fetched?: boolean; cached?: boolean };
 };
 
 const DEADLINE_MS = 22_500; // + article fetch overhead and JSON stays under 25 s
+const PREGEN_DEADLINE_MS = 320_000; // pre-generation only (dev, scripts/pregen-openers.mjs)
 const MAX_GRADE = 6;
 const PREFER_HIGH_MS = 15_000; // use the high-effort draft if it lands by then, else the low-effort one
+// Quick Tale writes its opener while people join (no one waits): high effort runs 15-25 s tonight, so it gets until
+// 30 s, and the whole call until 40 s (one retry fits). Measured Sun ~8 AM: at the 15 s cut, 1 of 2 live drafts
+// shipped the minimal draft with 5 problems (incl. a giveaway word) while the high draft landed at ~20 s.
+const PATIENT_DEADLINE_MS = 40_000;
+const PATIENT_PREFER_HIGH_MS = 30_000;
 
 const clip = (s: unknown, n: number) => String(s ?? "").replace(/[<>]/g, "").replace(/\s+/g, " ").trim().slice(0, n);
 
@@ -72,8 +79,8 @@ const EXAMPLES = `EXAMPLES (NEWS). Each keeps the real place, people, situation,
    problem_line "A giant snake that eats metal ate the old bridge, and tonight she is nibbling the new railing."
    stakes_line "If the inspector finds bite marks at sunrise, the bridge fails and the town stays cut off."
    goal "Get the snake off the bridge before inspection"
-   situation "Orange barriers, a shiny railing with fresh bite marks, and a dark river that hums."
-   npc_line {"speaker": "Bridge inspector", "line": "Good morning! Is the bridge supposed to be humming?"}
+   situation "Orange barriers, a shiny railing with fresh bite marks, and a dark river full of bubbles."
+   npc_line {"speaker": "Bridge inspector", "line": "Good morning! Why does my railing have teeth marks?"}
    problem {"name": "The Hungry River Snake", "stakes": "the bridge fails and the town stays cut off", "pronoun": "she"}
    beats ["Find what is nibbling the railing", "Lead the snake away from the bridge", "Find her something else to eat", "Pass the sunrise inspection"]
 2. REAL: "Plastic pellets on a country's beaches likely came from a river spill in another country 390 miles away"
@@ -107,14 +114,21 @@ fantasy twist. At the reveal they say "wait, that really happened?"
 - ADD exactly ONE fantasy twist that secretly explains or drives the real event. Treat it as completely normal.
   The twist is the problem the group must solve.
 - HIDE only: proper nouns (people, towns, countries, organizations, brands), exact numbers and dates, and the
-  headline's PUNCHLINE: the one surprising fact the reveal delivers (for "A forgotten fossil reveals a fearsome
-  dinosaur with giant claws", keep the museum and the forgotten bone, hide that it is a new kind of dinosaur with
-  giant claws). Put the punchline's words in punchline_words (2 to 5 words) and never use them, or the GIVEAWAY
-  WORDS in the user message, outside official_line and whats_happening_now.
+  PUNCHLINE: how it really turned out, the one fact the reveal delivers (for "A forgotten fossil reveals a fearsome
+  dinosaur with giant claws", keep the museum and the forgotten bone, hide what the bone turned out to be). Put the
+  punchline's words in punchline_words (2 to 5 words) and never use them, or the GIVEAWAY WORDS in the user
+  message, outside official_line and whats_happening_now.
+- SAY WHAT IT IS AND WHERE (design/29 #4): name the real thing and place plainly (owls, a pumpkin festival, a
+  city roof, a zoo's baby animals). Hide ONLY how it turned out. Never coin kennings or riddle names ("pale fliers",
+  "soft white faces", "the loud street" are banned: say "owls", "the owls' faces", "the busy street"). Never give
+  the real ending away in the opener ("it won the fair" is banned; say "the weigh-in is tomorrow morning").
 - real_setting describes the REAL event (not the fantasy), spoiler-free with the same HIDE rules: place_type,
   roles (2 to 4 people or groups, by role), situation (one plain sentence), stakes (what was really at risk), and
   arc (3 or 4 short steps of what really happened, in order).
 - Every story needs its OWN twist that fits ITS real facts. Never reuse the examples' twists.
+- WORN-OUT MOTIFS (banned unless the real event is literally about them): sleep, sleepy, naps, snoring, yawning,
+  lullabies, humming, glowing, whispering, pale things. Too many stories became "the sleepy glowing thing". Pick
+  a twist with a different kind of energy (hungry, homesick, showing off, ticklish, stubborn, confused, a mix-up).
 - The twist must make plain sense on its own: anyone can picture it right away. Use whole, natural phrases.
   One strange thing, not a pile of riddles. Never add random extra characters.
 
@@ -285,8 +299,22 @@ function contentWords(s: string) {
 
 /** CD: "we don't need a villain, we need a problem." */
 const VILLAIN = /\b(defeat|destroy|fight|battle|villain|enemy|evil|monster|kill|banish|vanquish|trap the|capture the)\b/i;
+/** design/29 #6: the motifs that kept coming back. Each family is one regex so "sleepy" and "asleep" count as sleep. */
+const MOTIFS: [string, RegExp][] = [
+  ["sleep", /\b(sleep\w*|slept|asleep)\b/i],
+  ["snore", /\bsnor\w*/i],
+  ["nap", /\b(naps?|napping|napped)\b/i],
+  ["lullaby", /\blullab\w*/i],
+  ["hum", /\b(hums?|humm\w*)\b/i],
+  ["yawn", /\byawn\w*/i],
+  ["glow", /\bglow\w*/i],
+  ["whisper", /\bwhisper\w*/i],
+  ["pale", /\bpale\b/i],
+];
 const STAKES = /\b(if|unless|or|otherwise|will|won't|can't|cannot|never|forever|before|until|so)\b/i;
-const GOAL_VERBS = new Set("stop find bring keep help catch calm guide leave return clean fix save send stay sleep tonight before after first without".split(" "));
+const GOAL_VERBS = new Set(
+  "stop find bring keep help catch calm guide leave return clean fix save send stay sleep tonight before after first without close open carry lead move push pull lift wake tell show finish reach patch seal fill empty count give hide wash cool warm feed tidy sort pick climb cross drive ride follow free gather settle protect rescue".split(" "),
+);
 /** Talk about the source or about missing facts: never shown to players at the reveal. */
 const META = /\b(not (been )?(reported|said|stated|mentioned|known|clear|confirmed)|(has|have|was|were) not (been )?(reported|said|announced)|no (word|details|information)|unclear|unknown|the (text|article|source|snippet|report|story) (does|did|doesn't|didn't|says|said)|according to (the )?(text|article|report))\b/i;
 
@@ -297,7 +325,7 @@ function sigWords(s: string) {
   return new Set(s.toLowerCase().replace(/[^a-z0-9 ]/g, " ").split(/\s+/).filter((w) => w.length >= 3));
 }
 /** True when `text` has a sentence that is >= 80% made of one source sentence's words. */
-function copies(text: string, sourceSentences: string[]) {
+function copies(text: string, sourceSentences: string[], threshold = 0.8) {
   return splitSentences(text).some((t) => {
     const a = sigWords(t);
     if (a.size < 5) return false;
@@ -305,7 +333,7 @@ function copies(text: string, sourceSentences: string[]) {
       const b = sigWords(src);
       let n = 0;
       for (const w of a) if (b.has(w)) n++;
-      return n / a.size >= 0.8;
+      return n / a.size >= threshold;
     });
   });
 }
@@ -444,6 +472,11 @@ function problems(d: Draft, mode: "news" | "personal", sourceText: string, perso
     if (VILLAIN.test(`${d.problem_name} ${d.problem_line} ${d.goal} ${(Array.isArray(d.beats) ? d.beats : []).join(" ")}`)) list.push("this reads like a villain to defeat: make it a problem to solve (stuck, lost, broken, spreading)");
   }
   for (const p of styleProblems(all)) list.push(p);
+  // Worn-out motifs, unless the source itself is about them (a story about a sleep study may say "sleep").
+  // Only the headline and snippet count as "about it", not the whole article (a stray "humming" there doesn't).
+  const motifSource = sourceText.split("\nARTICLE:")[0];
+  const motifs = [...new Set(MOTIFS.filter(([, re]) => re.test(all) && !re.test(motifSource)).map(([name]) => name))];
+  if (motifs.length) list.push(`worn-out motif (${motifs.join(", ")}): pick a twist with a different kind of energy`);
   const coined = inventedNames(all, sourceText);
   if (coined.length) list.push(`invented names (${coined.join(", ")}): describe things in plain words instead`);
   if (/\byou(r|'re)?\b/i.test(`${d.narration} ${d.situation}`)) list.push(`do not say "you"`);
@@ -460,7 +493,8 @@ function problems(d: Draft, mode: "news" | "personal", sourceText: string, perso
     if (!d.official_line.trim()) list.push("official_line is required");
     for (const [k, v] of [["official_line", d.official_line], ["whats_happening_now", d.whats_happening_now]] as const) {
       if (META.test(v)) list.push(`${k} talks about the text or what is unknown: state only known facts, or leave whats_happening_now ""`);
-      if (copies(v, sourceSentences)) list.push(`${k} copies a sentence from the source: use your own plain words`);
+      // official_line restates a fact, so it may reuse more words (90%); whats_happening_now must add something (80%).
+      if (copies(v, sourceSentences, k === "official_line" ? 0.9 : 0.8)) list.push(`${k} copies a sentence from the source: use your own plain words`);
     }
   }
   if (mode === "personal" && personal) {
@@ -624,9 +658,15 @@ export async function makeOpener(input: {
   rating: Rating;
   party: PartyMember[];
   source: NewsSource | PersonalSource;
+  /** Dev pre-generation for the library: high effort only, no 25 s limit, up to 4 tries until a draft is clean. */
+  pregen?: boolean;
+  /** Written during the lobby (Quick Tale): nobody is waiting, so the high-effort draft gets time to land. */
+  patient?: boolean;
 }): Promise<OpenerResult> {
   const t0 = Date.now();
-  const left = () => DEADLINE_MS - (Date.now() - t0);
+  const deadline = input.pregen ? PREGEN_DEADLINE_MS : input.patient ? PATIENT_DEADLINE_MS : DEADLINE_MS;
+  const preferHigh = input.patient ? PATIENT_PREFER_HIGH_MS : PREFER_HIGH_MS;
+  const left = () => deadline - (Date.now() - t0);
   const { mode, rating, party } = input;
   const meta: OpenerResult["meta"] = { grade: 0, attempts: 0, ms: 0, problems: [] };
   const done = (r: Omit<OpenerResult, "meta">): OpenerResult => ({ ...r, meta: { ...meta, ms: Date.now() - t0 } });
@@ -641,6 +681,12 @@ export async function makeOpener(input: {
 
   if (mode === "news") {
     news = input.source as NewsSource;
+    const stored = libraryStory(news.headline);
+    // A clean stored opener suits any group its rating is allowed for (a kids opener is fine for adults).
+    if (!input.pregen && stored?.opener && stored.opener_rating && questAllowed(stored.opener_rating, rating)) {
+      meta.cached = true;
+      return done({ opener: stored.opener as Opener, ending_facts: (stored.ending_facts as EndingFacts) ?? newsFacts(news), safe: true, fallback: false });
+    }
     const n = news;
     let facts = "";
     if (/^https?:\/\//.test(n.url) && n.snippet.length < 700) {
@@ -681,7 +727,7 @@ ${RATING_GUIDE[rating]}`;
       user: userPrompt(mode, rating, party, body, authorHero, prev, giveaway, keyNouns),
       schema: OPENER_SCHEMA,
       effort,
-      maxTokens: effort === "high" ? 16000 : 8000, // reasoning tokens count against this
+      maxTokens: effort === "high" ? (input.pregen ? 24000 : 16000) : effort === "minimal" ? 4000 : 8000, // reasoning tokens count against this
       timeoutMs: Math.max(3_000, left() - 900),
     }).then((d) => {
       d.title = d.quest_title;
@@ -693,15 +739,26 @@ ${RATING_GUIDE[rating]}`;
   // 1) "high" effort (the contract) and a "low" backup start together. The disguise prompt makes high run 15-25 s
   //    and low 10-13 s, so waiting to start the backup meant both missed the 25 s limit. Prefer high if it
   //    answers by PREFER_HIGH_MS, otherwise take whichever answered.
+  //    A "minimal" call runs too, as the last safety net: when Muse is slow (Sun 1 AM: ~60 tokens/s, 4x slower than
+  //    Sat evening) high and low both miss the deadline, and minimal (little reasoning) still lands. Preference
+  //    is always high > low > minimal; minimal is used only when neither of the others has answered.
   let first: { d: Draft; effort: Effort } | null = null;
-  const high = call("high");
-  const low = call("low");
-  high.catch((e) => console.warn(`[opener] high failed: ${(e as Error).message}`));
-  low.catch((e) => console.warn(`[opener] low backup failed: ${(e as Error).message}`));
-  const wait = Math.max(0, PREFER_HIGH_MS - (Date.now() - t0));
-  const h = await Promise.race([high.catch(() => null), new Promise<"late">((r) => setTimeout(() => r("late"), wait))]);
-  if (h && h !== "late") first = h;
-  else first = await Promise.any([high, low]).catch(() => null);
+  if (!input.pregen) {
+    const high = call("high");
+    const low = call("low");
+    const min = call("minimal");
+    const got: Partial<Record<Effort, { d: Draft; effort: Effort }>> = {};
+    for (const [p, name] of [[high, "high"], [low, "low"], [min, "minimal"]] as const) {
+      p.then((r) => (got[name] = r)).catch((e) => console.warn(`[opener] ${name} failed: ${(e as Error).message}`));
+    }
+    const wait = Math.max(0, preferHigh - (Date.now() - t0));
+    const h = await Promise.race([high.catch(() => null), new Promise<"late">((r) => setTimeout(() => r("late"), wait))]);
+    if (h && h !== "late") first = h;
+    else {
+      const any = await Promise.any([high, low, min]).catch(() => null);
+      first = got.high ?? got.low ?? any;
+    }
+  }
 
   // Hero names that the source itself never mentions: they must never appear in anything we write.
   const rawSource = news ? `${news.headline} ${news.snippet} ${body}` : personal ? `${personal.title} ${personal.setup} ${[personal.steps].flat().join(" ")} ${personal.real_ending}` : "";
@@ -718,7 +775,24 @@ ${RATING_GUIDE[rating]}`;
     return list;
   };
 
-  if (first) {
+  if (input.pregen) {
+    // Pre-generation: high effort, one call at a time, each retry sees the last draft's problems.
+    let prev: { draft: Draft; problems: string[] } | undefined;
+    for (let i = 0; i < 4 && left() > 45_000; i++) {
+      try {
+        const r = await call("high", prev);
+        if (!r.d.safe) {
+          console.log(`[opener] unsafe: ${clip(r.d.unsafe_message, 200)}`);
+          return done({ opener: null, ending_facts: null, safe: false, fallback: false, message: GENTLE });
+        }
+        const probs = judge(r.d, `pregen ${i + 1} (high)`);
+        if (!probs.length) break;
+        prev = { draft: r.d, problems: probs };
+      } catch (e) {
+        console.warn(`[opener] pregen ${i + 1} failed: ${(e as Error).message}`);
+      }
+    }
+  } else if (first) {
     if (!first.d.safe) {
       console.log(`[opener] unsafe: ${clip(first.d.unsafe_message, 200)}`);
       return done({ opener: null, ending_facts: null, safe: false, fallback: false, message: GENTLE }); // one reviewed line, never improvised
@@ -742,7 +816,11 @@ ${RATING_GUIDE[rating]}`;
       mode === "news"
         ? newsFacts(news!, best.d)
         : { kind: "personal", author_id: clip(personal!.author_id, 80), real_ending: sanitize(best.d.real_ending) || clip(personal!.real_ending, 600) };
-    return done({ opener: scrubNames(finish(best.d), partyNames), ending_facts: scrubNames(ending, partyNames), safe: true, fallback: false });
+    const opener = scrubNames(finish(best.d), partyNames);
+    const facts = scrubNames(ending, partyNames);
+    // Party-independent parts only would be ideal; the opener never names heroes, so it is safe to keep as is.
+    if (news && !best.probs.length) attachOpener(news.headline, opener, facts, rating); // only clean drafts are reused
+    return done({ opener, ending_facts: facts, safe: true, fallback: false });
   }
 
   // Canned fallback: the table never waits on a failed AI call.

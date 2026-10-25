@@ -26,6 +26,8 @@ export default function TVPage() {
       if (party) h.setPartyName(party);
       // /tv?mode=quick opens straight into the 3-minute judge demo.
       if (qs.get("mode") === "quick") h.setMode("quick");
+      // /tv?judge=1: the judge-safe table, Quick Tale always plays a saved story (no waiting on a live one).
+      if (qs.get("judge") === "1") h.judge = true;
       if (quest) h.chooseQuest(quest);
     } catch {}
     // Dev only: lets the playtest scripts read the table's phase and timings.

@@ -6,6 +6,7 @@
 import { Fragment, useEffect, useRef, useState } from "react";
 import type { Tier } from "@/lib/types";
 import "@/app/tv-theme.css";
+import { Particles } from "./motion";
 
 export type Css = React.CSSProperties & Record<`--${string}`, string | number>;
 
@@ -18,8 +19,12 @@ export function TvStage({ children, interactive = false, className = "" }: { chi
   );
 }
 
-/** The painted scene behind everything: slow Ken Burns, crossfade on change, club grade, grain. (Optional: QuickTV has its own.) */
-export function SceneArt({ src, dim = 0.35 }: { src?: string; dim?: number }) {
+/**
+ * The painted scene behind everything: a 2-layer parallax (the far layer drifts slowly; a near copy of the bottom of the
+ * painting drifts faster), crossfade on change, club grade, grain, floating dust and sparks. (QuickTV has its own
+ * Backdrop; this one is optional, or use <Particles/> on its own over QuickTV's.)
+ */
+export function SceneArt({ src, dim = 0.35, particles = true }: { src?: string; dim?: number; particles?: boolean }) {
   const [layers, setLayers] = useState<{ src: string; k: number }[]>([]);
   const seq = useRef(0);
   useEffect(() => {
@@ -34,12 +39,17 @@ export function SceneArt({ src, dim = 0.35 }: { src?: string; dim?: number }) {
   }, [src]);
   return (
     <div className="tvx tvx-art" aria-hidden>
-      {layers.map((l, i) => (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img key={l.k} src={l.src} alt="" className="tvx-art-img" style={{ ["--kb" as string]: i % 2 ? "tvx-kb-b" : "tvx-kb-a" }} />
+      {layers.map((l) => (
+        <div key={l.k} className="tvx-art-set" style={{ ["--kb" as string]: l.k % 2 ? "tvx-kb-b" : "tvx-kb-a" }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={l.src} alt="" className="tvx-art-img" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={l.src} alt="" className="tvx-art-near" />
+        </div>
       ))}
       <div className="tvx-art-grade" style={{ opacity: dim } as Css} />
       <div className="tvx-art-vig" />
+      {particles && <Particles />}
       <div className="tvx-grain" />
     </div>
   );
@@ -49,8 +59,8 @@ export function SceneArt({ src, dim = 0.35 }: { src?: string; dim?: number }) {
 export const TIER_LOOK: Record<Tier, { color: string; word: string }> = {
   clever: { color: "#2cf5c0", word: "Clever plan" },
   solid: { color: "#f7f3ff", word: "Solid plan" },
-  risky: { color: "#ffad3b", word: "Risky plan" },
-  wild: { color: "#ff2e7e", word: "Wild plan" },
+  risky: { color: "#ffad3b", word: "Bold plan" },
+  wild: { color: "#ff2e7e", word: "Long shot" },
   miracle: { color: "#b46bff", word: "Only a miracle" },
 };
 

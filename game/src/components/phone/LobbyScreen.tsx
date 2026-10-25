@@ -33,7 +33,7 @@ export function LobbyScreen({
         <div className="pk-goal" style={{ boxShadow: "inset 4px 0 0 #3de7ff, 0 10px 24px rgba(0,0,0,.45)" }}>
           <span className="pk-goal-top" style={{ color: "#3de7ff" }}>
             At the table
-            <span className="pk-voters" style={{ position: "static", marginLeft: "auto" }}>
+            <span className="pk-table-dots">
               {players.map((p) => (
                 <i key={p.id} style={{ ["--vc" as string]: p.color } as React.CSSProperties} title={p.name} />
               ))}

@@ -24,9 +24,9 @@ export const FEATURES = {
   liveNews: true,
   /** AI-written scene openers. Off = the hand-written scenes in seed_quests.json. */
   aiScenes: false,
-  /** The narrator reads the story aloud (Gemini TTS, /api/tts). Off or failing = text only. */
+  /** The narrator reads the story aloud (OpenAI TTS, Gemini as backup; server/tts.ts, /api/tts). Off or failing = text only. */
   voice: true,
-  /** One AI-picked painting style per story (lib/artStyles.ts). Off = always Neon Uncanny. */
+  /** One AI-picked painting style per story (lib/artStyles.ts). Off = always the Neon Ink house style. */
   artStyles: true,
   /** Paint the party's heroes into each scene (server/art, muse-image edits, ~$0.01 each, cached). */
   heroArt: true,

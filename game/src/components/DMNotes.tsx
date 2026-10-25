@@ -11,7 +11,7 @@ export const FILTER_NOTE = "Every story passes a tragedy filter first: no deaths
 
 const RULES: { icon: string; text: string }[] = [
   { icon: "🎲", text: "Dice are real random numbers from code. The AI never picks a number." },
-  { icon: "🧠", text: "Muse Spark judges each plan literally and writes what happens. Needs N+, bonuses and totals are plain math." },
+  { icon: "🧠", text: "Muse Spark judges each plan and writes what happens. The dice, bonuses and totals are plain math in code." },
   { icon: "🎨", text: "Muse Image paints the heroes into each decision. The narrator is voiced by OpenAI TTS (Meta has no voice model)." },
   { icon: "🚫", text: "No real people or brands in the story. Real places only in the broadest sense." },
   { icon: "🛡️", text: "Tragedies are filtered out. Only strange-but-harmless news becomes a story." },
@@ -240,6 +240,7 @@ export function DMNotesPanel({ s, open, onClose }: { s: GameState; open: boolean
         </button>
       </header>
       <div className="flex-1 min-h-0 overflow-y-auto px-6 py-5 text-lg">{open && <DMNotesBody s={s} showQR />}</div>
+      <footer className="px-6 py-2 font-ui text-xs text-parchment/50">Build {process.env.NEXT_PUBLIC_BUILD || "dev"}</footer>
     </aside>
   );
 }

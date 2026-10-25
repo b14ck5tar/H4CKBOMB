@@ -69,6 +69,8 @@ export interface Pitch {
   embraceFlaw: boolean;
   verdict?: Verdict;
   creditId?: string; // the friend whose suggestion the turn owner used (+1, credit shown)
+  own?: string; // the owner's own words (phone sends both parts)
+  idea?: string; // the friend's idea they picked
   auto?: boolean; // filled in for a player who ran out of time
   autopilot?: boolean; // filled in because the player was away (TV shows "on autopilot")
 }
@@ -321,8 +323,10 @@ export interface GameState {
   nowGoal: string; // "Right now:" the objective the players' own choices set (written after each outcome)
   ladder: string[]; // the story ladder: 2-4 planned steps, the last one is the goal (the finale). [] = no ladder
   step: number; // the step the table is on (0-based)
-  fling: { power: number; angle: number } | null;
-  danger: number; // the team's danger meter, 0..3: worse branches raise it, better ones lower it; full = a harder finale // how the die was thrown (flight only; the number is decided in code)
+  fling: { power: number; angle: number } | null; // how the die was thrown (flight only; the number is decided in code)
+  sceneArt: string; // the current painting's URL (phones show it as a live thumbnail); "" if it's a data URL
+  progress: number; // 0-100 toward the finish line (procedural stories, design/35); 3 act dots on the TV
+  act?: number; // 1-3, the story's act (the act clock or a solved step can move it ahead of progress)
   narration: string;
   situation: string;
   banner: string;
@@ -380,4 +384,26 @@ export interface GameState {
   solvedBy: string; // reveal line: "Solved by Ava's parallel parking and Ben's coffee." ("" until the reveal, or if nobody shared a skill)
   notes: DMNotes;
   busy: string;
+}
+
+/**
+ * The procedural story's state (design/35), held by the host and shown to the AI on every call. The AI proposes
+ * changes (progress_delta, new_fact, where, open_thread); code validates and applies them so the story can't wander.
+ */
+export interface StoryState {
+  where: string;
+  problem: string;
+  stakes: string;
+  finish_line: string; // "what solved looks like", on screen all game
+  progress: number; // 0-100
+  cast: { name: string; role: string }[]; // at most 3 named side characters
+  facts: string[]; // at most 8 short facts that are true in this story
+  open_thread: string; // at most one
+  last_moments: string[]; // the last 3 outcome lines
+  memorable: string[]; // 2 player lines worth calling back
+  pronouns: Record<string, string>; // hero name -> pronouns
+  creature_pronoun?: string; // if the problem is a creature
+  hook: string; // the opener's fantasy twist: it must come back in act 2 and in the finale
+  achieved: string[]; // what the table has already done (never undone)
+  last_prop?: string;
 }

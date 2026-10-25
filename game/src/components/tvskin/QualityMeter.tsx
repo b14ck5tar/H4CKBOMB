@@ -1,8 +1,9 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { gradeRoll, type Grade, type GradeResult } from "@/lib/grade";
 import { playSfx } from "@/lib/sound";
 import { D20Glyph, fmtSigned, type Css } from "./shared";
+import { flashScreen, shakeStage } from "./motion";
 
 export interface QualityMeterProps {
   /** Final total (d20 + stat + bonuses + tier shift). 20+ pins to the end. */
@@ -32,6 +33,8 @@ const ZONES: { grade: Grade; from: number; to: number; word: string; color: stri
 ];
 const zoneOf = (n: number) => ZONES.find((z) => n >= z.from && n <= z.to) ?? ZONES[ZONES.length - 1];
 const FILL_S = 1.3;
+/** When segment i (0-based) lights, as a fraction of the fill: matches the marker's ease-out travel (quadratic). */
+const litAt = (i: number, shown: number) => 1 - Math.sqrt(Math.max(0, 1 - (i + 1) / Math.max(1, shown)));
 
 /** A 1-20 track that fills to the roll total, then slams the grade: "14 · IT WORKS". Nat 1 cracks, nat 20 bursts. */
 export function QualityMeter({ total, natural, parts, result, grade, label, delay = 0.2, sound = true }: QualityMeterProps) {
@@ -41,14 +44,26 @@ export function QualityMeter({ total, natural, parts, result, grade, label, dela
   const zone = ZONES.find((z) => z.grade === g.grade) ?? zoneOf(shown);
   const nat = natural === 20 ? 20 : natural === 1 ? 1 : 0;
   const word = (label ?? g.label).toUpperCase();
+  const ref = useRef<HTMLElement>(null);
   useEffect(() => {
-    if (!sound) return;
-    const t = setTimeout(
-      () => playSfx(nat === 20 ? "nat20" : nat === 1 ? "nat1" : g.branch === "worse" ? "fail" : g.branch === "mixed" ? "partial" : "success"),
-      (delay + FILL_S) * 1000,
+    const ts: ReturnType<typeof setTimeout>[] = [];
+    // a tick per segment as the track fills (rising pitch), then the verdict hit
+    if (sound)
+      for (let i = 0; i < shown; i++)
+        ts.push(setTimeout(() => playSfx("tap", { volume: 0.32, pitch: Math.min(14, i * 0.7) }), (delay + litAt(i, shown) * FILL_S) * 1000));
+    ts.push(
+      setTimeout(() => {
+        if (sound) playSfx(nat === 20 ? "nat20" : nat === 1 ? "nat1" : g.branch === "worse" ? "fail" : g.branch === "mixed" ? "partial" : "success");
+        if (nat === 1) {
+          shakeStage(ref.current, 1.4);
+          flashScreen(ref.current, "rgba(255,40,60,0.55)", 600);
+        } else if (nat === 20) {
+          flashScreen(ref.current, "rgba(255,214,80,0.75)", 700);
+        } else if (g.branch === "worse") shakeStage(ref.current, 0.5);
+      }, (delay + FILL_S + 0.05) * 1000),
     );
-    return () => clearTimeout(t);
-  }, [g.total, g.branch, nat, delay, sound]);
+    return () => ts.forEach(clearTimeout);
+  }, [g.total, g.branch, nat, delay, sound, shown]);
   const style: Css = {
     "--zc": zone.color,
     "--x": `${((shown - 0.5) / 20) * 100}%`,
@@ -57,7 +72,7 @@ export function QualityMeter({ total, natural, parts, result, grade, label, dela
     "--fs": `${FILL_S}s`,
   };
   return (
-    <section className={`tvx-meter ${nat === 20 ? "is-nat20" : nat === 1 ? "is-nat1" : ""}`} style={style} aria-label={`${g.total}: ${word}`}>
+    <section ref={ref} className={`tvx-meter ${nat === 20 ? "is-nat20" : nat === 1 ? "is-nat1" : ""}`} style={style} aria-label={`${g.total}: ${word}`}>
       <div className="tvx-meter-readout">
         {nat ? <span className="tvx-meter-nat">Natural {nat}!</span> : null}
         <span className="tvx-meter-num">{g.total}</span>
@@ -70,7 +85,7 @@ export function QualityMeter({ total, natural, parts, result, grade, label, dela
             const n = i + 1;
             const z = zoneOf(n);
             const on = n <= shown;
-            const cs: Css = { "--cc": z.color, "--ci": i, "--cd": `calc(${delay}s + ${(i / Math.max(1, shown)) * FILL_S}s)` };
+            const cs: Css = { "--cc": z.color, "--ci": i, "--cd": `${(delay + litAt(i, shown) * FILL_S * 0.82).toFixed(3)}s` };
             return (
               <span key={n} className={`tvx-cell ${on ? "on" : ""} ${z.from === n && n > 1 ? "edge" : ""}`} style={cs}>
                 {(n === 1 || n === 5 || n === 10 || n === 15 || n === 20) && <i>{n}</i>}
@@ -100,6 +115,13 @@ export function QualityMeter({ total, natural, parts, result, grade, label, dela
         </p>
       )}
       {nat === 20 && <span className="tvx-meter-burst" aria-hidden />}
+      {nat === 20 && (
+        <span className="tvx-confetti" aria-hidden>
+          {Array.from({ length: 22 }, (_, k) => (
+            <i key={k} style={{ ["--a" as string]: `${(k * 360) / 22 + (k % 3) * 7}deg`, ["--r" as string]: 10 + (k % 5) * 3.5, ["--cc" as string]: ["#ffd23f", "#ff2e7e", "#3de7ff", "#c6ff2e"][k % 4] } as Css} />
+          ))}
+        </span>
+      )}
     </section>
   );
 }

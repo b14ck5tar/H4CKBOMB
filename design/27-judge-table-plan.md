@@ -1,13 +1,15 @@
 # 27. Judge table run-of-show (Sun Oct 25, judging 2 to 5 PM, WEL)
 
-Goal: every judge plays one real turn on their own phone, sees a friend's idea win "+1", throws the die, and leaves
-on the "Based on a true story" reveal, inside ~4 minutes. Judges are free to leave mid-game; the table should make
-them want to come back.
+Updated Sun ~4:30 AM (laptop clock, CDT) for judge mode and the current code. The spoken lines, timing table and FAQ live in PITCH_KIT.md
+(section 3); the pocket version is `pitch/CHEAT_SHEET.md`. This doc is the setup and logistics.
 
-Sources: DECISIONS.md (judge demo, Sun ~12:30 AM and ~1 AM calls), design/13 (judge demo), design/22 (the Meta
-rep's lenses: the flow works, the AI feels magical, how we built it with AI), PITCH_CARD.md (lines and Q&A).
+Goal: every judge plays a real turn on their own phone, sees a friend's idea win "+1", throws the die, plays the
+shake-together finale and leaves on the "Based on a true story" reveal. Judge mode (`/tv?judge=1`): 1 turn each, at
+most 3 turns, then the finale everyone plays, on a saved, tested true story. About 5 min from Start.
 
-CD = creative director (host, talks to judges). ENG = engineer/partner (laptop, hotkeys, fixes, Q&A on the build).
+**People:** the CD is at work 11 AM to ~4:30 PM and back ~4:45 (DECISIONS Sun ~1 AM). **The partner runs the table
+alone from 2:00 to ~4:45.** HOST = whoever talks to the judges. DRIVER = the second person, if there is one (laptop,
+hotkeys, tech questions). Solo, the HOST does both: everything below works with one person.
 
 ---
 
@@ -15,125 +17,103 @@ CD = creative director (host, talks to judges). ENG = engineer/partner (laptop, 
 
 ### Hardware checklist
 - [ ] **Laptop as the TV**, lid facing the judges, charger plugged in, power saving and sleep **off**.
-- [ ] **External screen if one is free** (a monitor or TV at WEL, or ask an organizer). HDMI/USB-C adapter in the
-      bag. Mirror is fine; extend is better (TV on the big screen, laptop keeps DM's Notes or the deck).
-- [ ] **QR stand:** a printed card beside the screen with a QR for **groupproject-game.vercel.app/play** and the
-      line "Scan the TV, or open this and type the 4 letters on screen". The room code changes every game, so the
-      lobby's own QR (it carries the code) stays the fast path; the card is for judges at the back and for later.
-- [ ] **Sound on:** laptop volume ~70%, or a small Bluetooth speaker. The narrator and the dice are half the magic.
-      Test it in the room; WEL is loud during judging.
-- [ ] **Phone hotspot ready** on ENG's phone (name and password known, battery > 70%, charging from a power bank).
-- [ ] **Chargers:** laptop charger, a power bank, 2 cables for phones.
-- [ ] **Two spare phones** (team phones) already on `/play`, for judges who don't want to scan or have a dead phone.
-- [ ] **Backup video** (the Meta video MP4) downloaded on the laptop and on a phone.
-- [ ] Laptop: Do Not Disturb, notifications off, other tabs closed, bookmarks bar hidden.
+- [ ] **External screen if one is free** (ask an organizer). HDMI/USB-C adapter in the bag.
+- [ ] **QR card:** a printed card beside the screen with a QR for **groupproject-game.vercel.app/play** and the
+      line "Scan the TV, or open this and type the 4 letters on screen". The lobby's own QR carries the room code and
+      stays the fast path.
+- [ ] **Sound on:** laptop volume ~70%, or a small Bluetooth speaker. WEL is loud during judging.
+- [ ] **Phone hotspot ready** (name and password known, battery > 70%, on a power bank).
+- [ ] **Chargers:** laptop charger, a power bank, 2 phone cables.
+- [ ] **Two spare phones** already on `/play`, for judges who don't want to scan or have a dead phone.
+- [ ] **Backup video** (the Meta video MP4) on the laptop and on a phone.
+- [ ] Laptop: Do Not Disturb, Discord/Slack/email closed, other tabs closed, bookmarks bar hidden, no `.env` file or
+      key page open anywhere.
 
-### Browser tabs (in this order, all on the deployed site)
-1. **TV:** `https://groupproject-game.vercel.app/tv?bots=1`, full screen (F11). Lobby set to **Quick Tale**,
-   **Odd news**, **Teens** (Adults only if the judges ask for it).
-2. **Deck:** `https://groupproject-game.vercel.app/pitch/deck.html` (slide 8, the QR, is the backdrop between groups).
+### Browser tabs (all on the deployed site)
+1. **TV:** `https://groupproject-game.vercel.app/tv?judge=1&bots=1`, full screen (F11). Lobby: **Quick**, **Odd
+   news**, **Teens** (Adults only if judges ask).
+2. **Deck:** `https://groupproject-game.vercel.app/pitch/deck.html` (the reveal slide and the QR slide, for a judge in
+   a hurry).
 3. **Backup:** the video file, ready to play.
 
 ### Ten minutes before the first judge
-- [ ] Play one full warm-up Quick Tale (2 of us + 1 bot). It wakes Muse, caches the news and checks the narrator.
-- [ ] Check: the narrator speaks, paintings change per decision, swipe-to-throw works on both team phones, the
-      reveal shows the real article.
-- [ ] Reset (section 6), then leave the lobby on the **attract screen** (press **A**, or wait 20 s with nobody
-      joined). It loops hero-in-scene art and one pitch line, so passing judges see something moving.
+- [ ] Play one full warm-up game (you + a team phone + 1 bot). It wakes Muse and checks the narrator.
+- [ ] Check: the narrator speaks, paintings change per decision, swipe-to-throw works, **the turn cap holds** (with 3
+      players: 3 turns, then the finale), the reveal shows "Based on a true story" and the real article.
+- [ ] Reset (section 5) and leave the lobby up. With nobody joined it is its own attract screen (big QR + pitch line).
 
-### Hotkeys (TV laptop; ENG only, never in front of the judge's hands)
+### Hotkeys (`Presenter.tsx`)
 | Key | Does |
 |---|---|
-| A | Attract screen on/off |
-| B | Add a test player (lobby only; up to 3 bots: Riley, Sam, Jo) |
-| Q | Quick Tale + begin (picks the demo story if none is chosen) |
+| B | Add a test player (lobby only, needs `?bots=1`; up to 3: Riley, Sam, Jo) |
+| Q | Quick Tale + begin |
 | Space | Continue on a reading screen |
-| S | Skip the current timer |
+| S | Skip the current timer (only once everyone has sent) |
 | N | DM's Notes: every AI call, live |
-| H | Help overlay |
-| Esc | Close notes, help, attract |
+| H | Hotkey help |
+| Esc | Close notes and help |
 
 ---
 
 ## 2. Bots for empty seats
 
-- The game needs 2+ players. **One judge alone:** ENG joins as a human from a team phone (so the judge's friend
-  suggestion comes from a real person), and press **B** once for a third hero.
-- **Two judges:** press **B** once (3 heroes) so there are always two suggestions per turn. Keep it to at most 4
-  heroes total in Quick Tale, or the 4 minutes run over.
-- **Three or more judges:** no bots.
-- Say it plainly: "Riley is a test player the TV runs, so you have someone to help you." Never pass a bot off as a
-  person.
+- The game needs 2+ players. Bots never own a turn while a human plays; they only suggest ideas.
+- **One judge alone:** the HOST joins as a player from a team phone (so the judge's suggestion comes from a real
+  person; 2 turns: the judge's and the HOST's), and press **B** once.
+- **Two judges:** press **B** once, so each turn gets two suggestions.
+- **Three or more judges:** no bots. With 4+, turns stop at 3; the 4th judge opens the finale ("you're the closer").
+- Say it plainly: "Riley is a test player the TV runs." Never pass a bot off as a person.
 
 ---
 
-## 3. Who says what
+## 3. The flow
 
-- **CD talks to the judges.** The opener, coaching each turn, the reveal, the scorecard close. CD faces the judges,
-  not the screen.
-- **ENG is silent until needed.** Starts the game, presses Space/S if a screen lingers, watches DM's Notes on the
-  second screen, answers build questions (models, cost, privacy, how we used AI). ENG takes over the talk if a judge
-  asks something technical mid-game, so CD keeps the table playing.
-- **Rule for both:** hand them the QR first, talk second. Never type for a judge. When the judges are arguing about
-  an idea, stop talking.
+See PITCH_KIT.md section 3 for the second-by-second lines. Shape, with 3 judges:
 
----
+| Clock | Beat |
+|---|---|
+| 0:00 | QR card first, 30-second pitch while they scan; heroes with "What's your secret talent?" |
+| 0:50 | Start. Opener: painting + narrator. |
+| 1:15 | Turn 1 (45 s to suggest and pick; ends early once everyone has sent). Coach the friend's idea. Swipe to throw. |
+| 2:15-3:45 | Turns 2 and 3. Only say whose turn it is. |
+| 3:50 | Finale: everyone writes, backs one plan (not their own), everyone shakes. |
+| 5:15 | "Because of you", then the reveal: the real headline, "Solved by" with their secret talents, the keepsake QR. |
+| 5:40 | The close, then questions. |
 
-## 4. The 4-minute flow (Quick Tale)
+With 2 judges (or 1 judge + the HOST), the reveal lands about 45 s earlier. Say the length up front: "It's a whole
+game in five minutes. The best part is the last 30 seconds."
 
-| Clock | Who | Do / say |
-|---|---|---|
-| 0:00 | CD | **Opener (connection first):** "Quick question: last time you hung out with friends, how much of it was everyone on their phone? *(beat)* This is Group Project, the one group project where everyone actually shows up. The TV is the table, your phone's the controller, and Meta's Muse is the Dungeon Master. Scan this, you're in." Point at the QR. |
-| 0:20 | Judges | Scan, type a hero in one line, answer "What are you weirdly good at?" CD: "No app, no account. Muse is painting you as a cartoon right now." If someone stalls past 20 s: "Tap a ready-made hero, they're instant." |
-| 0:45 | ENG | Adds a bot if needed (section 2), presses Start. CD: "Each story hides something that really happened this week. You'll find out what at the end." |
-| 1:00 | CD | Opening painting + narrator. CD, quietly over it: "Muse wrote this, picked that narrator for the mood, and painted all of you into the scene." Then stop talking. |
-| 1:15 | CD | **First turn (the connection beat).** "It's [Judge A]'s turn. Everyone else: send them an idea on your phone. [A], pick one. If you use a friend's idea you get plus one and their name goes up there." **Coach the pick:** "Which one made you laugh?" Then stop talking and let them argue. |
-| 1:50 | CD | **Swipe.** "Swipe up on your phone to throw." The die flies onto the TV. As the meter fills: "Every number is its own outcome, disaster to legendary. The dice come from code, never the AI." |
-| 2:00 | CD | **New painting.** Point at the crossfade: "Every decision gets a new painting with you in it." On a low roll: "A bad roll never stops the story, it makes it worse. That's the fun part." |
-| 2:00 to 3:00 | Judges | Remaining turns (30 s timers; the turn ends early once everyone has sent). CD only names whose turn it is. |
-| 3:00 | CD | **Finale:** "Last move. Everyone back one plan, not your own. Then everyone shakes your phone at the same time. One die for the whole table." |
-| 3:25 | CD | **Reveal:** "Based on a true story." Let them read for 3 s. Point at the article: "That's the real headline." Point at "Solved by": "And that's what you said you're weirdly good at." Keepsake QR: "Take the story home." |
-| 3:45 | CD | **Scorecard close, one breath each:** "**Connection:** your friends' ideas are your best move. **AI:** Muse writes, judges and paints every decision; code rolls the dice. **Original:** it's based on a true story, and you find out at the end. **Working:** you just played it." |
-| 4:00 | ENG | Q&A (PITCH_CARD.md, "Judge Q&A"). Offer DM's Notes (N) if they ask how the AI decided. |
-
-**If you're running long:** ENG presses **S** to skip timers once everyone has sent, never during a judge's typing.
-Past 3:30 with turns left: skip to the finale talk and let the game play out while you close. Always end on the
-reveal and the four scorecard lines.
-
-**If a judge has only 1 minute:** the 30-second version from PITCH_CARD.md, then show the deck's slide 4 (a turn)
-and slide 6 (the reveal), and hand them the keepsake QR from the last game.
-
-**If judges arrive mid-game:** let the current group finish (it's under 2 minutes away). CD to the new judges:
-"Watch the reveal, it's the best part, then you're next." The ending is the best attract screen we have.
+**If you're running long:** press **S** only after everyone has sent, never during a judge's typing.
+**If a judge has only 1 minute:** the 30-second pitch, the deck's reveal slide, and the QR card.
+**If judges arrive mid-game:** "Watch the reveal, it's the best part, then you're next."
 
 ---
 
-## 5. Fallbacks
+## 4. Fallbacks
 
 | Problem | Do |
 |---|---|
-| **Venue Wi-Fi slow or down** | Timers freeze while every phone is offline and restart when one is back. ENG switches the laptop to the phone hotspot; judges' phones rejoin by scanning again (or join the hotspot if their data is bad). Under 60 s. |
-| **Hotspot also fails** | Play the backup video on the laptop and talk over it with the 4-minute script. Hand out the URL card: "Play it tonight with your friends." |
-| **Muse slow or down** | Canned lines fill in and the game keeps going; paintings stay on the last scene. Keep talking. If every call is falling back, switch to the video. |
-| **Narrator silent** | Text still shows. "Tonight the narrator is shy." Check laptop volume, then move on. |
+| **Venue Wi-Fi slow or down** | The timer stops while every phone is offline and restarts when one is back. Switch the laptop to the hotspot; judges rescan. Under 60 s. |
+| **Hotspot also fails** | Play the backup video and talk over it. Hand out the QR card: "Play it tonight with your friends." |
+| **Muse slow or down** | Canned lines fill in and the game keeps going; paintings stay on the last scene. If every call is falling back, switch to the video. |
+| **Narrator silent** | Text still shows. "Tonight the narrator is shy." Check the volume, move on. |
 | **A painting is slow** | Say nothing. The old painting stays up and the new one fades in. |
-| **No live news** | The vote uses our curated real stories. Nobody can tell. |
 | **A phone won't join** | Hand them a spare phone already on `/play`. Don't debug a judge's phone. |
-| **A judge types something offensive** | The DM keeps it in-world and the filter catches the worst. Smile, move on. |
-| **The game errors or freezes** | ENG: reload the TV tab (F5). The room code changes, so everyone rescans. If it happens twice, video. |
+| **A judge types something offensive** | The DM keeps it in-world and the checks catch the worst. Smile, move on. |
+| **The game errors or freezes** | Reload the TV tab (F5). New room code, everyone rescans. Twice = video. |
 | **"Is that a real person?" about a bot** | "No, that's a test player the TV runs so small groups can play." |
 
 ---
 
-## 6. Reset between groups (~30 s, ENG)
+## 5. Reset between groups (~30 s)
 
 1. On the reveal/keepsake screen, let the judges scan the keepsake QR first.
-2. Reload `/tv?bots=1` (F5). New room code, empty lobby.
-3. Check the lobby settings came back as **Quick Tale / Odd news / Teens**.
-4. Team spare phones: reload `/play` and leave them on the join screen.
-5. Leave the TV on the lobby; press **A** for the attract screen if nobody is waiting.
-6. Glance at battery: laptop on charger, hotspot phone > 40%.
+2. Reload `/tv?judge=1&bots=1` (F5). New room code, empty lobby.
+3. Check the lobby came back as **Quick / Odd news / Teens**.
+4. Spare phones: reload `/play`, leave them on the join screen.
+5. Glance at battery: laptop on charger, hotspot phone > 40%.
 
-## 7. Between groups (CD)
-- Note what each judge laughed at or got stuck on (one line on a phone). Anything that breaks twice goes to ENG.
-- Drink water. The opener should sound as fresh at 4:55 PM as at 2:00.
+## 6. Between groups
+- One line on a phone: what each judge laughed at or got stuck on. Anything that breaks twice: message the team.
+- Drink water. The pitch should sound as fresh at 4:55 PM as at 2:00.
+- ~4:45: the CD arrives. From then on, CD = HOST, partner = DRIVER.

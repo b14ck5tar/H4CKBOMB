@@ -6,21 +6,45 @@
  *                                         your own plan, and "Solved by…"
  */
 import type { Player, Storybook } from "@/lib/types";
-import { Kicker, Say, TvGlyph } from "./kit";
+import { Kicker, ReactionBar, Say, SceneThumb } from "./kit";
 
-/** `text` may mark words with *stars* (lime); the stamp already says "this really happened". */
-export function RevealScreen({ text = "The real story is *on the TV*" }: { text?: string }) {
+/**
+ * `text` may mark words with *stars* (lime); the stamp already says "based on a true story". Never dark: the scene,
+ * how your version ended, and big reactions stay on the phone while the TV tells the real story.
+ */
+export function RevealScreen({
+  text = "The real story is *on the TV*",
+  art,
+  line,
+  reactions,
+  onReact,
+}: {
+  text?: string;
+  art?: string;
+  /** how the table's version ended (state.endingLine / state.recap) */
+  line?: string;
+  reactions?: readonly string[];
+  onReact?: (emoji: string) => void;
+}) {
   return (
-    <div className="pk-choices pk-center" style={{ flex: 1, justifyContent: "center", gap: 16 }}>
-      <div className="pk-truth" role="status">
-        Based on a<br />
-        true story
-        <small>This really happened</small>
+    <>
+      <div className="pk-choices pk-center" style={{ gap: 14 }}>
+        <div className="pk-truth" role="status">
+          Based on a<br />
+          true story
+        </div>
+        {art && <SceneThumb art={art} live="The real story" />}
+        <Kicker tone="pink">The reveal</Kicker>
+        <Say text={text} small />
       </div>
-      <TvGlyph />
-      <Kicker tone="pink">The reveal</Kicker>
-      <Say text={text} small />
-    </div>
+      {line && (
+        <p className="pk-quote pk-latest">
+          <small>Your version</small>
+          {line}
+        </p>
+      )}
+      {reactions && onReact && <ReactionBar reactions={reactions} onReact={onReact} big />}
+    </>
   );
 }
 

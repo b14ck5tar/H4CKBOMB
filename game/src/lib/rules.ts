@@ -26,8 +26,8 @@ export function judge(die: number, total: number, tier: Tier): Band {
 export const TIER_LABEL: Record<Tier, string> = {
   clever: "CLEVER",
   solid: "SOLID",
-  risky: "RISKY",
-  wild: "WILD",
+  risky: "BOLD", // playful, never insulting (CD): "bold", "long shot"
+  wild: "LONG SHOT",
   miracle: "ONLY A MIRACLE",
 };
 
@@ -45,9 +45,9 @@ export function stampText(tier: Tier): string {
     case "solid":
       return "SOLID";
     case "risky":
-      return "RISKY";
+      return "BOLD";
     case "wild":
-      return "WILD";
+      return "LONG SHOT";
     case "miracle":
       return "ONLY A MIRACLE";
   }
@@ -119,10 +119,10 @@ export const REACTIONS = ["😂", "🔥", "😱", "👏", "👀", "❤️"];
 export const PITCH_MS = 40_000;
 /** One player's turn: everyone else suggests, the owner picks (design/24). */
 export const TURN_MS = 60_000;
-export const QUICK_TURN_MS = 30_000;
+export const QUICK_TURN_MS = 45_000; // 45 s to type a suggestion or a plan (100-persona sim: 30 s was too tight)
 /** One action, ~140 characters. */
-export const PLAN_MAX = 140;
-export const VOTE_MS = 15_000;
+export const PLAN_MAX = 280; // own words + a friend's idea, together
+export const VOTE_MS = 20_000; // the finale vote
 export const STORY_VOTE_MS = 15_000;
 export const RULING_MS = 3_500;
 export const APPEAL_MS = 20_000;

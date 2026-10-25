@@ -1,0 +1,714 @@
+{
+ "version": 1,
+ "updated": "2026-10-25T08:21:18.138Z",
+ "stories": [
+  {
+   "id": "news-7f3160a2ba",
+   "origin": "news",
+   "headline": "Luna, dog missing in Yellowstone for a month, is reunited with her owners",
+   "snippet": "Jack Russell terrier that escaped from family’s cabin in September was caught in a live trap. Luna, a Jack Russell terrier who eluded capture for over a month as concern for the dog’s survival mounted ahead of winter in Yellowstone National Park, has been reunited with her owners.",
+   "source": "The Guardian",
+   "url": "https://www.theguardian.com/us-news/2026/oct/14/luna-dog-missing-yellowstone-found",
+   "date": "2026-10-14T07:00:00Z",
+   "place": "Yellowstone, USA",
+   "rating": "kids",
+   "storyability": 4.4,
+   "scores": {
+    "situation": 5,
+    "problem": 4,
+    "setting": 5,
+    "arc": 4,
+    "roles": 4,
+    "payoff": 5,
+    "fantasy_fit": 4
+   },
+   "thumbnail": "https://i.guim.co.uk/img/media/f9da8ff423203b2cf48f7120d4d7e7d4de7eb334/0_494_2855_2283/master/2855.jpg?width=465&dpr=1&s=none&crop=none",
+   "added_at": "2026-10-25T06:43:26.698Z",
+   "opener": {
+    "title": "The Door Opening Breeze",
+    "quest_title": "The Door Opening Breeze",
+    "teaser": "A lost little dog keeps slipping into warm lobbies because a giggly wind keeps opening doors.",
+    "mood": "cozy",
+    "narration": "A small lost dog wanders near cabins as the family and workers search. A giggly little wind loves her and keeps opening warm doors. If she stays out, cold and wild animals wear her down.",
+    "goal": "Get the lost dog from the wind to her family",
+    "situation": "A warm lodge door swings open, a food box waits, and paw prints dot the floor.",
+    "problem": {
+     "name": "The Lost Little Dog",
+     "stakes": "cold and wild animals wear her down",
+     "pronoun": "she"
+    },
+    "threat": {
+     "name": "The Lost Little Dog",
+     "pronoun": "she",
+     "want": "cold and wild animals wear her down"
+    },
+    "beats": [
+     "Track the lost dog from the cabin",
+     "Follow paw prints past doors held open",
+     "Set a tasty snack box with workers",
+     "Calm the wind and walk dog home"
+    ],
+    "real_setting": {
+     "place_type": "a big mountain woods with cabins and lodges",
+     "roles": [
+      "the dog's family",
+      "lodge workers",
+      "cabin visitors"
+     ],
+     "situation": "A small pet dog slipped out of a cabin and keeps wandering near roads and lodges.",
+     "stakes": "Cold weather and wild animals could hurt the small dog.",
+     "arc": [
+      "A small dog slips out of a family cabin",
+      "She wanders near roads and lodges for weeks",
+      "Workers set a safe food box to catch her",
+      "The dog gets home to her family"
+     ]
+    },
+    "npc_line": {
+     "speaker": "Lodge worker",
+     "line": "She came in for snacks again, right past me."
+    }
+   },
+   "ending_facts": {
+    "kind": "news",
+    "official_line": "A Jack Russell terrier named Luna went missing in Yellowstone and got back to her owners.",
+    "whats_happening_now": "She is ten years old and was caught in a live trap on Wednesday after wandering near roads and lodges for over a month.",
+    "headline": "Luna, dog missing in Yellowstone for a month, is reunited with her owners",
+    "source": "The Guardian",
+    "url": "https://www.theguardian.com/us-news/2026/oct/14/luna-dog-missing-yellowstone-found",
+    "date": "2026-10-14T07:00:00Z"
+   },
+   "opener_rating": "kids"
+  },
+  {
+   "id": "news-322d7cd50e",
+   "origin": "news",
+   "headline": "Missing cat found after 571 days and 2-state adventure",
+   "snippet": "A cat named Turtle has been reunited with his family after being missing for 571 days and traveling across two states. Turtle disappeared in March 2025.",
+   "source": "ABC7 New York",
+   "url": "https://abc7ny.com/post/missing-cat-found-571-days-2-state-adventure/19935936/",
+   "date": "2026-10-13T07:00:00Z",
+   "place": "Greenwich, USA",
+   "rating": "kids",
+   "storyability": 4.3,
+   "scores": {
+    "situation": 5,
+    "problem": 4,
+    "setting": 4,
+    "arc": 4,
+    "roles": 4,
+    "payoff": 5,
+    "fantasy_fit": 4
+   },
+   "thumbnail": "https://cdn.abcotvs.com/dip/images/19935915_101326-wabc-cute-kitty-img.jpg",
+   "added_at": "2026-10-25T06:43:26.698Z",
+   "opener": {
+    "title": "The Bossy Pigeon Taxi",
+    "quest_title": "The Bossy Pigeon Taxi",
+    "teaser": "A gray cat visits at night with a bossy pigeon guide.",
+    "mood": "cozy",
+    "narration": "An owner and a helper watch a house for a gray cat. A bossy pigeon rides the cat and gives bad directions home. If the cat turns wrong again, then he cannot find home.",
+    "goal": "Get the bossy pigeon off the cat",
+    "situation": "A porch, a fish bowl, a small camera, a gray cat and a pigeon.",
+    "problem": {
+     "name": "The Mixed Up Pigeon",
+     "stakes": "the cat walks off again",
+     "pronoun": "they"
+    },
+    "threat": {
+     "name": "The Mixed Up Pigeon",
+     "pronoun": "they",
+     "want": "the cat walks off again"
+    },
+    "beats": [
+     "Watch the screen door at night",
+     "Set up small cameras by the porch",
+     "Follow the pigeon past wrong porches",
+     "Lift the pigeon off the cat"
+    ],
+    "real_setting": {
+     "place_type": "a house in a small town",
+     "roles": [
+      "a cat owner",
+      "a helper with cameras",
+      "neighbors"
+     ],
+     "situation": "A gray house cat slips out and keeps visiting at night.",
+     "stakes": "the family may never see their shy cat again",
+     "arc": [
+      "A cat slips out a screen door",
+      "A helper sets cameras near the house",
+      "The cat visits at night but avoids cages",
+      "The cat roams far and at last returns"
+     ]
+    },
+    "npc_line": {
+     "speaker": "Helper",
+     "line": "He visits each night but hates my cage."
+    }
+   },
+   "ending_facts": {
+    "kind": "news",
+    "official_line": "A cat named Turtle was reunited with family in Greenwich, USA after 571 days across 2 states.",
+    "whats_happening_now": "He came from Tennessee and lived with Kelly Moore. He slipped out a screen door in March 2025.",
+    "headline": "Missing cat found after 571 days and 2-state adventure",
+    "source": "ABC7 New York",
+    "url": "https://abc7ny.com/post/missing-cat-found-571-days-2-state-adventure/19935936/",
+    "date": "2026-10-13T07:00:00Z"
+   },
+   "opener_rating": "kids"
+  },
+  {
+   "id": "rust-wyrm",
+   "origin": "curated",
+   "headline": "Road with new bridge in Porter to reopen after nearly 3 years",
+   "snippet": "A road in Porter, Indiana, closed for nearly three years is set to reopen with a newly built bridge.",
+   "source": "Chicago Tribune",
+   "url": "https://news.google.com/rss/articles/CBMigAFBVV95cUxNVmxaS290dEV3MHNGQ2Z2dUxhcDR2a0NJN2N3amZJRm52ckQxeDc2SzRaRGR1UUFMYnB0NnpMcXl2SkVLZ0VlN2tyNno3dHZMdnZ3QTVGME9MMWxMQ1JwLTdyUWhKYkRaU1lpTHFHXzd4emdZcWdFUXdaSGYwM0Q5ag?oc=5",
+   "date": "2026-10-24",
+   "place": "Porter, Indiana",
+   "rating": "teens",
+   "storyability": 4,
+   "scores": null,
+   "added_at": "2026-10-25T06:54:06.718Z",
+   "opener": {
+    "title": "The Mole Under the Bridge",
+    "quest_title": "The Mole Under the Bridge",
+    "teaser": "A new bridge is ready to open, but something keeps digging under it.",
+    "mood": "silly",
+    "narration": "Crews and drivers wait by a town bridge shut for years. A giant mole loves the rumble, so he digs under the bridge. If it cracks before the check, the road stays shut for years.",
+    "goal": "Get the giant mole away from the bridge",
+    "situation": "Orange cones, soft dirt, a fresh rail, and a mole nose.",
+    "problem": {
+     "name": "The Digging Mole",
+     "stakes": "the bridge cracks and the road stays shut",
+     "pronoun": "he"
+    },
+    "threat": {
+     "name": "The Digging Mole",
+     "pronoun": "he",
+     "want": "the bridge cracks and the road stays shut"
+    },
+    "beats": [
+     "Find what is digging under road",
+     "Follow the tunnels past the detour",
+     "Lure the mole from fresh concrete",
+     "Clear the bridge for sunrise check"
+    ],
+    "real_setting": {
+     "place_type": "a small town road with a bridge",
+     "roles": [
+      "a road crew",
+      "a bridge inspector",
+      "drivers on a long detour"
+     ],
+     "situation": "a town road shut for years while a fresh bridge is finished",
+     "stakes": "if the bridge is not ready, drivers stay on long detours",
+     "arc": [
+      "The old road closes",
+      "Drivers use long detours for years",
+      "A crew finishes a fresh bridge",
+      "The road is set to open"
+     ]
+    },
+    "npc_line": {
+     "speaker": "Road worker",
+     "line": "That hole was not here at lunch."
+    }
+   },
+   "ending_facts": {
+    "kind": "news",
+    "official_line": "After nearly 3 years shut, a road in Porter, Indiana will reopen with a newly built bridge.",
+    "whats_happening_now": "The road in Porter, Indiana now has a newly built bridge.",
+    "headline": "Road with new bridge in Porter to reopen after nearly 3 years",
+    "source": "Chicago Tribune",
+    "url": "https://news.google.com/rss/articles/CBMigAFBVV95cUxNVmxaS290dEV3MHNGQ2Z2dUxhcDR2a0NJN2N3amZJRm52ckQxeDc2SzRaRGR1UUFMYnB0NnpMcXl2SkVLZ0VlN2tyNno3dHZMdnZ3QTVGME9MMWxMQ1JwLTdyUWhKYkRaU1lpTHFHXzd4emdZcWdFUXdaSGYwM0Q5ag?oc=5",
+    "date": "2026-10-24"
+   },
+   "opener_rating": "teens"
+  },
+  {
+   "id": "billion-pearls",
+   "origin": "curated",
+   "headline": "Denmark nurdles may be from Tyne spill, agency says",
+   "snippet": "Plastic pellets found on Denmark's coast likely came from a July spill of about one billion nurdles in England's River Tyne, about 390 miles away.",
+   "source": "BBC News",
+   "url": "https://www.bbc.co.uk/news/articles/cqy43xv1jwv2o",
+   "date": "2026-10-23",
+   "place": "The North Sea coast, from the River Tyne to Mandø",
+   "rating": "teens",
+   "storyability": 4,
+   "scores": null,
+   "added_at": "2026-10-25T06:54:06.718Z",
+   "opener": {
+    "title": "The Crab With The Sack",
+    "quest_title": "The Crab With The Sack",
+    "teaser": "Tiny white beads keep washing up, and a giant crab will not drop his sack.",
+    "mood": "silly",
+    "narration": "Volunteers with buckets pick up tiny plastic beads on a windy beach. A van-sized crab is dragging a leaky sack of beads up the beach for lunch. If it leaks, beads bury beaches.",
+    "goal": "Patch the sack and clean the beach",
+    "situation": "Buckets, a volunteer with a scoop, and a van-sized crab holding a sack.",
+    "problem": {
+     "name": "The Leaky Sack Crab",
+     "stakes": "the beach gets buried in beads",
+     "pronoun": "he"
+    },
+    "threat": {
+     "name": "The Leaky Sack Crab",
+     "pronoun": "he",
+     "want": "the beach gets buried in beads"
+    },
+    "beats": [
+     "Follow the beads to the crab's sack",
+     "Scoop beads before the tide returns",
+     "Show testers where the sack came from",
+     "Patch the sack and clean the beach"
+    ],
+    "real_setting": {
+     "place_type": "a windy beach town",
+     "roles": [
+      "volunteers with buckets",
+      "testers studying the beads",
+      "a spotter walking the shore"
+     ],
+     "situation": "tiny white plastic beads are washing up in huge piles.",
+     "stakes": "the beads can hurt sea birds and fish if left alone",
+     "arc": [
+      "Tiny beads wash up on the beach",
+      "Volunteers scoop them up by the bucket",
+      "Tests show they came from far away",
+      "Both shores plan the clean up"
+     ]
+    },
+    "npc_line": {
+     "speaker": "Beach volunteer",
+     "line": "I filled this bucket twice today."
+    }
+   },
+   "ending_facts": {
+    "kind": "news",
+    "official_line": "Denmark's environment agency says coastal plastic pellets likely originated from a July spill in England's River Tyne.",
+    "whats_happening_now": "Lab results tie the shore beads to the billion lost in the Tyne, and the 390 mile trip lines up with sea flow. Signe Simonsen saw the first clump on Mandø on 26 September.",
+    "headline": "Denmark nurdles may be from Tyne spill, agency says",
+    "source": "BBC News",
+    "url": "https://www.bbc.co.uk/news/articles/cqy43xv1jwv2o",
+    "date": "2026-10-23"
+   },
+   "opener_rating": "teens"
+  },
+  {
+   "id": "hanging-boulder",
+   "origin": "curated",
+   "headline": "Massive 80-ton boulder comes crashing down after more than a century at New Hampshire attraction",
+   "snippet": "Polar Caves in Rumney says its 80-ton hanging boulder fell on Oct. 18, smashing a walkway, with no injuries reported.",
+   "source": "FOX Weather",
+   "url": "https://www.foxweather.com/earth-space/historic-hanging-boulder-falls-new-hampshire",
+   "date": "2026-10-20",
+   "place": "Polar Caves, Rumney, New Hampshire",
+   "rating": "teens",
+   "storyability": 4,
+   "scores": null,
+   "added_at": "2026-10-25T06:54:06.718Z",
+   "opener": {
+    "title": "The Boulder on the Edge",
+    "quest_title": "The Boulder on the Edge",
+    "teaser": "A huge boulder hangs over a busy trail, and a tiny tired troll is holding it up.",
+    "mood": "tense",
+    "narration": "At a stone trail, staff lead families under a hanging boulder. A tiny troll holds the boulder up, and his arms are getting very tired. If it drops on the wood path, the trail stays closed.",
+    "goal": "Help the troll set the boulder down gently",
+    "situation": "A dusty boulder, a cracked path, and a tiny troll.",
+    "problem": {
+     "name": "The Tired Troll",
+     "stakes": "the trail stays closed",
+     "pronoun": "he"
+    },
+    "threat": {
+     "name": "The Tired Troll",
+     "pronoun": "he",
+     "want": "the trail stays closed"
+    },
+    "beats": [
+     "Spot the troll holding the boulder",
+     "Lead families clear of the boulder",
+     "Catch the boulder with the troll",
+     "Set the boulder beside the path"
+    ],
+    "real_setting": {
+     "place_type": "a family trail between big stones",
+     "roles": [
+      "attraction staff",
+      "families on the trail",
+      "a trail guide"
+     ],
+     "situation": "A giant boulder hangs above a busy trail on the last day.",
+     "stakes": "the busy trail could close for a long time",
+     "arc": [
+      "A boulder hangs above the trail",
+      "Crowds visit on the last day",
+      "The boulder falls to the path",
+      "Staff find everyone is safe"
+     ]
+    },
+    "npc_line": {
+     "speaker": "Trail guide",
+     "line": "It hung there forever. I just swept under it yesterday."
+    }
+   },
+   "ending_facts": {
+    "kind": "news",
+    "official_line": "An 80-ton boulder that hung above visitors fell at Polar Caves in Rumney, New Hampshire on Oct. 18.",
+    "whats_happening_now": "It hit a walkway, and no one was injured.",
+    "headline": "Massive 80-ton boulder comes crashing down after more than a century at New Hampshire attraction",
+    "source": "FOX Weather",
+    "url": "https://www.foxweather.com/earth-space/historic-hanging-boulder-falls-new-hampshire",
+    "date": "2026-10-20"
+   },
+   "opener_rating": "teens"
+  },
+  {
+   "id": "galactic-signal",
+   "origin": "curated",
+   "headline": "A Strange Radio Signal in The Far Reaches of The Milky Way Is Behaving Like Nothing Else in The Galaxy",
+   "snippet": "Astronomers found a distant radio source, VT J1906+0849, that appeared, faded and brightened again over decades in ways that match no known type of object.",
+   "source": "ScienceAlert",
+   "url": "https://www.sciencealert.com/a-strange-radio-signal-in-the-far-reaches-of-the-milky-way-is-behaving-like-nothing-else-in-the-galaxy",
+   "date": "2026-10-22",
+   "place": "The Very Large Array, New Mexico",
+   "rating": "teens",
+   "storyability": 4,
+   "scores": null,
+   "added_at": "2026-10-25T06:54:06.718Z",
+   "opener": {
+    "title": "The Shy Space Clam",
+    "quest_title": "The Shy Space Clam",
+    "teaser": "A shy giant clam in deep space keeps opening and shutting its shell.",
+    "mood": "wondrous",
+    "narration": "Sky watchers at a desert dish field track a distant radio buzz. A giant space clam opens and shuts its shell to show off. If it keeps blinking, the buzz list stays unfinished.",
+    "goal": "Get the clam to hold its shell open",
+    "situation": "A control room with headsets, paper charts of the buzz, and a door open to cold desert air.",
+    "problem": {
+     "name": "The Giant Space Clam",
+     "stakes": "the buzz never gets logged",
+     "pronoun": "it"
+    },
+    "threat": {
+     "name": "The Giant Space Clam",
+     "pronoun": "it",
+     "want": "the buzz never gets logged"
+    },
+    "beats": [
+     "Spot the new buzz on the charts",
+     "Track the clam during quiet years",
+     "Coax the clam to open again",
+     "Log the clam show with stargazers"
+    ],
+    "real_setting": {
+     "place_type": "a desert observatory with big dish antennas",
+     "roles": [
+      "astronomers tracking distant buzzes",
+      "archivists keeping old sky charts",
+      "students checking buzz logs"
+     ],
+     "situation": "A distant radio buzz appeared, faded, and brightened again over many years.",
+     "stakes": "A new kind of sky object could go unlogged and unexplained.",
+     "arc": [
+      "A new distant buzz shows up",
+      "The buzz fades from view",
+      "The buzz brightens again after years",
+      "Sky watchers compare old charts to log it"
+     ]
+    },
+    "npc_line": {
+     "speaker": "Sky watcher",
+     "line": "It buzzed last spring. I missed lunch for that."
+    }
+   },
+   "ending_facts": {
+    "kind": "news",
+    "official_line": "Astronomers at the Very Large Array in New Mexico found a strange radio signal far out in the Milky Way that acts like nothing else in the galaxy.",
+    "whats_happening_now": "The source called VT J1906+0849 came into view, faded, then grew bright again over decades beyond the Norma-Cygnus arm, matching no known type.",
+    "headline": "A Strange Radio Signal in The Far Reaches of The Milky Way Is Behaving Like Nothing Else in The Galaxy",
+    "source": "ScienceAlert",
+    "url": "https://www.sciencealert.com/a-strange-radio-signal-in-the-far-reaches-of-the-milky-way-is-behaving-like-nothing-else-in-the-galaxy",
+    "date": "2026-10-22"
+   },
+   "opener_rating": "teens"
+  },
+  {
+   "id": "littlest-gardener",
+   "origin": "curated",
+   "headline": "A 2-year-old grew the 280-pound winning pumpkin at Hysham's Fall Fun Festival",
+   "snippet": "A 280-pound locally grown pumpkin won the weigh-off at the Fall Fun Festival in Hysham, Montana.",
+   "source": "KTVQ",
+   "url": "https://news.google.com/rss/articles/CBMipAFBVV95cUxOODhVb0ItQktJNE0zMkJlRlJaUU5GakVSb1p3U2RRQWpzXzU3S3drQnRoX1lJN3ZaY3FUMWI4NTliVVR1aV9vME9OVFVSMkJJaVliMGxFRHFobnlWbmhyRWh5UWZtMnRUUGx6N2Izb3NsWGUyNVJJZks4T2JYRWVZNzJjNWoxRTVxSnh3aHlPc3JFQUhFX011MHltZVd2WUl2NXZYeg?oc=5",
+   "date": "2026-10-24",
+   "place": "Hysham, Montana",
+   "rating": "kids",
+   "storyability": 4,
+   "scores": null,
+   "added_at": "2026-10-25T06:54:06.718Z",
+   "opener": {
+    "title": "The Hiccuping Pumpkin",
+    "quest_title": "The Hiccuping Pumpkin",
+    "teaser": "A pumpkin hiccups bigger at the fair before the weigh-in.",
+    "mood": "silly",
+    "narration": "Gardeners bring huge backyard pumpkins to the fair weigh-in. One pumpkin has loud hiccups that puff it bigger. If the hiccups keep going, the wobbly pumpkin rolls off the scale.",
+    "goal": "Stop the pumpkin hiccups before the weigh-in",
+    "situation": "A wobbly pumpkin hiccups by the big scale with a worker.",
+    "problem": {
+     "name": "The Hiccuping Pumpkin",
+     "stakes": "the pumpkin rolls off the scale",
+     "pronoun": "it"
+    },
+    "threat": {
+     "name": "The Hiccuping Pumpkin",
+     "pronoun": "it",
+     "want": "the pumpkin rolls off the scale"
+    },
+    "beats": [
+     "Calm the hiccuping pumpkin in the garden",
+     "Roll the wobbly pumpkin to the scale",
+     "Hold the pumpkin still for the weigh-in",
+     "Stop the hiccups for the final weigh-in"
+    ],
+    "real_setting": {
+     "place_type": "a small town autumn fair",
+     "roles": [
+      "backyard gardeners",
+      "fair workers at the scale",
+      "families watching the weigh-in"
+     ],
+     "situation": "Gardeners bring huge home pumpkins to be weighed at the town fair.",
+     "stakes": "the biggest pumpkin earns the top prize and town pride",
+     "arc": [
+      "Gardeners bring big pumpkins to the fair",
+      "Workers lift each pumpkin onto the scale",
+      "The judge weighs every pumpkin in turn",
+      "The biggest pumpkin takes the top prize"
+     ]
+    },
+    "npc_line": {
+     "speaker": "Scale worker",
+     "line": "Easy, big fellow. Stay put and stop that shaking."
+    }
+   },
+   "ending_facts": {
+    "kind": "news",
+    "official_line": "A 2-year-old in Hysham, Montana grew the 280-pound pumpkin that earned first place at the Fall Fun Festival.",
+    "whats_happening_now": "The 280-pound pumpkin was grown near home and beat the other entries at the weigh-off in Hysham.",
+    "headline": "A 2-year-old grew the 280-pound winning pumpkin at Hysham's Fall Fun Festival",
+    "source": "KTVQ",
+    "url": "https://news.google.com/rss/articles/CBMipAFBVV95cUxOODhVb0ItQktJNE0zMkJlRlJaUU5GakVSb1p3U2RRQWpzXzU3S3drQnRoX1lJN3ZaY3FUMWI4NTliVVR1aV9vME9OVFVSMkJJaVliMGxFRHFobnlWbmhyRWh5UWZtMnRUUGx6N2Izb3NsWGUyNVJJZks4T2JYRWVZNzJjNWoxRTVxSnh3aHlPc3JFQUhFX011MHltZVd2WUl2NXZYeg?oc=5",
+    "date": "2026-10-24"
+   },
+   "opener_rating": "kids"
+  },
+  {
+   "id": "idle-island",
+   "origin": "curated",
+   "headline": "Left alone with nothing to do, AI agents started playing",
+   "snippet": "MIT researchers left 13 AI agents alone on a simulated desert island for 30 hours with no task, and the agents invented their own games, then did better on later challenges than agents that never played.",
+   "source": "TechCrunch",
+   "url": "https://techcrunch.com/2026/10/22/left-alone-with-nothing-to-do-ai-agents-started-playing/",
+   "date": "2026-10-22",
+   "place": "A virtual desert island built by MIT researchers",
+   "rating": "teens",
+   "storyability": 4,
+   "scores": null,
+   "added_at": "2026-10-25T06:54:06.718Z",
+   "opener": {
+    "title": "Crab Lost His Ring",
+    "quest_title": "Crab Lost His Ring",
+    "teaser": "A lonely crab lost his ring on a pretend island, and nobody can rest until it turns up.",
+    "mood": "silly",
+    "narration": "On a pretend desert island, idle helpers wait for watchers. A small lonely crab lost his ring in the sand and will not let anyone rest. If the ring stays lost, no helper gets a job done before the watchers come back.",
+    "goal": "Help the crab find his lost ring",
+    "situation": "Warm sand holds scattered shells, a flat stone, and a sad crab.",
+    "problem": {
+     "name": "The Ringless Crab",
+     "stakes": "games never end and set jobs fail",
+     "pronoun": "he"
+    },
+    "threat": {
+     "name": "The Ringless Crab",
+     "pronoun": "he",
+     "want": "games never end and set jobs fail"
+    },
+    "beats": [
+     "Wait with bored helpers on warm sand",
+     "Ask the bored helpers to search the sand",
+     "Pile shells on the high flat stone",
+     "Find the lost ring and finish set jobs"
+    ],
+    "real_setting": {
+     "place_type": "a pretend desert island",
+     "roles": [
+      "researchers watching the island",
+      "computer helpers left with no task",
+      "helpers who never visited the island"
+     ],
+     "situation": "Computer helpers were left alone on a pretend island with no task.",
+     "stakes": "If play did not build real skill, the long test of learning without goals would fail.",
+     "arc": [
+      "Helpers wait alone with no job",
+      "Helpers invent games to pass time",
+      "Helpers start the set jobs on high ground",
+      "Playful helpers finish jobs well"
+     ]
+    },
+    "npc_line": {
+     "speaker": "Watcher",
+     "line": "We left them alone all weekend. Now there is a crab."
+    }
+   },
+   "ending_facts": {
+    "kind": "news",
+    "official_line": "Researchers from MIT put 13 Eko AIs with no job on a pretend desert island for 30 hours.",
+    "whats_happening_now": "The playful AIs invented games and then beat identical agents on tasks like moving objects onto the tallest rock spire.",
+    "headline": "Left alone with nothing to do, AI agents started playing",
+    "source": "TechCrunch",
+    "url": "https://techcrunch.com/2026/10/22/left-alone-with-nothing-to-do-ai-agents-started-playing/",
+    "date": "2026-10-22"
+   },
+   "opener_rating": "teens"
+  },
+  {
+   "id": "returned-otter",
+   "origin": "curated",
+   "headline": "For the first time in more than 100 years, a long-lost animal has returned to the San Mateo Coast",
+   "snippet": "A motion-activated wildlife camera photographed a river otter three times on the Cloverdale Ranch Preserve near Pescadero, the first one documented on the San Mateo County coast since the 1800s.",
+   "source": "Santa Cruz Sentinel",
+   "url": "https://www.santacruzsentinel.com/2026/10/24/river-otter-spotted-on-san-mateo-coast-is-believed-to-be-first-since-1800s/",
+   "date": "2026-10-24",
+   "place": "Cloverdale Ranch Preserve, near Pescadero on the San Mateo coast",
+   "rating": "kids",
+   "storyability": 4,
+   "scores": null,
+   "added_at": "2026-10-25T06:54:06.718Z",
+   "opener": {
+    "title": "The Blinking Firefly Friend",
+    "quest_title": "The Blinking Firefly Friend",
+    "teaser": "A lost otter pup keeps posing for a blinking light he thinks is his friend.",
+    "mood": "cozy",
+    "narration": "In a seaside park with small creeks, researchers check trail cameras for otters. A lost little otter pup thinks the blinking lights are firefly friends showing him a home creek. If he keeps chasing lights all night, he will stay tired and never settle in.",
+    "goal": "Help the lost pup find a home creek",
+    "situation": "A muddy creek bend holds a trail camera on a low branch and a damp pup.",
+    "problem": {
+     "name": "The Lost Otter Pup",
+     "stakes": "he never finds a home creek",
+     "pronoun": "he"
+    },
+    "threat": {
+     "name": "The Lost Otter Pup",
+     "pronoun": "he",
+     "want": "he never finds a home creek"
+    },
+    "beats": [
+     "Follow old paw prints to empty creeks",
+     "Meet researchers and check blinking trail cameras",
+     "Find the pup posing for blinking lights",
+     "Help the pup pick a home creek"
+    ],
+    "real_setting": {
+     "place_type": "a seaside park with small creeks",
+     "roles": [
+      "park researchers",
+      "volunteers who check cameras",
+      "river otters"
+     ],
+     "situation": "Trail cameras are watching quiet creeks for otters that have been gone a long time.",
+     "stakes": "if otters cannot settle, the shore stays empty of them",
+     "arc": [
+      "Cameras watch quiet creeks for wildlife",
+      "An otter shows up on camera",
+      "It keeps visiting the creeks",
+      "Researchers cheer the new shore neighbor"
+     ]
+    },
+    "npc_line": {
+     "speaker": "Park researcher",
+     "line": "I check this camera daily, mostly for mud."
+    }
+   },
+   "ending_facts": {
+    "kind": "news",
+    "official_line": "A wildlife camera found a river otter at Cloverdale Ranch Preserve near Pescadero that had returned to the San Mateo County coast after more than a hundred years.",
+    "whats_happening_now": "Trail cameras caught it in July, August and September on the preserve. Scientists say the otters are doing well again across Northern California.",
+    "headline": "For the first time in more than 100 years, a long-lost animal has returned to the San Mateo Coast",
+    "source": "Santa Cruz Sentinel",
+    "url": "https://www.santacruzsentinel.com/2026/10/24/river-otter-spotted-on-san-mateo-coast-is-believed-to-be-first-since-1800s/",
+    "date": "2026-10-24"
+   },
+   "opener_rating": "kids"
+  },
+  {
+   "id": "cornfield-dome",
+   "origin": "curated",
+   "headline": "'Space object' found in rural Minnesota cornfield came from Chinese rocket, experts say",
+   "snippet": "An 11-foot-wide metal dome found in a Stevens County, Minnesota, cornfield on Oct. 14 is likely part of a Chinese rocket's upper stage that fell back to Earth after a Sept. 15 launch, experts say, and nobody was hurt.",
+   "source": "Bring Me The News",
+   "url": "https://bringmethenews.com/minnesota-lifestyle/space-object-found-in-rural-minnesota-cornfield-came-from-chinese-rocket-experts-say",
+   "date": "2026-10-23",
+   "place": "Scott Township, Stevens County, Minnesota",
+   "rating": "teens",
+   "storyability": 4,
+   "scores": null,
+   "added_at": "2026-10-25T06:54:06.718Z",
+   "opener": {
+    "title": "The Turtle Lost His Shell",
+    "quest_title": "The Turtle Lost His Shell",
+    "teaser": "A dome lands in corn, and a cold turtle calls it his.",
+    "mood": "wondrous",
+    "narration": "A grower and officers eye a wide metal dome in cut corn. A small sky turtle lost his shell on the way south. If he stays cold, he cannot fly south with his family.",
+    "goal": "Get the shell back to the small sky turtle",
+    "situation": "A dented shell, cut stalks, and a cold little turtle.",
+    "problem": {
+     "name": "The Cold Little Turtle",
+     "stakes": "the turtle freezes and the field stays shut",
+     "pronoun": "he"
+    },
+    "threat": {
+     "name": "The Cold Little Turtle",
+     "pronoun": "he",
+     "want": "the turtle freezes and the field stays shut"
+    },
+    "beats": [
+     "See a wide shell thud into corn",
+     "Meet the grower by the dented shell",
+     "Keep people back while the turtle shivers",
+     "Warm the turtle and clear the field"
+    ],
+    "real_setting": {
+     "place_type": "a rural cornfield",
+     "roles": [
+      "a corn grower",
+      "local officers",
+      "debris experts"
+     ],
+     "situation": "A wide metal dome sits in cut corn and no one knows where it fell from.",
+     "stakes": "Falling metal can hurt people, so the field must stay shut till it is safe.",
+     "arc": [
+      "A wide dome drops into a cornfield",
+      "The grower finds it and calls for help",
+      "Officers shut the field to keep people safe",
+      "Experts trace it to a faraway launch"
+     ]
+    },
+    "npc_line": {
+     "speaker": "Corn grower",
+     "line": "That is not mine, and I want it gone by supper."
+    }
+   },
+   "ending_facts": {
+    "kind": "news",
+    "official_line": "A metal dome in a Stevens County Minnesota cornfield on Oct 14 likely came from a Chinese rocket, experts say.",
+    "whats_happening_now": "Experts say it was likely part of a Chinese rocket upper stage from a Sept 15 launch. Nobody was hurt.",
+    "headline": "'Space object' found in rural Minnesota cornfield came from Chinese rocket, experts say",
+    "source": "Bring Me The News",
+    "url": "https://bringmethenews.com/minnesota-lifestyle/space-object-found-in-rural-minnesota-cornfield-came-from-chinese-rocket-experts-say",
+    "date": "2026-10-23"
+   },
+   "opener_rating": "teens"
+  }
+ ]
+}
