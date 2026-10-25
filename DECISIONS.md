@@ -152,3 +152,9 @@ Full history and train of thought: `design/00-where-we-are.md`.
 - Turns: 2-4 players = 2 turns each, 5+ players = 1 turn each, in every mode (humans only).
 - Campaign mode (heroes carry over into the next story with upgrades, like real D&D): proposal only. The proposal-only list will be trimmed to a top 3 for the pitch.
 - Started PITCH_KIT.md: pitches, judge-table run-of-show, AI explanation, how-we-built-it, judge FAQ, talking tips, rehearsal.
+
+## Sun ~5:45 AM: CD answers before the session split
+- Non-negotiables for every session: **players' ideas drive the story**, and **silky smooth, moderately fast**: nobody waits more than about 5 s. Be as efficient as possible, and keep generating ahead: start every AI call the moment its inputs exist, so the answers are ready and quality has time. (Simple-beats-clever and the social rules stay as decided earlier.)
+- Priority: everything at a high standard. **Story quality is the weak point**, plus preparing for the actual judging. Art, looks, sound and smoothness need only small touch-ups.
+- Judge mode: `/tv?judge=1` = 1 turn each, max 3 turns, then the finale everyone plays (about 5 min). Normal games keep 2 each at 2-4 players and 1 each at 5+.
+- Handoff: a short GAME.md (the shared truth) plus a tailored brief per session.
