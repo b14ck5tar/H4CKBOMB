@@ -2032,10 +2032,11 @@ export class GameHost {
    */
   private startConvince() {
     this.set({ phase: "convince", ready: [] });
-    this.setTimer(CONVINCE_MS, () => this.endConvince());
-    this.armNudge("convince", CONVINCE_MS, () => this.present().filter((p) => !this.state.ready.includes(p.id)).map((p) => p.id));
+    const talkMs = this.judge ? 30_000 : CONVINCE_MS; // judge mode keeps the demo short
+    this.setTimer(talkMs, () => this.endConvince());
+    this.armNudge("convince", talkMs, () => this.present().filter((p) => !this.state.ready.includes(p.id)).map((p) => p.id));
     // Pre-voiced by the voice session (exact text = a cache hit).
-    const said = "Alright. You've got one minute. Convince each other.";
+    const said = this.judge ? "Alright. You've got thirty seconds. Convince each other." : "Alright. You've got one minute. Convince each other.";
     this.voiceBy(said, Date.now() + 3000).then((clip) => this.state.phase === "convince" && this.play(clip));
     this.note("ruling", "Convince each other", "One minute to talk the table into your plan. Everyone taps Ready to vote, or the minute runs out.");
   }
