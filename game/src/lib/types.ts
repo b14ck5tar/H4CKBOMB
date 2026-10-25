@@ -343,6 +343,8 @@ export interface GameState {
   wins: Record<string, number>; // player id -> plans of theirs that won (the spotlight rule)
   outcome: string; // 1-2 sentences: what the winning plan did
   endingLine: string; // one line for the reveal: how it ended
+  /** A time warning ~10 s before an input deadline (CD): who is still typing, if it's one person (their character's name). */
+  nudge?: { at: number; kind: "turn" | "idea" | "pitch" | "vote" | "convince"; name: string };
   /** The grand ending's reveal (CD): each hero's key move, the real story in beats, and the line linking the two. */
   revealData?: { moves: { heroId: string; name: string; move: string }[]; real: { what: string; ending: string; source: string; date: string }; bridge: string };
   /** The story slide's sound cues (lib/storySfx.ts): the TV plays them in order when `at` changes. `id` = the first. */

@@ -1845,6 +1845,7 @@ export class GameHost {
     const owner = order[k];
     this.set({ phase: "turn", turnIndex: k, ideas: {}, pitches: [], votes: {}, winnerId: "", outcome: "", rolls: [], revealed: [], ready: [], busy: "", typing: [] });
     this.setTimer(this.turnMs(), () => this.endTurn(true));
+    this.armNudge("turn", this.turnMs(), () => [owner]);
     // "Jay, the lodger is…": the narrator reads the turn start if the clip is ready (it was asked for with the outcome).
     const line = this.turnLine(owner);
     // The clock restarts once the narrator has finished the line (CD playtest: "is it my turn?" while it was still
@@ -1852,7 +1853,10 @@ export class GameHost {
     this.voiceBy(line, Date.now() + 4000).then((clip) => {
       if (this.state.phase !== "turn" || this.state.turnIndex !== k) return;
       const ms = this.play(clip);
-      if (ms) this.setTimer(this.turnMs() + ms, () => this.endTurn(true));
+      if (ms) {
+        this.setTimer(this.turnMs() + ms, () => this.endTurn(true));
+        this.armNudge("turn", this.turnMs() + ms, () => [owner]);
+      }
     });
     this.note("turn", this.heroName(owner), `Turn ${k + 1} of ${order.length}. Everyone else can suggest one action; ${this.heroName(owner)} picks.`);
   }
@@ -1989,6 +1993,7 @@ export class GameHost {
     const line = `Alright, everyone… time for the grand finale. ${this.state.situation} So. What's the final move?`;
     this.voiceBy(line, Date.now() + 4000).then((clip) => this.state.phase === "pitch" && this.play(clip));
     this.setTimer(this.turnMs(), () => this.endPitch(true));
+    this.armNudge("pitch", this.turnMs(), () => this.present().filter((h) => !this.state.pitches.some((x) => x.playerId === h.id)).map((h) => h.id));
   }
 
   private endPitch(timedOut = false) {
@@ -2018,6 +2023,7 @@ export class GameHost {
   private startVote() {
     this.set({ phase: "vote", votes: {}, ready: [] });
     this.setTimer(this.quick ? 12_000 : VOTE_MS, () => this.endVote(true));
+    this.armNudge("vote", this.quick ? 12_000 : VOTE_MS, () => this.planVoters().filter((p) => !this.state.votes[p.id]).map((p) => p.id));
   }
 
   /**
@@ -2027,10 +2033,32 @@ export class GameHost {
   private startConvince() {
     this.set({ phase: "convince", ready: [] });
     this.setTimer(CONVINCE_MS, () => this.endConvince());
+    this.armNudge("convince", CONVINCE_MS, () => this.present().filter((p) => !this.state.ready.includes(p.id)).map((p) => p.id));
     // Pre-voiced by the voice session (exact text = a cache hit).
     const said = "Alright. You've got one minute. Convince each other.";
     this.voiceBy(said, Date.now() + 3000).then((clip) => this.state.phase === "convince" && this.play(clip));
     this.note("ruling", "Convince each other", "One minute to talk the table into your plan. Everyone taps Ready to vote, or the minute runs out.");
+  }
+
+  private nudgeTimer: ReturnType<typeof setTimeout> | null = null;
+
+  /**
+   * Time warning (CD): ~10 s before an input deadline, if someone still hasn't sent, state.nudge names the slow player
+   * (only when it's exactly one) and the voice session plays a pre-voiced nudge, never twice in a row, never over the
+   * narrator. Re-arming replaces the last one; a phase change cancels it.
+   */
+  private armNudge(kind: "turn" | "idea" | "pitch" | "vote" | "convince", totalMs: number, slow: () => string[]) {
+    if (this.nudgeTimer) clearTimeout(this.nudgeTimer);
+    this.nudgeTimer = null;
+    if (totalMs < 15_000) return;
+    const phase = this.state.phase;
+    const turn = this.state.turnIndex;
+    this.nudgeTimer = setTimeout(() => {
+      if (this.state.phase !== phase || this.state.turnIndex !== turn || this.state.paused) return;
+      const who = slow().filter((id) => this.player(id) && !this.player(id)!.away);
+      if (!who.length) return;
+      this.set({ nudge: { at: Date.now(), kind, name: who.length === 1 ? this.heroName(who[0]) : "" } });
+    }, totalMs - 10_000);
   }
 
   private endConvince() {
