@@ -84,16 +84,16 @@ export function crackleNoise(c: BaseAudioContext): AudioBuffer {
  * A stereo reverb impulse response generated in code: a pre-delay, a few early reflections, then
  * an exponentially decaying noise tail that gets darker over time (like a real room).
  */
-export function reverbIR(c: BaseAudioContext, seconds = 2.6, brightness = 0.6, preDelay = 0.018): AudioBuffer {
-  const key = `${seconds}|${brightness}|${preDelay}`;
+export function reverbIR(c: BaseAudioContext, seconds = 2.6, brightness = 0.6, preDelay = 0.018, channels = 2): AudioBuffer {
+  const key = `${seconds}|${brightness}|${preDelay}|${channels}`;
   const k = cache(c);
   const hit = k.ir.get(key);
   if (hit) return hit;
   const sr = c.sampleRate;
   const len = Math.floor(sr * seconds);
-  const b = c.createBuffer(2, len, sr);
+  const b = c.createBuffer(channels, len, sr);
   const pre = Math.floor(sr * preDelay);
-  for (let ch = 0; ch < 2; ch++) {
+  for (let ch = 0; ch < channels; ch++) {
     const d = b.getChannelData(ch);
     let lp = 0;
     for (let i = pre; i < len; i++) {
@@ -112,12 +112,12 @@ export function reverbIR(c: BaseAudioContext, seconds = 2.6, brightness = 0.6, p
   }
   // normalise energy so different lengths sit at similar levels
   let sum = 0;
-  for (let ch = 0; ch < 2; ch++) {
+  for (let ch = 0; ch < channels; ch++) {
     const d = b.getChannelData(ch);
     for (let i = 0; i < len; i++) sum += d[i] * d[i];
   }
-  const norm = 1 / Math.sqrt(sum / 2 / (sr * 0.25));
-  for (let ch = 0; ch < 2; ch++) {
+  const norm = 1 / Math.sqrt(sum / channels / (sr * 0.25));
+  for (let ch = 0; ch < channels; ch++) {
     const d = b.getChannelData(ch);
     for (let i = 0; i < len; i++) d[i] *= norm * 0.5;
   }

@@ -251,7 +251,8 @@ export class Kit {
     this.shaper.oversample = on ? "none" : "2x";
     const now = this.ctx.currentTime;
     this.revSend.gain.cancelScheduledValues(now);
-    this.revSend.gain.setTargetAtTime(on ? 0 : 1, now, 0.3);
+    this.revSend.gain.setValueAtTime(this.revSend.gain.value, now);
+    this.revSend.gain.linearRampToValueAtTime(on ? 0 : 1, now + 0.3); // reaches exactly 0 (setTarget never does)
   }
 
   /** Polyphony budget: reserve `cost` sources until `end`; non-essential notes are dropped when full. */
@@ -463,7 +464,8 @@ export class Kit {
     } else {
       amp.gain.setValueAtTime(0, t);
       amp.gain.linearRampToValueAtTime(a, t + (kind === "sub" ? 0.02 : 0.008));
-      amp.gain.setValueAtTime(a * 0.9, t + Math.max(0.03, dur - 0.05));
+      // glide (not step) to the release level: a mid-note gain step on a low sine clicks (the "static")
+      amp.gain.linearRampToValueAtTime(a * 0.9, t + Math.max(0.03, dur - 0.05));
       amp.gain.setTargetAtTime(0, t + Math.max(0.03, dur - 0.05), 0.05);
     }
     amp.connect(this.bassIn);

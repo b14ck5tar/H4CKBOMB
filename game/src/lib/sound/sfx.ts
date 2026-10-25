@@ -1,7 +1,7 @@
 "use client";
 
-import { canStart, getBuses, isAllMuted, isServer } from "./context";
-import { EPS, adEnv, cleanup, mtof, pinkNoise, rand, reverbIR, whiteNoise } from "./dsp";
+import { canStart, getBuses, getRoom, isAllMuted, isServer, makeRoom } from "./context";
+import { EPS, adEnv, cleanup, mtof, pinkNoise, rand, whiteNoise } from "./dsp";
 import { music } from "./music";
 
 /**
@@ -95,8 +95,11 @@ function ceilingCurve(): Float32Array<ArrayBuffer> {
   return curve;
 }
 
-/** The shared tone + room every voice goes through (also used by the offline renderer). */
-function makeChain(c: BaseAudioContext, dest: AudioNode, outLevel: number) {
+/**
+ * The shared tone + room every voice goes through (also used by the offline renderer). Live, the reverb send goes
+ * to the app's ONE shared room (`room`, context.ts); the offline renderer makes its own copy of that room.
+ */
+function makeChain(c: BaseAudioContext, dest: AudioNode, outLevel: number, room?: AudioNode) {
   const out = c.createGain();
   out.gain.value = outLevel;
   const lp = c.createBiquadFilter();
@@ -104,13 +107,10 @@ function makeChain(c: BaseAudioContext, dest: AudioNode, outLevel: number) {
   lp.frequency.value = TONE_HZ;
   lp.Q.value = 0.5;
   const verb = c.createGain();
-  const conv = c.createConvolver();
-  conv.buffer = reverbIR(c, 1.6, 0.55, 0.02); // the music's room, with a shorter tail (half the convolver cost)
-  const rhp = c.createBiquadFilter();
-  rhp.type = "highpass";
-  rhp.frequency.value = 220;
-  const ret = c.createGain();
-  ret.gain.value = 0.3;
+  const send = c.createGain();
+  send.gain.value = 0.3 / 0.38; // the effects' old room return (0.3) through the shared room's (0.38)
+  verb.connect(send);
+  send.connect(room ?? makeRoom(c, lp).input);
   // a gentle peak catcher so short clicks never poke above the music bed
   const comp = c.createDynamicsCompressor();
   comp.threshold.value = -20;
@@ -119,10 +119,6 @@ function makeChain(c: BaseAudioContext, dest: AudioNode, outLevel: number) {
   comp.attack.value = 0.001;
   comp.release.value = 0.12;
   out.connect(lp);
-  verb.connect(conv);
-  conv.connect(rhp);
-  rhp.connect(ret);
-  ret.connect(lp);
   // and a soft ceiling at -14 dBFS: millisecond click peaks are rounded off, never poke above the music
   const ceil = c.createWaveShaper();
   ceil.curve = ceilingCurve();
@@ -138,7 +134,7 @@ function bus() {
   const b = getBuses();
   if (!b) return null;
   try {
-    fx = { ctx: b.ctx, ...makeChain(b.ctx, b.sfx, OUT_LEVEL) };
+    fx = { ctx: b.ctx, ...makeChain(b.ctx, b.sfx, OUT_LEVEL, getRoom()?.input) };
     return fx;
   } catch {
     return null;

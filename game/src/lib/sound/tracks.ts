@@ -120,7 +120,7 @@ const lobby: TrackDef = {
   bpm: 88,
   swing: 0.24,
   swingUnit: 16,
-  level: 1.19, // measured on /sound-test (K-weighted, intensity 0.2): all tracks within 1 dB
+  level: 1.25, // measured offline (K-weighted LUFS, in-game defaults, shared room): every bed within about 1 dB of -22.5
   key: 61,
   minor: false,
   kit: {
@@ -224,7 +224,7 @@ const mysterious: TrackDef = {
   bpm: 74,
   swing: 0.08,
   swingUnit: 16,
-  level: 0.81, // measured on /sound-test (K-weighted, intensity 0.2): all tracks within 1 dB
+  level: 0.73, // measured offline (K-weighted LUFS, in-game defaults, shared room): every bed within about 1 dB of -22.5
   key: 62,
   minor: true,
   kit: {
@@ -308,7 +308,7 @@ const eerie: TrackDef = {
   bpm: 62,
   swing: 0,
   swingUnit: 16,
-  level: 0.8, // measured on /sound-test (K-weighted, intensity 0.2): all tracks within 1 dB
+  level: 0.86, // measured offline (K-weighted LUFS, in-game defaults, shared room): every bed within about 1 dB of -22.5
   key: 57,
   minor: true,
   kit: {
@@ -403,7 +403,7 @@ const playful: TrackDef = {
   bpm: 108,
   swing: 0.6,
   swingUnit: 8,
-  level: 1.53, // measured on /sound-test (K-weighted, intensity 0.2): all tracks within 1 dB
+  level: 1.84, // measured offline (K-weighted LUFS, in-game defaults, shared room): every bed within about 1 dB of -22.5
   key: 64,
   minor: true,
   kit: {
@@ -501,7 +501,7 @@ const warm: TrackDef = {
   bpm: 78,
   swing: 0.14,
   swingUnit: 16,
-  level: 1.07, // measured on /sound-test (K-weighted, intensity 0.2): all tracks within 1 dB
+  level: 0.88, // measured offline (K-weighted LUFS, in-game defaults, shared room): every bed within about 1 dB of -22.5
   key: 63,
   minor: false,
   kit: {
@@ -588,7 +588,7 @@ const tense: TrackDef = {
   bpm: 100,
   swing: 0,
   swingUnit: 16,
-  level: 0.87, // measured on /sound-test (K-weighted, intensity 0.2): all tracks within 1 dB
+  level: 1.03, // measured offline (K-weighted LUFS, in-game defaults, shared room): every bed within about 1 dB of -22.5
   key: 60,
   minor: true,
   kit: {

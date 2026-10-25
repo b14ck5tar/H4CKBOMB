@@ -6,16 +6,18 @@ import {
   emitChange,
   expRamp,
   getBuses,
+  getRoom,
   isRunning,
   isServer,
   onUnlock,
   peekCtx,
   ramp,
   readPref,
+  setRoomOn,
   writePref,
 } from "./context";
 import { CUE_NAMES, cueLength, playCue, type CueName, type CueOpts } from "./cues";
-import { dbToGain, reverbIR } from "./dsp";
+import { dbToGain } from "./dsp";
 import { Kit, type Layers } from "./instruments";
 import { MOODS, TRACKS, layersFor, toMood, type Mood, type TrackDef, type TrackId } from "./tracks";
 
@@ -51,7 +53,9 @@ interface Playing {
 class MusicEngine {
   private ctx: AudioContext | null = null;
   private input: GainNode | null = null;
-  private reverb: ConvolverNode | null = null;
+  private revIn: GainNode | null = null; // music's send into the shared room
+  private revDuck: GainNode | null = null;
+  private revVol: GainNode | null = null;
   private bright: BiquadFilterNode | null = null;
   private lift: GainNode | null = null;
   private duckG: GainNode | null = null;
@@ -91,6 +95,7 @@ class MusicEngine {
    */
   setLite(on: boolean) {
     this.lite = !!on;
+    if (this.ctx) setRoomOn(!this.lite); // the real saving: the shared reverb is disconnected
     for (const p of this.playing) p.kit.setLite(this.lite);
     for (const c of this.cues.values()) c.kit.setLite(this.lite);
     emitChange();
@@ -142,7 +147,7 @@ class MusicEngine {
    */
   cue(name: CueName | string, opts: CueOpts = {}) {
     const n = cueName(name);
-    if (!n || isServer() || !isRunning() || !this.ensureGraph() || !this.ctx || !this.cueIn || !this.reverb) return;
+    if (!n || isServer() || !isRunning() || !this.ensureGraph() || !this.ctx || !this.cueIn || !this.revIn) return;
     const ctx = this.ctx;
     const live = this.playing.find((p) => !p.dying)?.def;
     const key = live?.key ?? 62;
@@ -154,7 +159,7 @@ class MusicEngine {
     }
     this.endCue(n, 0.08); // a repeated cue restarts
     try {
-      const kit = new Kit(ctx, this.cueIn, this.reverb, { bpm: live?.bpm ?? 100, pump: 0, width: 0.5, echo: { beats: 0.75, feedback: 0.28, tone: 2600 } });
+      const kit = new Kit(ctx, this.cueIn, this.revIn, { bpm: live?.bpm ?? 100, pump: 0, width: 0.5, echo: { beats: 0.75, feedback: 0.28, tone: 2600 } });
       if (this.lite) kit.setLite(true);
       kit.setFade(1, 0.02);
       const t0 = ctx.currentTime + 0.03;
@@ -403,17 +408,17 @@ class MusicEngine {
       this.duckG = ctx.createGain();
       this.vol = ctx.createGain();
       this.vol.gain.value = 0;
-      this.reverb = ctx.createConvolver();
-      this.reverb.buffer = reverbIR(ctx, 2.8, 0.55, 0.02);
-      const revRet = ctx.createGain();
-      revRet.gain.value = 0.38;
-      // keep the reverb out of the low end and the fizz
-      const revHP = eq("highpass", 220, 0.6);
-      const revLP = eq("lowpass", 6500, 0.6);
-      this.reverb.connect(revHP);
-      revHP.connect(revLP);
-      revLP.connect(revRet);
-      revRet.connect(this.input);
+      // the send into the app's ONE shared room (context.ts), ducked and volumed like the dry music
+      const room = getRoom();
+      if (!room) return false;
+      setRoomOn(!this.lite);
+      this.revIn = ctx.createGain();
+      this.revDuck = ctx.createGain();
+      this.revVol = ctx.createGain();
+      this.revVol.gain.value = 0;
+      this.revIn.connect(this.revDuck);
+      this.revDuck.connect(this.revVol);
+      this.revVol.connect(room.input);
       this.input.connect(hp);
       top.connect(this.bright);
       this.bright.connect(this.lift);
@@ -439,14 +444,14 @@ class MusicEngine {
   }
 
   private switchTo(id: TrackId) {
-    if (!this.ensureGraph() || !this.ctx || !this.input || !this.reverb) return;
+    if (!this.ensureGraph() || !this.ctx || !this.input || !this.revIn) return;
     const live = this.playing.find((p) => !p.dying);
     if (live && live.def.id === id) return;
     const ctx = this.ctx;
     for (const p of this.playing) if (!p.dying) this.kill(p, CROSSFADE_SEC);
     const def = TRACKS[id];
     try {
-      const kit = new Kit(ctx, this.input, this.reverb, { bpm: def.bpm, ...def.kit });
+      const kit = new Kit(ctx, this.input, this.revIn, { bpm: def.bpm, ...def.kit });
       if (this.lite) kit.setLite(true);
       kit.mix.gain.value = def.level;
       kit.setLayers(this.layersNow(def), 0.05);
@@ -571,6 +576,7 @@ class MusicEngine {
     if (!ctx || !this.duckG) return;
     const on = this.duckers.size > 0;
     expRamp(this.duckG.gain, on ? dbToGain(DUCK_DB) : 1, on ? DUCK_ATTACK : DUCK_RELEASE, ctx);
+    if (this.revDuck) expRamp(this.revDuck.gain, on ? dbToGain(DUCK_DB) : 1, on ? DUCK_ATTACK : DUCK_RELEASE, ctx);
   }
 
   private applyVolume(sec: number) {
@@ -578,6 +584,7 @@ class MusicEngine {
     if (!ctx || !this.vol) return;
     const v = this.muted ? 0 : BASE_LEVEL * this.volume * this.volume; // squared: a natural-feeling slider
     ramp(this.vol.gain, v, sec, ctx);
+    if (this.revVol) ramp(this.revVol.gain, v, sec, ctx);
   }
 }
 
