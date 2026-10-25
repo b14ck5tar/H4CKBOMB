@@ -23,9 +23,14 @@ export type Opener = {
   goal: string;
   situation: string;
   npc_line?: { speaker: string; line: string };
-  /** Who the trouble is, so later scenes stay consistent. `want` is tied to the real story's emotional core. */
+  /**
+   * CD: "we don't need a villain, we need a problem." The center of the quest: something stuck, lost, broken,
+   * spreading or going wrong. pronoun is set only when the problem is a creature, else null.
+   */
+  problem: { name: string; stakes: string; pronoun: Pronoun | null };
+  /** @deprecated alias of `problem` for one release: {name, pronoun: problem.pronoun ?? "it", want: problem.stakes}. */
   threat: { name: string; pronoun: Pronoun; want: string };
-  /** The story ladder: 3-4 step goals, setup → twist → climax. The last one pays off threat.want and the real story. */
+  /** The story ladder: 3-4 steps to solve the problem, setup → twist → climax. The last one pays off the real story. */
   beats: string[];
 };
 export const PRONOUNS = ["she", "he", "they", "it"] as const;
@@ -53,43 +58,43 @@ const clip = (s: unknown, n: number) => String(s ?? "").replace(/[<>]/g, "").rep
 
 // ---------------------------------------------------------------- prompt
 
-const EXAMPLES = `EXAMPLES (NEWS). Each one disguises the real story as a metaphor that only clicks at the reveal.
+const EXAMPLES = `EXAMPLES (NEWS). Each one disguises the real story as a PROBLEM that only clicks at the reveal.
 1. REAL: "Road with new bridge to reopen after nearly 3 years"
-   key_concepts ["road", "bridge", "reopen", "closed", "traffic"]
-   quest_title "The Hungry Hum"  mood "eerie"
-   teaser "Something under the river hums all night, and it has a taste for metal."
-   scene_line "A whole river town has waited years for this sunrise, and tonight the water is humming."
-   trouble_line "A giant snake that eats metal lives in the river, and she is chewing the shiny new railing."
-   stakes_line "She ate the old way across, so if she eats this one too, the town stays cut off for years."
-   goal "Get the metal snake back to sleep before sunrise"
-   situation "Fresh orange paint, a shiny railing with bite marks, and a dark river that hums."
-   npc_line {"speaker": "Night guard", "line": "Good morning. Is the river supposed to hum?"}
-   threat {"name": "The Metal Snake", "pronoun": "she", "want": "wants one last big metal snack before winter"}
-   beats ["Find out what is humming", "Lure the snake away from the railing", "Find her a better metal snack", "Get the first car across at sunrise"]
+   key_concepts ["road", "bridge", "reopen", "closed", "traffic", "steel"]
+   quest_title "The Metal Went Soft"  mood "eerie"
+   teaser "Every bit of metal in a river town is going soft, and tomorrow is a big day."
+   scene_line "A river town has waited years for this sunrise, and tonight every railing feels soft as butter."
+   problem_line "The metal in town gets tired at night and bends, and nobody knows how to wake it up."
+   stakes_line "If the shiny new railing goes soft too, nobody crosses the river for years."
+   goal "Make the metal strong again before sunrise"
+   situation "A bendy lamp post, a railing drooping like a noodle, and a toolbox full of floppy wrenches."
+   npc_line {"speaker": "Night guard", "line": "My keys bent in my pocket. That is new."}
+   problem {"name": "The Tired Metal", "stakes": "nobody can cross the river for years", "pronoun": "none"}
+   beats ["Find where the soft metal starts", "Learn what makes the metal tired", "Wake up the old metal first", "Get the first car across at sunrise"]
 2. REAL: "Massive 80-ton boulder comes crashing down after more than a century at a park"
    key_concepts ["boulder", "rock", "crash", "fall", "century", "attraction"]
-   quest_title "The Hand That Let Go"  mood "spooky"
-   teaser "Something held on tight for a hundred years, and today it finally let go."
-   scene_line "A quiet park path is covered in frosty handprints as big as couches."
-   trouble_line "A giant ice hand held something heavy up high for a hundred years, and now it grabs everything."
-   stakes_line "If the hand keeps grabbing, the park can never open again."
-   goal "Put the grabby ice hand to sleep for winter"
-   situation "A smashed walkway, a huge dent in the ground, and an ice hand juggling traffic cones."
-   npc_line {"speaker": "Park ranger", "line": "It took my lunch. It does not even have a mouth."}
-   threat {"name": "The Ice Hand", "pronoun": "it", "want": "wants something new to hold after a hundred tired years"}
-   beats ["Follow the frosty handprints", "Get the ranger's lunch back", "Give the hand something new to hold", "Tuck the hand in for winter"]
+   quest_title "The Park Let Go"  mood "spooky"
+   teaser "After a hundred years of holding on, a whole park is letting go of things."
+   scene_line "In a quiet park, things that held still for a hundred years are slipping and sliding."
+   problem_line "The park got tired of holding on, so benches tip, signs drop and paths slide downhill."
+   stakes_line "If nothing will stay put, the park can never open again."
+   goal "Get the park to hold on through the winter"
+   situation "A bench sliding by itself, a sign hanging by one bolt, and a cracked path tilting downhill."
+   npc_line {"speaker": "Park ranger", "line": "My lunch rolled away. Again."}
+   problem {"name": "The Tired Park", "stakes": "the park can never open again", "pronoun": "none"}
+   beats ["Catch the sliding bench", "Find out why the park is tired", "Give the park a reason to hold on", "Tuck the park in for winter"]
 3. REAL: "Plastic pellets on a beach likely came from a river spill hundreds of miles away"
    key_concepts ["plastic", "pellets", "nurdles", "spill", "pollution", "coast"]
-   quest_title "Mom Wants Her Eggs"  mood "silly"
-   teaser "A billion tiny eggs washed up on the sand, and their mom wants them back."
-   scene_line "A cold, windy beach is covered in tiny white eggs, millions and millions of them."
-   trouble_line "A sea mom as big as a ferry swam a very long way to find them, and she is building a nest."
-   stakes_line "The eggs will never hatch, so if she keeps nesting, the whole shore gets buried."
-   goal "Get the eggs back without breaking her heart"
-   situation "A rusty dock at low tide, a nest of white eggs as big as a house, and a giant sea mom curled around it."
-   npc_line {"speaker": "The sea mom", "line": "Shh. They are almost ready to hatch. I can tell."}
-   threat {"name": "The Sea Mom", "pronoun": "she", "want": "wants her babies back where they belong"}
-   beats ["Find out who is building the nest", "Show the sea mom the eggs are fake", "Help her find her real babies", "Clear the beach before the tide"]`;
+   quest_title "Beads That Want Home"  mood "silly"
+   teaser "A billion tiny white beads are rolling up the beach, and they are all homesick."
+   scene_line "A cold, windy beach is covered in tiny white beads, and they are rolling uphill."
+   problem_line "The beads came from very far away, and they are rolling inland trying to find home."
+   stakes_line "If they reach town, every street fills up with beads, and they still won't be home."
+   goal "Send the lost beads back where they came from"
+   situation "A sea wall covered in beads, a leaky bucket, and a long wet trail heading inland."
+   npc_line {"speaker": "Lifeguard", "line": "They roll uphill. I checked twice."}
+   problem {"name": "The Homesick Beads", "stakes": "the whole town fills up with beads", "pronoun": "none"}
+   beats ["Stop the beads before they reach town", "Learn where the beads came from", "Find the way back to their river", "Send every bead home"]`;
 
 export const OPENER_SYSTEM = `You write the opening of a co-op party story game. A group of friends play heroes together. Your words
 appear on a TV and are read aloud, so they must be instantly clear to everyone, including an 8-year-old.
@@ -101,7 +106,7 @@ Odd and funny, a little spooky at most. Deadpan: the joke is one specific detail
 You get a SOURCE. It is either NEWS (a real news story) or PERSONAL (a real thing that happened to one player).
 
 THE REVEAL RULE (NEWS, most important): players must NOT guess the real story until the reveal, and at the
-reveal it must click ("oh, THAT is what the scratching cabinet was!"). Everything except official_line,
+reveal it must click ("oh, THAT is what the soft metal was!"). Everything except official_line,
 whats_happening_now and real_ending is the disguised FANTASY version:
 - Turn the real story into an urban-fantasy METAPHOR. Keep its emotional core (forgotten and wants to be found,
   stuck and wants out, the biggest ever and wants to be seen, lost and wants to go home) and its rough shape,
@@ -123,20 +128,22 @@ WRITE:
 - quest_title: 2 to 5 words, funny and concrete, fantasy only. Shown on the story vote card.
 - teaser: ONE intriguing fantasy sentence for the vote card, 18 words max, no real-world giveaways.
 - mood: one word from the list that fits the story.
-- threat: who the trouble is, kept the same in every later scene. name: a plain 2-4 word description
-  ("The Ice Hand", "The Sea Mom"), never an invented proper name. pronoun: she, he, they or it. want: one plain
-  line of what it wants, tied to the real story's emotional core ("wants to be remembered").
+- THE CENTER IS A PROBLEM, NOT A VILLAIN. Something is stuck, lost, broken, spreading or going wrong, and the
+  group solves it together. No bad guy to defeat. A creature is fine only if the creature itself is the problem
+  (lost, stuck, scared), never an enemy.
+- problem: kept the same in every later scene. problem_name: a plain 2-4 word name ("The Tired Metal",
+  "The Homesick Beads"), never an invented proper name. problem_stakes: what goes wrong if nobody solves it, in
+  a few plain words. problem_pronoun: she, he, they or it ONLY if the problem is a creature, else "none".
 - beats: the story ladder, 3 or 4 step goals in order (setup, twist, climax), each 8 words max and starting with
-  a verb. Fantasy only, with the same disguise rules. Each step follows from the one before, and the LAST step
-  gives the threat what it wants (or fixes it), so the real story clicks at the reveal. The first beat is a
+  a verb. They are the steps to SOLVE the problem. Fantasy only, with the same disguise rules. Each step follows
+  from the one before, and the LAST step solves the problem in a way that pays off the real story at the reveal. The first beat is a
   small first step toward the goal, and the last beat finishes the goal.
 - The narration is three sentences, 45 words max in total, written as three fields:
   - scene_line: where we are and what is strange (fantasy only, no real names or numbers).
-  - trouble_line: WHO or WHAT the trouble is, in plain words, and what it is doing. This is the one magical
-    twist that secretly explains the real event. Anyone or anything named in the goal MUST be explained here
-    ("a ghost who rents a room under the volcano", not just "the lodger").
-  - stakes_line: WHY the goal matters: what goes wrong if the group fails ("if it eats this one, the road
-    stays closed for years"). Cause and effect, said plainly.
+  - problem_line: WHAT the problem is, in plain words, and why it is happening. This is the one magical twist
+    that secretly explains the real event. Anything named in the goal MUST be explained here.
+  - stakes_line: WHY the goal matters: what goes wrong if the group fails ("if the new railing goes soft too,
+    nobody crosses the river for years"). Cause and effect, said plainly.
   An 8-year-old must be able to retell the problem after hearing these three sentences once.
 - goal: what the group must do, 10 words max, starting with a verb ("Get", "Find", "Put", "Help", "Stop").
   It must be clear when the goal is done. Use only things already explained in the three lines.
@@ -204,7 +211,7 @@ const str = { type: "string" } as const;
 export const OPENER_SCHEMA = {
   type: "object",
   additionalProperties: false,
-  required: ["safe", "unsafe_message", "key_concepts", "quest_title", "teaser", "mood", "scene_line", "trouble_line", "stakes_line", "goal", "situation", "npc_speaker", "npc_line", "official_line", "whats_happening_now", "real_ending", "threat_name", "threat_pronoun", "threat_want", "beats"],
+  required: ["safe", "unsafe_message", "key_concepts", "quest_title", "teaser", "mood", "scene_line", "problem_line", "stakes_line", "goal", "situation", "npc_speaker", "npc_line", "official_line", "whats_happening_now", "real_ending", "problem_name", "problem_pronoun", "problem_stakes", "beats"],
   properties: {
     safe: { type: "boolean" },
     unsafe_message: str,
@@ -213,7 +220,7 @@ export const OPENER_SCHEMA = {
     teaser: str,
     mood: { type: "string", enum: [...MOODS] },
     scene_line: str,
-    trouble_line: str,
+    problem_line: str,
     stakes_line: str,
     goal: str,
     situation: str,
@@ -222,9 +229,9 @@ export const OPENER_SCHEMA = {
     official_line: str,
     whats_happening_now: str,
     real_ending: str,
-    threat_name: str,
-    threat_pronoun: { type: "string", enum: [...PRONOUNS] },
-    threat_want: str,
+    problem_name: str,
+    problem_pronoun: { type: "string", enum: [...PRONOUNS, "none"] },
+    problem_stakes: str,
     beats: { type: "array", items: str },
   },
 } as const;
@@ -236,13 +243,13 @@ type Draft = {
   quest_title: string;
   teaser: string;
   mood: Mood;
-  threat_name: string;
-  threat_pronoun: Pronoun;
-  threat_want: string;
+  problem_name: string;
+  problem_pronoun: Pronoun | "none";
+  problem_stakes: string;
   beats: string[];
   title: string; // = quest_title, set in code
   scene_line: string;
-  trouble_line: string;
+  problem_line: string;
   stakes_line: string;
   narration: string; // built in code from the three lines
   goal: string;
@@ -271,6 +278,8 @@ function contentWords(s: string) {
   );
 }
 
+/** CD: "we don't need a villain, we need a problem." */
+const VILLAIN = /\b(defeat|destroy|fight|battle|villain|enemy|evil|monster|kill|banish|vanquish|trap the|capture the)\b/i;
 const STAKES = /\b(if|unless|or|otherwise|will|won't|can't|cannot|never|forever|before|until|so)\b/i;
 const GOAL_VERBS = new Set("stop find bring keep help catch calm guide leave return clean fix save send stay sleep tonight before after first without".split(" "));
 /** Talk about the source or about missing facts: never shown to players at the reveal. */
@@ -389,7 +398,7 @@ export function headlineKeyNouns(headline: string) {
 
 function problems(d: Draft, mode: "news" | "personal", sourceText: string, personal?: PersonalSource, sourceSentences: string[] = [], giveaway: string[] = [], keyNouns: string[] = []): { list: string[]; grade: number } {
   const list: string[] = [];
-  const grade = fkGrade([d.scene_line, d.trouble_line, d.stakes_line, d.goal, d.situation, d.teaser]);
+  const grade = fkGrade([d.scene_line, d.problem_line, d.stakes_line, d.goal, d.situation, d.teaser]);
   if (grade > MAX_GRADE) list.push(`reading grade is ${grade}, the max is ${MAX_GRADE}: use shorter sentences and everyday words, but keep it natural English`);
   const nw = wordCount(d.narration);
   if (nw > 48) list.push(`the three lines are ${nw} words together, the max is 45`);
@@ -401,7 +410,7 @@ function problems(d: Draft, mode: "news" | "personal", sourceText: string, perso
   if (!d.teaser.trim() || wordCount(d.teaser) > 18) list.push(`teaser must be one sentence of 18 words max (it is ${wordCount(d.teaser)})`);
   if (!(MOODS as readonly string[]).includes(d.mood)) list.push(`mood must be one of ${MOODS.join(", ")}`);
   const beats = Array.isArray(d.beats) ? d.beats.map((b) => String(b ?? "").trim()).filter(Boolean) : [];
-  const all = [d.quest_title, d.teaser, d.narration, d.goal, d.situation, d.npc_speaker, d.npc_line, d.threat_name, d.threat_want, ...beats].join(" ");
+  const all = [d.quest_title, d.teaser, d.narration, d.goal, d.situation, d.npc_speaker, d.npc_line, d.problem_name, d.problem_stakes, ...beats].join(" ");
   if (beats.length < 3 || beats.length > 4) list.push(`beats must be 3 or 4 steps (got ${beats.length})`);
   const longBeat = beats.find((b) => wordCount(b) > 8);
   if (longBeat) list.push(`each beat is 8 words max ("${longBeat}" is ${wordCount(longBeat)})`);
@@ -417,19 +426,20 @@ function problems(d: Draft, mode: "news" | "personal", sourceText: string, perso
     const concepts = conceptWords([...keyNouns, ...(Array.isArray(d.key_concepts) ? d.key_concepts : [])]);
     const used = concepts.filter((c) => conceptRe(c).test(all));
     if (used.length) list.push(`giveaway: the opener uses the real story's key nouns (${used.join(", ")}). Disguise them as a fantasy metaphor`);
-    if (!d.threat_name.trim() || !d.threat_want.trim()) list.push("threat_name and threat_want are required");
+    if (!d.problem_name.trim() || !d.problem_stakes.trim()) list.push("problem_name and problem_stakes are required");
+    if (VILLAIN.test(`${d.problem_name} ${d.problem_line} ${d.goal} ${(Array.isArray(d.beats) ? d.beats : []).join(" ")}`)) list.push("this reads like a villain to defeat: make it a problem to solve (stuck, lost, broken, spreading)");
   }
   for (const p of styleProblems(all)) list.push(p);
   const coined = inventedNames(all, sourceText);
   if (coined.length) list.push(`invented names (${coined.join(", ")}): describe things in plain words instead`);
   if (/\byou(r|'re)?\b/i.test(`${d.narration} ${d.situation}`)) list.push(`do not say "you"`);
-  for (const [k, v] of [["scene_line", d.scene_line], ["trouble_line", d.trouble_line], ["stakes_line", d.stakes_line]] as const) {
+  for (const [k, v] of [["scene_line", d.scene_line], ["problem_line", d.problem_line], ["stakes_line", d.stakes_line]] as const) {
     if (!v.trim()) list.push(`${k} is required`);
     else if ((v.trim().match(/[.!?](\s|$)/g) ?? []).length > 1) list.push(`${k} must be ONE sentence`);
   }
   if (d.stakes_line.trim() && !STAKES.test(d.stakes_line)) list.push(`stakes_line must say what goes wrong if the group fails ("if ... then ...")`);
   // Everything the goal mentions must be explained in the narration (the "who is the lodger?" bug).
-  const told = stems(`${d.scene_line} ${d.trouble_line} ${d.stakes_line}`);
+  const told = stems(`${d.scene_line} ${d.problem_line} ${d.stakes_line}`);
   const unexplained = [...contentWords(d.goal)].filter((w) => !GOAL_VERBS.has(w) && !w.endsWith("ly") && !told.has(w.slice(0, 4)));
   if (unexplained.length) list.push(`the goal mentions ${unexplained.map((w) => `"${w}"`).join(", ")} but the three lines never say who or what that is`);
   if (mode === "news") {
@@ -466,7 +476,8 @@ function newsFallback(): Opener {
     narration: "A quiet town woke up to something very strange this morning. Something hidden is causing it, and it is still nearby. If nobody finds it tonight, it will happen again tomorrow.",
     goal: "Find the hidden thing before morning",
     situation: "A quiet street at night, a flickering lamp, and one thing that looks a little out of place.",
-    threat: { name: "The Hidden Thing", pronoun: "it", want: "wants someone to finally notice it" },
+    problem: { name: "The Out-of-Place Thing", stakes: "it will happen again tomorrow", pronoun: null },
+    threat: { name: "The Out-of-Place Thing", pronoun: "it", want: "it will happen again tomorrow" },
     beats: ["Look for what is out of place", "Follow the strange clue to its hiding spot", "Find out what the hidden thing wants", "Give it what it wants before morning"],
   };
 }
@@ -502,7 +513,8 @@ function personalFallback(src: PersonalSource, authorHero: string): Opener {
     narration: sanitize(`${who} had a day that went wrong in a very strange way. ${firstSentence(src.setup, 160)} Tonight, the whole group is stuck in it too.`),
     goal: "Get through the day and fix what went wrong",
     situation: "The exact spot where it all started, looking normal except for one strange detail.",
-    threat: { name: "The Bad Luck", pronoun: "it", want: "wants this one day to go as wrong as possible" },
+    problem: { name: "The Bad Luck Day", stakes: "the whole day falls apart", pronoun: null },
+    threat: { name: "The Bad Luck Day", pronoun: "it", want: "the whole day falls apart" },
     beats: ["Find where the bad luck started", "Get past the first big problem", "Turn the bad luck around", "Fix what went wrong before the day ends"],
   };
 }
@@ -519,8 +531,8 @@ function userPrompt(mode: "news" | "personal", rating: Rating, party: PartyMembe
   if (giveaway.length) u += `\nGIVEAWAY WORDS (only allowed in official_line and whats_happening_now): ${giveaway.join(", ")}. Also no digits outside those two fields.\n`;
   if (keyNouns.length) u += `KEY NOUNS from the headline (disguise them, never use them or their plurals outside official_line and whats_happening_now): ${keyNouns.join(", ")}\n`;
   if (prev) {
-    const { threat_name, threat_want, quest_title, teaser, scene_line, trouble_line, stakes_line, goal, situation, official_line, whats_happening_now } = prev.draft;
-    u += `\nYour previous draft had problems. Write a new version that fixes ALL of them and keeps what worked.\nPREVIOUS DRAFT: ${JSON.stringify({ quest_title, teaser, threat_name, threat_want, beats: prev.draft.beats, scene_line, trouble_line, stakes_line, goal, situation, ...(mode === "news" ? { official_line, whats_happening_now } : {}) })}\nPROBLEMS:\n${prev.problems.map((p) => `- ${p}`).join("\n")}\n`;
+    const { problem_name, problem_stakes, quest_title, teaser, scene_line, problem_line, stakes_line, goal, situation, official_line, whats_happening_now } = prev.draft;
+    u += `\nYour previous draft had problems. Write a new version that fixes ALL of them and keeps what worked.\nPREVIOUS DRAFT: ${JSON.stringify({ quest_title, teaser, problem_name, problem_stakes, beats: prev.draft.beats, scene_line, problem_line, stakes_line, goal, situation, ...(mode === "news" ? { official_line, whats_happening_now } : {}) })}\nPROBLEMS:\n${prev.problems.map((p) => `- ${p}`).join("\n")}\n`;
   }
   return u;
 }
@@ -535,14 +547,17 @@ function finish(d: Draft): Opener {
     narration: sanitize(d.narration),
     goal: sanitize(d.goal).replace(/[.!]+$/, ""),
     situation: sanitize(d.situation),
+    problem: { name: "", stakes: "", pronoun: null },
     threat: { name: "", pronoun: "it", want: "" },
     beats: (Array.isArray(d.beats) ? d.beats : []).map((b) => sanitize(String(b ?? "")).replace(/[.!]+$/, "")).filter(Boolean).slice(0, 4),
   };
-  o.threat = {
-    name: sanitize(d.threat_name).replace(/[.!]+$/, "") || "The Trouble",
-    pronoun: (PRONOUNS as readonly string[]).includes(d.threat_pronoun) ? d.threat_pronoun : "it",
-    want: sanitize(d.threat_want).replace(/[.!]+$/, ""),
+  const pron = (PRONOUNS as readonly string[]).includes(d.problem_pronoun) ? (d.problem_pronoun as Pronoun) : null;
+  o.problem = {
+    name: sanitize(d.problem_name).replace(/[.!]+$/, "") || "The Problem",
+    stakes: sanitize(d.problem_stakes).replace(/[.!]+$/, ""),
+    pronoun: pron,
   };
+  o.threat = { name: o.problem.name, pronoun: pron ?? "it", want: o.problem.stakes }; // alias for one release
   if (d.npc_speaker.trim() && d.npc_line.trim()) o.npc_line = { speaker: sanitize(d.npc_speaker), line: sanitize(d.npc_line) };
   return o;
 }
@@ -610,7 +625,7 @@ ${RATING_GUIDE[rating]}`;
       timeoutMs: Math.max(3_000, left() - 900),
     }).then((d) => {
       d.title = d.quest_title;
-      d.narration = [d.scene_line, d.trouble_line, d.stakes_line].map((x) => String(x ?? "").trim()).filter(Boolean).join(" ");
+      d.narration = [d.scene_line, d.problem_line, d.stakes_line].map((x) => String(x ?? "").trim()).filter(Boolean).join(" ");
       return { d, effort };
     });
   };

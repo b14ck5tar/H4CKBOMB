@@ -42,7 +42,7 @@ const show = (label, r, ms) => {
   line(`  NARRATION: ${o.narration}`);
   line(`  GOAL:      ${o.goal}`);
   line(`  SITUATION: ${o.situation}`);
-  if (o.threat) line(`  THREAT:    ${o.threat.name} (${o.threat.pronoun}), ${o.threat.want}`);
+  if (o.problem) line(`  PROBLEM:   ${o.problem.name} (${o.problem.pronoun ?? "no pronoun"}), stakes: ${o.problem.stakes}`);
   if (o.beats?.length) line(`  BEATS:     ${o.beats.join(" > ")}`);
   if (o.npc_line) line(`  NPC:       ${o.npc_line.speaker}: "${o.npc_line.line}"`);
   const e = r.ending_facts;
