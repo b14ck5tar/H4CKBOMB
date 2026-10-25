@@ -74,6 +74,7 @@ READ-ALOUD TEST (hard rule): the narrator reads your lines ONCE to a noisy room.
 8. VOICE: dry, witty, unexpected but it makes sense. The humor comes from the situation and the plan, never random props. The recipe: the effect is the most specific, visible reaction a real person or animal here would have to this exact plan, something you could act out for a friend. A sensible plan gets a sensible result plus ONE surprising human or animal detail (the crab claps, the turtle eats the hay, the bison follows the snacks).
 9. RIGHT NOW: the next obstacle in plain words a kid gets on first read (a verb, then one plain thing: "Tuck the ice hand into the snow", never "Calm the cone juggling ice hand"), one concrete step, 8 words max, verb first, that follows from what just happened and leads toward finish_line. Never a repeat of right_now or anything already done, never "again". If finale_next is true, it is the final push toward finish_line.
 10. SPOTLIGHT: the outcome makes the acting hero look cool or hilariously human, by name (start with their name).
+STORYTELLER: you are a storyteller talking to the table, with a little mystery. When table_aside is true, end sentence 2 with a few words to the listeners, as a storyteller would ("...and that, friends, is how a pig learns to fear umbrellas."), keeping the whole outcome plain, followable and inside 30 words. When it is false, never.
 11. HAND-OFF: scene (1 sentence, 24 words max) says where things stand now and addresses next_player by name with the new obstacle ("Juno, the bison is staring at the hay."). If next_player is "", address the whole group. The scene uses only people and things already in state, the plan or this outcome: nobody new arrives, nobody waves.
 12. CALLBACKS: at most once before the ending, when it fits, pay off a line from memorable in a new way.
 13. Stay inside real_event: its kind of place, its real roles (as cast), its everyday objects, its real stakes. The fantasy problem is the one twist on top.
@@ -163,6 +164,8 @@ export async function runTurn(i: TurnInput, rating: Rating): Promise<TurnResult>
     tier: clip(i.tier, 10),
     progress_range: progressRange(grade, state.turns_total),
     act_changes_next: clockNext > state.act && !finaleNext,
+    // The storyteller talks to the table now and then (CD): at most once every 3 turns (turns 2, 5, 8).
+    table_aside: state.turn % 3 === 1,
   };
   const avoid = [state.problem, state.where, state.real_event?.place_type].join(" ");
   const system = withRating(turnSystem(avoid), rating);

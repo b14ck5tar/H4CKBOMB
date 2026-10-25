@@ -114,7 +114,7 @@ const outcomeMs = (text: string) => Math.min(12_000, Math.max(6500, text.split(/
 // Autopilot: a phone that's said nothing for this long (mid-story) is away; its hero keeps playing on its own.
 const AWAY_SILENCE_MS = 25_000;
 const AWAY_AFTER_TIMEOUTS = 2;
-export const MONTAGE_PANEL_MS = 4800; // one ending-montage panel on the TV
+export const MONTAGE_PANEL_MS = 3600; // one ending-montage panel on the TV (was 4.8 s: the CD waited ~70 s across montage + reveal)
 /** design/35 rule 4: progress is decided by code from the grade, never by the AI. */
 /** The house ranking of the hand-made stories (Quick Tale opens on the first one a table hasn't played). */
 const JUDGE_TOP = 3; // judge mode (/tv?judge=1) rotates through the first 3 FEATURED stories only
@@ -2772,7 +2772,8 @@ export class GameHost {
         long: FEATURES.longStorybook,
         real_story: this.seed?.the_real_story,
       }),
-      30_000,
+      // Started with the final roll; the keepsake QR waits on it, so a slow book falls back instead (was 30 s).
+      15_000,
       (d) => (Array.isArray(d?.pages) && d.pages.length ? d : null),
       bookFallback,
     );
