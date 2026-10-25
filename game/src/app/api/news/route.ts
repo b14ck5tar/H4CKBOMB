@@ -2,7 +2,13 @@ import { NextResponse, type NextRequest } from "next/server";
 import { unstable_cache } from "next/cache";
 import { getNewsCandidates, lastStats, type NewsCandidate } from "@/server/news/candidates";
 import { fillFromLibrary } from "@/server/news/library";
-import { DEFAULT_RATING, isRating } from "@/lib/rating";
+import { DEFAULT_RATING, isRating, questAllowed } from "@/lib/rating";
+import SEEDS from "@/data/seed_quests.json";
+import type { Rating } from "@/lib/types";
+
+/** The vote shows 3 cards; below this the hand-written seeds top the list up (played ones last). */
+const MIN_STORIES = 3;
+type SeedLike = { id: string; quest_title?: string; realm_name?: string; rating?: Rating; the_real_story?: { headline?: string; summary?: string; source?: string; link?: string; date?: string } };
 
 // GET /api/news?rating=kids|teens|adults&played=id1,id2
 //   → { quests: [{id, origin, headline, snippet, source, url, date, place, rating, storyability, scores, has_opener}], generatedAt }
@@ -51,6 +57,23 @@ export async function GET(req: NextRequest) {
     console.warn(`[api/news] ${error}`);
   }
   const quests = fillFromLibrary(live, rating, played);
+  // Never run out (the vote needs 3, the Quick Tale needs 1): top up from the hand-written seeds, gated or not.
+  if (quests.length < MIN_STORIES) {
+    const have = new Set(quests.map((q) => q.id));
+    const seeds = (SEEDS as SeedLike[]).filter((x) => !have.has(x.id) && questAllowed(x.rating ?? "teens", rating));
+    const fresh = seeds.filter((x) => !played.has(x.id));
+    for (const x of [...fresh, ...seeds.filter((x) => played.has(x.id))]) {
+      if (quests.length >= MIN_STORIES) break;
+      const r = x.the_real_story ?? {};
+      quests.push({ id: x.id, origin: "curated", headline: r.headline ?? x.quest_title ?? x.id, snippet: r.summary ?? "", source: r.source ?? "", url: r.link ?? "", date: r.date ?? "", place: x.realm_name ?? "", rating: x.rating ?? "teens", storyability: 3, checklist: null, one_sentence_setup: "", dilemma: "", has_opener: false });
+      have.add(x.id);
+    }
+    // Still short (a table that played almost everything): bring back gated stories it already played.
+    for (const q of fillFromLibrary(live, rating, new Set())) {
+      if (quests.length >= MIN_STORIES) break;
+      if (!have.has(q.id)) quests.push(q), have.add(q.id);
+    }
+  }
   const body: Record<string, unknown> = { quests, generatedAt };
   if (debug) Object.assign(body, { stats: lastStats(), all: live, ...(error ? { error } : {}) });
   return NextResponse.json(body, {

@@ -1,6 +1,6 @@
 {
  "version": 1,
- "updated": "2026-10-25T15:37:52.426Z",
+ "updated": "2026-10-25T15:43:01.425Z",
  "stories": [
   {
    "id": "news-0048323f2b",
@@ -12,45 +12,551 @@
    "date": "2026-10-21T14:33:10Z",
    "place": "Sumatra, Indonesia",
    "rating": "kids",
-   "storyability": 4,
+   "storyability": 5,
    "thumbnail": "https://www.earth.com/assets/_next/image/?url=%2Fimg%2F16x9%2F1920%2Fmedia-2026%2F2026%2F10%2F15105412%2Fratu-sumatran-rhino-way-kambas-sanctuary.jpg&w=1920&q=75",
    "added_at": "2026-10-25T08:36:36.068Z",
    "checklist": {
     "box1": {
      "yes": true,
-     "why": "Last rhinos need whole crew to save"
+     "why": "Village versus beast needs group"
     },
     "box2": {
      "yes": true,
-     "why": "Kill monster, capture, or leave wild"
+     "why": "Save rhino or drive it off"
     },
     "box3": {
      "yes": true,
-     "why": "Night beast panic plays vividly live"
+     "why": "Mythic mistaken-beast quest flows great"
     },
     "box4": {
      "yes": true,
-     "why": "Tracker, calmer, speaker, protector fit easily"
+     "why": "Protectors, trackers, mystics fit easily"
     },
     "box5": {
      "yes": true,
-     "why": "Fear, capture, escape allow many endings"
+     "why": "Fear, mercy create branching routes"
     },
     "box6": {
      "yes": true,
-     "why": "Rhino mistaken for shape-shifting pig stuns"
+     "why": "Rhino mistaken for magic pig"
     },
     "box7": {
      "yes": true,
-     "why": "Villagers fear magic beast at edge"
+     "why": "Villagers fear strange pig that is rhino"
     },
     "box8": {
      "yes": true,
-     "why": "Slay demon pig or save rare animal"
+     "why": "Protect rare beast or chase away"
     }
    },
-   "one_sentence_setup": "In a Sumatra village, a supposed shape-shifting pig threatens the village and a species' survival is at stake.",
-   "dilemma": "Treat the beast as an evil spirit to drive off or as a rare animal to protect."
+   "one_sentence_setup": "In Sumatra villagers find a monster pig that is really a rare rhino.",
+   "dilemma": "Protect the strange beast or drive it away to stay safe."
+  },
+  {
+   "id": "news-c69a3801cf",
+   "origin": "news",
+   "headline": "Sew down! Villagers knit fake cameras and cops to stop speeders",
+   "snippet": "Locals reckon the sign is working with many drivers falling for the mock speed cameras. Villagers in Fillongley, Warwickshire, have created knitted traffic officers in a bid to fool reckless drivers. (Emma Trimble via SWNS) Lorna Rosser, former Lollipop Lady in Fillongley village. (Emma Trimble via SWNS) Tom Decker with knitted traffic officer in Fillongley, Warwickshire, England.",
+   "source": "ttownmedia.com",
+   "url": "https://www.ttownmedia.com/news/national/sew-down-villagers-knit-fake-cameras-and-cops-to-stop-speeders/article_d76b692d-6168-5d9c-b718-2e0c02c71058.html",
+   "date": "2026-10-20T08:15:14Z",
+   "place": "Fillongley, United Kingdom",
+   "rating": "kids",
+   "storyability": 4,
+   "thumbnail": "https://bloximages.chicago2.vip.townnews.com/ttownmedia.com/content/tncms/assets/v3/editorial/8/b1/8b1186cf-2a93-5a52-8560-dec40cd5db5f/6ad67a6893cb3.image.jpg?resize=1200%2C900",
+   "added_at": "2026-10-25T09:50:48.095Z",
+   "opener": {
+    "title": "The Yarn Traffic Cop",
+    "quest_title": "The Yarn Traffic Cop",
+    "teaser": "A knitted cop keeps hopping into traffic, and he really wants everyone to slow down.",
+    "mood": "silly",
+    "narration": "Neighbors set knitted guards and knitted kids by a village crossing. One knitted guard woke eager and hops out to flag cars. If he gets hit, cars stop slowing and kids cannot cross.",
+    "goal": "Move the knitted guard off the road and slow cars",
+    "situation": "A wobbly yarn guard with a stop sign, a bench of knitted kids, and fast cars rolling past.",
+    "problem": {
+     "name": "The Eager Yarn Guard",
+     "stakes": "the crossing stays unsafe",
+     "pronoun": "he"
+    },
+    "threat": {
+     "name": "The Eager Yarn Guard",
+     "pronoun": "he",
+     "want": "the crossing stays unsafe"
+    },
+    "beats": [
+     "Set the knitted guards by the road",
+     "Flag fast cars to ease off",
+     "Keep the eager guard off the road",
+     "Slow traffic and keep the crossing safe"
+    ],
+    "real_setting": {
+     "place_type": "a small village road with a busy crossing",
+     "roles": [
+      "neighbors who knit",
+      "people in fast cars",
+      "kids crossing to school"
+     ],
+     "situation": "cars speed past a crossing, so neighbors set out knitted guards to slow traffic",
+     "stakes": "if cars keep speeding, kids and walkers could get hurt",
+     "arc": [
+      "Neighbors knit guards and set them by road",
+      "Fast cars keep rushing past the crossing",
+      "Cars begin to ease off near figures",
+      "Neighbors say the road feels safer"
+     ]
+    },
+    "npc_line": {
+     "speaker": "Knitter",
+     "line": "Love, get out of the road right now!"
+    }
+   },
+   "ending_facts": {
+    "kind": "news",
+    "official_line": "Villagers in Fillongley, Warwickshire made knitted traffic officers to slow speeding drivers.",
+    "whats_happening_now": "Locals say many drivers are fooled by the mock speed cameras and ease off.",
+    "headline": "Sew down! Villagers knit fake cameras and cops to stop speeders",
+    "source": "ttownmedia.com",
+    "url": "https://www.ttownmedia.com/news/national/sew-down-villagers-knit-fake-cameras-and-cops-to-stop-speeders/article_d76b692d-6168-5d9c-b718-2e0c02c71058.html",
+    "date": "2026-10-20T08:15:14Z"
+   },
+   "opener_rating": "teens",
+   "checklist": {
+    "box1": {
+     "yes": true,
+     "why": "Whole village knits decoy force"
+    },
+    "box2": {
+     "yes": true,
+     "why": "Trick works or drivers catch on"
+    },
+    "box3": {
+     "yes": true,
+     "why": "Cheeky yarn-prank quest plays fun"
+    },
+    "box4": {
+     "yes": true,
+     "why": "Crafters, illusionists, lookouts fit"
+    },
+    "box5": {
+     "yes": true,
+     "why": "Drivers, council reactions branch story"
+    },
+    "box6": {
+     "yes": true,
+     "why": "Knitted cops fooling real drivers"
+    },
+    "box7": {
+     "yes": true,
+     "why": "Village uses knitted cops against speeders"
+    },
+    "box8": {
+     "yes": true,
+     "why": "Trick speeders with fakes or demand real"
+    }
+   },
+   "one_sentence_setup": "In Fillongley villagers place knitted cops to trick speeding drivers.",
+   "dilemma": "Keep tricking speeders with knitted fakes or demand real enforcement."
+  },
+  {
+   "id": "news-2d576cc1da",
+   "origin": "news",
+   "headline": "Bear breaks into Mammoth Lakes library, raids honey on Winnie-the-Pooh centennial",
+   "snippet": "A bear walked into the Mammoth Lakes library before opening on Oct. 14, exactly 100 years after Winnie-the-Pooh was published. It ate peanut butter, peach cups, cookies and one jar of honey from the staff snacks, toured New Releases and the reference desk, and left on its own. No damage. The director said snacks are not part of the circulating collection.",
+   "source": "NBC Palm Springs",
+   "url": "https://www.nbcpalmsprings.com/ca-us-and-world/2026/10/19/bear-finds-honey-at-california-library-on-winniethepooh-anniversary",
+   "date": "2026-10-19T12:00:00Z",
+   "place": "Mammoth Lakes, USA",
+   "rating": "kids",
+   "storyability": 4,
+   "added_at": "2026-10-25T10:45:41.000Z",
+   "curated": "top-10 odd news Aug-Oct 2026 (story-candidates.md)",
+   "checklist": {
+    "box1": {
+     "yes": true,
+     "why": "Team must trap bear without harming books"
+    },
+    "box2": {
+     "yes": true,
+     "why": "Chase out, befriend, or hand to rangers"
+    },
+    "box3": {
+     "yes": true,
+     "why": "Library chase flows as fun group quest"
+    },
+    "box4": {
+     "yes": true,
+     "why": "Trackers, calm-animal, speed powers fit easily"
+    },
+    "box5": {
+     "yes": true,
+     "why": "Hide, lure, lock-in create branching routes"
+    },
+    "box6": {
+     "yes": true,
+     "why": "Bear stole honey on Pooh centennial day"
+    },
+    "box7": {
+     "yes": true,
+     "why": "Bear raids library honey, must remove safely"
+    },
+    "box8": {
+     "yes": true,
+     "why": "Evict bear or keep as mascot"
+    }
+   },
+   "one_sentence_setup": "A bear broke into a Mammoth Lakes library and is raiding snacks and honey.",
+   "dilemma": "Chase the bear out or keep it as a library mascot"
+  },
+  {
+   "id": "news-4dd516f5a0",
+   "origin": "news",
+   "headline": "Live snake found under plane carpet in Japan, forcing flight cancellation",
+   "snippet": "A pilot at Fukuoka Airport saw something small slither across the cockpit, and it vanished. The flight was cancelled and 43 passengers got refunds. The next day a mechanic lifted the carpet at the back and found a 40 cm harmless striped snake. Nobody knows how it got on board.",
+   "source": "The Star",
+   "url": "https://www.thestar.com.my/aseanplus/2026/10/21/live-snake-found-under-plane-carpet-in-japan-forcing-flight-cancellation",
+   "date": "2026-10-21T12:00:00Z",
+   "place": "Fukuoka, Japan",
+   "rating": "teens",
+   "storyability": 4,
+   "added_at": "2026-10-25T10:45:41.000Z",
+   "curated": "top-10 odd news Aug-Oct 2026 (story-candidates.md)",
+   "checklist": {
+    "box1": {
+     "yes": true,
+     "why": "Whole crew must search grounded plane together"
+    },
+    "box2": {
+     "yes": true,
+     "why": "Fly, cancel, spare or remove snake"
+    },
+    "box3": {
+     "yes": true,
+     "why": "Confined plane search builds tense teamwork"
+    },
+    "box4": {
+     "yes": true,
+     "why": "X-ray vision, sensing, tiny-size powers shine"
+    },
+    "box5": {
+     "yes": true,
+     "why": "Cockpit, cabin, carpet hide multiple search routes"
+    },
+    "box6": {
+     "yes": true,
+     "why": "Snake under carpet cancelled whole flight"
+    },
+    "box7": {
+     "yes": true,
+     "why": "A snake is loose inside a passenger plane"
+    },
+    "box8": {
+     "yes": true,
+     "why": "Delay everyone or risk flying with snake"
+    }
+   },
+   "one_sentence_setup": "A small snake vanished inside a plane in Fukuoka and the flight must be secured.",
+   "dilemma": "Cancel the flight and hunt the snake or let the plane fly anyway"
+  },
+  {
+   "id": "news-e5af271a18",
+   "origin": "news",
+   "headline": "2 pelicans rescued after escaping their enclosure at the Pittsburgh Zoo",
+   "snippet": "A gust of wind lifted two pelicans that cannot really fly out of their pen at the Pittsburgh Zoo and onto the Allegheny River. Staff, volunteers, River Rescue, the Army Corps of Engineers and the National Aviary chased them all afternoon. One was caught by 4 p.m., the other at 4:46. The zoo now keeps them inside on windy days.",
+   "source": "WPXI",
+   "url": "https://www.wpxi.com/news/local/two-pelicans-escape-their-pittsburgh-zoo-enclosure-search-underway-by-highland-park-bridge/ZXABE5VE4NAHNH3X2W5KYYO3SU/",
+   "date": "2026-10-17T12:00:00Z",
+   "place": "Pittsburgh, USA",
+   "rating": "kids",
+   "storyability": 3,
+   "added_at": "2026-10-25T10:45:41.000Z",
+   "curated": "top-10 odd news Aug-Oct 2026 (story-candidates.md)",
+   "checklist": {
+    "box1": {
+     "yes": true,
+     "why": "River chase needed staff, rescue, engineers"
+    },
+    "box2": {
+     "yes": true,
+     "why": "Recapture, release, or sanctuary all possible"
+    },
+    "box3": {
+     "yes": true,
+     "why": "Afternoon river pursuit flows well dramatized"
+    },
+    "box4": {
+     "yes": true,
+     "why": "Flyers, swimmers, trackers, animal-calming fit perfectly"
+    },
+    "box5": {
+     "yes": true,
+     "why": "Two birds, river forks, unexpected escapes"
+    },
+    "box6": {
+     "yes": true,
+     "why": "Wind blew flightless pelicans onto wild river"
+    },
+    "box7": {
+     "yes": true,
+     "why": "Wind blew two zoo pelicans onto river"
+    },
+    "box8": {
+     "yes": true,
+     "why": "Return to zoo or free on river"
+    }
+   },
+   "one_sentence_setup": "Wind blew two zoo pelicans onto the Allegheny River and they must be recaptured.",
+   "dilemma": "Catch the pelicans for the zoo or let them stay free on the river"
+  },
+  {
+   "id": "cornfield-dome",
+   "origin": "curated",
+   "headline": "'Space object' found in rural Minnesota cornfield came from Chinese rocket, experts say",
+   "snippet": "An 11-foot-wide metal dome found in a Stevens County, Minnesota, cornfield on Oct. 14 is likely part of a Chinese rocket's upper stage that fell back to Earth after a Sept. 15 launch, experts say, and nobody was hurt.",
+   "source": "Bring Me The News",
+   "url": "https://bringmethenews.com/minnesota-lifestyle/space-object-found-in-rural-minnesota-cornfield-came-from-chinese-rocket-experts-say",
+   "date": "2026-10-23",
+   "place": "Scott Township, Stevens County, Minnesota",
+   "rating": "teens",
+   "storyability": 5,
+   "added_at": "2026-10-25T06:54:06.718Z",
+   "opener": {
+    "title": "The Turtle Lost His Shell",
+    "quest_title": "The Turtle Lost His Shell",
+    "teaser": "A dome lands in corn, and a cold turtle calls it his.",
+    "mood": "wondrous",
+    "narration": "A grower and officers eye a wide metal dome in cut corn. A small sky turtle lost his shell on the way south. If he stays cold, he cannot fly south with his family.",
+    "goal": "Get the shell back to the small sky turtle",
+    "situation": "A dented shell, cut stalks, and a cold little turtle.",
+    "problem": {
+     "name": "The Cold Little Turtle",
+     "stakes": "the turtle freezes and the field stays shut",
+     "pronoun": "he"
+    },
+    "threat": {
+     "name": "The Cold Little Turtle",
+     "pronoun": "he",
+     "want": "the turtle freezes and the field stays shut"
+    },
+    "beats": [
+     "See a wide shell thud into corn",
+     "Meet the grower by the dented shell",
+     "Keep people back while the turtle shivers",
+     "Warm the turtle and clear the field"
+    ],
+    "real_setting": {
+     "place_type": "a rural cornfield",
+     "roles": [
+      "a corn grower",
+      "local officers",
+      "debris experts"
+     ],
+     "situation": "A wide metal dome sits in cut corn and no one knows where it fell from.",
+     "stakes": "Falling metal can hurt people, so the field must stay shut till it is safe.",
+     "arc": [
+      "A wide dome drops into a cornfield",
+      "The grower finds it and calls for help",
+      "Officers shut the field to keep people safe",
+      "Experts trace it to a faraway launch"
+     ]
+    },
+    "npc_line": {
+     "speaker": "Corn grower",
+     "line": "That is not mine, and I want it gone by supper."
+    }
+   },
+   "ending_facts": {
+    "kind": "news",
+    "official_line": "A metal dome in a Stevens County Minnesota cornfield on Oct 14 likely came from a Chinese rocket, experts say.",
+    "whats_happening_now": "Experts say it was likely part of a Chinese rocket upper stage from a Sept 15 launch. Nobody was hurt.",
+    "headline": "'Space object' found in rural Minnesota cornfield came from Chinese rocket, experts say",
+    "source": "Bring Me The News",
+    "url": "https://bringmethenews.com/minnesota-lifestyle/space-object-found-in-rural-minnesota-cornfield-came-from-chinese-rocket-experts-say",
+    "date": "2026-10-23"
+   },
+   "opener_rating": "teens",
+   "checklist": {
+    "box1": {
+     "yes": true,
+     "why": "Secure huge debris needs crew"
+    },
+    "box2": {
+     "yes": true,
+     "why": "Keep, return, study all possible"
+    },
+    "box3": {
+     "yes": true,
+     "why": "Farm crash investigation flows well"
+    },
+    "box4": {
+     "yes": true,
+     "why": "Lifters, scanners, talkers fit investigation"
+    },
+    "box5": {
+     "yes": true,
+     "why": "Owners, police, farmers want different things"
+    },
+    "box6": {
+     "yes": true,
+     "why": "Chinese rocket landed in cornfield"
+    },
+    "box7": {
+     "yes": true,
+     "why": "Rocket debris crashed in Minnesota cornfield"
+    },
+    "box8": {
+     "yes": true,
+     "why": "Keep debris, hand over, or return"
+    }
+   },
+   "one_sentence_setup": "A giant rocket dome crashed in a Minnesota cornfield with no one hurt.",
+   "dilemma": "Keep the space debris, hand it to authorities, or return it"
+  },
+  {
+   "id": "canal-shark",
+   "origin": "curated",
+   "headline": "South Korean officials free a shark trapped for a month in Busan canal",
+   "snippet": "A 3-meter shark lived in a canal in Busan, South Korea, for a month. The city nicknamed it Bukangi and made it a mascot, and about 1.7 million people came to see it. No people or animals were hurt.",
+   "source": "AP",
+   "url": "https://www.ksl.com/article/51639046/south-korean-officials-free-a-shark-trapped-for-a-month-in-busan-canal",
+   "date": "2026-10-21",
+   "place": "Busan, South Korea",
+   "rating": "teens",
+   "storyability": 5,
+   "added_at": "2026-10-25T15:41:31.022Z",
+   "checklist": {
+    "box1": {
+     "yes": true,
+     "why": "Month-long canal shark needs city team"
+    },
+    "box2": {
+     "yes": true,
+     "why": "Free it or keep mascot both fair"
+    },
+    "box3": {
+     "yes": true,
+     "why": "Mascot fame then rescue flows great"
+    },
+    "box4": {
+     "yes": true,
+     "why": "Swimmers, talk-to-animals, crowd-control powers fit"
+    },
+    "box5": {
+     "yes": true,
+     "why": "Feed, watch, free or relocate branch widely"
+    },
+    "box6": {
+     "yes": true,
+     "why": "Shark lived month as canal mascot"
+    },
+    "box7": {
+     "yes": true,
+     "why": "A shark lived a month in Busan canal"
+    },
+    "box8": {
+     "yes": true,
+     "why": "Free the shark or keep beloved mascot"
+    }
+   },
+   "one_sentence_setup": "A shark lived a month in a Busan canal and became a famous mascot.",
+   "dilemma": "Free the beloved canal shark or keep it as a mascot"
+  },
+  {
+   "id": "wall-gold",
+   "origin": "curated",
+   "headline": "Construction workers find $10M in gold bars & coins during sewer installation",
+   "snippet": "In Dendermonde, Belgium, a sewer crew found about 50 gold bars and many coins, worth about 9 million euros, bricked inside the cellar wall of an old brewer's house. Nobody was hurt and nothing was stolen.",
+   "source": "WJLA",
+   "url": "https://wjla.com/news/offbeat/construction-workers-find-10m-in-gold-bars-coins-during-sewer-installation-belgium-buried-treasure-hunters-renovation-project-brewery-money-value-finders-reward",
+   "date": "2026-08-15",
+   "place": "A small town in Belgium",
+   "rating": "teens",
+   "storyability": 5,
+   "added_at": "2026-10-25T15:41:31.022Z",
+   "checklist": {
+    "box1": {
+     "yes": true,
+     "why": "Guarding fortune and uncovering owner needs crew"
+    },
+    "box2": {
+     "yes": true,
+     "why": "Keep, share, or hand in gold"
+    },
+    "box3": {
+     "yes": true,
+     "why": "Dig, guard, and investigate flows well"
+    },
+    "box4": {
+     "yes": true,
+     "why": "Strength, detection, research powers fit easily"
+    },
+    "box5": {
+     "yes": true,
+     "why": "Greed, honesty, surprises create many routes"
+    },
+    "box6": {
+     "yes": true,
+     "why": "Millions hidden in wall stuns people"
+    },
+    "box7": {
+     "yes": true,
+     "why": "Simple find with clear stakes"
+    },
+    "box8": {
+     "yes": true,
+     "why": "Keep gold or hand it in"
+    }
+   },
+   "one_sentence_setup": "In Dendermonde, Belgium, workers found millions in gold hidden in a cellar wall and must decide its fate.",
+   "dilemma": "Keep the gold or hand it in"
+  },
+  {
+   "id": "norwich-batman",
+   "origin": "curated",
+   "headline": "Pow! Man in Batman costume chases down suspected Norwich handbag thief",
+   "snippet": "On a night out in Norwich, England, a man dressed as Batman chased a suspected handbag thief, with friends dressed as Poison Ivy and Mister Fantastic. Nobody was hurt, and the bag came back with everything inside.",
+   "source": "Irish Examiner",
+   "url": "https://www.irishexaminer.com/world/arid-41915671.html",
+   "date": "2026-09-19",
+   "place": "An old cathedral city in England",
+   "rating": "adults",
+   "storyability": 5,
+   "added_at": "2026-10-25T15:41:31.022Z",
+   "checklist": {
+    "box1": {
+     "yes": true,
+     "why": "Tracking thief across town needs crew"
+    },
+    "box2": {
+     "yes": true,
+     "why": "Catch, release, or call police"
+    },
+    "box3": {
+     "yes": true,
+     "why": "Costumed nighttime chase flows well"
+    },
+    "box4": {
+     "yes": true,
+     "why": "Speed, tracking, distraction powers fit chase"
+    },
+    "box5": {
+     "yes": true,
+     "why": "Chase can split many ways"
+    },
+    "box6": {
+     "yes": true,
+     "why": "Real Batman caught thief surprises everyone"
+    },
+    "box7": {
+     "yes": true,
+     "why": "Clear chase with clear stakes"
+    },
+    "box8": {
+     "yes": true,
+     "why": "Catch thief or let police handle"
+    }
+   },
+   "one_sentence_setup": "In Norwich, England, a costumed crew chases a handbag thief through town to get the bag back.",
+   "dilemma": "Catch the thief yourselves or let police handle it"
   }
  ]
 }

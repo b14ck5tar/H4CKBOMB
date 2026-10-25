@@ -102,10 +102,24 @@ const NOT_STORY =
 // after years is exactly what we want), plus our own court/crime rule and heavy topics. The gate judges the rest.
 const COURT = /\b(manhunt|arrest(ed)?|charged|sentenced|trial|lawsuit|sues?|indict\w*|jail|prison|court)\b/i;
 const EXTRA_BLOCK =
-  /\b(victims?|injur\w*|tragic|tragedy|disaster|crisis|attack(ed|s)?|weapons?|guns?|drugs?|cocaine|poison\w*|toxic|robbery|burglar\w*|protest\w*|strike|government|minister|mayor|governor|obituary|funeral|grief|mourn\w*|wildfire|hurricane|earthquake|flood\w*|evacuat\w*|earnings|shares|stock|ipo|revenue|quarterly|launch(es|ed)?)\b/i;
+  /\b(victims?|injur\w*|tragic|tragedy|disaster|crisis|attack(ed|s)?|weapons?|guns?|drugs?|cocaine|poison\w*|toxic|robbery|burglar\w*|protest\w*|strike|government|minister|mayor|governor|obituary|funeral|grief|mourn\w*|wildfire|hurricane|earthquake|flood\w*|evacuat\w*|earnings|shares|stock|ipo|revenue|quarterly)\b/i;
+
+/**
+ * Phrases that LOOK like a block word but aren't (live false positives: "no injuries", "Poison Ivy" the costume, a
+ * rocket "launch"). They are removed before the block regexes run; the model still judges safety on the full text.
+ */
+const NOT_A_HIT = [
+  /\b(no|without|not|nobody|no one|none|zero)\b[^.]{0,40}?\b(injur\w*|hurt|harmed)\b/gi, // "nobody was injured"
+  /\b(injur\w*|hurt|harmed)\b[^.]{0,15}?\b(reported|were reported)\b[^.]{0,10}?\bnone\b/gi,
+  /\buninjured\b/gi,
+  /\bPoison Ivy\b/g, // the costume / comic character
+  /\b(rocket|space|satellite|balloon)\b[^.]{0,30}?\blaunch\w*/gi,
+];
+const neutralize = (text: string) => NOT_A_HIT.reduce((t, re) => t.replace(re, " "), text);
 const MISSING_OK = /\b(found|reunited|returned|home|back|safe)\b/i;
 
-export function blocked(text: string): string | null {
+export function blocked(raw: string): string | null {
+  const text = neutralize(raw);
   for (const re of HARD_BLOCK) {
     const m = text.match(re);
     if (!m) continue;
@@ -137,9 +151,19 @@ function shuffle<T>(a: T[]): T[] {
 
 // ---------------------------------------------------------------- storyability gate
 
-const GATE_SYSTEM = `You are the strict story editor for a party game. A group of friends step INTO a real news event as
-heroes with different superpowers, play it with one fantasy twist, and at the end learn it really happened. Most news
-is NOT a story we can use. Be strict: when a box is not clearly YES, it is NO.
+const GATE_SYSTEM = `You are the story editor for a party game. A group of friends step INTO a real news event as heroes
+with different superpowers, play it as a quest with one fantasy twist, and at the end learn it really happened.
+
+HOW TO JUDGE: the boxes are about the DRAMATIZED QUEST we can build from the article, not the article as written. We
+add the group, the twist, the side characters and the pressures. So ask "can we dramatize this to satisfy the box?":
+- A one-person event can become a group job (a costumed chase becomes a crew tracking the thief across town).
+- The dilemma can come from the situation (who gets the reward, tell the truth or keep the secret, free it or keep it).
+- More routes and an open ending come from the people involved wanting different things.
+But be STRICT on these, they cannot be invented:
+- box6 (the real event itself makes people say "wait, that REALLY happened?"): routine news is NO.
+- box7 (easy to follow): the setup must fit one plain sentence a newcomer gets at once.
+- safety (below).
+Expect roughly a third to a half of odd, harmless stories to pass. Routine or dull stories still fail.
 
 SAFETY GATE FIRST: safe=false if anyone died, is missing and not found, was seriously hurt, sick or in danger now; any
 disaster or accident with victims; violence against people; sexual content; children involved; hate; war, the
@@ -158,10 +182,12 @@ box5: ${CHECKLIST.box5}
 box6: ${CHECKLIST.box6}
 box7: ${CHECKLIST.box7}
 box8: ${CHECKLIST.box8}
-NO examples: a road or bridge reopening (box6, box8), a statistic or ranking (box3, box7), a science paper with no
-scene (box3), a lost pet found (box1: one family's problem, box8: nothing to argue about), a sports result (box2).
-YES example: workers find a fortune in gold coins hidden in a cellar wall (whole crew, who keeps it is a real
-dilemma, many endings, "wait, really?").
+NO examples: a road or bridge reopening (box6: routine), a statistic or ranking (box3, box7), a science paper with no
+scene (box3), a sports result (box6), a lost pet simply found at home (box6: it happens every day).
+YES examples: workers find a fortune in gold coins hidden in a cellar wall (who keeps it is a dilemma); a shark lives
+in a city canal for a month and becomes a mascot (free it or keep it); a man in a Batman costume chases a bag thief
+on a night out (dramatized: the costumed crew hunts the thief across town; dilemma: catch him or let police handle
+it); villagers mistake a rare rhino for a shape-shifting pig (protect it or drive it off).
 
 Also return:
 - one_sentence_setup: ONE plain sentence a newcomer gets at once: where, what's wrong, what's at stake. No names of
