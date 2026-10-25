@@ -222,3 +222,10 @@ Full history and train of thought: `design/00-where-we-are.md`.
 - ✅ (Sun ~7:20 AM) CD: the hero question is "What's your secret strength?" everywhere (was "secret talent"): game copy + prompts (story), docs/Devpost/hub (pitch), video (video session).
 - ✅ CD: the final-roll phone buttons get bigger and clearer, with obvious states and instant feedback (look).
 - A new "video" session (local_e5d8a79d) owns the video rework; the hook is the real-headline cold open.
+
+## Sun ~10:35 AM: after Meta's judges played it (design/37)
+- Meta: the look and feel landed; the story didn't progress (4 turns for a bag) and was hard to follow. Their rep: the moat is how we prompt the story. A spine is chosen at selection, then the model and the players play open-ended.
+- The story rework (storyV3): a strict start (setting, cast, the original problem from the article, a goal that's only a suggestion, 2-3 pressures), a loose middle (actions are irreversible, a success creates a new situation, never the same objective twice, players can go beyond the goal), and a strict path to an open ending (a story clock, the climax of wherever they ended up).
+- The 8-box story checklist (design/37): ALL must be YES for a story to enter the pool. An LLM judges each box; code enforces the safety gate.
+- The newspaper stays on screen (TV ‹ › only) with a QR to the real article; framing copy says it's real news dramatized into fantasy and your secret strength becomes your power; suggestion screens show the turn owner's strength.
+- Ships ~1:15 PM, behind flags, after simulated-player testing (100 simulated college students); the CD/partner approves the deploy.
