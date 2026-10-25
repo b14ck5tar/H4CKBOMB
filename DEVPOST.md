@@ -1,5 +1,9 @@
 # Group Project (Devpost text, final build)
 
+> **Final (Sun ~10:40):** the live Devpost "About the project" is a shorter human rewrite saved by the coordinator
+> directly on Devpost. That live text is the submitted version; this file is the longer draft it came from.
+
+
 Field-by-field paste steps: `DEVPOST_SUBMIT.md`. The "About the project" box takes everything from **## Inspiration**
 down to the end of **## What's next for Group Project**.
 
