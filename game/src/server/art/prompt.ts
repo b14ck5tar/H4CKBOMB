@@ -1,4 +1,4 @@
-import { NEGATIVE, STYLE } from "@/server/prompts";
+import { COLOR, NEGATIVE, STYLE } from "@/server/prompts";
 import type { ArtHero } from "./types";
 import { ART_STYLES, isArtStyle } from "@/lib/artStyles";
 
@@ -47,6 +47,25 @@ export function sceneEditPrompt(o: { heroes: ArtHero[]; sceneText: string; momen
       : `Each hero must look exactly like their portrait: same face, body shape, proportions, colors, outfit and prop, in the same flat cartoon style with bold ink outlines. Paint them into the scene, not pasted on top: the same ink linework, halftone shading and lighting as Image 1, warm orange lamplight on one side and a magenta-cyan rim light from the impossible element on the other.${ratingLine(o.rating)}`,
     st ? `Style: ${st.prompt}. ${NEGATIVE}` : `${STYLE}. ${NEGATIVE}`,
   ].join("\n");
+}
+
+/**
+ * design/24 P4 v2: a decision's painting is a NEW scene, not an edit. The previous picture and the portraits are
+ * references for character and style only; the place, camera and composition follow the new situation.
+ */
+export function newScenePrompt(o: { heroes: ArtHero[]; sceneText: string; moment?: string; rating?: string; style?: string }) {
+  const st = isArtStyle(o.style) && o.style !== "neon" ? ART_STYLES[o.style] : null;
+  const n = o.heroes.length;
+  return [
+    `Image 1 is the PREVIOUS picture of our story: use it ONLY for the art style, color mood and the look of the world. Image${n > 1 ? `s 2 to ${n + 1} are reference portraits` : " 2 is a reference portrait"} of our cartoon hero${n > 1 ? "es" : ""}.`,
+    `Paint a NEW illustration of the next moment of the story${o.moment ? `: ${clip(o.moment, 280)}` : ""}.`,
+    o.sceneText ? `Where we are now: ${clip(o.sceneText, 240)}` : "",
+    `This must look like a different shot from Image 1: a new camera angle, new framing and a new composition that fit this moment. If the story has moved somewhere new (inside a machine, onto a roof, across a giant chess board), paint that new place. Do not copy Image 1's layout.`,
+    `The heroes, from left to right: ${heroList(o.heroes)} Show them in the middle of the action, full body, big enough to read, each clearly recognizable from their portrait: same face, body shape, colors, outfit and prop.${ratingLine(o.rating)}`,
+    st ? `Style: ${st.prompt}. ${NEGATIVE}` : `${STYLE}. ${COLOR} ${NEGATIVE}`,
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 export function posterEditPrompt(o: { heroes: ArtHero[]; sceneText: string; rating?: string }) {

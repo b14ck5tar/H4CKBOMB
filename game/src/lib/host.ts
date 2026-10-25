@@ -1727,7 +1727,6 @@ export class GameHost {
     if (this.state.phase !== "ruling" || this.state.turnIndex !== turn || this.state.finale !== finale) return;
     const judged = { ...pitch, verdict: v };
     this.noteRuling(judged, v);
-    this.paintDecision(judged, v);
     // The die is decided now (crypto, in code), so the outcome is written while the table watches the roll.
     const roll = this.makeRoll(judged);
     this.set({ pitches: this.state.pitches.map((x) => (x.id === pitch.id ? judged : x)), busy: "", rolls: [{ ...roll, dice: [], kept: 0 }], revealed: [] });
@@ -1738,6 +1737,8 @@ export class GameHost {
     this.outcomeP.then((o) => {
       this.outcomeAt = Date.now();
       this.voiceFor(o.text);
+      // The new picture shows what just happened, in the place the story has moved to.
+      this.paintDecision(judged, v, o.text, o.situation || this.state.situation);
     });
     this.setTimer(this.quick ? 3000 : RULING_MS, () => this.startRoll());
   }
@@ -1747,8 +1748,8 @@ export class GameHost {
    * muse-image edits the CURRENT picture: the heroes, doing this action, in this situation. ~15 s; the outcome shows
    * over the previous art and the TV crossfades when it lands. Never waited on. Steered plans are never painted.
    */
-  private paintDecision(pitch: Pitch, v: Verdict) {
-    if (!FEATURES.heroArt || !this.seed || v.fallback || v.moderation !== "ok") return;
+  private paintDecision(pitch: Pitch, v: Verdict, moment = v.interpretation, where = this.state.situation) {
+    if (!FEATURES.heroArt || !this.seed || v.moderation !== "ok") return;
     const questId = this.seed.id;
     const plate = this.plateFor(this.state.turnIndex);
     const prev = this.sceneImages[this.state.artKey] ?? this.sceneImages[plate];
@@ -1767,9 +1768,10 @@ export class GameHost {
         heroes,
         rating: this.state.rating,
         sceneUrl: prev,
-        sceneText: this.state.situation,
-        moment: v.interpretation,
+        sceneText: where,
+        moment,
         style: this.state.cast?.art ?? "neon",
+        newScene: true,
       }),
     })
       .then((r) => (r.ok ? r.json() : null))
@@ -1785,9 +1787,10 @@ export class GameHost {
               heroes: heroes.map((h) => ({ id: `${h.id}-plain`, name: "", visual: "a friendly cartoon hero in everyday clothes" })),
               rating: this.state.rating,
               sceneUrl: prev,
-              sceneText: this.state.situation,
+              sceneText: where,
               moment: "the heroes try their plan",
               style: this.state.cast?.art ?? "neon",
+              newScene: true,
             }),
           })
             .then((r) => (r.ok ? r.json() : null))
@@ -1799,7 +1802,7 @@ export class GameHost {
         this.lastArtAsked = asked;
         const key = this.artSeq++;
         this.sceneImages[key] = res.url;
-        this.note("scene", "Scene art", `Painted by Muse Image: ${this.heroName(pitch.playerId)}'s move (${Math.round((Date.now() - t0) / 1000)}s): ${clip(v.interpretation, 80)}`);
+        this.note("scene", "Scene art", `Painted by Muse Image, a new shot (${Math.round((Date.now() - t0) / 1000)}s): ${clip(where, 90)}`);
         this.set({ artKey: key });
       })
       .catch(() => {});
@@ -2238,6 +2241,7 @@ export class GameHost {
     this.epilogueP.then((e) => {
       this.endingAt = Date.now();
       this.voiceFor(e.ending);
+      if (pitch.verdict) this.paintDecision(pitch, pitch.verdict, e.ending, e.line || this.state.situation);
     });
     const images = this.artCount().map((i) => `scene_${i + 1}`);
     const log = [...this.state.log, { scene: this.state.sceneIndex, heroId: pitch.playerId, hero: winner, pitch: pitch.text, band: roll.band, headline: sc?.title ?? "", narration: `(the finale: ${ending.toLowerCase()})`, rescue: false }];

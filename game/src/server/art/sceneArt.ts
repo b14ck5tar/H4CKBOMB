@@ -3,7 +3,7 @@ import crypto from "node:crypto";
 import { museImage } from "@/server/muse";
 import { getCached, markFailure, once, persist, recentFailure, store } from "./cache";
 import { finalize, loadImage, toRef } from "./images";
-import { posterEditPrompt, PROMPT_VERSION, sceneEditPrompt } from "./prompt";
+import { newScenePrompt, posterEditPrompt, PROMPT_VERSION, sceneEditPrompt } from "./prompt";
 import { resolvePlate } from "./quests";
 import type { ArtHero, ArtRequest, ArtResult } from "./types";
 
@@ -80,8 +80,9 @@ export async function paintArt(req: ArtRequest, origin?: string): Promise<ArtRes
     .join(",");
   const extras = poster ? "" : (req as { moment?: string }).moment ?? "";
   const style = poster ? "" : String((req as { style?: string }).style ?? "");
+  const fresh = !poster && !!(req as { newScene?: boolean }).newScene;
   const key = hash(
-    [PROMPT_VERSION, poster ? "poster" : "scene", req.questId, String(scene), hash(plateBuf).slice(0, 8), heroKey, req.rating ?? "", extras, req.quality ?? "", style].join("|"),
+    [PROMPT_VERSION, poster ? "poster" : "scene", req.questId, String(scene), hash(plateBuf).slice(0, 8), heroKey, req.rating ?? "", extras, req.quality ?? "", style, fresh ? "new" : "", fresh ? sceneText : ""].join("|"),
   ).slice(0, 24);
 
   const hit = await getCached(key);
@@ -100,7 +101,9 @@ export async function paintArt(req: ArtRequest, origin?: string): Promise<ArtRes
     ];
     const prompt = poster
       ? posterEditPrompt({ heroes: withPortrait, sceneText, rating: req.rating })
-      : sceneEditPrompt({ heroes: withPortrait, sceneText, moment: extras || undefined, rating: req.rating, style });
+      : fresh
+        ? newScenePrompt({ heroes: withPortrait, sceneText, moment: extras || undefined, rating: req.rating, style })
+        : sceneEditPrompt({ heroes: withPortrait, sceneText, moment: extras || undefined, rating: req.rating, style });
     const t1 = Date.now();
     store.stats.calls++;
     const tag = `${poster ? "poster" : "scene"} ${req.questId}/${String(scene)} heroes=${withPortrait.map((h) => h.id).join(",")} q=${quality} key=${key}`;
