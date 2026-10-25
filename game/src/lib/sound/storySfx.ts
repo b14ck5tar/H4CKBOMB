@@ -25,12 +25,23 @@ export const STORY_SFX_ENGINE: Record<string, SfxName> = {
   drumroll: "drumroll",
 };
 
-const GAIN = 0.35; // ~ -9 dB: under the narrator (the voice peaks near full scale, these files near -3 dBFS)
+// Loudness targets (RMS, dBFS). The narrator's speech sits near -20: line cues ~9 dB under her, the finale build-up a
+// touch quieter, the payoff hit the loudest story sound. Peaks are capped so nothing ever clips.
+const TARGET_DB = { line: -29, buildup: -31, payoff: -22 } as const;
+const PEAK_CAP = { line: 0.35, buildup: 0.35, payoff: 0.8 } as const;
+type Kind = keyof typeof TARGET_DB;
+function gainFor(id: string, kind: Kind) {
+  const l = level.get(id);
+  if (!l || l.rms < 1e-5) return 0;
+  const g = Math.pow(10, TARGET_DB[kind] / 20) / l.rms;
+  return Math.min(g, PEAK_CAP[kind] / Math.max(l.peak, 1e-3), 8);
+}
+const GAIN: Kind = "line";
 const MAX_SEC = 3;
 const FADE = 0.25;
 
 const buffers = new Map<string, Promise<AudioBuffer | null>>();
-const level = new Map<string, number>();
+const level = new Map<string, { rms: number; peak: number }>();
 let playing = new Set<{ src: AudioBufferSourceNode; g: GainNode }>(); // this slide's sounds
 
 function load(id: string): Promise<AudioBuffer | null> {
@@ -42,11 +53,16 @@ function load(id: string): Promise<AudioBuffer | null> {
     .then((r) => (r.ok ? r.arrayBuffer() : null))
     .then((ab) => (ab ? b.ctx.decodeAudioData(ab) : null))
     .then((buf) => {
-      // level every file to the same peak (-3 dBFS), so a loud thunder and a soft owl sit at the same height
+      // level every file by LOUDNESS (not peak): a siren and a soft owl both land ~9 dB under the narrator
       if (buf) {
-        let peak = 0;
-        for (let c = 0; c < buf.numberOfChannels; c++) for (const v of buf.getChannelData(c)) peak = Math.max(peak, Math.abs(v));
-        level.set(id, peak > 0.01 ? 0.7 / peak : 1);
+        let peak = 0, ss = 0, n = 0;
+        for (let c = 0; c < buf.numberOfChannels; c++)
+          for (const v of buf.getChannelData(c)) {
+            peak = Math.max(peak, Math.abs(v));
+            ss += v * v;
+            n++;
+          }
+        level.set(id, { rms: Math.sqrt(ss / Math.max(1, n)), peak });
       }
       return buf;
     })
@@ -82,7 +98,7 @@ export function stopStorySfx(sec = 0.15) {
 }
 
 /** Start one sound (no stopping of others). */
-async function start(raw: string | null | undefined, delaySec: number, gain = GAIN, maxSec = MAX_SEC, into: Set<{ src: AudioBufferSourceNode; g: GainNode }> = playing) {
+async function start(raw: string | null | undefined, delaySec: number, gain: Kind = GAIN, maxSec = MAX_SEC, into: Set<{ src: AudioBufferSourceNode; g: GainNode }> = playing) {
   const ok = pickStorySfx(raw);
   if (!FEATURES.storySfx || isServer() || !ok) return;
   if (isAllMuted() || isSilenced() || !canStart()) return;
@@ -100,7 +116,8 @@ async function start(raw: string | null | undefined, delaySec: number, gain = GA
     src.buffer = buf;
     const g = ctx.createGain();
     const t0 = ctx.currentTime + Math.max(0, delaySec);
-    const peakGain = gain * Math.min(4, level.get(ok) ?? 1);
+    const peakGain = gainFor(ok, gain);
+    if (!peakGain) return;
     const end = t0 + Math.min(buf.duration, maxSec);
     g.gain.setValueAtTime(0, ctx.currentTime);
     g.gain.setValueAtTime(0, t0);
@@ -144,8 +161,8 @@ export async function playStorySfxCues(cues: { id: string; word: number }[] | nu
 }
 
 // ---- the finale: a build-up under the last line, then the payoff hit on the result (the biggest sound of the game) ----
-const BUILD_GAIN = 0.3; // under the narrator's last line
-const HIT_GAIN = 0.6; // ~ -4 dB: the loudest story sound; it lands as the result shows, right after her line
+const BUILD_GAIN: Kind = "buildup"; // under the narrator's last line
+const HIT_GAIN: Kind = "payoff"; // the loudest story sound; it lands as the result shows, right after her line
 let building = new Set<{ src: AudioBufferSourceNode; g: GainNode }>();
 
 function fadeOut(set: Set<{ src: AudioBufferSourceNode; g: GainNode }>, sec: number) {

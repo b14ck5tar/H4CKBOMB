@@ -6,7 +6,9 @@
  * id list and the playback (lib/sound/storySfx.ts); FEATURES.storySfx switches it on.
  */
 // The fallback set (the house sound engine); the ElevenLabs library replaces it when its files are made.
-export const STORY_SFX_IDS: readonly string[] = ["whoosh", "rumble", "crash", "heartbeat", "ticking-clock", "magic-shimmer", "drumroll"];
+export const STORY_SFX_IDS: readonly string[] = [
+  "splash", "big-splash", "bubbles", "crowd-gasp", "crowd-cheer", "applause", "laughter", "glass-break", "creaky-door", "door-slam", "siren", "dog-bark", "cat-meow", "seagulls", "owl-hoot", "coins", "cash-register", "thunder", "wind", "rain", "running-footsteps", "sneaky-footsteps", "record-scratch", "church-bell", "car-horn", "magic-shimmer", "alarm-bell", "rumble", "crash", "boing", "ticking-clock", "whoosh", "mining-picks", "drumroll-build", "crowd-murmur", "rising-tension", "fast-heartbeat", "fast-ticking", "gold-clink", "crowd-roar", "huge-splash", "big-gong", "magic-burst", "kaboom", "glass-smash", "brass-hit",
+];
 
 export type StorySfxCue = { id: string; word: number };
 
