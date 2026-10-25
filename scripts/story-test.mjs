@@ -5,6 +5,7 @@
 
 // --news-only skips the personal stories.
 const NEWS_ONLY = process.argv.includes("--news-only");
+const PERSONAL_ONLY = process.argv.includes("--personal-only"); // skips the news openers
 const args = process.argv.slice(2).filter((a) => !a.startsWith("--"));
 const BASE = args[0] || "http://localhost:3090";
 const RATING = args[1] || "teens";
@@ -104,7 +105,7 @@ if (st?.rejected?.length) line(`  rejected sample: ${st.rejected.slice(0, 8).map
 
 // --pick=fossil,elf,moon picks cached headlines by substring (no extra SerpApi calls).
 const pickArg = process.argv.find((a) => a.startsWith("--pick="))?.slice(7).split(",").filter(Boolean) ?? [];
-const picks = pickArg.length
+const picks = PERSONAL_ONLY ? [] : pickArg.length
   ? pickArg.map((k) => news.quests.find((q) => q.headline.toLowerCase().includes(k.toLowerCase()))).filter(Boolean)
   : news.quests.slice(0, 3);
 const jobs = [

@@ -178,7 +178,8 @@ NEWS SOURCE RULES:
 PERSONAL SOURCE RULES:
 - Keep it recognizable (the same place, the same problem, the same key objects) but add one magical twist
   that secretly explains it. It is happening to the whole group right now.
-- You may name the author's hero (AUTHOR_HERO) as the one this happened to. Nobody else.
+- Never name or cast any hero from the HEROES list. Refer to the author's real-life people by role ("the host",
+  "a friend", "the gate agent") unless the author named them in the story.
 - THE REAL-EVENT RULE above is for NEWS. A personal story stays recognizable, punchline_words is [], and
   real_setting describes the player's real situation and the steps that led there, NEVER the real ending.
 - REAL_ENDING is how it really ended. NEVER reveal it, hint at it, or set up its exact solution in the opener,
@@ -516,7 +517,8 @@ function newsFacts(src: NewsSource, d?: Partial<Draft>): EndingFacts {
 }
 
 function personalFallback(src: PersonalSource, authorHero: string): Opener {
-  const who = authorHero || "One of the group";
+  void authorHero; // heroes are never story characters
+  const who = "Someone at this table";
   const t = clip(src.title, 60) || "A Very Strange Day";
   return {
     title: t,
@@ -535,12 +537,46 @@ function personalFallback(src: PersonalSource, authorHero: string): Opener {
 
 // ---------------------------------------------------------------- main
 
+// ---------------------------------------------------------------- heroes are never story characters
+
+/** Each hero's full name and first name (2+ letters), unless the source text itself uses that name. */
+function bannedPartyNames(party: PartyMember[], source: string): string[] {
+  const out = new Set<string>();
+  for (const m of party) {
+    const full = clip(m.name, 40).replace(/[^A-Za-z'’ -]/g, "").trim();
+    for (const n of [full, full.split(/\s+/)[0]]) {
+      if (n.length < 2) continue;
+      if (new RegExp(`\\b${n.replace(/[-'’]/g, ".")}\\b`, "i").test(source)) continue; // the author named them
+      out.add(n);
+    }
+  }
+  return [...out];
+}
+
+const nameRe = (n: string) => new RegExp(`(^|[^A-Za-z])${n.replace(/[-'’]/g, ".")}('s)?(?![A-Za-z])`, "g");
+
+/** Names found in any field we write (case-sensitive, so "Will" the hero does not match "will"). */
+function partyHits(d: Draft, names: string[]): string[] {
+  if (!names.length) return [];
+  const text = JSON.stringify(d);
+  return names.filter((n) => nameRe(n).test(text));
+}
+
+/** Last resort if the retry still used a hero name: swap it for "someone", in every string field. */
+function scrubNames<T>(x: T, names: string[]): T {
+  if (!names.length) return x;
+  const fix = (s: string) =>
+    names.reduce((acc, n) => acc.replace(nameRe(n), (_m, pre: string, poss?: string) => `${pre}someone${poss ?? ""}`), s).replace(/(^|[.!?]\s+)someone/g, (_m, p: string) => `${p}Someone`);
+  const walk = (v: unknown): unknown =>
+    typeof v === "string" ? fix(v) : Array.isArray(v) ? v.map(walk) : v && typeof v === "object" ? Object.fromEntries(Object.entries(v).map(([k, val]) => [k, walk(val)])) : v;
+  return walk(x) as T;
+}
+
 function userPrompt(mode: "news" | "personal", rating: Rating, party: PartyMember[], body: string, authorHero: string, prev?: { draft: Draft; problems: string[] }, giveaway: string[] = [], keyNouns: string[] = []) {
   const heroes = party.length
     ? party.map((p) => `- ${clip(p.name, 40)} (good at: ${clip(p.power, 80) || "unknown"})`).join("\n")
     : "(not known yet)";
-  let u = `MODE: ${mode.toUpperCase()}\nAUDIENCE: ${rating}\nHEROES (for context only; do not name them or build the scene around their powers):\n${heroes}\n`;
-  if (mode === "personal") u += `AUTHOR_HERO: ${authorHero || "(unknown, do not name anyone)"}\n`;
+  let u = `MODE: ${mode.toUpperCase()}\nAUDIENCE: ${rating}\nHEROES (context only: NEVER use these names anywhere in your answer, not as characters, speakers, NPCs or culprits, and do not build the scene around their powers):\n${heroes}\n`;
   u += `\n<source>\n${body}\n</source>\n`;
   if (giveaway.length) u += `\nGIVEAWAY WORDS (only allowed in official_line and whats_happening_now): ${giveaway.join(", ")}. Also no digits outside those two fields.\n`;
   if (prev) {
@@ -621,7 +657,7 @@ export async function makeOpener(input: {
     const steps = [p.steps].flat().map((s) => clip(s, 300)).filter(Boolean).join(" Then ");
     authorHero = clip(party.find((m) => m.hero_id === p.author_id)?.name, 40);
     body = `TITLE: ${clip(p.title, 120)}\nSETUP: ${clip(p.setup, 600)}\nSTEPS THAT LED THERE: ${steps || "(none)"}\nREAL_ENDING (secret): ${clip(p.real_ending, 600)}`;
-    sourceText = `${body} ${authorHero}`;
+    sourceText = body;
     // Fast, free safety pre-check on the player's own words. The AI makes the same check too.
     const all = `${p.title} ${p.setup} ${steps} ${p.real_ending}`;
     if (PERSONAL_UNSAFE.test(all)) {
@@ -663,10 +699,15 @@ ${RATING_GUIDE[rating]}`;
   if (h && h !== "late") first = h;
   else first = await Promise.any([high, low]).catch(() => null);
 
+  // Hero names that the source itself never mentions: they must never appear in anything we write.
+  const rawSource = news ? `${news.headline} ${news.snippet} ${body}` : personal ? `${personal.title} ${personal.setup} ${[personal.steps].flat().join(" ")} ${personal.real_ending}` : "";
+  const partyNames = bannedPartyNames(party, rawSource);
   type Best = { d: Draft; probs: string[]; grade: number };
   let best = null as Best | null; // assigned inside judge(), so no narrowing to null
   const judge = (d: Draft, label: string) => {
     const { list, grade } = problems(d, mode, sourceText, personal, sourceSentences, giveaway, keyNouns);
+    const cast = partyHits(d, partyNames);
+    if (cast.length) list.unshift(`giveaway: uses a player's hero name (${cast.join(", ")}) in the story. Never use the heroes' names anywhere`);
     console.log(`[opener] ${label} grade ${grade}, problems: ${list.length ? list.join(" | ") : "none"}`);
     const w = (l: string[]) => l.reduce((a, x) => a + (x.startsWith("giveaway") ? 10 : 1), 0);
     if (!best || w(list) < w(best.probs) || (w(list) === w(best.probs) && grade < best.grade)) best = { d, probs: list, grade };
@@ -697,7 +738,7 @@ ${RATING_GUIDE[rating]}`;
       mode === "news"
         ? newsFacts(news!, best.d)
         : { kind: "personal", author_id: clip(personal!.author_id, 80), real_ending: sanitize(best.d.real_ending) || clip(personal!.real_ending, 600) };
-    return done({ opener: finish(best.d), ending_facts: ending, safe: true, fallback: false });
+    return done({ opener: scrubNames(finish(best.d), partyNames), ending_facts: scrubNames(ending, partyNames), safe: true, fallback: false });
   }
 
   // Canned fallback: the table never waits on a failed AI call.

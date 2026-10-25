@@ -104,3 +104,19 @@ Full history and train of thought: `design/00-where-we-are.md`.
 - ⏳ Danger meter / progress bar: unclear, to confirm.
 - ⏳ Ending: to revisit later (proposed a "because of you" montage).
 - ✅ Story ladder: 3-4 planned steps per quest (success climbs, fail stays with a twist), small progress dots next to 'Right now'. No spoilers before the reveal; vote on fantasy quest cards.
+- ✅ No villain: every quest centers on a PROBLEM (stuck, lost, broken, spreading) with stakes; nothing to defeat.
+- ✅ Test bots: up to 3 human-like bot players (hidden host option) for playtesting.
+- ✅ Lobby revamp (CD answers): Jackbox-style title screen mixed with a moody neon nightclub poster; background = slow loop of AI-painted scenes mixed with the melting neon logo art; big logo with a drip/pulse; big neon-framed QR on one side; hero cards pop in with sound; settings as big buttons but uncluttered; Start appears big at 2+ players (countdown option); punchy text plus a tiny "how it works"; attract mode cycles hero-in-scene art plus one pitch line; references: Jackbox + D&D. Must NOT look like an AI-made web page.
+
+## Sun ~12:30 AM: CD answers on the overall game
+- Audience: everyone. **Connectedness first (Meta).** Feelings: laughed so hard + learned something about them + a cool story.
+- Length: Full 10-15 min, Quick ~5 min. One AI twist per turn. Free-text input. Team win/lose with a clear ending card. Judge demo: judges play on their phones, or a short video then a live round.
+- Humor: iconic, a little dry and witty, creative, unexpected but makes sense. Art: stray a bit from the Gravity Falls look (too close).
+- Fails: funny AND set you back a little.
+- ✅ NO success threshold: every roll number is its own outcome (1 worst … 20 best). Plan difficulty shifts the number; the AI writes the outcome at exactly that intensity; ladder movement is graded (setback / stall / climb / big climb / legendary).
+- Swipe up on the phone to throw the die; it's thrown and rolls on the TV (the result is still code RNG).
+- The CD's bar for tomorrow: "perfection: full-scale working product, optimal integration, eye-stealing graphics and UI, so smooth it feels like you're in the story."
+- ✅ (Sun ~1 AM) CD "yes on everything": swap in the new lobby (no Mabel-lookalike art), phone revamp, in-game TV polish, "Based on a true story" on the reveal, ending "because of you" montage, danger meter, the real Meta video (script now, record on the final build in the morning), Devpost final update, pitch prep, judge-table plan.
+- ✅ Tagline: "Group Project: the one group project where everyone actually shows up."
+- ✅ Fail forward: every turn advances one step; the grade picks a better or worse branch.
+- ✅ Blind model bake-off for storytelling (Spark minimal vs Spark high vs Wonder, plus Claude/GPT if keys are added).
