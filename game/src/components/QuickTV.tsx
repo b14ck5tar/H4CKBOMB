@@ -859,7 +859,8 @@ function SkinHud({ s }: { s: GameState }) {
   if (!s.goal) return null;
   return (
     <HudStrip
-      ladder={s.ladder.length > 1 ? { steps: s.ladder.length, at: s.step, now: s.nowGoal || s.goal, goal: s.goal } : { steps: 1, at: 0, now: s.nowGoal || s.goal, goal: s.goal }}
+      // 3 acts plus the finale crown, driven by progress (0-100): no fixed beats (design/35).
+      ladder={{ steps: 4, at: s.finale || (s.progress ?? 0) >= 100 ? 3 : (s.progress ?? 0) >= 67 ? 2 : (s.progress ?? 0) >= 34 ? 1 : 0, now: s.nowGoal || s.goal, goal: s.goal }}
       danger={{ level: s.danger, max: 3 }}
     />
   );
@@ -877,7 +878,14 @@ function SkinTurn({ host, s }: { host: Stage; s: GameState }) {
     .filter((x): x is NonNullable<typeof x> => !!x);
   return (
     <>
-      <TurnCard hero={cardHero(host, owner)} playedBy={speakableName(owner.name)} turn={{ n: s.turnIndex + 1, of: s.turnOrder.length }} prompt="Everyone else: suggest a move on your phone" k={`${owner.id}-${s.turnIndex}`} />
+      <TurnCard
+        hero={cardHero(host, owner)}
+        playedBy={speakableName(owner.name)}
+        turn={{ n: s.turnIndex + 1, of: s.turnOrder.length }}
+        // Talk-out-loud cue (design/35 rule 14): while the owner types, the TV invites them to tell the table.
+        prompt={s.typing.includes(owner.id) ? `${speakableName(owner.name)}, tell the table your plan.` : "Everyone else: suggest a move on your phone"}
+        k={`${owner.id}-${s.turnIndex}`}
+      />
       <SuggestionBubbles items={items} />
     </>
   );
