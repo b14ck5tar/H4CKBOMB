@@ -107,6 +107,7 @@ const FINAL_SHAKE_MS = 5000;
 const FINAL_TUMBLE_MS = 2000;
 const FINAL_LAND_MS = 1400;
 const FINAL_RESULT_MS = 3500;
+const CONVINCE_MS = 60_000; // the finale talk (CD): one minute to convince each other
 const FULL_READ_CAP_MS = 20_000; // a reading screen never holds the table longer (Space or every phone skips sooner)
 const TITLE_CARD_MS = 5200; // Full Story: the title card before scene 1
 const ROLL_HOLD_MS = 2200; // after the die lands: the quality meter fills and its grade reads (was 3.4 s of dead air)
@@ -659,6 +660,14 @@ export class GameHost {
   }
 
   private onReady(pid: string) {
+    // The finale talk: "ready to vote" (everyone here ready = the vote starts).
+    if (this.state.phase === "convince") {
+      if (!this.player(pid)?.hero || this.state.ready.includes(pid)) return;
+      const ready = [...this.state.ready, pid];
+      this.set({ ready });
+      if (this.allPresent((id) => ready.includes(id))) this.endConvince();
+      return;
+    }
     if (!READING.has(this.state.phase) || this.state.busy || !this.pending) return;
     if (this.quick && this.state.phase === "quest") return; // the cold open plays out (the TV can still skip)
     if (!this.player(pid)?.hero || this.state.ready.includes(pid)) return;
@@ -2002,8 +2011,32 @@ export class GameHost {
       this.note("ruling", "The vote", el.length === 1 ? "Only one final plan, so no vote." : "Nobody else could back a plan, so no vote.");
       return this.startRuling(el[0]);
     }
-    this.set({ phase: "vote", votes: {} });
+    if (FEATURES.finaleTalk) return this.startConvince();
+    this.startVote();
+  }
+
+  private startVote() {
+    this.set({ phase: "vote", votes: {}, ready: [] });
     this.setTimer(this.quick ? 12_000 : VOTE_MS, () => this.endVote(true));
+  }
+
+  /**
+   * "Convince each other" (CD, Sun): before the final vote, 60 s for the table to argue for their plans out loud.
+   * Everyone's plan is on screen (state.pitches); phones send "ready"; everyone ready = straight to the vote.
+   */
+  private startConvince() {
+    this.set({ phase: "convince", ready: [] });
+    this.setTimer(CONVINCE_MS, () => this.endConvince());
+    // Pre-voiced by the voice session (exact text = a cache hit).
+    const said = "Alright. You've got one minute. Convince each other.";
+    this.voiceBy(said, Date.now() + 3000).then((clip) => this.state.phase === "convince" && this.play(clip));
+    this.note("ruling", "Convince each other", "One minute to talk the table into your plan. Everyone taps Ready to vote, or the minute runs out.");
+  }
+
+  private endConvince() {
+    if (this.state.phase !== "convince") return;
+    this.clearTimer();
+    this.startVote();
   }
 
   /** Finale plans that can win: every plan someone actually made. */

@@ -34,6 +34,8 @@ export const FEATURES = {
   suggestions: false,
   /** One AI-picked sound effect per story slide (lib/storySfx.ts, game/public/sfx/). Voice owns it; ships off unless solid. */
   storySfx: false,
+  /** The finale talk (CD): 60 s to convince each other before the final vote (phase "convince"). Off until the screens exist. */
+  finaleTalk: false,
 } as const;
 
 export type Feature = keyof typeof FEATURES;
