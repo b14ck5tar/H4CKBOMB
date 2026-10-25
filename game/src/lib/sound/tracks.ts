@@ -134,8 +134,10 @@ const lobby: TrackDef = {
   },
   step({ k, t, bar, s, beat, intensity: I, mem }) {
     const b16 = bar % 16;
-    if (s === 0) {
-      if (b16 === 0) mem.form = bar === 0 ? "AA" : chance(0.6) ? "AB" : "AA";
+    // set up the bar on its first 16th, or on whatever 16th comes first if a late scheduler skipped it
+    if (s === 0 || mem.bar !== bar) {
+      mem.bar = bar;
+      if (b16 === 0 || !mem.form) mem.form = bar === 0 ? "AA" : chance(0.6) ? "AB" : "AA";
       const half = b16 < 8 ? "A" : (mem.form as string)[1];
       mem.section = half;
       const prog = half === "B" ? LOBBY_B : LOBBY_A;
@@ -417,8 +419,9 @@ const playful: TrackDef = {
   },
   step({ k, t, bar, s, beat, intensity: I, mem }) {
     const b16 = bar % 16;
-    if (s === 0) {
-      if (bar % 4 === 0) {
+    if (s === 0 || mem.bar !== bar) {
+      mem.bar = bar;
+      if (bar % 4 === 0 || !mem.rhythm) {
         mem.section = b16 >= 8 ? (chance(0.7) ? "B" : "A") : "A";
         mem.tune = bar >= 2 && (mem.section === "B" || chance(0.55));
         mem.rhythm = pick(RHYTHMS);
