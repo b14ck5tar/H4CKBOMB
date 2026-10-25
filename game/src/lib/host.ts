@@ -186,6 +186,9 @@ interface OpenerRes {
     threat?: { name?: string; pronoun?: string; want?: string };
     problem?: { name?: string; stakes?: string; pronoun?: string };
     beats?: string[];
+    /** Story v3: the starting problem in one plain sentence, and 2-3 things that get worse on their own. */
+    original_problem?: string;
+    pressures?: { name: string; stages: string[]; fix: string }[];
   };
   ending_facts?: { kind: "news"; whats_happening_now?: string; official_line?: string } | { kind: "personal"; real_ending?: string };
   safe?: boolean;
@@ -253,6 +256,8 @@ function newsSeed(id: string, c: NewsCand, o: OpenerRes): QuestSeed {
     art_style_hint: o.opener.situation,
     rating: "teens",
     opener: openerScene(o.opener, c.place),
+    original_problem: o.opener.original_problem,
+    pressures: o.opener.pressures,
   };
 }
 
@@ -272,6 +277,8 @@ function personalSeed(id: string, pid: string, author: string, st: { title: stri
     art_style_hint: o.opener.situation,
     rating: "teens",
     opener: openerScene(o.opener, ""),
+    original_problem: o.opener.original_problem,
+    pressures: o.opener.pressures,
     author: { pid, name: author },
   };
 }
@@ -380,6 +387,22 @@ function shortGoal(text: string) {
   const first = text.split(/(?<=[.!?])\s/)[0];
   const words = first.split(/\s+/);
   return words.length > 16 ? words.slice(0, 16).join(" ") + "…" : first;
+}
+
+/** The last few endings on this TV (v3: the ending prompt avoids repeating them). */
+function recentEndings(): string[] {
+  try {
+    return JSON.parse(localStorage.getItem("gp-endings") ?? "[]").slice(0, 5);
+  } catch {
+    return [];
+  }
+}
+function rememberEnding(text: string) {
+  try {
+    if (text) localStorage.setItem("gp-endings", JSON.stringify([text, ...recentEndings()].slice(0, 5)));
+  } catch {
+    /* a nice-to-have */
+  }
 }
 
 export function loadShelf(): ShelfBook[] {
@@ -1751,6 +1774,9 @@ export class GameHost {
         // A plain problem name ("the ice hand"), never the invented title ("The Ice Age Grip").
         problem: { name: (quick && seed.quick_scene?.problem_name) || seed.the_threat.name, stakes: seed.problem?.stakes ?? "" },
         real_setting: seed.real_event,
+        // Story v3: the starting problem (the reveal refers back to it) and the pressures (the live opener writes them).
+        original_problem: seed.original_problem,
+        pressures: seed.pressures,
         // Quick Tale's opener already answers the full story's first mystery, so its first step comes from the quick scene.
         beats: quick && seed.quick_scene?.first_step ? [seed.quick_scene.first_step] : seed.beats ?? (seed.scenes ?? []).map((sc) => sc.goal),
       },
@@ -1758,7 +1784,13 @@ export class GameHost {
       this.state.turnOrder.length,
     );
     this.set({ ladder: [], step: 0, progress: 0, act: 1 });
-    this.note("scene", "The finish line", `${this.story.finish_line}. No script: every turn's plan is what happens, and the roll sets how well. Progress fills from 0 to 100 over 3 acts.`);
+    if (FEATURES.storyV3)
+      this.note(
+        "scene",
+        "The story",
+        `It starts with: ${this.story.original_problem || this.story.problem}. Suggested goal: ${this.story.finish_line} (players can go anywhere). Every success settles the situation for good and the story moves on; ${(this.story.pressures ?? []).map((p) => p.name).join(", ")} get worse on their own. The meter is a story clock: Act 1, 2, 3, then the finale.`,
+      );
+    else this.note("scene", "The finish line", `${this.story.finish_line}. No script: every turn's plan is what happens, and the roll sets how well. Progress fills from 0 to 100 over 3 acts.`);
     this.note("safety", "Why it's safe", SAFETY_NOTES[seed.id] ?? SAFETY_GENERIC);
     this.note(
       "source",
@@ -1882,7 +1914,7 @@ export class GameHost {
     }
     if (k >= order.length) return this.startFinale();
     if (this.finaleNext) {
-      this.note("turn", "Grand finale", "The finish line is in reach, so the finale comes now.");
+      this.note("turn", "Grand finale", FEATURES.storyV3 ? "The story clock ran out, so the finale comes now." : "The finish line is in reach, so the finale comes now.");
       return this.startFinale();
     }
     this.verdicts.clear();
@@ -2033,7 +2065,8 @@ export class GameHost {
   private startFinale() {
     this.clearTimer();
     this.verdicts.clear();
-    this.set({ phase: "pitch", finale: true, nowGoal: this.state.goal, pitches: [], votes: {}, winnerId: "", outcome: "", rolls: [], revealed: [], ready: [], busy: "", typing: [] });
+    // v3: the finale is the moment of truth for the situation as it is NOW, never a snap back to the original goal.
+    this.set({ phase: "pitch", finale: true, nowGoal: FEATURES.storyV3 ? this.story?.right_now || this.state.nowGoal : this.state.goal, pitches: [], votes: {}, winnerId: "", outcome: "", rolls: [], revealed: [], ready: [], busy: "", typing: [] });
     this.note("turn", "Grand finale", "Everyone proposes the final move, everyone backs a friend's plan (never their own), and the winning plan gets one shared die.");
     const line = `Alright, everyone… time for the grand finale. ${this.state.situation} So. What's the final move?`;
     this.voiceBy(line, Date.now() + 4000).then((clip) => this.state.phase === "pitch" && this.play(clip));
@@ -2949,7 +2982,7 @@ export class GameHost {
     const sc = this.sceneList[this.state.sceneIndex];
     const heroes = this.heroes().map((p) => ({ id: p.id, name: p.hero!.name }));
     const winner = this.heroName(pitch.playerId);
-    const fb = () => ({ ending: fallbackEnding(ending, winner, pitch.verdict && !pitch.verdict.fallback ? pitch.verdict.interpretation : "", this.story?.finish_line ?? ""), line: FALLBACK_LINE[ending], recap: "", skills: null as Record<string, string> | null, sfx: [] as StorySfxCue[], buildup: "", payoff: "", bridge: "" });
+    const fb = () => ({ ending: fallbackEnding(ending, winner, pitch.verdict && !pitch.verdict.fallback ? pitch.verdict.interpretation : "", (FEATURES.storyV3 ? this.story?.right_now : this.story?.finish_line) ?? ""), line: FALLBACK_LINE[ending], recap: "", skills: null as Record<string, string> | null, sfx: [] as StorySfxCue[], buildup: "", payoff: "", bridge: "" });
     this.epilogueP = this.viaAI(
       "The ending",
       this.ask<{ ending: string; line: string; recap: string; skills?: { id: string; phrase: string }[]; sfx?: unknown; sfx_buildup?: string; sfx_payoff?: string; bridge?: string; lines?: unknown }>("story_end", {
@@ -2972,6 +3005,7 @@ export class GameHost {
         situation: this.state.situation,
         earlier: this.state.log.map((l) => l.narration),
         finale_plan: pitch.verdict?.interpretation ?? "",
+        recent_endings: FEATURES.storyV3 ? recentEndings() : undefined,
         quick_tale: this.quick || undefined,
       }),
       15_000,
@@ -2996,6 +3030,7 @@ export class GameHost {
     this.endingAt = 0;
     this.epilogueP.then((e) => {
       this.endingAt = Date.now();
+      if (FEATURES.storyV3) rememberEnding(e.ending);
       // The final scene reads the ending; the montage closes on the sign-off alone (never the ending twice).
       this.castLine(e.ending, e.lines);
       this.voiceFor(e.ending);

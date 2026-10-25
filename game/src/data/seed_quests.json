@@ -148,7 +148,37 @@
     "A big floating platform slowly pushes it back out to sea"
    ]
   },
-  "art_style_hint": "A narrow concrete canal between apartment towers at night, crowds with glowing phones on low bridges, a giant shark fin in neon-lit green water."
+  "art_style_hint": "A narrow concrete canal between apartment towers at night, crowds with glowing phones on low bridges, a giant shark fin in neon-lit green water.",
+  "original_problem": "A shark is stuck in a city canal, and it gets bigger every time someone takes its photo.",
+  "pressures": [
+   {
+    "name": "the crowds",
+    "stages": [
+     "More tourists pack the canal bridges.",
+     "The crowds are taking photos, and the shark grows again.",
+     "The bridges are so full they sag toward the water."
+    ],
+    "fix": "Get the tourists off the bridges"
+   },
+   {
+    "name": "the tide",
+    "stages": [
+     "The tide starts going out.",
+     "The canal water is getting shallow.",
+     "The water is so low the shark's back is showing."
+    ],
+    "fix": "Get water back into the canal"
+   },
+   {
+    "name": "the mayor",
+    "stages": [
+     "The mayor wants a photo with the shark.",
+     "The mayor announces a shark parade for tonight.",
+     "The mayor is selling shark T-shirts on the bridge."
+    ],
+    "fix": "Talk the mayor out of the parade"
+   }
+  ]
  },
  {
   "id": "wall-gold",
@@ -300,7 +330,37 @@
     "The gold goes to a government vault, and treasure hunters are told not to bother"
    ]
   },
-  "art_style_hint": "A damp cellar under an old Belgian brick house at night, a broken wall glowing with stacked gold bars, a sewer crew's work lamp, neon gold light."
+  "art_style_hint": "A damp cellar under an old Belgian brick house at night, a broken wall glowing with stacked gold bars, a sewer crew's work lamp, neon gold light.",
+  "original_problem": "A sewer crew found a wall full of talking gold, and every bar is begging to be kept.",
+  "pressures": [
+   {
+    "name": "the treasure hunters",
+    "stages": [
+     "Two treasure hunters with metal detectors walk past the house.",
+     "The treasure hunters are knocking on the cellar door.",
+     "The treasure hunters are digging in the garden."
+    ],
+    "fix": "Keep the treasure hunters out"
+   },
+   {
+    "name": "the neighbors",
+    "stages": [
+     "A neighbor peeks over the fence.",
+     "The neighbors are filming from their windows.",
+     "The neighbors have called the local newspaper."
+    ],
+    "fix": "Get the neighbors to stop filming"
+   },
+   {
+    "name": "the end of the shift",
+    "stages": [
+     "The foreman says the shift ends in an hour.",
+     "The crew's truck is the last one on the street.",
+     "The street lights come on, and the shift is over."
+    ],
+    "fix": "Finish the job before the shift ends"
+   }
+  ]
  },
  {
   "id": "norwich-batman",
@@ -452,7 +512,37 @@
     "A toilet-paper grappling hook fails, so Batman climbs up and returns the bag with everything inside"
    ]
   },
-  "art_style_hint": "Old English cathedral city at night, crooked cobbled lanes, a man in a homemade bat costume and cape climbing a tall flint wall toward a handbag, a streamer of toilet paper, neon street light."
+  "art_style_hint": "Old English cathedral city at night, crooked cobbled lanes, a man in a homemade bat costume and cape climbing a tall flint wall toward a handbag, a streamer of toilet paper, neon street light.",
+  "original_problem": "A thief stole a woman's handbag, and the bag climbs to the highest place it can find.",
+  "pressures": [
+   {
+    "name": "the cathedral bells",
+    "stages": [
+     "The cathedral clock says it's almost midnight.",
+     "The bag is climbing toward the bells, and they ring at midnight.",
+     "The big bells start to swing."
+    ],
+    "fix": "Get to the bag before the bells ring"
+   },
+   {
+    "name": "the thief",
+    "stages": [
+     "The thief is still out there, laughing.",
+     "The thief has found a second bag to steal.",
+     "The thief is selling tickets to watch the bag climb."
+    ],
+    "fix": "Catch the thief"
+   },
+   {
+    "name": "the birthday party",
+    "stages": [
+     "The birthday girl wants everyone back at the bar.",
+     "The bar is about to give away their table.",
+     "The birthday cake is melting on the pavement."
+    ],
+    "fix": "Get back to the birthday party"
+   }
+  ]
  },
  {
   "id": "opera-snake",
@@ -603,7 +693,37 @@
     "A smaller boa becomes her understudy"
    ]
   },
-  "art_style_hint": "Inside a grand opera house at night, red velvet curtain and gold balconies, a huge boa coiled in a spotlight, neon magenta stage light."
+  "art_style_hint": "Inside a grand opera house at night, red velvet curtain and gold balconies, a huge boa coiled in a spotlight, neon magenta stage light.",
+  "original_problem": "The opera's star snake, Princess, is lost in the air vents on opening night.",
+  "pressures": [
+   {
+    "name": "the curtain",
+    "stages": [
+     "The curtain goes up in thirty minutes.",
+     "The orchestra is tuning up.",
+     "The audience is seated, and the lights go down."
+    ],
+    "fix": "Stall the show"
+   },
+   {
+    "name": "the understudy",
+    "stages": [
+     "The tiny understudy snake is warming up.",
+     "The understudy wants the part, and the director is tempted.",
+     "The director puts the understudy's name on the poster."
+    ],
+    "fix": "Keep the understudy off the stage"
+   },
+   {
+    "name": "the critic",
+    "stages": [
+     "A famous critic sits down in the front row.",
+     "The critic is already writing notes.",
+     "The critic asks loudly where the snake is."
+    ],
+    "fix": "Distract the critic"
+   }
+  ]
  },
  {
   "id": "rust-wyrm",

@@ -38,6 +38,12 @@ export const FEATURES = {
   storySfx: true,
   /** The finale talk (CD): 60 s to convince each other before the final vote (phase "convince"). Off until the screens exist. */
   finaleTalk: true, // look: TV FinaleTalk + phone TalkScreen are in (6c6dbb8, c684ff7); off again if the real run shows a problem
+  /**
+   * Story v3 (design/37, after Meta's judges): a success resolves the situation for good and the story moves to the
+   * NEW circumstance it created; 2-3 pressures worsen on their own each turn; the meter is a story clock by turns;
+   * the finish line is only a suggested goal. Off = the design/35 engine (one fixed finish line).
+   */
+  storyV3: process.env.NEXT_PUBLIC_STORY_V2 !== "1",
   /** CD (Sun AM): the TV host can remove a player or bot from the lobby (host.kick); their phone offers Rejoin. */
   kick: true,
   /** CD (Sun AM): after the ending, "Back to lobby" keeps the room, the players and their heroes (host.playAgain). */

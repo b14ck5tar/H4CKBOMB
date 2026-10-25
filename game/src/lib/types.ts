@@ -152,6 +152,9 @@ export interface QuestSeed {
   the_real_story: { summary: string; headline: string; source: string; link: string; date: string; context_note?: string; now?: string };
   /** A live-news or player-written story's opener (fixed start + fixed goal; the middle branches). */
   opener?: SeedScene;
+  /** Story v3 (design/37): the starting problem in one plain sentence, and 2-3 things that get worse on their own. */
+  original_problem?: string;
+  pressures?: { name: string; stages: string[]; fix: string }[];
   /** The problem's stakes, and a pronoun if the problem is a creature (live stories, from the writer). */
   problem?: { pronoun: string; stakes: string };
   /** The story ladder: 3-4 step goals, setup → twist → climax (live stories, from the writer). */

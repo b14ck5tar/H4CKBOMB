@@ -7,9 +7,18 @@
  * If the model fails, fallbackTurn() still names the plan and applies its grade (rule 2), so the table never waits.
  */
 
+import { FEATURES } from "./features";
+
 export type Grade = "DISASTER" | "SETBACK" | "PARTIAL" | "PROGRESS" | "GREAT" | "LEGENDARY";
 
 export type CastMember = { name: string; role: string; pronoun?: string };
+
+/**
+ * Story v3 (design/37): a thing that gets worse on its own, whatever the players do (a D&D "front"). One advances
+ * every turn and shows in the scene, so the story always moves. stages = how it gets worse, in order (plain, short);
+ * fix = a verb-first Right now for when the story needs a forced twist ("Keep the reporters away").
+ */
+export type Pressure = { name: string; stages: string[]; fix: string; level: number };
 
 export type StoryState = {
   /** Where the heroes are right now (plain words, never a real place name). */
@@ -49,6 +58,12 @@ export type StoryState = {
   hook: string;
   /** The real event behind the story (HIDDEN from players; the AI keeps it real). */
   real_event?: { place_type?: string; roles?: string[]; situation?: string; stakes?: string; arc?: string[] };
+  /** v3: the story's starting problem in one plain sentence (the reveal refers back to it). */
+  original_problem?: string;
+  /** v3: 2-3 things that get worse on their own (one advances every turn). */
+  pressures?: Pressure[];
+  /** v3: every problem the table has faced so far (the never-the-same-situation-twice guard). */
+  problems_seen?: string[];
 };
 
 /** What the model proposes for one turn (the "turn" task's raw answer). */
@@ -69,6 +84,8 @@ export type TurnProposal = {
   step_solved: boolean;
   /** 1-3 sound cues for this slide (lib/storySfx.ts): { id, word }, in order. */
   sfx?: { id: string; word: number }[];
+  /** v3: the NEW situation this turn created, in one plain sentence (what's wrong now). */
+  problem_now?: string;
   /** Lines said out loud in the outcome (FEATURES.castVoices): who says them, and the words inside the quote marks. */
   quotes?: { speaker: string; text: string }[];
 };
@@ -208,7 +225,75 @@ export function stateFromOpener(opener: any, party: { name: string; pronouns?: s
     act: 1,
     hook: lines[1] || clip(o.problem_line, 200) || problemName,
     real_event: o.real_setting ? { place_type: clip(real.place_type, 120), roles: (real.roles ?? []).slice(0, 4).map((r: unknown) => clip(r, 60)), situation: clip(real.situation, 200), stakes: clip(real.stakes, 160), arc: (real.arc ?? []).slice(0, 5).map((r: unknown) => clip(r, 100)) } : undefined,
+    ...(FEATURES.storyV3
+      ? {
+          original_problem: clip(o.original_problem, 200) || [problemName, lines[1] ?? ""].filter(Boolean).join(": ").slice(0, 200),
+          pressures: cleanPressures(o.pressures, clip(real.place_type || o.situation, 60)),
+          problems_seen: [first].filter(Boolean),
+        }
+      : {}),
   };
+}
+
+// ---------------------------------------------------------------- v3: pressures and the never-the-same-situation guard
+
+/**
+ * The opener's pressures, cleaned (2-3). A story without any gets two generic ones that fit anywhere, so the
+ * clock still moves: a crowd that grows, and the day running out.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function cleanPressures(x: any, where = ""): Pressure[] {
+  const got = (Array.isArray(x) ? x : [])
+    .map((p) => ({
+      name: clip(p?.name, 40),
+      stages: (Array.isArray(p?.stages) ? p.stages : []).map((s: unknown) => clip(s, 110)).filter(Boolean).slice(0, 4),
+      fix: clip(p?.fix, 60).replace(/[.!]+$/, ""),
+      level: 0,
+    }))
+    .filter((p) => p.name && p.stages.length && p.fix)
+    .slice(0, 3);
+  if (got.length >= 2) return got;
+  const place = where ? ` at the ${where.replace(/^(the|a|an)\s+/i, "")}` : "";
+  return [
+    ...got,
+    { name: "the crowd", stages: [`A few people stop to watch${place}.`, "The crowd is filming everything now.", "The crowd starts shouting advice."], fix: "Get the crowd to back off", level: 0 },
+    { name: "the clock", stages: ["The light starts to fade.", "Someone says there's an hour left, tops.", "It's nearly dark, and nobody is going home."], fix: "Beat the dark", level: 0 },
+  ].slice(0, 3);
+}
+
+/**
+ * Content-word overlap of two lines: shared stems over all stems in either (0-1). "Get the bag" vs "Get the bag off
+ * the ledge" = 0.5 (a repeat); "Catch the thief" vs "Chase the thief through the old lanes" = 0.17 (a new step).
+ */
+export function overlap(text: string, other: string) {
+  const a = planWords(text);
+  const b = planWords(other);
+  if (!a.length || !b.length) return 0;
+  const shared = a.filter((w) => b.includes(w)).length;
+  return shared / new Set([...a, ...b]).size;
+}
+
+/** The earlier goal or problem this one repeats (content-word overlap >= 0.5), or "". */
+export function repeatsEarlier(text: string, earlier: string[]) {
+  return text.trim() ? earlier.find((e) => e && overlap(text, e) >= 0.5) ?? "" : "";
+}
+
+/** The pressure that advances this turn (they take turns), with its next stage. null = none. */
+export function pressureNow(state: StoryState) {
+  const ps = state.pressures ?? [];
+  if (!ps.length) return null;
+  const i = state.turn % ps.length;
+  const p = ps[i];
+  return { i, name: p.name, stage: p.stages[Math.min(p.level, p.stages.length - 1)], fix: p.fix };
+}
+
+/**
+ * Every Right now so far (v3's never-again list for the next step). Problems are checked against earlier problems
+ * only: the story's core thing (the bag, the shark) naturally stays in a step, so a step is never compared with a
+ * whole problem sentence.
+ */
+export function earlierSituations(state: StoryState) {
+  return [...state.goals_done, state.right_now].filter(Boolean);
 }
 
 // ---------------------------------------------------------------- checks (rules 7, 9, pronouns, game words)
@@ -450,15 +535,34 @@ export function checkTurn(p: TurnProposal, ctx: { state: StoryState; hero: strin
     if (words(rn) > 8) out.push(`right_now is ${words(rn)} words (8 max)`);
     if (longestStack(rn, true) >= 4 || modifierPile(rn) >= 2) out.push(`right_now "${rn}" stacks too many words: a verb, then one plain thing ("Tuck the ice hand into the snow")`);
     if (NOT_VERB_START.test(rn) || VAGUE.test(rn)) out.push(`right_now "${rn}" must start with a concrete verb (no vague verbs)`);
-    const stays = !WON(ctx.grade) && norm(rn) === norm(ctx.state.right_now); // a miss may keep the same step
-    // A success moves on: a reworded copy of the step just worked on ("Scoop beads before high tide" x3) is a repeat.
-    const rw = planWords(rn);
-    const near = (g: string) => rw.length > 0 && rw.filter((w) => planWords(g).includes(w)).length / rw.length >= 0.6;
-    if (WON(ctx.grade) && near(ctx.state.right_now)) out.push(`right_now "${rn}" is the step they just did, reworded: give the NEXT step`);
-    if (/\bagain\b/i.test(rn) || (!stays && ctx.state.goals_done.some((x) => norm(x) === norm(rn)))) out.push(`right_now "${rn}" repeats an earlier goal: give the NEXT step`);
+    if (FEATURES.storyV3) {
+      // v3 (design/37): never the same objective twice, success or miss: the story is always somewhere new.
+      const was = repeatsEarlier(rn, earlierSituations(ctx.state));
+      if (was || /\bagain\b/i.test(rn)) out.push(`repeats an earlier moment: right_now "${rn}" is an earlier goal ("${was || rn}") reworded; give the NEW situation's next step`);
+    } else {
+      const stays = !WON(ctx.grade) && norm(rn) === norm(ctx.state.right_now); // a miss may keep the same step
+      // A success moves on: a reworded copy of the step just worked on ("Scoop beads before high tide" x3) is a repeat.
+      const rw = planWords(rn);
+      const near = (g: string) => rw.length > 0 && rw.filter((w) => planWords(g).includes(w)).length / rw.length >= 0.6;
+      if (WON(ctx.grade) && near(ctx.state.right_now)) out.push(`right_now "${rn}" is the step they just did, reworded: give the NEXT step`);
+      if (/\bagain\b/i.test(rn) || (!stays && ctx.state.goals_done.some((x) => norm(x) === norm(rn)))) out.push(`right_now "${rn}" repeats an earlier goal: give the NEXT step`);
+    }
+  }
+  if (FEATURES.storyV3) {
+    const pn = String(p.problem_now ?? "").trim();
+    if (!pn) out.push("problem_now is empty: say the NEW situation in one plain sentence");
+    else {
+      if (words(pn) > 22) out.push(`problem_now is ${words(pn)} words (20 max)`);
+      const was = repeatsEarlier(pn, [...(ctx.state.problems_seen ?? []), ctx.state.problem]);
+      if (was) out.push(`repeats an earlier moment: problem_now is the old situation ("${was}") again; a success resolved it for good, a miss made something NEW go wrong`);
+    }
+    const pr = pressureNow(ctx.state);
+    if (pr && !usesPlan(`${o} ${p.scene}`, pr.name)) out.push(`the pressure (${pr.name}) must get worse in the scene, in plain words: "${pr.stage}"`);
   }
   if (ctx.next_player && p.scene && !new RegExp(`\\b${esc(ctx.next_player)}\\b`).test(p.scene)) out.push(`scene must hand the moment to ${ctx.next_player} by name`);
-  if (sentences(p.scene).length > 1 || words(p.scene) > 24) out.push("scene is 1 sentence, 24 words max");
+  if (FEATURES.storyV3) {
+    if (sentences(p.scene).length > 2 || words(p.scene) > 32) out.push("scene is 2 short sentences at most (the pressure, then the hand-off), 30 words max");
+  } else if (sentences(p.scene).length > 1 || words(p.scene) > 24) out.push("scene is 1 sentence, 24 words max");
   if (p.new_character?.name && ctx.state.cast.length >= 3 && !ctx.state.cast.some((c) => norm(c.name) === norm(p.new_character.name))) out.push("no new named characters: the cast is full (3)");
   const newThings = [p.new_fact, p.new_character?.name].filter((x) => x && x.trim()).length;
   if (newThings > 1) out.push("one new thing per turn at most (a fact OR a character)");
@@ -496,6 +600,7 @@ export function applyTurn(
   p: TurnProposal,
   ctx: { hero: string; attempt?: string; grade: Grade; depth?: number },
 ): { state: StoryState; delta: number; finale: boolean; act_changed: boolean } {
+  if (FEATURES.storyV3) return applyTurnV3(state, p, ctx);
   const turn = state.turn + 1;
   let delta = progressDelta(ctx.grade, p.progress_gain, state.turns_total);
   // A success that solves the current step takes the top of its grade's range (a bigger roll is always a bigger step).
@@ -534,6 +639,56 @@ export function applyTurn(
   return { state: next, delta, finale: progress >= 100, act_changed: act !== state.act };
 }
 
+/**
+ * v3 (design/37): the meter is a story clock (turns, not task %), the finale comes when the turns run out, and every
+ * turn lands somewhere NEW: a success resolves the situation for good (it becomes a fact), a miss makes a new thing
+ * go wrong. If the model's next situation still repeats an earlier one after the retry, code forces a twist from the
+ * pressure that advanced this turn. That pressure moves one stage on whatever happened.
+ */
+function applyTurnV3(state: StoryState, p: TurnProposal, ctx: { hero: string; attempt?: string; grade: Grade; depth?: number }) {
+  const turn = state.turn + 1;
+  const T = Math.max(1, state.turns_total || 1);
+  const progress = Math.min(100, Math.round((100 * turn) / T));
+  const act = Math.max(state.act, actClock(turn, T));
+  const won = WON(ctx.grade);
+  const pr = pressureNow(state);
+  const earlier = earlierSituations(state);
+  let rn = clip(p.right_now, 80).replace(/[.!]+$/, "");
+  let problem = clip(p.problem_now, 200);
+  const stale = !rn || /\bagain\b/i.test(rn) || !!repeatsEarlier(rn, earlier) || !problem || !!repeatsEarlier(problem, [...(state.problems_seen ?? []), state.problem]);
+  // The forced twist: the pressure itself becomes the situation (never "try again").
+  if (stale && pr) {
+    problem = pr.stage;
+    rn = pr.fix;
+  } else if (stale && !rn) rn = state.right_now;
+  const pressures = (state.pressures ?? []).map((x, i) => (pr && i === pr.i ? { ...x, level: Math.min(x.level + 1, x.stages.length - 1) } : x));
+  const cast = [...state.cast];
+  if (p.new_character?.name && cast.length < 3 && !cast.some((c) => norm(c.name) === norm(p.new_character.name)) && !p.new_fact?.trim()) cast.push({ name: clip(p.new_character.name, 30), role: clip(p.new_character.role, 50) });
+  // What the plan did is a fact, success or miss; a success also closes the old situation for good.
+  const did = won && state.right_now ? `Done: ${clip(state.right_now, 80)}` : "";
+  const facts = [...state.facts, ...(p.new_fact?.trim() ? [clip(p.new_fact, 120)] : []), ...(did ? [did] : [])].slice(-8);
+  const mem = p.memorable?.trim() ? [...state.memorable, clip(p.memorable, 100)].slice(-2) : state.memorable;
+  const next: StoryState = {
+    ...state,
+    where: clip(p.where, 120) || state.where,
+    problem: problem || state.problem,
+    progress,
+    cast,
+    facts,
+    open_thread: clip(p.open_thread, 120) || state.open_thread,
+    last_moments: [...state.last_moments, clip(p.outcome, 240)].slice(-6),
+    memorable: mem,
+    right_now: rn,
+    goals_done: [...state.goals_done, rn].slice(-12),
+    problems_seen: [...(state.problems_seen ?? []), state.problem, problem].filter(Boolean).slice(-12),
+    pressures,
+    credits: [...state.credits, { name: ctx.hero, did: clip(ctx.attempt, 120) || "had a go", grade: ctx.grade }],
+    turn,
+    act,
+  };
+  return { state: next, delta: progress - state.progress, finale: turn >= T, act_changed: act !== state.act };
+}
+
 // ---------------------------------------------------------------- fallback (still names the plan, rule 2)
 
 /** The AI-free turn: names the plan, applies its grade generically, keeps the story moving. */
@@ -559,6 +714,25 @@ export function fallbackProposal(state: StoryState, o: { hero: string; attempt?:
   const result = won ? "worked" : o.grade === "PARTIAL" ? "half worked" : "made things harder";
   // A miss keeps the current step; a success heads for the finish line (plain, never "Build on X's plan").
   const fresh = won ? state.finish_line : state.right_now || state.finish_line;
+  // v3: the canned turn still moves the story: the pressure that advances this turn becomes the new situation.
+  const pr = FEATURES.storyV3 ? pressureNow(state) : null;
+  if (pr) {
+    const v3how: Record<Grade, string> = { ...how, SETBACK: "but it backfires.", DISASTER: "but it backfires spectacularly." };
+    return {
+      outcome: `${o.hero} ${action}${credit} ${v3how[o.grade]}`.replace(/\s+/g, " ").trim(),
+      scene: o.next_player ? `${pr.stage} ${o.next_player}, what now?` : `${pr.stage} Everyone, the grand finale is next.`,
+      right_now: pr.fix,
+      problem_now: pr.stage,
+      progress_gain: Number.NaN,
+      progress_why: "",
+      new_fact: "",
+      new_character: { name: "", role: "" },
+      where: "",
+      open_thread: "",
+      memorable: "",
+      step_solved: won,
+    };
+  }
   return {
     outcome: `${o.hero} ${action}${credit} ${how[o.grade]}`.replace(/\s+/g, " ").trim(),
     scene: o.next_player ? `${o.next_player}, ${o.hero}'s ${key} plan ${result}, so what now?` : `Everyone, ${o.hero}'s ${key} plan ${result}, and the grand finale is next.`,
