@@ -120,7 +120,8 @@
     "line": "We sold forty thousand shark keychains. I need it gone and I need it happy."
    },
    "first_step": "Clear the crowd off the canal bridges",
-   "problem_name": "the canal shark"
+   "problem_name": "the canal shark",
+   "sfx": "big-splash"
   },
   "the_real_story": {
    "summary": "A 3-meter shark lived in a canal in Busan, South Korea, for a month. The city nicknamed it Bukangi and made it a mascot, and about 1.7 million people came to see it.",
@@ -270,7 +271,8 @@
     "line": "Thirty years in sewers. First time a wall made me an offer."
    },
    "first_step": "Carry the gold up out of the cellar",
-   "problem_name": "the talking gold"
+   "problem_name": "the talking gold",
+   "sfx": "coins"
   },
   "the_real_story": {
    "summary": "In Dendermonde, Belgium, a sewer crew found about 50 gold bars and many coins, worth about 9 million euros, bricked inside the cellar wall of an old brewer's house.",
@@ -421,7 +423,8 @@
     "line": "I have a grappling hook. It is made of toilet paper."
    },
    "first_step": "Chase the thief through the old lanes",
-   "problem_name": "the climbing handbag"
+   "problem_name": "the climbing handbag",
+   "sfx": "running-footsteps"
   },
   "the_real_story": {
    "summary": "On a night out in Norwich, England, a man dressed as Batman chased a suspected handbag thief, with friends dressed as Poison Ivy and Mister Fantastic.",
@@ -572,7 +575,8 @@
     "line": "The understudy is eleven inches long. The costume is nine feet."
    },
    "first_step": "Follow the humming through the air vents",
-   "problem_name": "the star snake"
+   "problem_name": "the star snake",
+   "sfx": "crowd-gasp"
   },
   "the_real_story": {
    "summary": "The Metropolitan Opera in New York held auditions for a live snake. Each snake wrapped around the handler and was lifted overhead. A boa named Princess got the part, on a trial basis.",

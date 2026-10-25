@@ -2058,7 +2058,9 @@ export class GameHost {
       if (this.state.phase !== phase || this.state.turnIndex !== turn || this.state.paused) return;
       const who = slow().filter((id) => this.player(id) && !this.player(id)!.away);
       if (!who.length) return;
-      this.set({ nudge: { at: Date.now(), kind, name: who.length === 1 ? this.heroName(who[0]) : "" } });
+      const name = who.length === 1 ? this.heroName(who[0]) : "";
+      // nudge = look's "10 s!" chip; timeWarn = voice's spoken warning (a live "<Name>, ten seconds." when one person).
+      this.set({ nudge: { at: Date.now(), kind, name }, timeWarn: { at: Date.now(), ...(name ? { name } : {}) } });
     }, totalMs - 10_000);
   }
 
@@ -3297,11 +3299,12 @@ export class GameHost {
       const said = this.seed?.author ? `Here's the twist… it's based on ${speakableName(this.seed.author.name)}'s true story. ${rsr.summary}` : `Now, here's the strange part… it's based on a true story. ${rsr.headline}.`;
       // The bridge links the table's ending to the real one, after a beat of breathing room (CD: the grand ending).
       const bridge = this.state.revealData?.bridge ?? "";
-      this.voiceBy(bridge ? `${said} ... ${bridge}` : said, Date.now() + 2500).then((clip) => this.state.phase === "reveal" && this.play(clip));
+      // It starts on the real-story beat (look: ~5 s of WHAT YOU DID first), so the result lands before she speaks.
+      this.voiceBy(bridge ? `${said} ... ${bridge}` : said, Date.now() + 2500).then((clip) => this.state.phase === "reveal" && this.play(clip, 5000));
     }
     const text = `${this.seed?.the_real_story.headline ?? ""} ${this.seed?.the_real_story.summary ?? ""}`;
     // Room to breathe: the headline plus the bridge line (CD's grand ending); Continue still skips.
-    if (this.quick) return this.reading(text, () => this.showStorybook(), Math.max(QUICK.revealMs, 16_000), Math.max(QUICK.revealMs, 16_000));
+    if (this.quick) return this.reading(text, () => this.showStorybook(), Math.max(QUICK.revealMs, 20_000), Math.max(QUICK.revealMs, 20_000));
     this.reading(text, () => this.showStorybook(), 15000);
   }
 
