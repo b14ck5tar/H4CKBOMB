@@ -2371,7 +2371,7 @@ export class GameHost {
       if (this.seed?.id !== seed.id) return r.cast;
       this.set({ cast: r.cast });
       if (this.story && !this.story.stakes && r.want) this.story.stakes = r.want;
-      this.note("hero", "Narrator", `Cast by Muse Spark: ${r.cast.name} (${VOICES[r.cast.voice as keyof typeof VOICES]?.gemini ?? r.cast.voice} voice) for ${r.cast.kind}: "${r.cast.style}". Painted in ${r.cast.artName}. Music: ${r.cast.music || "rotating"}.`);
+      this.note("hero", "Story look", `Muse Spark read the story as ${r.cast.kind}: painted in ${r.cast.artName}, music: ${r.cast.music || "rotating"}. One narrator voice for every story.`);
       if (this.story?.stakes) this.note("scene", "The problem", `${seed.the_threat.name}. At stake: ${this.story?.stakes}. Every complication comes from the problem; nobody has to be defeated.`);
       return r.cast;
     });
@@ -2401,7 +2401,8 @@ export class GameHost {
         // Gemini's calm reads slowly, so the TV plays it at 1.25x; OpenAI's pace is already natural (1x).
         const rate = Number(res.headers.get("X-Voice-Rate") ?? 1) || 1;
         if (!this.voicedBy) {
-          this.voicedBy = rate === 1 ? "OpenAI TTS" : "Gemini TTS";
+          const by = res.headers.get("X-Voice-Provider");
+          this.voicedBy = by === "elevenlabs" ? "ElevenLabs (Sarah: Eleven v3 for openers and endings, Flash v2.5 for live lines)" : by === "gemini" || rate !== 1 ? "Gemini TTS" : "OpenAI TTS";
           this.note("hero", "Narrator", `Voiced by ${this.voicedBy} (Meta has no voice model). Text only if a line isn't ready in 5 s.`);
         }
         const ms = Number(res.headers.get("X-Audio-Ms") ?? 0);
