@@ -42,8 +42,6 @@ finale, about 5-6 minutes. Real faces reacting to each other are the human-conne
 Start every recording first, then **clap once on camera** (it syncs the tracks):
 1. **TV:** OBS (1920x1080, 60 fps, desktop audio on, mic off), or Snipping Tool (Win+Shift+R, system audio on).
 2. **Phone A (and B if you can):** screen recording, mic off, "Show touches" on (Android).
-3. **Room camera:** a 4th phone (borrow one) propped on books, landscape, all three faces + the TV glow. No 4th phone?
-   Film the reveal and the laughing clip with one player's phone once their turn is over.
 
 Play these moves (plan the moves, not the words):
 - [ ] A types a custom hero ("a night-shift baker who argues with her sourdough"); B and C grab ready-made heroes.
@@ -59,8 +57,6 @@ own word, a readable headline at the reveal. **One good take is enough.**
 
 Also record:
 - [ ] **The opening shot** (Part 1, 9 s): the three of you on a couch, each scrolling your own phone, nobody talking.
-- [ ] **The laughing clip** (5-10 s, phone camera): the three of you at the table reacting to a roll or the reveal, real
-      laughs, the TV glow in frame. If the take already caught one, that's it.
 - [ ] Optional: 5 s of hands rolling real dice.
 
 ## 3. Screen captures after the take (5 min)
@@ -95,7 +91,7 @@ natural, like telling a friend; no trailer voice. Fluff a line? Pause, then rere
 2. Cut the voiceover at its [pause] gaps and lay the parts on top: Part 1 at 0:00, Part 2 at 0:30, Part 3 at 2:00,
    Part 4 at 2:30. Add the small criterion chips (VIDEO_SCRIPT.md) top-left.
 3. In Part 2, cut the live take down to the moments in VIDEO_SCRIPT.md (join, opener, the friend's-idea pick, the
-   swipe, the outcome, the shake, the reveal). Cut away to a phone capture or the room camera at least 3 times.
+   swipe, the outcome, the shake, the reveal). Cut away to a phone capture at least 3 times.
 4. Game sound low under the VO; louder for the narrator and the reveal.
 5. Captions: Clipchamp's auto-captions, then fix any wrong words. Keep them out of the bottom 15%.
 6. **Under 3:00.** If long, cut words, not the friend's-idea moment or the reveal.

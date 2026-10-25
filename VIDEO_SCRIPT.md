@@ -86,7 +86,7 @@ Muse calls"; "Every number is its own outcome."
 **The take (§2):** `/tv?judge=1`, **Quick · Odd news · Teens**, **3 real people on their own phones** (CD, partner,
 a friend), no test players. Human connection is 30% of the score, and only real people reacting to each other prove
 it. Judge mode plays a saved, tested true story and gives each person 1 turn, then the finale: about 5-6 minutes of
-footage. Plus a **5-10 s room clip** of the three of you laughing at the table (§2), used in Part 1 or Part 2.
+footage, all screen recordings (the TV and the phones).
 *Solo backup only* (no third person around): `/tv?judge=1&bots=1` with 2 people + 2 test players (press **B**
 twice). Test players only suggest ideas, never own a turn; never call one "my friend".
 
@@ -95,15 +95,15 @@ twice). Test players only suggest ideas, never own a turn; never call one "my fr
 | **Part 1** | | | |
 | 0:00-0:09 | "everyone on their own phone" | Two friends on a couch, each scrolling, nobody talking. 2 s of silence first. | §2 couch shot (LIVE) |
 | 0:09-0:19 | "Tabletop games fix that…" | Hands rolling real dice, people leaning in. No dice? Use `deck-slide-3.png` with a slow push. | §2 dice shot / §4 B-roll |
-| 0:19-0:30 | "So we built Group Project…" | The TV lobby: neon title, big QR; three phones come up and scan; then the 5-10 s room clip of the three of you laughing at the table. Title: **Group Project**, subtitle *the one group project where everyone actually shows up.* | §2 take: TV + room camera |
+| 0:19-0:30 | "So we built Group Project…" | The TV lobby: neon title, big QR and the lobby filling with three heroes. Title: **Group Project**, subtitle *the one group project where everyone actually shows up.* | §2 take: TV |
 | **Part 2** | | | |
 | 0:30-0:40 | "Scan the code…" | Phone A: type the hero, answer "What's your secret talent?" TV: the hero card pops in, the portrait paints in. | §2 take: phone A + TV |
 | 0:40-0:48 | "Muse turns a real, odd news story…" | TV: the opening painting with all three heroes; the narrator starts reading, text in sync. | §2 take: TV |
-| 0:48-1:06 | "There's no script…" (**the money shot**) | TV: "{A}, tell the table your plan." Room: B pitches an idea out loud, A laughs. Phone A: friends' ideas; A taps B's. TV: the plan card with "+ B's idea +1". Hold 2 s on the credit. | §2 take: room camera + both phones + TV |
-| 1:06-1:16 | "Swipe up to throw…" | Phone A: the thumb flicks up. TV: the d20 flies onto the table, lands, the meter fills to its grade. Room: both react. Caption: *1 = DISASTER … 20 = LEGENDARY*. | §2 take: phone A + TV + room |
-| 1:16-1:32 | "Muse takes your plan literally…" | TV: the outcome uses A's own word, the new painting crossfades in, the progress meter moves, the last line names B. Room: B looks up. | §2 take: TV + room |
-| 1:32-1:44 | "For the finale…" | Phones: "Shake!" Room, wide: both shake at the same moment, laughing. TV: one shared die lands. | §2 take: room + TV |
-| 1:44-2:00 | "And the twist…" | TV: "Because of you" with names, then **Based on a true story**: the real headline, "Solved by" with the real talents. Room: "wait, that's real?" Last 2 s: the keepsake QR. Headline hard to read? Cut to `deck-slide-6.png`. | §2 take: TV + room / §4 |
+| 0:48-1:06 | "There's no script…" (**the money shot**) | TV: "{A}, tell the table your plan." Phone B: typing the idea. Phone A: friends' ideas; A taps B's. TV: the plan card with "+ B's idea +1". Hold 2 s on the credit. | §2 take: both phones + TV |
+| 1:06-1:16 | "Swipe up to throw…" | Phone A: the thumb flicks up. TV: the d20 flies onto the table, lands, the meter fills to its grade. Caption: *1 = DISASTER … 20 = LEGENDARY*. | §2 take: phone A + TV |
+| 1:16-1:32 | "Muse takes your plan literally…" | TV: the outcome uses A's own word, the new painting crossfades in, the progress meter moves, the last line names B. | §2 take: TV |
+| 1:32-1:44 | "For the finale…" | Phones: "Shake!" TV: one shared die lands, the screen shakes. | §2 take: phones + TV |
+| 1:44-2:00 | "And the twist…" | TV: "Because of you" with names, then **Based on a true story**: the real headline, "Solved by" with the real talents. Last 2 s: the keepsake QR. Headline hard to read? Cut to `deck-slide-6.png`. | §2 take: TV / §4 |
 | **Part 3** | | | |
 | 2:00-2:14 | "Muse runs the night…" | The one-turn diagram: real news → Muse Spark → plan → Muse Spark judges → code rolls → Muse Spark writes → Muse Image paints → narrator. Chips: *muse-spark-1.3*, *muse-image-1.0*. | §4 `how-it-works.png` |
 | 2:14-2:24 | "Code keeps it fair…" | TV with DM's Notes open, entries scrolling (rulings, progress with one line of why). | §3 DM's Notes clip |
@@ -112,7 +112,7 @@ twice). Test players only suggest ideas, never own a turn; never call one "my fr
 | 2:30-2:39 | "This is my first hackathon…" | Claude Code with several sessions in the sidebar. **Safety check first.** Unsure? Stay on `deck-slide-7.png`. | §3 Claude Code clip |
 | 2:39-2:49 | "They watched our playtest videos…" | A contact sheet of frames from the worst playtest (design/33), then the clean turn screen from today's take. | a still from design/33 + §2 take |
 | 2:49-2:55 | "A test harness… eight of eight." | `deck-slide-7.png`, zoomed on "5→8/8". | §4 B-roll |
-| 2:55-3:00 | (no voice; room laughter) | End card: **Group Project** · groupproject-game.vercel.app · QR. | §4 `deck-slide-8.png` |
+| 2:55-3:00 | (no voice; game music) | End card: **Group Project** · groupproject-game.vercel.app · QR. | §4 `deck-slide-8.png` |
 
 **Keep the take that has:** a friend's idea picked, one low roll and one high roll, an outcome that uses the
 player's own word, a readable headline at the reveal. One good take is enough.
