@@ -239,7 +239,7 @@ export class GameHost {
   private sceneList: SeedScene[] = []; // the hand-written scenes being played
   private pinned = false; // a story was picked by link, so Full Story skips the vote
   private pendingRoll: RollResult | null = null;
-  private outcomeP: Promise<string> | null = null;
+  private outcomeP: Promise<{ text: string; situation: string; why: string }> | null = null;
   private finalRoll: RollResult | null = null;
   private finalPitch: Pitch | null = null;
   private artP = new Map<string, Promise<void>>(); // `${questId}:${scene}` -> hero-painted scene art in flight
@@ -1513,24 +1513,29 @@ export class GameHost {
   }
 
   // ---------- what happened ----------
-  private askOutcome(pitch: Pitch, roll: RollResult): Promise<string> {
+  /**
+   * The branching writer (design/24): what the action did, plus the NEW situation the next hero faces, plus the
+   * cause and effect for DM's Notes. Fixed start, fixed goal, open middle.
+   */
+  private askOutcome(pitch: Pitch, roll: RollResult) {
     const h = this.player(pitch.playerId)!.hero!;
-    const fb = () => FALLBACK_OUTCOME[roll.band].replaceAll("{name}", h.name);
+    const fb = () => ({ text: FALLBACK_OUTCOME[roll.band].replaceAll("{name}", h.name), situation: "", why: "" });
     return this.viaAI(
       "What happened",
-      this.ask<{ text: string }>("outcome", {
-        scene: { title: this.state.sceneTitle, goal: this.state.goal, situation: this.state.situation },
+      this.ask<{ text: string; situation: string; why: string }>("outcome", {
+        story: { title: this.state.quest?.title ?? this.state.sceneTitle, goal: this.state.goal },
+        situation: this.state.situation,
         hero: { name: h.name, power: h.ability?.text ?? "", weakness: h.flaw },
         attempt: pitch.verdict?.interpretation ?? "",
         plan: pitch.text,
         helped_by: pitch.creditId ? this.heroName(pitch.creditId) : "",
         band: roll.band,
         natural: roll.kept === 1 || roll.kept === 20 ? roll.kept : null,
-        finale: false,
-        next_scene: "",
+        earlier: this.state.log.map((l) => l.narration).slice(-4),
+        turns_left: Math.max(0, this.state.turnOrder.length - this.state.turnIndex - 1),
       }),
       12_000,
-      (d, f) => (f ? fb() : d?.text?.trim() || null),
+      (d, f) => (f ? fb() : d?.text?.trim() ? { text: d.text.trim(), situation: (d.situation ?? "").trim(), why: (d.why ?? "").trim() } : null),
       fb,
     );
   }
@@ -1542,13 +1547,16 @@ export class GameHost {
     const pitch = this.state.pitches.find((p) => p.playerId === roll.playerId)!;
     this.set({ phase: "outcome", outcome: "", ready: [] });
     let settled = false;
-    const op = this.outcomeP ?? Promise.resolve(FALLBACK_OUTCOME[roll.band].replaceAll("{name}", this.heroName(roll.playerId)));
+    const op = this.outcomeP ?? Promise.resolve({ text: FALLBACK_OUTCOME[roll.band].replaceAll("{name}", this.heroName(roll.playerId)), situation: "", why: "" });
     op.then(() => (settled = true));
     setTimeout(() => !settled && this.state.phase === "outcome" && this.set({ busy: "The DM is writing it down…" }), 600);
-    const text = await op;
+    const { text, situation, why } = await op;
     if ((this.state.phase as string) !== "outcome") return;
     this.recordWin(pitch, roll, text);
-    this.set({ outcome: text, busy: "" });
+    if (why) this.note("ruling", "Why it went that way", why);
+    if (situation) this.note("scene", "Now", situation);
+    // The story branches: the next turn starts from what just happened.
+    this.set({ outcome: text, busy: "", situation: situation || this.state.situation });
     this.setTimer(outcomeMs(text), () => this.startTurn(this.state.turnIndex + 1));
   }
 

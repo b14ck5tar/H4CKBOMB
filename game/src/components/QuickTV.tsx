@@ -168,9 +168,9 @@ function QTopBar({ host, s, onNotes, notesOpen }: { host: Stage; s: GameState; o
         </button>
       )}
       <RunClock host={host} />
-      {onNotes && !host.readOnly && (
-        <button className={`gp-tb ${notesOpen ? "on" : ""}`} onClick={onNotes} title="What the AI is doing, and why (press N)" aria-pressed={!!notesOpen}>
-          DM&apos;s Notes
+      {notesOpen && onNotes && (
+        <button className="gp-tb on" onClick={onNotes}>
+          Close notes
         </button>
       )}
       <button
@@ -553,10 +553,7 @@ function Ruling({ host, s }: { host: Stage; s: GameState }) {
           {v ? (
             <>
               <Stamp text={stampText(v.tier)} size="lg" rotate={-4} tone={tierTone(v.tier)} />
-              <p className="text-2xl leading-snug text-parchment/90 gp-line flex-1">
-                <span className="font-ui uppercase tracking-widest text-sm text-parchment/60 block">Why</span>
-                {v.reason}
-              </p>
+              <span className="flex-1" />
               {need ? <NeedBadge need={need} /> : null}
             </>
           ) : (
@@ -828,7 +825,7 @@ function RevealCard({ host, s }: { host: Stage; s: GameState }) {
 }
 
 // ---------- 10. the keepsake ----------
-function Keepsake({ host, s }: { host: Stage; s: GameState }) {
+function Keepsake({ host, s, onNotes }: { host: Stage; s: GameState; onNotes?: () => void }) {
   const book = s.storybook;
   const [page, setPage] = useState(0);
   useEffect(() => {
@@ -889,9 +886,16 @@ function Keepsake({ host, s }: { host: Stage; s: GameState }) {
               </p>
             )}
             {!host.readOnly && (
-              <button className="btn btn-crimson text-xl self-start" onClick={() => host.nextTale()}>
-                Play another
-              </button>
+              <div className="flex items-center gap-4">
+                <button className="btn btn-crimson text-xl" onClick={() => host.nextTale()}>
+                  Play another
+                </button>
+                {onNotes && (
+                  <button className="gp-tb !opacity-80 !text-base" onClick={onNotes}>
+                    How the AI decided ▸
+                  </button>
+                )}
+              </div>
             )}
           </div>
         </div>
@@ -980,7 +984,7 @@ export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameS
       main = <RevealCard host={host} s={s} />;
       break;
     case "storybook":
-      main = <Keepsake host={host} s={s} />;
+      main = <Keepsake host={host} s={s} onNotes={onNotes} />;
       break;
     default:
       main = (

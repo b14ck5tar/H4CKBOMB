@@ -201,9 +201,10 @@ export async function POST(req: Request) {
     data = scrubDeep(conform(fallback(task, fbInput), data));
     if (task === "epilogue" && !String(data.ending ?? "").trim()) throw new Error("empty ending");
     if (task === "outcome") {
-      const text = String(data.text ?? "").replace(/<\/?player_input[^>]*>/g, "").trim();
+      const clean = (x: unknown) => String(x ?? "").replace(/<\/?player_input[^>]*>/g, "").trim();
+      const text = clean(data.text);
       if (!text) throw new Error("empty outcome");
-      data = { text };
+      data = { text, situation: clean(data.situation).slice(0, 220), why: clean(data.why).slice(0, 180) };
     }
     if (task === "kind") {
       // The sentence must finish the frame and stay a sentence; otherwise use the safe local version.

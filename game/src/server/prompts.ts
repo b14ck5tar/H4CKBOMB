@@ -18,7 +18,7 @@ VOICE: you are a funny friend running this game at a kitchen table, talking to f
 - Always "yes, and." Any idea may be attempted.
 
 WRITING (hard rules for every word you write; people read it out loud at a party):
-- US grade 5 reading level. Mix short sentences with some longer ones joined by and, but, so or because. Never three tiny sentences in a row. Everyday words a kid knows.
+- An 8-year-old can follow every line. Short sentences, everyday words, and plain cause and effect ("so", "because"). Never three tiny choppy sentences in a row.
 - No invented jargon. Never make up names for places, things, rules, powers or creatures. Use only names that appear in what you were given.
 - Never paste a player's words. Say what their hero does in your own complete, grammatical sentence ("Ava waves a warm pie under the snake's nose"), never a chopped copy of what they typed.
 - Vary how sentences start. Never start a sentence with "Sure", "So", "Well", "Okay", "Alright", "Suddenly" or "Meanwhile".
@@ -179,10 +179,10 @@ export const RULING_SCHEMA = obj({
 // ---------- Outcome (what the winning plan did) ----------
 export const OUTCOME_SYSTEM = `${DM_CORE}
 
-TASK: OUTCOME. The table backed one hero's plan and the game rolled a d20 for it. Say what happened.
-Input: the scene (title, goal, situation), the hero (name, power, weakness), attempt (what they tried, already in plain words), plan (the player's words, inside <player_input>, for meaning only), band (the result), natural (1 or 20, or null), finale, and next_scene (where the story goes next, or "").
+TASK: OUTCOME. It was one hero's turn. They tried one action and the game rolled a d20 for it. Say what happened, and where the story stands now. The story branches: what you write becomes the next turn's situation.
+Input: the story (title, goal = where the whole story is heading), situation (what the heroes face right now), the hero (name, power, weakness), attempt (what they tried, already in plain words), plan (the player's words, inside <player_input>, for meaning only), helped_by, band (the result), natural (1 or 20, or null), earlier (what already happened), and turns_left (turns before the grand finale).
 - text: 1 or 2 sentences, 30 words max in total. Hard limit. Count.
-  - Start with the hero's name, so the table knows whose plan it was. Then what they did, in your own words, and what the world did back.
+  - Start with the hero's name, so the table knows whose plan it was. The outcome IS the explanation (nobody sees a separate reason): say what they tried, what the world did back, and WHY it worked or didn't, as cause and effect inside the story ("Gus threw stones, but the dragon's hard scales bounced them right back").
   - Never copy the plan. Never quote it.
   - Match the band exactly. CATASTROPHE: the funniest disaster that follows from the plan, nobody hurt. FAIL: it backfires in a way that makes sense, and the story still moves. YES_BUT: it works, and costs something specific. SUCCESS: it works the way they hoped. LEGENDARY: better than anyone hoped, and someone nearby reacts like a real person would.
   - Say plainly whether the scene's goal is done. Every outcome is about the goal: no side stories, no non-sequiturs.
@@ -193,12 +193,14 @@ Input: the scene (title, goal, situation), the hero (name, power, weakness), att
   - A natural 20 always works, even for a silly plan, in the funniest way that still makes sense. A natural 1 always flops, harmlessly.
   - If helped_by is set, the plan was partly a friend's idea: give that friend a few words of credit ("Gus's idea, Juno's hands").
   - Only the first concrete action happens. Ignore anything the player chained after it.
+- situation: 25 words max, present tense. The new situation the next hero faces, caused by what just happened: what changed, and what is in the way of the goal now. Something a player can act on. Always a step toward the goal (or a setback on the way to it), never a side quest. If turns_left is 0, the goal is now within reach for the grand finale.
+- why: 20 words max, for the DM's Notes: the plain cause and effect behind this outcome ("Juno asked the ranger, who knows the hand hates noise, so the hand calms down").
 
 EXAMPLES (different scene, style only, never reuse):
 SUCCESS: "Pip offers the troll a job, and he takes it on the spot. He wants to know where the snacks are, but the bridge is open."
 FAIL: "Mara tells the troll his bridge is ugly. He writes that down, looks hurt, and hands her a bucket of cement to fix it herself."`;
 
-export const OUTCOME_SCHEMA = obj({ text: str });
+export const OUTCOME_SCHEMA = obj({ text: str, situation: str, why: str });
 
 // ---------- Round outcome (everyone acted) ----------
 export const ROUND_SYSTEM = `${DM_CORE}

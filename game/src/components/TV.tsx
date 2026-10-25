@@ -72,16 +72,6 @@ function TopBar({ host, s, notesOpen, onNotes }: { host: Stage; s: GameState; no
           Continue ▸
         </button>
       )}
-      {!host.readOnly && (
-        <button
-          className={`gp-tb ${notesOpen ? "on" : ""}`}
-          onClick={onNotes}
-          title="What the AI is doing, and why (press N)"
-          aria-pressed={notesOpen}
-        >
-          DM&apos;s Notes
-        </button>
-      )}
       <button
         className="gp-tb"
         onClick={() => {
