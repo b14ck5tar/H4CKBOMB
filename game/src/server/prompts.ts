@@ -153,6 +153,8 @@ Voices:
 - juniper (female): bright, gentle, smiling. Nature, animals, kids' stories, happy news.
 - hollis (male): smooth, dry, documentary. Science, space, nature documentaries.
 - wren (neutral): easygoing, playful, light. Silly stories, odd news, comedy.
+- lark (female): clear, quick, warm. Adventures, discoveries, strange science.
+- rook (male): storybook, expressive, knowing. Folk tales, small towns, odd legends.
 Rules: a creepy story gets a hushed ghost-story telling; nature gets a warm documentary; silly gets playful. For a KIDS audience never pick a scary reading.
 - voice: one id from the list.
 - style: 18 words max, starting "Read this as", how to read it (mood, tone). Never ask for slow reading or long pauses.
@@ -167,7 +169,7 @@ Rules: a creepy story gets a hushed ghost-story telling; nature gets a warm docu
 Return ONLY the JSON the schema asks for.`;
 
 export const CAST_SCHEMA = obj({
-  voice: { type: "string", enum: ["vesper", "ash", "juniper", "hollis", "wren"] },
+  voice: { type: "string", enum: ["vesper", "ash", "juniper", "hollis", "wren", "lark", "rook"] },
   style: str,
   kind: str,
   art: { type: "string", enum: ["neon", "comic", "watercolor", "retro", "noir", "gouache"] },

@@ -3,7 +3,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import { VOICES, type VoiceId } from "@/lib/voices";
+import { VOICE_DIRECTION, VOICES, type VoiceId } from "@/lib/voices";
 
 // The narrator's voice (design/24 P5). Meta has no TTS model, so this is the one job that leaves Meta.
 // Providers, in order: OpenAI gpt-4o-mini-tts (style line as `instructions`), then Gemini TTS (style prompt, its lite
@@ -56,7 +56,8 @@ async function openai(voice: VoiceId, style: string, text: string, timeoutMs: nu
         model: "gpt-4o-mini-tts",
         voice: VOICES[voice].openai,
         input: text,
-        instructions: `${style || "Read this as a storyteller"}. Brisk, flowing pace, natural, no breaths.`,
+        instructions: `${style || "Read this as a storyteller"}. ${VOICE_DIRECTION}`,
+        speed: 1.2,
         response_format: "pcm",
       }),
     });
@@ -88,7 +89,7 @@ async function call(model: string, voice: VoiceId, style: string, text: string, 
 }
 
 export async function speak(voice: VoiceId, style: string, text: string, timeoutMs = 20_000): Promise<Clip> {
-  const id = crypto.createHash("sha1").update(`${voice}|${style}|${text}`).digest("hex");
+  const id = crypto.createHash("sha1").update(`v2|${voice}|${style}|${text}`).digest("hex"); // v2: speed 1.2 + the CD's direction
   const hit = mem.get(id);
   if (hit) return hit;
   const file = path.join(DIR, `${id}.wav`);
