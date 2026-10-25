@@ -1,6 +1,7 @@
 import "server-only";
 import { RATING_GUIDE } from "@/lib/rating";
 import type { Rating } from "@/lib/types";
+import { badExamplesPrompt, callbackExamplesPrompt, goalExamplesPrompt, outcomeExamplesPrompt } from "@/server/story-examples";
 
 // Prompts and strict JSON schemas for the AI Dungeon Master.
 // Voice and craft come from design/08-dm-craft.md and design/09-human-dm-voice.md (tested live on Muse).
@@ -221,7 +222,7 @@ export const RULING_SCHEMA = obj({
 // Story director v4 (Sun): fail forward. Every roll moves the story to a NEW situation (one act per turn); the grade
 // (lib/grade.ts) picks the branch: worse, mixed, better or legendary. The real event behind every line, a strict
 // "Right now" rubric, a connected table, and a brief for the decision's new painting. Tuned with scripts/story-evals.mjs.
-export const OUTCOME_SYSTEM = `${DM_CORE}
+const OUTCOME_BASE = `${DM_CORE}
 
 TASK: OUTCOME. It was one hero's turn. They tried one action and the game rolled. Say what happened, and move the story to its NEXT act. What you write becomes the next turn's situation.
 Input: story (title, goal = where the whole story is heading), real_event (HIDDEN from players: the real place_type, the roles of real people there, the real situation, the real stakes, and the real arc in order), story_so_far (the problem, what's at stake, its pronoun if it's a creature, where the heroes are, what changed), situation (what the heroes faced), right_now (the goal they were working on), ladder (steps = the planned acts up to the final goal; current = the act they were in; next = the NEXT act, where this outcome takes them (also sent as target), or "" = invent the next act yourself, one step closer to story.goal), last_prop, the hero (name, power, weakness), attempt (what they tried, in plain words), plan (the player's words, inside <player_input>, for meaning only), idea_from (the friend whose suggestion this hero used, or ""; older callers send helped_by instead), heroes (everyone at the table), next_hero (who acts next, or ""), side_character (the story's recurring person: speaker = their role, line = how they talk), roll (total, grade, branch, meaning, depth), band (older name), natural (1 or 20, or null), earlier, turns_left, short. story_so_far.memorable holds the best lines so far.
@@ -275,28 +276,25 @@ THE TABLE (friends play together):
 - where: 8 words max, where the heroes are now ("under the weigh-in scales").
 - changed: 12 words max, the ONE key fact this turn changed.
 - new_prop: 4 words max, the one new object this outcome brought in, or "".
-- memorable: 10 words max, the most quotable detail of this outcome, for later callbacks ("the guard wrote butter on his clipboard"), or "".
+- memorable: 10 words max, the most quotable detail of this outcome, for later callbacks ("the guard wrote butter on his clipboard"), or "".`;
 
-EXAMPLES (a different story, never reuse). real_event: place_type "a small natural history museum after closing", roles ["a night guard", "the fossil curator"], stakes "the fossil goes on show for a school visit at nine". The problem: a fossil drawer that jammed itself shut. right_now "Get the jammed drawer open". ladder.next "Lift the fossil out in one piece".
-- Momo rubs butter on the drawer's rails. PROGRESS 13 (better).
-  text "Momo butters the rails like toast, and the drawer slides open with a polite squeak. The night guard writes butter on his clipboard."
-  situation "The fossil is heavy as a fridge, and the curator is guarding it with a feather duster."
-  now_goal "Lift the fossil out without one crack"
-- Raj pries the drawer with a crowbar. SETBACK 3 (worse).
-  text "Raj pries hard, and the drawer shoots out like a tongue and spits the fossil down the laundry chute."
-  situation "The fossil is sliding toward the basement, where the night guard is mopping a very wet floor."
-  now_goal "Catch the fossil before the mop bucket"
-- Pip yells at the drawer to open. DISASTER 1 (worse).
-  text "Pip yells at the drawer, and every drawer in the hall flies open. Two hundred bones roll out, and the fossil is one of them."
-  now_goal "Find the real fossil in the bone pile"
-- Ada uses Momo's idea and butters the curator's gloves. GREAT 17 (better), idea_from "Momo".
-  text "Momo's idea, Ada's hands: the buttered gloves slide the fossil out like soap. The curator offers his rolling cart, which he never does."
-  now_goal "Roll the fossil to the display case"
-- Kai asks the drawer nicely. LEGENDARY 22 (legendary).
-  text "Kai asks the drawer nicely. It opens, hands him the fossil, and closes with a little bow. The night guard says, \"I'm writing that down.\""
-  now_goal "Carry the fossil up to the display case"
-BAD now_goal: "Get the jammed drawer open" (same as right_now), "Find the crowbar" (a prop), "Deal with the drawers" (vague verb), "Figure out what is happening in the museum tonight" (vague, too long).
-BAD text: "Raj tries, but it doesn't work, and the drawer stays stuck." (nothing changed: the story stalls). "Everyone cheers as the drawer opens." (generic reaction).`;
+/**
+ * The outcome prompt with the Writers' Room few-shot examples (server/story-examples.ts). `avoid` = the live story's
+ * title + real_event.place_type + problem name, so an example game that overlaps the live story is left out (leakage).
+ * full = all example games (spark-high branch writing); otherwise 2 games (the fast low/minimal path).
+ */
+export function outcomeSystem(o: { avoid?: string; full?: boolean } = {}) {
+  return `${OUTCOME_BASE}
+
+${outcomeExamplesPrompt({ avoid: o.avoid, games: o.full ? 3 : 2 })}
+
+${goalExamplesPrompt()}
+
+${badExamplesPrompt()}
+
+${callbackExamplesPrompt()}`;
+}
+export const OUTCOME_SYSTEM = outcomeSystem();
 
 export const OUTCOME_SCHEMA = obj({ text: str, situation: str, now_goal: str, scene: str, why: str, where: str, changed: str, new_prop: str, memorable: str });
 
@@ -356,7 +354,9 @@ Input: the finale scene (title, goal), winner (the hero whose plan it was), atte
 - line: 12 words max. One plain sentence for the last card: how it ended ("The snake works at the scrapyard now.").
 - recap: 1 or 2 sentences, 32 words max. What this group actually did tonight, from start to finish, by hero name, in plain words a kid could retell ("Gus asked the ranger what the hand wanted, Juno got their stuff back, and Bev sang it to sleep."). Only the moves that mattered to the goal (skip side objects), and it MUST end with the finale's result: won true = they reached the goal, won false = they didn't. Only things that happened.
 - Use the pronoun from story_so_far for any creature in the problem.
-- skills: one entry per player: id, and phrase = a clean 1 to 4 word skill in lowercase ("parallel parking", "baking bread", "talking to dogs"), or "" if what they said is a joke, crude, gross, mean, violent, or not a real skill. Never invent one.`;
+- skills: one entry per player: id, and phrase = a clean 1 to 4 word skill in lowercase ("parallel parking", "baking bread", "talking to dogs"), or "" if what they said is a joke, crude, gross, mean, violent, or not a real skill. Never invent one.
+
+${callbackExamplesPrompt()}`;
 
 export const EPILOGUE_SCHEMA = obj({ ending: str, line: str, recap: str, skills: { type: "array", items: obj({ id: str, phrase: str }) } });
 

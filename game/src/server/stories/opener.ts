@@ -3,6 +3,7 @@ import { museJSON, type Effort } from "@/server/muse";
 import { RATING_GUIDE } from "@/lib/rating";
 import type { Rating } from "@/lib/types";
 import { fetchArticleFacts } from "@/server/news/sources";
+import { openerExamplesPrompt } from "@/server/story-examples";
 import { fkGrade, inventedNames, sanitize, styleProblems, wordCount } from "./readability";
 
 // Story openers (design/24 "Story writing": fixed start, fixed goal, open middle). Made ahead of time, so we use
@@ -666,7 +667,10 @@ export async function makeOpener(input: {
   }
 
   const sourceSentences = news ? splitSentences(`${clip(news.snippet, 1000)} ${body}`) : [];
+  // Writers' Room opener examples (server/story-examples.ts), minus any that overlap this source (leakage).
   const system = `${OPENER_SYSTEM}
+
+${openerExamplesPrompt({ avoid: body })}
 
 ${RATING_GUIDE[rating]}`;
   const call = (effort: Effort, prev?: { draft: Draft; problems: string[] }) => {

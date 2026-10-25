@@ -13,7 +13,7 @@ import {
   KIND_SCHEMA,
   KIND_SYSTEM,
   OUTCOME_SCHEMA,
-  OUTCOME_SYSTEM,
+  outcomeSystem,
   ROUND_SCHEMA,
   ROUND_SYSTEM,
   SCENE_SCHEMA,
@@ -117,7 +117,7 @@ async function run(task: string, input: Any, rating: Rating) {
     case "cast":
       return museJSON({ task: t("cast"), model: MODELS.ruling, system: withRating(CAST_SYSTEM, rating), schema: CAST_SCHEMA, effort: "minimal", timeoutMs: 8000, maxTokens: 1200, user: JSON.stringify(input) });
     case "outcome":
-      return museJSON({ task: t("outcome"), ...STORY_CALLS.outcome, system: withRating(OUTCOME_SYSTEM, rating), schema: OUTCOME_SCHEMA, user: JSON.stringify(input) });
+      return museJSON({ task: t("outcome"), ...STORY_CALLS.outcome, system: withRating(outcomeSystem({ avoid: avoidOf(input) }), rating), schema: OUTCOME_SCHEMA, user: JSON.stringify(input) });
     case "outcome_branches": {
       // Three parallel calls; a branch that fails or times out comes back null (host then uses the live "outcome" call).
       const helped = input.helped_by || input.idea_from || "";
@@ -128,7 +128,7 @@ async function run(task: string, input: Any, rating: Rating) {
           const roll = { total: r.total, grade: r.grade, branch: r.branch, meaning: GRADE_MEANING[r.grade], depth: 0.5 };
           const one = { ...input, band: r.band, natural: null, roll, helped_by: b === "better" ? helped : "" };
           try {
-            const d = await museJSON({ task: t("outcome"), ...STORY_CALLS.branch, system: withRating(OUTCOME_SYSTEM, rating), schema: OUTCOME_SCHEMA, user: JSON.stringify(one) });
+            const d = await museJSON({ task: t("outcome"), ...STORY_CALLS.branch, system: withRating(outcomeSystem({ avoid: avoidOf(input), full: true }), rating), schema: OUTCOME_SCHEMA, user: JSON.stringify(one) });
             return [b, cleanOutcome(scrubDeep(d))] as const;
           } catch (e) {
             console.error(`[ai] outcome branch ${b} failed:`, (e as Error).message);
@@ -222,6 +222,11 @@ function scrubDeep(v: Any, key = ""): Any {
 }
 
 const TIERS = ["clever", "solid", "risky", "wild", "miracle"];
+
+/** The live story's words, so a Writers' Room example game that overlaps it is left out of the prompt. */
+function avoidOf(input: Any) {
+  return [input?.story?.title, input?.real_event?.place_type, input?.story_so_far?.problem, input?.situation].map((x) => String(x ?? "")).join(" ");
+}
 
 /** The outcome fields the host reads, cleaned; null when there is no text. */
 function cleanOutcome(data: Any) {
