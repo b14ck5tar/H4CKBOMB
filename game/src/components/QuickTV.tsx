@@ -22,7 +22,7 @@ import { Reactions } from "./Reactions";
 import { Avatar, Hope, ThankHearts, useFastNow } from "./TV";
 import { KeepsakeQR } from "./Keepsake";
 import { FEATURES } from "@/lib/features";
-import { dice, music, playSfx, playStoryBuildup, playStoryPayoff, playStorySfxCues, stopStoryBuildup, useMusic } from "@/lib/sound";
+import { dice, music, playSfx, playStoryBuildup, playStoryPayoff, playStorySfxCues, playTimeWarning, stopStoryBuildup, useMusic } from "@/lib/sound";
 import { Banner, EndingMontage, FinalePitch, FinaleShake, FinaleVote, HudStrip, OutcomeCaption, Particles, PayoffPunch, PhaseSwap, PlanCard, QualityMeter, SuggestionBubbles, TurnCard, TvStage, TIER_LOOK } from "@/components/tvskin";
 import { QUICK_TURN_MS, TURN_MS, VOTE_MS } from "@/lib/rules";
 import type { CardHero, MontagePanel } from "@/components/tvskin";
@@ -1362,6 +1362,15 @@ function moodFor(s: GameState, title: boolean): Mood {
   return "scene";
 }
 
+/** ~10 s left (state.timeWarn, set by the host): the narrator nudges the table, unless she's already talking. */
+function useTimeWarning(s: GameState) {
+  const at = s.timeWarn?.at ?? 0;
+  useEffect(() => {
+    if (at && Date.now() - at < 4000) void playTimeWarning(s.timeWarn?.name);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [at]);
+}
+
 /** The slide's story sounds (Muse's 1-3 cues, state.sfx), each near its word in the narration. Silent unless FEATURES.storySfx. */
 function useStorySfx(s: GameState) {
   const at = s.sfx?.at ?? 0;
@@ -1438,7 +1447,10 @@ function useStorySound(s: GameState) {
   useEffect(() => {
     if (s.phase === "final_roll" && (s.final?.stage === "arm" || s.final?.stage === "count")) music.cue("finale", { ms: 9000 });
     if (s.phase === "final_roll" && s.final?.stage === "shake") playSfx("finaleShake", { ms: 2000 });
-    if (s.phase === "final_result") music.cue("hit", { grade: hitGrade(r) });
+    if (s.phase === "final_result") {
+      music.cue("hit", { grade: hitGrade(r) });
+      music.swell(1, 7000); // the grand ending: the music lifts under the finale outcome (still ducked under her voice)
+    }
     if (s.phase === "reveal") music.cue("resolve");
     if (s.phase === "storybook") playSfx("keepsake");
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1457,6 +1469,7 @@ function useTimerTicks(host: Stage) {
 export function QuickTV({ host, s, onNotes, notesOpen }: { host: Stage; s: GameState; onNotes?: () => void; notesOpen?: boolean }) {
   useNarrator(host, s);
   useStorySfx(s);
+  useTimeWarning(s);
   useStorySound(s);
   useTimerTicks(host);
   const [reactions, setReactions] = useState<{ id: number; emoji: string; color?: string }[]>([]);
