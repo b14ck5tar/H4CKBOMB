@@ -146,3 +146,9 @@ Full history and train of thought: `design/00-where-we-are.md`.
 - Approved A (scene art follows the story; art never hidden by the UI on laptops), B (music polish), C (submission prep). Run agents in parallel.
 - Boulder opener renamed "The Boulder on the Edge"; spoilers removed from 3 more openers.
 - GAME.md: the one doc of all main ideas, weighted on the core-loop picker (design/24) and the procedural rules (design/35).
+
+## Sun ~5:15 AM: danger meter cut, turn counts, campaign idea, pitch kit
+- Danger meter cut entirely (CD: "never understood it"). One meter only: progress with 3 act dots.
+- Turns: 2-4 players = 2 turns each, 5+ players = 1 turn each, in every mode (humans only).
+- Campaign mode (heroes carry over into the next story with upgrades, like real D&D): proposal only. The proposal-only list will be trimmed to a top 3 for the pitch.
+- Started PITCH_KIT.md: pitches, judge-table run-of-show, AI explanation, how-we-built-it, judge FAQ, talking tips, rehearsal.
