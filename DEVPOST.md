@@ -47,7 +47,7 @@ players in one room. A Quick Tale takes about 5 to 10 minutes, depending on how 
    story runs in 3 acts; an act ends when a plan solves it (or its time runs out). Then the narration hands the spotlight to
    the next player by name: "Leo, the lights are yours."
 7. **Every decision gets painted and read aloud.** Muse paints a new scene with your group's heroes in it. A
-   narrator, cast by Muse to fit the story (Vesper, Juniper, Hollis or Wren), reads it over original music made in
+   narrator, cast by Muse to fit the story (Vesper, Hollis or Wren), reads it over original music made in
    the browser (a lobby theme and 5 story moods), with sound on every tap and roll. Muse also picks one of 6 art themes
    per story, all built on Neon Ink so the heroes stay recognizable.
 8. **The finale, together.** Everyone proposes a last plan and backs one that isn't theirs (each backer adds +1, up to
