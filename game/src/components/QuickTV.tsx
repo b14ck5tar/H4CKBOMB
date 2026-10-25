@@ -22,8 +22,8 @@ import { Reactions } from "./Reactions";
 import { Avatar, Hope, ThankHearts, useFastNow } from "./TV";
 import { KeepsakeQR } from "./Keepsake";
 import { FEATURES } from "@/lib/features";
-import { dice, music, playSfx, playStorySfxCues, useMusic } from "@/lib/sound";
-import { EndingMontage, FinalePitch, FinaleShake, FinaleVote, HudStrip, OutcomeCaption, Particles, PhaseSwap, PlanCard, QualityMeter, SuggestionBubbles, TurnCard, TvStage, TIER_LOOK } from "@/components/tvskin";
+import { dice, music, playSfx, playStoryBuildup, playStoryPayoff, playStorySfxCues, stopStoryBuildup, useMusic } from "@/lib/sound";
+import { EndingMontage, FinalePitch, FinaleShake, FinaleVote, HudStrip, OutcomeCaption, Particles, PayoffPunch, PhaseSwap, PlanCard, QualityMeter, SuggestionBubbles, TurnCard, TvStage, TIER_LOOK } from "@/components/tvskin";
 import { QUICK_TURN_MS, TURN_MS, VOTE_MS } from "@/lib/rules";
 import type { CardHero, MontagePanel } from "@/components/tvskin";
 import { TIER_SHIFT, gradeRoll } from "@/lib/grade";
@@ -1002,7 +1002,7 @@ function SkinEnding({ host, s }: { host: Stage; s: GameState }) {
         ending: f ? ENDING_LABEL[f.ending] : undefined,
         endingColor: f?.ending === "TRIUMPHANT" ? "#ffd23f" : f?.ending === "BITTERSWEET" ? "#2cf5c0" : "#ff2e7e",
       }}
-      keepsake={s.storybook ? <KeepsakeQR host={host} s={s} size={260} bare /> : undefined}
+      keepsake={s.storybook || s.recap || s.epilogue ? <KeepsakeQR host={host} s={s} size={260} bare /> : undefined}
     />
   );
 }
@@ -1143,6 +1143,9 @@ function Final({ host, s }: { host: Stage; s: GameState }) {
         {result && r && f ? (
           <TvStage>
             <SkinMeter s={s} r={r} />
+            {FEATURES.storySfx && s.sfx?.kind === "payoff" && (
+              <PayoffPunch at={s.sfx.at} tone={f.ending === "TRIUMPHANT" ? "up" : f.ending === "GRIM_BUT_HILARIOUS" ? "down" : "mixed"} word={ENDING_LABEL[f.ending]} />
+            )}
           </TvStage>
         ) : (
           <div className="flex items-center gap-10">
@@ -1363,9 +1366,17 @@ function moodFor(s: GameState, title: boolean): Mood {
 function useStorySfx(s: GameState) {
   const at = s.sfx?.at ?? 0;
   useEffect(() => {
-    if (at && s.sfx) void playStorySfxCues(s.sfx.cues?.length ? s.sfx.cues : [{ id: s.sfx.id, word: 0 }]);
+    if (!at || !s.sfx) return;
+    if (s.sfx.kind === "buildup") void playStoryBuildup(s.sfx.id);
+    else if (s.sfx.kind === "payoff") void playStoryPayoff(s.sfx.id);
+    else void playStorySfxCues(s.sfx.cues?.length ? s.sfx.cues : [{ id: s.sfx.id, word: 0 }]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [at]);
+  // leaving the finale: a build-up still going fades out
+  const inFinale = s.phase === "final_roll" || s.phase === "final_result";
+  useEffect(() => {
+    if (!inFinale) stopStoryBuildup();
+  }, [inFinale]);
 }
 
 /** Plays the narrator's current line on the TV (respects mute). Text never waits for it. */

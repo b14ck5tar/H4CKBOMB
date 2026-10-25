@@ -82,7 +82,7 @@ export function stopStorySfx(sec = 0.15) {
 }
 
 /** Start one sound (no stopping of others). */
-async function start(raw: string | null | undefined, delaySec: number) {
+async function start(raw: string | null | undefined, delaySec: number, gain = GAIN, maxSec = MAX_SEC, into: Set<{ src: AudioBufferSourceNode; g: GainNode }> = playing) {
   const ok = pickStorySfx(raw);
   if (!FEATURES.storySfx || isServer() || !ok) return;
   if (isAllMuted() || isSilenced() || !canStart()) return;
@@ -100,8 +100,8 @@ async function start(raw: string | null | undefined, delaySec: number) {
     src.buffer = buf;
     const g = ctx.createGain();
     const t0 = ctx.currentTime + Math.max(0, delaySec);
-    const peakGain = GAIN * Math.min(4, level.get(ok) ?? 1);
-    const end = t0 + Math.min(buf.duration, MAX_SEC);
+    const peakGain = gain * Math.min(4, level.get(ok) ?? 1);
+    const end = t0 + Math.min(buf.duration, maxSec);
     g.gain.setValueAtTime(0, ctx.currentTime);
     g.gain.setValueAtTime(0, t0);
     g.gain.linearRampToValueAtTime(peakGain, t0 + 0.02);
@@ -112,9 +112,9 @@ async function start(raw: string | null | undefined, delaySec: number) {
     src.start(t0);
     src.stop(end + 0.02);
     const mine = { src, g };
-    playing.add(mine);
+    into.add(mine);
     src.onended = () => {
-      playing.delete(mine);
+      into.delete(mine);
       try {
         src.disconnect();
         g.disconnect();
@@ -135,11 +135,47 @@ export async function playStorySfx(raw: string | null | undefined, delaySec = 0)
 const WORD_SEC = 0.37; // the narrator's pace (Combo Flash, ~2.7 words a second): a cue on word 8 plays ~3 s in
 
 /**
- * A slide's cues (1-3, each on a word of the narration): the last slide's sounds fade out, then each cue plays at
- * about the moment its word is spoken. Cues of one slide may overlap; they never touch the narrator.
+ * A slide's cues (1-3, each on a word of the narration): each plays at about the moment its word is spoken. Cues may
+ * overlap each other (CD); they never pause, cut or duck the narrator: they just sit ~10 dB under her.
  */
 export async function playStorySfxCues(cues: { id: string; word: number }[] | null | undefined, startDelaySec = 0) {
   if (!FEATURES.storySfx || !cues?.length) return;
-  stopStorySfx();
   await Promise.all(cues.slice(0, 3).map((c) => start(c.id, startDelaySec + Math.max(0, c.word) * WORD_SEC)));
+}
+
+// ---- the finale: a build-up under the last line, then the payoff hit on the result (the biggest sound of the game) ----
+const BUILD_GAIN = 0.3; // under the narrator's last line
+const HIT_GAIN = 0.6; // ~ -4 dB: the loudest story sound; it lands as the result shows, right after her line
+let building = new Set<{ src: AudioBufferSourceNode; g: GainNode }>();
+
+function fadeOut(set: Set<{ src: AudioBufferSourceNode; g: GainNode }>, sec: number) {
+  for (const c of [...set]) {
+    try {
+      const t = c.g.context.currentTime;
+      c.g.gain.cancelScheduledValues(t);
+      c.g.gain.setValueAtTime(c.g.gain.value, t);
+      c.g.gain.linearRampToValueAtTime(0, t + sec);
+      c.src.stop(t + sec + 0.02);
+    } catch {}
+  }
+  set.clear();
+}
+
+/** The finale's build-up (up to 8 s; it fades the instant the payoff lands). */
+export async function playStoryBuildup(raw: string | null | undefined) {
+  if (!FEATURES.storySfx) return;
+  fadeOut(building, 0.2);
+  await start(raw, 0, BUILD_GAIN, 8, building);
+}
+
+/** The payoff hit, exactly on the result: the build-up stops, the hit plays loud. */
+export async function playStoryPayoff(raw: string | null | undefined) {
+  if (!FEATURES.storySfx) return;
+  fadeOut(building, 0.08);
+  await start(raw, 0, HIT_GAIN, 3.5);
+}
+
+/** Leaving the finale: any build-up still going fades out. */
+export function stopStoryBuildup() {
+  fadeOut(building, 0.3);
 }

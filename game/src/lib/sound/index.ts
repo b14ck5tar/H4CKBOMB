@@ -11,4 +11,4 @@ export { MOODS, TRACK_IDS, TRACKS, toMood, layersFor } from "./tracks";
 export type { Mood, TrackId } from "./tracks";
 export { unlockAudio, setAllMuted, isAllMuted, onSoundChange } from "./context";
 export { useMusic, useDuckWhile, useSoundPrefs } from "./useMusic";
-export { STORY_SFX_IDS, pickStorySfx, playStorySfx, playStorySfxCues, preloadStorySfx, stopStorySfx } from "./storySfx";
+export { STORY_SFX_IDS, pickStorySfx, playStorySfx, playStorySfxCues, playStoryBuildup, playStoryPayoff, stopStoryBuildup, preloadStorySfx, stopStorySfx } from "./storySfx";
